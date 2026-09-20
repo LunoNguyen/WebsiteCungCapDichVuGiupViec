@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Marketing | GiupViec.vn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">📣</div>
+      <span class="sidebar-logo-text">Giup<span style="color:#FF6584">Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Phạm Văn Minh</div><div class="sidebar-user-role">NV Marketing</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/marketing/dashboard" class="sidebar-item active"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Marketing</div>
+        <div class="sidebar-nav-items">
+          <a href="/marketing/khuyen-mai" class="sidebar-item"><i class="ti ti-discount item-icon"></i><span class="item-label">Khuyến mãi</span></a>
+          <a href="/marketing/thong-bao" class="sidebar-item"><i class="ti ti-send item-icon"></i><span class="item-label">Gửi thông báo</span><span class="item-badge">2</span></a>
+          <a href="/marketing/phan-tich" class="sidebar-item"><i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích dữ liệu</span></a>
+          <a href="/marketing/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Quản lý đánh giá</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb"><span>GiupViec.vn</span><span class="sep">/</span><span class="current">Marketing – Dashboard</span></div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" onclick="window.location.href='/marketing/thong-bao'"><i class="ti ti-send"></i> Gửi thông báo</button>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
+          <div class="dropdown-menu" id="mkUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Dashboard Marketing</h1>
+          <p class="page-subtitle">Tổng quan chiến dịch, khuyến mãi và đánh giá · Tháng 9/2026</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">📣</div>
+          <div class="stat-value" data-count="3">0</div>
+          <div class="stat-label">Chiến dịch đang chạy</div>
+          <div class="kpi-compare"><span style="color:var(--accent)">● Đang chạy</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🎁</div>
+          <div class="stat-value" data-count="5">0</div>
+          <div class="stat-label">Mã khuyến mãi active</div>
+          <div class="kpi-compare"><span class="arrow-up">Sử dụng 842 lần</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📨</div>
+          <div class="stat-value" data-count="50248">0</div>
+          <div class="stat-label">Người nhận thông báo</div>
+          <div class="kpi-compare"><span class="arrow-up">36% tỷ lệ mở</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
+          <div class="stat-value">4.8</div>
+          <div class="stat-label">Đánh giá trung bình</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 0.2</span><span class="period">vs tháng trước</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
+          <div class="stat-value" data-count="2">0</div>
+          <div class="stat-label">Chờ GĐ phê duyệt</div>
+          <div class="kpi-compare"><span style="color:var(--warning)">● Cần theo dõi</span></div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid" style="margin-top:1.5rem">
+        <!-- Revenue + Conversion -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Doanh thu theo tháng</div>
+              <div class="card-subtitle">Tác động của khuyến mãi</div>
+            </div>
+            <div class="chart-period-tabs">
+              <button class="chart-period-btn active">6T</button>
+              <button class="chart-period-btn">1N</button>
+            </div>
+          </div>
+          <div style="height:260px"><canvas id="revenueChart"></canvas></div>
+        </div>
+
+        <!-- Active Campaigns -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Chiến dịch đang chạy</div>
+            <a href="/marketing/khuyen-mai" class="btn btn-outline btn-sm">Quản lý</a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.875rem">
+            <div style="padding:0.875rem;background:rgba(255,101,132,0.06);border:1px solid rgba(255,101,132,0.2);border-radius:var(--radius-md)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                <span style="font-weight:700;font-size:0.875rem">Ưu đãi Quốc khánh 🎉</span>
+                <span class="badge badge-success">Live</span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">Giảm 20% · Còn 5 ngày</div>
+              <div style="margin-top:0.625rem">
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:3px"><span>Sử dụng</span><span style="font-weight:600">456 / 1000</span></div>
+                <div class="progress"><div class="progress-bar success" style="width:45.6%"></div></div>
+              </div>
+            </div>
+            <div style="padding:0.875rem;background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-md)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                <span style="font-weight:700;font-size:0.875rem">Khách hàng mới -30%</span>
+                <span class="badge badge-success">Live</span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">Cho KH đăng ký lần đầu</div>
+              <div style="margin-top:0.625rem">
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:3px"><span>Sử dụng</span><span style="font-weight:600">348 / 500</span></div>
+                <div class="progress"><div class="progress-bar" style="width:69.6%"></div></div>
+              </div>
+            </div>
+            <div style="padding:0.875rem;background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.2);border-radius:var(--radius-md)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                <span style="font-weight:700;font-size:0.875rem">Combo Gia đình 5%</span>
+                <span class="badge badge-warning">Chờ GĐ duyệt</span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">Đặt 3 dịch vụ/tháng giảm 5%</div>
+              <div style="display:flex;gap:0.5rem;margin-top:0.625rem">
+                <button class="btn btn-outline btn-sm" onclick="Toast.show('Đã nhắc Giám đốc phê duyệt!')">Nhắc duyệt</button>
+                <button class="btn btn-warning btn-sm" onclick="window.location.href='/marketing/khuyen-mai'">Chỉnh sửa</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rating Overview -->
+      <div class="dashboard-grid-3" style="margin-top:1.5rem">
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">Phân phối đánh giá</div></div>
+          <div style="height:220px"><canvas id="ratingChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">Nguồn KH mới</div></div>
+          <div style="height:220px"><canvas id="ordersDonut"></canvas></div>
+        </div>
+
+        <!-- Recent Reviews Snippet -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Đánh giá gần đây</div><a href="/marketing/danh-gia" class="btn btn-outline btn-sm">Xem tất cả</a></div>
+          <div style="display:flex;flex-direction:column;gap:0.625rem">
+            <div style="border-bottom:1px solid var(--border-light);padding-bottom:0.625rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span style="font-weight:600;font-size:0.8rem">Nguyễn Thị Hoa</span><span style="color:#FFC107;font-size:0.8rem">★★★★★</span></div>
+              <div style="font-size:0.75rem;color:var(--text-secondary)">"Chị giúp việc rất tận tâm và cẩn thận!"</div>
+            </div>
+            <div style="border-bottom:1px solid var(--border-light);padding-bottom:0.625rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span style="font-weight:600;font-size:0.8rem">Trần Văn Minh</span><span style="color:#FFC107;font-size:0.8rem">★★★★</span></div>
+              <div style="font-size:0.75rem;color:var(--text-secondary)">"Dịch vụ tốt, đúng giờ, sẽ đặt tiếp."</div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span style="font-weight:600;font-size:0.8rem">Phạm Thị Lan</span><span style="color:#FFC107;font-size:0.8rem">★★★</span></div>
+              <div style="font-size:0.75rem;color:var(--text-secondary)">"Ổn, nhưng cần cải thiện khu vực bếp."</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Chart === 'undefined') return;
+
+    // Revenue
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const g = ctx.createLinearGradient(0,0,0,300);
+    g.addColorStop(0,'rgba(255,101,132,0.35)');g.addColorStop(1,'rgba(255,101,132,0.02)');
+    new Chart(ctx, {
+      type:'line',
+      data:{
+        labels:['T4','T5','T6','T7','T8','T9'],
+        datasets:[{
+          label:'Doanh thu',data:[62,90,110,125,160,185],fill:true,
+          backgroundColor:g,borderColor:'#FF6584',borderWidth:2.5,
+          pointBackgroundColor:'#FF6584',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:0.4
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+'tr'}}}}
+    });
+
+    // Rating
+    new Chart(document.getElementById('ratingChart'), {
+      type:'bar',
+      data:{
+        labels:['5★','4★','3★','2★','1★'],
+        datasets:[{data:[58,25,10,5,2],backgroundColor:['#43E97B','#6C63FF','#FFC107','#FF6584','#FF4757'],borderRadius:6,borderSkipped:false}]
+      },
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x}%`}}},
+        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},max:100,ticks:{callback:v=>v+'%',font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}
+    });
+
+    // Sources donut
+    new Chart(document.getElementById('ordersDonut'), {
+      type:'doughnut',
+      data:{
+        labels:['App iOS','App Android','Website','Giới thiệu'],
+        datasets:[{data:[38,32,20,10],backgroundColor:['#6C63FF','#43E97B','#FF6584','#FFC107'],borderColor:'transparent',hoverOffset:6}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,cutout:'68%',
+        plugins:{legend:{position:'bottom',labels:{padding:12,font:{size:11}}}}}
+    });
+  });
+</script>
+</body>
+</html>

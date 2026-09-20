@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – CSKH | GiupViec.vn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">📞</div>
+      <span class="sidebar-logo-text">Giup<span style="color:var(--info)">Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Hoàng Thị Dung</div><div class="sidebar-user-role">NV Chăm sóc Khách hàng</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/cskh/dashboard" class="sidebar-item active"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Khách hàng</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/khach-hang" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span></a>
+          <a href="/cskh/don-dat-dich-vu" class="sidebar-item"><i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span><span class="item-badge">5</span></a>
+          <a href="/cskh/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span><span class="item-badge">8</span></a>
+          <a href="/cskh/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Vận hành</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/lich-phan-cong" class="sidebar-item"><i class="ti ti-calendar item-icon"></i><span class="item-label">Lịch phân công CTV</span></a>
+          <a href="/cskh/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb"><span>GiupViec.vn</span><span class="sep">/</span><span class="current">CSKH – Dashboard</span></div>
+      <div class="topbar-search hide-mobile"><i class="ti ti-search search-icon"></i><input type="text" placeholder="Tìm khách hàng, đơn hàng..."></div>
+      <div class="topbar-actions">
+        <div class="dropdown">
+          <button class="topbar-icon-btn" data-dropdown="cskhNotif"><i class="ti ti-bell"></i><span class="notif-dot"></span></button>
+          <div class="dropdown-menu notif-dropdown" id="cskhNotif">
+            <div class="notif-header"><span class="notif-title">Thông báo</span></div>
+            <div class="notif-item unread"><div class="notif-dot-item"></div><div class="notif-content"><p>8 khiếu nại chưa xử lý.</p><span>Hôm nay</span></div></div>
+            <div class="notif-item unread"><div class="notif-dot-item"></div><div class="notif-content"><p>5 đơn đang ở trạng thái chờ ghép CTV.</p><span>2 giờ trước</span></div></div>
+          </div>
+        </div>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="cskhUser" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
+          <div class="dropdown-menu" id="cskhUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Dashboard Chăm sóc Khách hàng</h1>
+          <p class="page-subtitle">Theo dõi đơn hàng, khiếu nại, và chất lượng dịch vụ · Hôm nay 20/09/2026</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" onclick="window.location.href='/cskh/don-dat-dich-vu'">
+            <i class="ti ti-plus"></i> Tạo đơn mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">📋</div>
+          <div class="stat-value" data-count="52">0</div>
+          <div class="stat-label">Đơn hôm nay</div>
+          <div class="kpi-compare"><span class="arrow-up">42 hoàn thành</span><span class="period">· 10 đang xử lý</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
+          <div class="stat-value" data-count="5">0</div>
+          <div class="stat-label">Chờ ghép CTV</div>
+          <div class="kpi-compare"><span style="color:var(--warning)">● Cần ghép ngay</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">⚠️</div>
+          <div class="stat-value" data-count="8">0</div>
+          <div class="stat-label">Khiếu nại chưa xử lý</div>
+          <div class="kpi-compare"><span style="color:var(--danger)">● 2 quá hạn</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">⭐</div>
+          <div class="stat-value">4.8</div>
+          <div class="stat-label">Đánh giá TB hôm nay</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 0.1</span><span class="period">vs hôm qua</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(0,180,216,0.15)">👥</div>
+          <div class="stat-value" data-count="127">0</div>
+          <div class="stat-label">KH hoạt động hôm nay</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 15</span><span class="period">vs hôm qua</span></div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid" style="margin-top:1.5rem">
+        <!-- Pending Orders -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Đơn cần xử lý ngay</div>
+              <div class="card-subtitle">5 đơn đang chờ ghép CTV</div>
+            </div>
+            <a href="/cskh/don-dat-dich-vu" class="btn btn-primary btn-sm">Quản lý tất cả</a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.75rem">
+            <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.2);border-radius:var(--radius-md)">
+              <div class="avatar avatar-sm">N</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:0.875rem">#DD-20260920-052 · Nguyễn Thị Hoa</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">Dọn dẹp nhà · Q.1 · 14:00 hôm nay</div>
+              </div>
+              <div style="display:flex;gap:0.4rem">
+                <button class="btn btn-primary btn-sm" onclick="Toast.show('Đang tìm CTV phù hợp...')">Ghép CTV</button>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:var(--radius-md)">
+              <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:0.875rem">#DD-20260920-048 · Trần Văn Minh</div>
+                <div style="font-size:0.75rem;color:var(--danger)">⚠ Trông trẻ · Tân Bình · 13:30 – QUÁ HẠN</div>
+              </div>
+              <div style="display:flex;gap:0.4rem">
+                <button class="btn btn-danger btn-sm" onclick="Toast.show('Liên hệ khẩn cấp với KH và tìm CTV gấp!','warning')">Khẩn cấp</button>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
+              <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:0.875rem">#DD-20260920-051 · Lê Thị Thu</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">Nấu ăn · Bình Thạnh · 17:00 hôm nay</div>
+              </div>
+              <div style="display:flex;gap:0.4rem">
+                <button class="btn btn-primary btn-sm" onclick="Toast.show('Đang tìm CTV phù hợp...')">Ghép CTV</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+          <!-- Orders Status Donut -->
+          <div class="chart-card">
+            <div class="chart-header"><div class="chart-title">Trạng thái đơn hôm nay</div></div>
+            <div style="height:160px"><canvas id="ordersDonut"></canvas></div>
+          </div>
+
+          <!-- Recent Complaints -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Khiếu nại mới nhất</div>
+              <a href="/cskh/khieu-nai" class="btn btn-outline btn-sm">Xem tất cả</a>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.625rem">
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;padding:0.5rem 0;border-bottom:1px solid var(--border-light)">
+                <div style="display:flex;align-items:center;gap:0.5rem"><div class="avatar" style="width:28px;height:28px;font-size:0.7rem">T</div><span style="font-weight:600">Trần Thị Bình</span></div>
+                <span class="badge badge-danger">Leo thang</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;padding:0.5rem 0;border-bottom:1px solid var(--border-light)">
+                <div style="display:flex;align-items:center;gap:0.5rem"><div class="avatar" style="width:28px;height:28px;font-size:0.7rem;background:linear-gradient(135deg,#FF6584,#FF8FA3)">H</div><span style="font-weight:600">Hoàng Văn Khánh</span></div>
+                <span class="badge badge-warning">Đang xử lý</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;padding:0.5rem 0">
+                <div style="display:flex;align-items:center;gap:0.5rem"><div class="avatar" style="width:28px;height:28px;font-size:0.7rem;background:linear-gradient(135deg,#43E97B,#38D46A)">N</div><span style="font-weight:600">Nguyễn Minh Tuấn</span></div>
+                <span class="badge badge-secondary">Mới</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent activity + Quick CTV schedule -->
+      <div style="margin-top:1.5rem">
+        <div class="card" style="padding:0">
+          <div class="card-header" style="padding:1.25rem 1.5rem">
+            <div class="card-title">Đơn dịch vụ gần đây</div>
+            <a href="/cskh/don-dat-dich-vu" class="btn btn-outline btn-sm">Xem tất cả đơn</a>
+          </div>
+          <div class="table-container" style="border:none">
+            <table class="table">
+              <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>CTV phụ trách</th><th>Thời gian</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight:600;font-size:0.8rem;color:var(--primary-light)">#DD-052</td>
+                  <td><div class="user-cell"><div class="avatar avatar-sm">N</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hoa</div><div class="sub">Q.1</div></div></div></td>
+                  <td>Dọn dẹp nhà</td>
+                  <td style="color:var(--text-muted)">Chưa ghép</td>
+                  <td style="font-size:0.8rem">Hôm nay 14:00</td>
+                  <td><span class="badge badge-warning">Chờ CTV</span></td>
+                  <td><div class="table-actions"><button class="btn btn-primary btn-sm">Ghép CTV</button></div></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;font-size:0.8rem;color:var(--primary-light)">#DD-051</td>
+                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div><div class="user-cell-info"><div class="name">Lê Thị Thu</div><div class="sub">Bình Thạnh</div></div></div></td>
+                  <td>Nấu ăn</td>
+                  <td style="font-size:0.8rem">Chị Hoa (CTV)</td>
+                  <td style="font-size:0.8rem">Hôm nay 17:00</td>
+                  <td><span class="badge badge-primary">Đã ghép</span></td>
+                  <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem</button></div></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;font-size:0.8rem;color:var(--primary-light)">#DD-050</td>
+                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">H</div><div class="user-cell-info"><div class="name">Hoàng Văn Nam</div><div class="sub">Q.7</div></div></div></td>
+                  <td>Vệ sinh tổng thể</td>
+                  <td style="font-size:0.8rem">Chị Ngọc (CTV)</td>
+                  <td style="font-size:0.8rem">19/09/2026 09:00</td>
+                  <td><span class="badge badge-success">Hoàn thành</span></td>
+                  <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Order Detail Panel -->
+<div class="overlay" id="panelOverlay"></div>
+<div class="detail-panel" id="orderDetail">
+  <div class="detail-panel-header">
+    <div><h2 style="font-size:1.1rem;font-weight:700">#DD-051 · Chi tiết đơn dịch vụ</h2></div>
+    <button class="modal-close" data-panel-close="orderDetail">✕</button>
+  </div>
+  <div class="detail-panel-body">
+    <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value">Lê Thị Thu</span></div>
+    <div class="info-row"><span class="info-label">Dịch vụ</span><span class="info-value">Nấu ăn</span></div>
+    <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value">45 Phan Xích Long, Bình Thạnh</span></div>
+    <div class="info-row"><span class="info-label">Ngày giờ</span><span class="info-value">20/09/2026 · 17:00 - 19:00</span></div>
+    <div class="info-row"><span class="info-label">CTV phụ trách</span><span class="info-value" style="color:var(--accent)">Trần Thị Hoa (CTV Ưu tú)</span></div>
+    <div class="info-row"><span class="info-label">Thành tiền</span><span class="info-value" style="color:var(--accent)">180.000đ</span></div>
+    <div class="info-row"><span class="info-label">Thanh toán</span><span class="info-value"><span class="badge badge-warning">Chưa thanh toán</span></span></div>
+    <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value"><span class="badge badge-primary">Đã ghép CTV</span></span></div>
+    <div style="margin-top:1.25rem">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Ghi chú của khách hàng</div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;font-size:0.875rem;color:var(--text-secondary)">
+        Nấu 3 món: canh chua, cá chiên, rau xào. Gia đình 4 người, trẻ em không ăn cay.
+      </div>
+    </div>
+  </div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-danger btn-sm" onclick="Toast.show('Đơn đã hủy, hoàn tiền trong 24h.','error');PanelManager.close('orderDetail')">Hủy đơn</button>
+    <button class="btn btn-warning btn-sm" onclick="Toast.show('Đã chuyển CTV khác!')">Đổi CTV</button>
+    <button class="btn btn-secondary" data-panel-close="orderDetail">Đóng</button>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Chart === 'undefined') return;
+    new Chart(document.getElementById('ordersDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Hoàn thành', 'Đang thực hiện', 'Chờ CTV', 'Đã hủy'],
+        datasets: [{ data: [42, 5, 5, 0], backgroundColor: ['#43E97B','#6C63FF','#FFC107','#FF4757'], borderColor:'transparent', hoverOffset:6 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, cutout:'72%',
+        plugins: { legend: { position:'bottom', labels:{ padding:12, font:{size:11} } } } }
+    });
+  });
+</script>
+</body>
+</html>

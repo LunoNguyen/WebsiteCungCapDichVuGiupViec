@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Thông báo – Giám đốc | GiupViec.vn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">🏠</div><span class="sidebar-logo-text">Giup<span>Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyễn Văn An</div><div class="sidebar-user-role">Giám đốc</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/giam-doc/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Quản lý</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/bao-cao" class="sidebar-item"><i class="ti ti-chart-bar item-icon"></i><span class="item-label">Thống kê & Báo cáo</span></a>
+          <a href="/giam-doc/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Quản lý khiếu nại</span><span class="item-badge">3</span></a>
+          <a href="/giam-doc/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân viên</span></a>
+          <a href="/giam-doc/thong-bao" class="sidebar-item active"><i class="ti ti-bell item-icon"></i><span class="item-label">Quản lý thông báo</span><span class="item-badge">2</span></a>
+          <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>GiupViec.vn</span><span class="sep">/</span>
+        <a href="/giam-doc/dashboard" style="color:var(--text-muted)">Giám đốc</a><span class="sep">/</span>
+        <span class="current">Quản lý Thông báo</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" data-modal-open="createNotifModal"><i class="ti ti-plus"></i> Tạo thông báo</button>
+        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="um5" style="cursor:pointer">GĐ</div>
+          <div class="dropdown-menu" id="um5"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Quản lý Thông báo</h1>
+          <p class="page-subtitle">Tạo, gửi thông báo nội bộ & duyệt thông báo từ Marketing · UC-GD04</p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <!-- Left: Pending Approval -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Chờ phê duyệt từ Marketing</div>
+            <span class="badge badge-warning">2 thông báo</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.875rem">
+            <div style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+              <div style="padding:1rem;background:var(--bg-card)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.625rem">
+                  <span style="font-weight:700;font-size:0.875rem">Khuyến mãi 20% nhân Lễ Quốc khánh</span>
+                  <span class="badge badge-warning">Chờ duyệt</span>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Gửi đến: <strong style="color:var(--text-secondary)">Tất cả khách hàng</strong> (ước tính 50.000 người)</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);background:var(--bg-glass);padding:0.625rem;border-radius:var(--radius-sm)">
+                  🎉 Nhân dịp Lễ Quốc khánh 2/9, GiupViec.vn tri ân Quý khách với ưu đãi giảm 20% tất cả dịch vụ từ ngày 1-5/09/2026...
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem">Đề xuất bởi: NV Marketing · 18/09/2026</div>
+              </div>
+              <div style="padding:0.75rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.5rem">
+                <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt thông báo và gửi đến 50.000 khách hàng!')">Duyệt & Gửi</button>
+                <button class="btn btn-danger btn-sm">Từ chối</button>
+                <button class="btn btn-outline btn-sm">Xem trước</button>
+              </div>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+              <div style="padding:1rem;background:var(--bg-card)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.625rem">
+                  <span style="font-weight:700;font-size:0.875rem">Ra mắt tính năng đặt lịch mới</span>
+                  <span class="badge badge-warning">Chờ duyệt</span>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Gửi đến: <strong style="color:var(--text-secondary)">Tất cả khách hàng + CTV</strong></div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);background:var(--bg-glass);padding:0.625rem;border-radius:var(--radius-sm)">
+                  🆕 GiupViec.vn vừa ra mắt tính năng đặt lịch định kỳ thông minh...
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem">Đề xuất bởi: NV Marketing · 17/09/2026</div>
+              </div>
+              <div style="padding:0.75rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.5rem">
+                <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt và lên lịch gửi!')">Duyệt & Gửi</button>
+                <button class="btn btn-danger btn-sm">Từ chối</button>
+                <button class="btn btn-outline btn-sm">Chỉnh sửa</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Send Internal Notification -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Thông báo nội bộ mới</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1rem">
+            <div class="form-group">
+              <label class="form-label">Tiêu đề</label>
+              <input type="text" class="form-control" placeholder="Nhập tiêu đề thông báo...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nội dung</label>
+              <textarea class="form-control" rows="5" placeholder="Nhập nội dung thông báo nội bộ..."></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Gửi đến</label>
+                <select class="form-control">
+                  <option>Toàn bộ nhân viên</option>
+                  <option>Phòng HCNS-KT</option>
+                  <option>Phòng CSKH</option>
+                  <option>Phòng Marketing</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ưu tiên</label>
+                <select class="form-control">
+                  <option>Thông thường</option>
+                  <option>Quan trọng</option>
+                  <option>Khẩn cấp</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Thời gian gửi</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <button class="btn btn-primary" style="justify-content:center" onclick="Toast.show('Thông báo đã được gửi thành công!')">
+                  <i class="ti ti-send"></i> Gửi ngay
+                </button>
+                <button class="btn btn-secondary" style="justify-content:center">
+                  <i class="ti ti-calendar"></i> Lên lịch gửi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sent History -->
+      <div class="card" style="margin-top:1.5rem;padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem">
+          <div class="card-title">Lịch sử thông báo đã gửi</div>
+        </div>
+        <div class="table-container" style="border:none">
+          <table class="table">
+            <thead><tr><th>Tiêu đề</th><th>Nhóm nhận</th><th>Người gửi</th><th>Thời gian gửi</th><th>Đã đọc</th><th>Trạng thái</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:600">Họp toàn công ty tháng 9</td><td><span class="badge badge-info">Toàn bộ NV</span></td><td style="font-size:0.8rem">Nguyễn Văn An (GĐ)</td><td style="font-size:0.8rem">15/09/2026 09:00</td><td style="font-size:0.8rem">24/24</td><td><span class="badge badge-success">Đã gửi</span></td></tr>
+              <tr><td style="font-weight:600">Cập nhật quy trình xử lý khiếu nại</td><td><span class="badge badge-secondary">CSKH</span></td><td style="font-size:0.8rem">Nguyễn Văn An (GĐ)</td><td style="font-size:0.8rem">10/09/2026 14:30</td><td style="font-size:0.8rem">8/8</td><td><span class="badge badge-success">Đã gửi</span></td></tr>
+              <tr><td style="font-weight:600">Khuyến mãi Quốc khánh 2/9 🎉</td><td><span class="badge badge-primary">Tất cả KH</span></td><td style="font-size:0.8rem">Phòng Marketing</td><td style="font-size:0.8rem">01/09/2026 08:00</td><td style="font-size:0.8rem">18.245/50K</td><td><span class="badge badge-success">Đã gửi</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+</body>
+</html>

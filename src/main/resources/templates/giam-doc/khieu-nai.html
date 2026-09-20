@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Khiếu nại – Giám đốc | GiupViec.vn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">🏠</div>
+      <span class="sidebar-logo-text">Giup<span>Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyễn Văn An</div><div class="sidebar-user-role">Giám đốc</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/giam-doc/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Quản lý</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/bao-cao" class="sidebar-item"><i class="ti ti-chart-bar item-icon"></i><span class="item-label">Thống kê & Báo cáo</span></a>
+          <a href="/giam-doc/khieu-nai" class="sidebar-item active"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Quản lý khiếu nại</span><span class="item-badge">3</span></a>
+          <a href="/giam-doc/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân viên</span></a>
+          <a href="/giam-doc/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Quản lý thông báo</span><span class="item-badge">2</span></a>
+          <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>GiupViec.vn</span><span class="sep">/</span>
+        <a href="/giam-doc/dashboard" style="color:var(--text-muted)">Giám đốc</a><span class="sep">/</span>
+        <span class="current">Quản lý Khiếu nại</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="userMenu3" style="cursor:pointer">GĐ</div>
+          <div class="dropdown-menu" id="userMenu3"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Quản lý Khiếu nại (Leo thang)</h1>
+          <p class="page-subtitle">Xem xét và phê duyệt khiếu nại phức tạp · UC-GD01</p>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="quick-stats" style="grid-template-columns:repeat(4,1fr)">
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-alert-circle" style="color:var(--danger)"></i></div>
+          <div><div class="quick-stat-val">3</div><div class="quick-stat-lbl">Chờ GĐ xem xét</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div>
+          <div><div class="quick-stat-val">8</div><div class="quick-stat-lbl">Đang xử lý (CSKH)</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-check" style="color:var(--accent)"></i></div>
+          <div><div class="quick-stat-val">52</div><div class="quick-stat-lbl">Đã giải quyết (T9)</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-chart-line" style="color:var(--primary)"></i></div>
+          <div><div class="quick-stat-val">2.4 ngày</div><div class="quick-stat-lbl">Thời gian xử lý TB</div></div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-box" style="flex:1">
+          <i class="ti ti-search search-icon"></i>
+          <input type="text" class="form-control" placeholder="Tìm mã khiếu nại, tên KH..." data-table-search="complaintTable">
+        </div>
+        <select class="filter-select">
+          <option value="">Tất cả trạng thái</option>
+          <option value="leocao" selected>Leo thang</option>
+          <option value="dangxuly">Đang xử lý</option>
+          <option value="dagiaiQuyet">Đã giải quyết</option>
+        </select>
+        <select class="filter-select">
+          <option value="">Loại vấn đề</option>
+          <option>Chất lượng dịch vụ</option>
+          <option>Tài sản hư hỏng</option>
+          <option>Thái độ phục vụ</option>
+          <option>Khác</option>
+        </select>
+        <input type="date" class="form-control" style="width:auto" value="2026-09-01">
+        <span style="color:var(--text-muted)">đến</span>
+        <input type="date" class="form-control" style="width:auto" value="2026-09-20">
+      </div>
+
+      <!-- Table -->
+      <div class="card" style="padding:0">
+        <div class="table-container" style="border:none">
+          <table class="table" id="complaintTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAll" style="width:16px;height:16px;accent-color:var(--primary)"></th>
+                <th>Mã KN</th>
+                <th>Khách hàng</th>
+                <th>Loại vấn đề</th>
+                <th>Đơn liên quan</th>
+                <th>Ngày gửi</th>
+                <th>Trạng thái CSKH</th>
+                <th>Ưu tiên</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
+                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)">#KN-001</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm">T</div><div class="user-cell-info"><div class="name">Trần Thị Bình</div><div class="sub">0912 345 678</div></div></div></td>
+                <td>Tài sản hư hỏng</td>
+                <td style="font-size:0.8rem">#DD-20260915</td>
+                <td style="font-size:0.8rem">18/09/2026</td>
+                <td><span class="badge badge-danger">Leo thang</span></td>
+                <td><span class="badge badge-danger" style="gap:4px"><span class="dot dot-red" style="width:6px;height:6px"></span>Cao</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-primary btn-sm" data-panel-open="complaintDetail">Xem xét</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
+                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)">#KN-002</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">H</div><div class="user-cell-info"><div class="name">Hoàng Văn Khánh</div><div class="sub">0987 654 321</div></div></div></td>
+                <td>Chất lượng dịch vụ</td>
+                <td style="font-size:0.8rem">#DD-20260914</td>
+                <td style="font-size:0.8rem">17/09/2026</td>
+                <td><span class="badge badge-danger">Leo thang</span></td>
+                <td><span class="badge badge-warning">Trung bình</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-primary btn-sm" data-panel-open="complaintDetail">Xem xét</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
+                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)">#KN-003</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">N</div><div class="user-cell-info"><div class="name">Nguyễn Minh Tuấn</div><div class="sub">0901 234 567</div></div></div></td>
+                <td>Thái độ phục vụ</td>
+                <td style="font-size:0.8rem">#DD-20260912</td>
+                <td style="font-size:0.8rem">16/09/2026</td>
+                <td><span class="badge badge-danger">Leo thang</span></td>
+                <td><span class="badge badge-secondary">Thấp</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-primary btn-sm" data-panel-open="complaintDetail">Xem xét</button>
+                  </div>
+                </td>
+              </tr>
+              <!-- Đã giải quyết -->
+              <tr>
+                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
+                <td style="font-weight:700;font-size:0.8rem;color:var(--text-muted)">#KN-088</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FFC107,#E6A800)">L</div><div class="user-cell-info"><div class="name">Lê Thị Thu</div><div class="sub">0905 123 456</div></div></div></td>
+                <td>Chất lượng dịch vụ</td>
+                <td style="font-size:0.8rem">#DD-20260905</td>
+                <td style="font-size:0.8rem">08/09/2026</td>
+                <td><span class="badge badge-success">Đã giải quyết</span></td>
+                <td><span class="badge badge-warning">Trung bình</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm">Xem</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị 4 / 63 khiếu nại</span>
+          <div class="pagination">
+            <button class="page-btn">‹</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">›</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Detail Panel -->
+<div class="overlay" id="panelOverlay"></div>
+<div class="detail-panel" id="complaintDetail">
+  <div class="detail-panel-header">
+    <div>
+      <h2 style="font-size:1.1rem;font-weight:700">#KN-001 · Tài sản hư hỏng</h2>
+      <span class="badge badge-danger" style="margin-top:0.25rem">Leo thang – Chờ GĐ xem xét</span>
+    </div>
+    <button class="modal-close" data-panel-close="complaintDetail">✕</button>
+  </div>
+
+  <div class="detail-panel-body">
+    <!-- KH Info -->
+    <div style="padding:1rem;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border);margin-bottom:1.25rem">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Thông tin khách hàng</div>
+      <div class="info-row"><span class="info-label">Họ tên</span><span class="info-value">Trần Thị Bình</span></div>
+      <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value">0912 345 678</span></div>
+      <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value">123 Nguyễn Huệ, Q.1</span></div>
+      <div class="info-row"><span class="info-label">Đơn liên quan</span><span class="info-value" style="color:var(--primary-light)">#DD-20260915</span></div>
+    </div>
+
+    <!-- Complaint content -->
+    <div style="margin-bottom:1.25rem">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Nội dung khiếu nại</div>
+      <div style="background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:var(--radius-md);padding:1rem;font-size:0.875rem;color:var(--text-secondary);line-height:1.6">
+        Chiếc bình hoa gia truyền bị vỡ sau khi cộng tác viên dọn dẹp. Gia đình yêu cầu bồi thường 2.000.000đ nhưng Phòng CSKH chỉ phê duyệt 500.000đ dựa trên giá thị trường. Chúng tôi không đồng ý với kết quả này.
+      </div>
+    </div>
+
+    <!-- CSKH decision -->
+    <div style="margin-bottom:1.25rem">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Kết quả xử lý của CSKH</div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;font-size:0.875rem;color:var(--text-secondary)">
+        Sau khi xem xét hình ảnh và biên bản hiện trạng, xác nhận CTV gây vỡ bình hoa. Đề xuất bồi thường 500.000đ theo giá thị trường.
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Lịch sử xử lý</div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot danger"></div>
+        <div class="timeline-date">18/09/2026 14:32</div>
+        <div class="timeline-content"><span class="timeline-actor">Khách hàng</span> gửi khiếu nại và yêu cầu leo thang lên Giám đốc.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">17/09/2026 10:15</div>
+        <div class="timeline-content"><span class="timeline-actor">NV Hoàng Thị Dung (CSKH)</span> kết luận bồi thường 500.000đ, thông báo cho khách hàng.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">16/09/2026 09:00</div>
+        <div class="timeline-content"><span class="timeline-actor">CTV Nguyễn Thị E</span> nộp biểu mẫu hiện trạng trước và sau dịch vụ.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">15/09/2026 20:45</div>
+        <div class="timeline-content"><span class="timeline-actor">Khách hàng</span> gửi khiếu nại về tài sản hư hỏng.</div>
+      </div>
+    </div>
+
+    <!-- GD Decision -->
+    <div style="margin-top:1.25rem">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem;color:var(--primary-light)">Phê duyệt của Giám đốc</div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Phương án xử lý</label>
+        <select class="form-control">
+          <option>Phê duyệt bồi thường 2.000.000đ theo yêu cầu KH</option>
+          <option>Bồi thường 1.000.000đ (thương lượng)</option>
+          <option>Giữ nguyên quyết định 500.000đ của CSKH</option>
+          <option>Yêu cầu bổ sung tài liệu trước khi quyết định</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ghi chú cho Phòng CSKH</label>
+        <textarea class="form-control" rows="3" placeholder="Hướng dẫn thực thi..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-panel-footer">
+    <button class="btn btn-danger" onclick="Toast.show('Đã từ chối khiếu nại.','error');PanelManager.close('complaintDetail')">Từ chối</button>
+    <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="Toast.show('Đã phê duyệt phương án xử lý!');PanelManager.close('complaintDetail')">Phê duyệt & Chuyển CSKH</button>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+</body>
+</html>

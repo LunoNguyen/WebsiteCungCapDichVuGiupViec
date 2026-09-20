@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – HCNS-KT | GiupViec.vn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <!-- SIDEBAR HCNS -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon" style="background:linear-gradient(135deg,#43E97B,#38D46A)">🏢</div>
+      <span class="sidebar-logo-text">Giup<span style="color:var(--accent)">Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#43E97B,#38D46A);color:#000">HC</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyễn Thị Hạnh</div><div class="sidebar-user-role">NV HCNS - Kế toán</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/hcns/dashboard" class="sidebar-item active"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Nhân sự</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Nhân viên</span></a>
+          <a href="/hcns/cong-tac-vien" class="sidebar-item"><i class="ti ti-user-star item-icon"></i><span class="item-label">Quản lý CTV</span><span class="item-badge">12</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Dịch vụ</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/danh-muc-dich-vu" class="sidebar-item"><i class="ti ti-category item-icon"></i><span class="item-label">Danh mục dịch vụ</span></a>
+          <a href="/hcns/dich-vu-bang-gia" class="sidebar-item"><i class="ti ti-receipt item-icon"></i><span class="item-label">Dịch vụ & Bảng giá</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý Tài khoản</span></a>
+          <a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>GiupViec.vn</span><span class="sep">/</span><span class="current">HCNS – Dashboard</span>
+      </div>
+      <div class="topbar-search hide-mobile">
+        <i class="ti ti-search search-icon"></i><input type="text" placeholder="Tìm kiếm...">
+      </div>
+      <div class="topbar-actions">
+        <div class="dropdown">
+          <button class="topbar-icon-btn" data-dropdown="hcnsNotif"><i class="ti ti-bell"></i><span class="notif-dot"></span></button>
+          <div class="dropdown-menu notif-dropdown" id="hcnsNotif">
+            <div class="notif-header"><span class="notif-title">Thông báo</span></div>
+            <div class="notif-item unread"><div class="notif-dot-item"></div><div class="notif-content"><p>12 hồ sơ CTV mới cần xét duyệt.</p><span>30 phút trước</span></div></div>
+            <div class="notif-item unread"><div class="notif-dot-item"></div><div class="notif-content"><p>CTV Nguyễn Thị F yêu cầu kích hoạt lại tài khoản.</p><span>2 giờ trước</span></div></div>
+          </div>
+        </div>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="hcnsUser" style="cursor:pointer;background:linear-gradient(135deg,#43E97B,#38D46A);color:#000">HC</div>
+          <div class="dropdown-menu" id="hcnsUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Dashboard HCNS - Kế toán</h1>
+          <p class="page-subtitle">Quản lý nhân sự, CTV, dịch vụ · Tháng 9/2026</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" onclick="window.location.href='/hcns/cong-tac-vien'">
+            <i class="ti ti-user-star"></i> Xét duyệt CTV (12)
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">👥</div>
+          <div class="stat-value" data-count="24">0</div>
+          <div class="stat-label">Tổng nhân viên</div>
+          <div class="kpi-compare"><span class="arrow-up">22 đang làm</span><span class="period">· 2 tạm nghỉ</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🤝</div>
+          <div class="stat-value" data-count="3208">0</div>
+          <div class="stat-label">Cộng tác viên</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 48</span><span class="period">mới tháng này</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
+          <div class="stat-value" data-count="12">0</div>
+          <div class="stat-label">Hồ sơ chờ xét duyệt</div>
+          <div class="kpi-compare"><span style="color:var(--warning)">● Cần xử lý</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🛎</div>
+          <div class="stat-value" data-count="18">0</div>
+          <div class="stat-label">Dịch vụ đang hoạt động</div>
+          <div class="kpi-compare"><span class="arrow-up">6 danh mục</span></div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid" style="margin-top:1.5rem">
+        <!-- Pending CTV Applications -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Hồ sơ CTV chờ duyệt</div>
+              <div class="card-subtitle">12 hồ sơ mới cần xét duyệt</div>
+            </div>
+            <a href="/hcns/cong-tac-vien" class="btn btn-primary btn-sm">Xét duyệt tất cả</a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.75rem">
+            <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
+              <div class="avatar avatar-sm">N</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:0.875rem">Nguyễn Thị Mới</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">Dọn dẹp nhà · Q.1, TP.HCM · Nộp 20/09/2026</div>
+              </div>
+              <div style="display:flex;gap:0.4rem">
+                <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt hồ sơ CTV!')">✓</button>
+                <button class="btn btn-danger btn-sm" onclick="Toast.show('Đã từ chối hồ sơ.','error')">✕</button>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
+              <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:0.875rem">Trần Văn Đăng</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">Trông trẻ · Tân Bình · Nộp 19/09/2026</div>
+              </div>
+              <div style="display:flex;gap:0.4rem">
+                <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt hồ sơ CTV!')">✓</button>
+                <button class="btn btn-danger btn-sm">✕</button>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
+              <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:0.875rem">Lê Thị Lan</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">Nấu ăn · Bình Thạnh · Nộp 18/09/2026</div>
+              </div>
+              <div style="display:flex;gap:0.4rem">
+                <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt hồ sơ CTV!')">✓</button>
+                <button class="btn btn-danger btn-sm">✕</button>
+              </div>
+            </div>
+            <a href="/hcns/cong-tac-vien" style="text-align:center;font-size:0.8rem;color:var(--primary-light);padding:0.5rem;display:block">Xem 9 hồ sơ còn lại →</a>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+          <!-- CTV Level Distribution -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Phân cấp CTV</div>
+            </div>
+            <div style="height:160px"><canvas id="ordersDonut"></canvas></div>
+          </div>
+
+          <!-- Service Quick Overview -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Dịch vụ đang hoạt động</div>
+              <a href="/hcns/dich-vu-bang-gia" class="btn btn-outline btn-sm">Quản lý</a>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.5rem">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.875rem"><span>🧹 Dọn dẹp nhà</span><span class="badge badge-success">Hoạt động</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.875rem"><span>👕 Giặt ủi</span><span class="badge badge-success">Hoạt động</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.875rem"><span>🍳 Nấu ăn</span><span class="badge badge-success">Hoạt động</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.875rem"><span>👴 Chăm sóc NCT</span><span class="badge badge-success">Hoạt động</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.875rem"><span>👶 Trông trẻ</span><span class="badge badge-success">Hoạt động</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.875rem"><span>✨ Vệ sinh tổng thể</span><span class="badge badge-secondary">Ẩn tạm</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+<script>
+  // Override donut for CTV levels
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Chart === 'undefined') return;
+    new Chart(document.getElementById('ordersDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Mới', 'Thường', 'Ưu tú'],
+        datasets: [{ data: [45, 35, 20], backgroundColor: ['#FFC107','#6C63FF','#43E97B'], borderColor:'transparent', hoverOffset:6 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, cutout:'72%',
+        plugins: { legend: { position:'bottom', labels:{ padding:12, font:{size:11} } } } }
+    });
+  });
+</script>
+</body>
+</html>

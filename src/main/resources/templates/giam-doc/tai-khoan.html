@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Tài khoản – Giám đốc | GiupViec.vn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">🏠</div><span class="sidebar-logo-text">Giup<span>Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyễn Văn An</div><div class="sidebar-user-role">Giám đốc</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/giam-doc/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Quản lý</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/bao-cao" class="sidebar-item"><i class="ti ti-chart-bar item-icon"></i><span class="item-label">Thống kê & Báo cáo</span></a>
+          <a href="/giam-doc/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Quản lý khiếu nại</span><span class="item-badge">3</span></a>
+          <a href="/giam-doc/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân viên</span></a>
+          <a href="/giam-doc/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Quản lý thông báo</span></a>
+          <a href="/giam-doc/tai-khoan" class="sidebar-item active"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>GiupViec.vn</span><span class="sep">/</span>
+        <a href="/giam-doc/dashboard" style="color:var(--text-muted)">Giám đốc</a><span class="sep">/</span>
+        <span class="current">Quản lý Tài khoản</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="um6" style="cursor:pointer">GĐ</div>
+          <div class="dropdown-menu" id="um6"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Quản lý Tài khoản</h1>
+          <p class="page-subtitle">Kiểm soát toàn diện tài khoản hệ thống · UC-GD05</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" style="margin-bottom:1.5rem">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">👤</div>
+          <div class="stat-value" data-count="50248">0</div>
+          <div class="stat-label">Tổng tài khoản</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">✅</div>
+          <div class="stat-value" data-count="49820">0</div>
+          <div class="stat-label">Đang hoạt động</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">🔒</div>
+          <div class="stat-value" data-count="312">0</div>
+          <div class="stat-label">Đã khóa</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
+          <div class="stat-value" data-count="116">0</div>
+          <div class="stat-label">Chờ duyệt (CTV)</div>
+        </div>
+      </div>
+
+      <!-- Account Type Tabs -->
+      <div class="tabs" style="margin-bottom:1.25rem;max-width:500px">
+        <button class="tab-btn active" data-tab="all">Tất cả</button>
+        <button class="tab-btn" data-tab="nv">Nhân viên (24)</button>
+        <button class="tab-btn" data-tab="ctv">CTV (3.208)</button>
+        <button class="tab-btn" data-tab="kh">Khách hàng (47.016)</button>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-box" style="flex:1">
+          <i class="ti ti-search search-icon"></i>
+          <input type="text" class="form-control" placeholder="Tìm theo tên, email, SDT..." data-table-search="accountTable">
+        </div>
+        <select class="filter-select">
+          <option>Tất cả trạng thái</option>
+          <option>Hoạt động</option>
+          <option>Đã khóa</option>
+          <option>Chờ duyệt</option>
+        </select>
+        <select class="filter-select">
+          <option>Tất cả loại TK</option>
+          <option>Nhân viên</option>
+          <option>Cộng tác viên</option>
+          <option>Khách hàng</option>
+        </select>
+        <button class="btn btn-secondary btn-sm"><i class="ti ti-download"></i> Xuất Excel</button>
+      </div>
+
+      <div class="card" style="padding:0">
+        <div class="table-container" style="border:none">
+          <table class="table" id="accountTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAll" style="width:16px;height:16px;accent-color:var(--primary)"></th>
+                <th>Tài khoản</th>
+                <th>Loại</th>
+                <th>Email</th>
+                <th>Ngày tạo</th>
+                <th>Đăng nhập gần nhất</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
+                <td><div class="user-cell"><div class="avatar avatar-sm">H</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hạnh</div><div class="sub">@hanhnt</div></div></div></td>
+                <td><span class="badge badge-primary">Nhân viên</span></td>
+                <td style="font-size:0.8rem">hanhnt@giupviec.vn</td>
+                <td style="font-size:0.8rem">01/03/2023</td>
+                <td style="font-size:0.8rem;color:var(--accent)">20/09/2026 08:34</td>
+                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span></td>
+                <td><div class="table-actions">
+                  <button class="btn btn-outline btn-sm" data-panel-open="accountDetail">Chi tiết</button>
+                  <button class="btn btn-warning btn-sm">Đặt lại MK</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">N</div><div class="user-cell-info"><div class="name">Nguyễn Thị Ngọc</div><div class="sub">@ngocntv</div></div></div></td>
+                <td><span class="badge badge-success">CTV</span></td>
+                <td style="font-size:0.8rem">ngocntv@gmail.com</td>
+                <td style="font-size:0.8rem">15/01/2024</td>
+                <td style="font-size:0.8rem;color:var(--accent)">20/09/2026 07:15</td>
+                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span></td>
+                <td><div class="table-actions">
+                  <button class="btn btn-outline btn-sm" data-panel-open="accountDetail">Chi tiết</button>
+                  <button class="btn btn-danger btn-sm" onclick="Toast.show('Cảnh báo: Tài khoản này đang có đơn hoạt động!','warning')">Khóa TK</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div><div class="user-cell-info"><div class="name">Trần Thị Bình</div><div class="sub">@binhtt</div></div></div></td>
+                <td><span class="badge badge-secondary">Khách hàng</span></td>
+                <td style="font-size:0.8rem">binhtt@gmail.com</td>
+                <td style="font-size:0.8rem">10/05/2025</td>
+                <td style="font-size:0.8rem">19/09/2026 21:00</td>
+                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span></td>
+                <td><div class="table-actions">
+                  <button class="btn btn-outline btn-sm" data-panel-open="accountDetail">Chi tiết</button>
+                  <button class="btn btn-danger btn-sm">Khóa TK</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:rgba(255,71,87,0.2);color:var(--danger)">X</div><div class="user-cell-info"><div class="name">Lê Văn Xấu</div><div class="sub">@xautest</div></div></div></td>
+                <td><span class="badge badge-secondary">Khách hàng</span></td>
+                <td style="font-size:0.8rem">xautest@gmail.com</td>
+                <td style="font-size:0.8rem">20/08/2025</td>
+                <td style="font-size:0.8rem;color:var(--text-muted)">05/09/2026</td>
+                <td><span class="badge badge-danger"><span class="dot dot-red" style="width:6px;height:6px"></span>Đã khóa</span></td>
+                <td><div class="table-actions">
+                  <button class="btn btn-outline btn-sm" data-panel-open="accountDetail">Chi tiết</button>
+                  <button class="btn btn-success btn-sm" onclick="Toast.show('Đã mở khóa tài khoản!')">Mở khóa</button>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị 4 / 50.248 tài khoản</span>
+          <div class="pagination"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">...</button><button class="page-btn">›</button></div>
+        </div>
+      </div>
+
+      <!-- System Log -->
+      <div class="card" style="margin-top:1.5rem">
+        <div class="card-header">
+          <div class="card-title">Nhật ký hệ thống gần đây</div>
+          <button class="btn btn-outline btn-sm">Xem tất cả log</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem">
+            <span style="color:var(--text-muted);white-space:nowrap">20/09 08:34</span>
+            <span class="badge badge-success">Đăng nhập</span>
+            <span style="color:var(--text-secondary)">Nguyễn Thị Hạnh đăng nhập từ IP 192.168.1.5</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem">
+            <span style="color:var(--text-muted);white-space:nowrap">20/09 08:15</span>
+            <span class="badge badge-warning">Đặt lại MK</span>
+            <span style="color:var(--text-secondary)">NV Hạnh đặt lại mật khẩu cho TK CTV Nguyễn Thị E</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem">
+            <span style="color:var(--text-muted);white-space:nowrap">19/09 17:20</span>
+            <span class="badge badge-danger">Khóa TK</span>
+            <span style="color:var(--text-secondary)">NV Hạnh khóa tài khoản Lê Văn Xấu do vi phạm điều khoản</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;font-size:0.8rem">
+            <span style="color:var(--text-muted);white-space:nowrap">19/09 14:05</span>
+            <span class="badge badge-primary">Tạo TK</span>
+            <span style="color:var(--text-secondary)">Hệ thống tự động tạo tài khoản CTV Trần Thị Mới sau phê duyệt</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Account Detail Panel -->
+<div class="overlay" id="panelOverlay"></div>
+<div class="detail-panel" id="accountDetail">
+  <div class="detail-panel-header">
+    <div><h2 style="font-size:1.1rem;font-weight:700">Chi tiết tài khoản</h2></div>
+    <button class="modal-close" data-panel-close="accountDetail">✕</button>
+  </div>
+  <div class="detail-panel-body">
+    <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
+      <div class="avatar avatar-lg" style="margin:0 auto 0.875rem">H</div>
+      <div style="font-size:1.125rem;font-weight:700">Nguyễn Thị Hạnh</div>
+      <div style="font-size:0.875rem;color:var(--text-muted)">@hanhnt · Nhân viên</div>
+      <span class="badge badge-success" style="margin-top:0.5rem">Hoạt động</span>
+    </div>
+    <div class="info-row"><span class="info-label">Email</span><span class="info-value">hanhnt@giupviec.vn</span></div>
+    <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value">0912 345 678</span></div>
+    <div class="info-row"><span class="info-label">Ngày tạo</span><span class="info-value">01/03/2023</span></div>
+    <div class="info-row"><span class="info-label">Đăng nhập gần nhất</span><span class="info-value" style="color:var(--accent)">20/09/2026 08:34</span></div>
+    <div class="info-row"><span class="info-label">Thiết bị</span><span class="info-value">Chrome · Windows 11</span></div>
+    <div class="info-row"><span class="info-label">IP</span><span class="info-value">192.168.1.5</span></div>
+    <div class="info-row"><span class="info-label">Số lần đăng nhập</span><span class="info-value">428 lần</span></div>
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Quyền truy cập</div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
+          <span>Quản lý nhân viên</span><span style="color:var(--accent)">✓ Có</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
+          <span>Quản lý CTV</span><span style="color:var(--accent)">✓ Có</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
+          <span>Quản lý dịch vụ</span><span style="color:var(--accent)">✓ Có</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
+          <span>Quản lý tài khoản</span><span style="color:var(--accent)">✓ Có</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
+          <span>Xem báo cáo</span><span style="color:var(--text-muted)">✗ Không</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-warning" onclick="Toast.show('Đã gửi link đặt lại mật khẩu!')">Đặt lại MK</button>
+    <button class="btn btn-danger" onclick="Toast.show('Đã khóa tài khoản!','error');PanelManager.close('accountDetail')">Khóa TK</button>
+    <button class="btn btn-secondary" data-panel-close="accountDetail">Đóng</button>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+</body>
+</html>

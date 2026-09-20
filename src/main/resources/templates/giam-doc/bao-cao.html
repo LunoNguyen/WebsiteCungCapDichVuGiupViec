@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo cáo & Thống kê – Giám đốc | GiupViec.vn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">🏠</div>
+      <span class="sidebar-logo-text">Giup<span>Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">Nguyễn Văn An</div>
+        <div class="sidebar-user-role">Giám đốc</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Quản lý</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/bao-cao" class="sidebar-item active"><i class="ti ti-chart-bar item-icon"></i><span class="item-label">Thống kê & Báo cáo</span></a>
+          <a href="/giam-doc/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Quản lý khiếu nại</span><span class="item-badge">3</span></a>
+          <a href="/giam-doc/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân viên</span></a>
+          <a href="/giam-doc/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Quản lý thông báo</span><span class="item-badge">2</span></a>
+          <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items">
+          <a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>GiupViec.vn</span><span class="sep">/</span>
+        <a href="/giam-doc/dashboard" style="color:var(--text-muted)">Giám đốc</a><span class="sep">/</span>
+        <span class="current">Thống kê & Báo cáo</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm"><i class="ti ti-download"></i> Xuất báo cáo</button>
+        <div class="dropdown">
+          <div style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:4px 8px;border-radius:6px" data-dropdown="userMenu2">
+            <div class="avatar avatar-sm">GĐ</div>
+          </div>
+          <div class="dropdown-menu" id="userMenu2">
+            <a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Thống kê & Báo cáo</h1>
+          <p class="page-subtitle">Phân tích hoạt động kinh doanh · UC-GD02</p>
+        </div>
+        <div class="page-actions">
+          <!-- Period Filter -->
+          <select class="filter-select" id="periodFilter" onchange="updateCharts()">
+            <option value="month">Tháng này</option>
+            <option value="quarter">Quý này</option>
+            <option value="year">Năm nay</option>
+            <option value="custom">Tùy chọn</option>
+          </select>
+          <button class="btn btn-secondary btn-sm"><i class="ti ti-file-type-pdf"></i> PDF</button>
+          <button class="btn btn-success btn-sm"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+        </div>
+      </div>
+
+      <!-- Summary KPI -->
+      <div class="stats-grid" style="margin-bottom:1.5rem">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">💰</div>
+          <div class="stat-value" data-count="1850">0</div>
+          <div class="stat-label">Doanh thu (triệu đồng)</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 12.5%</span><span class="period">vs tháng trước</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📋</div>
+          <div class="stat-value" data-count="1247">0</div>
+          <div class="stat-label">Tổng đơn dịch vụ</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 8.3%</span><span class="period">vs tháng trước</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">👥</div>
+          <div class="stat-value" data-count="348">0</div>
+          <div class="stat-label">Khách hàng mới</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 15.2%</span><span class="period">vs tháng trước</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">📊</div>
+          <div class="stat-value">94.2%</div>
+          <div class="stat-label">Tỷ lệ hoàn thành đơn</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 1.8%</span><span class="period">vs tháng trước</span></div>
+        </div>
+      </div>
+
+      <!-- Tabs for report types -->
+      <div class="card" style="margin-bottom:1.5rem;padding:1.5rem">
+        <div class="tabs" style="margin-bottom:1.5rem">
+          <button class="tab-btn active" data-tab="revenue" data-tab-group>Doanh thu</button>
+          <button class="tab-btn" data-tab="services">Dịch vụ</button>
+          <button class="tab-btn" data-tab="ctv">Cộng tác viên</button>
+          <button class="tab-btn" data-tab="complaints">Khiếu nại</button>
+        </div>
+
+        <div data-tabs-container>
+          <!-- Revenue Tab -->
+          <div data-tab-panel="revenue">
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem">
+              <div>
+                <div style="font-weight:700;margin-bottom:1rem">Doanh thu theo tháng</div>
+                <div style="height:280px"><canvas id="revenueChart"></canvas></div>
+              </div>
+              <div>
+                <div style="font-weight:700;margin-bottom:1rem">So sánh kỳ</div>
+                <div style="height:280px"><canvas id="comparisonChart"></canvas></div>
+              </div>
+            </div>
+
+            <!-- Revenue by area table -->
+            <div style="margin-top:1.5rem">
+              <div style="font-weight:700;margin-bottom:1rem">Doanh thu theo khu vực</div>
+              <div class="table-container">
+                <table class="table">
+                  <thead><tr><th>Khu vực</th><th>Số đơn</th><th>Doanh thu</th><th>% Tổng</th><th>Tăng trưởng</th></tr></thead>
+                  <tbody>
+                    <tr><td>Quận 1, TP.HCM</td><td>312</td><td style="font-weight:700;color:var(--accent)">465.000.000đ</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-bar" style="width:25%"></div></div><span>25.1%</span></div></td><td style="color:var(--accent)">↑ 14%</td></tr>
+                    <tr><td>Quận 3, TP.HCM</td><td>248</td><td style="font-weight:700;color:var(--accent)">388.000.000đ</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-bar" style="width:21%"></div></div><span>20.9%</span></div></td><td style="color:var(--accent)">↑ 9%</td></tr>
+                    <tr><td>Tân Bình, TP.HCM</td><td>195</td><td style="font-weight:700;color:var(--accent)">275.000.000đ</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-bar" style="width:15%"></div></div><span>14.8%</span></div></td><td style="color:var(--accent)">↑ 12%</td></tr>
+                    <tr><td>Bình Thạnh, TP.HCM</td><td>172</td><td style="font-weight:700;color:var(--accent)">242.000.000đ</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-bar" style="width:13%"></div></div><span>13.1%</span></div></td><td style="color:var(--danger)">↓ 2%</td></tr>
+                    <tr><td>Các quận khác</td><td>320</td><td style="font-weight:700;color:var(--accent)">480.000.000đ</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-bar" style="width:26%"></div></div><span>26.1%</span></div></td><td style="color:var(--accent)">↑ 18%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Services Tab -->
+          <div data-tab-panel="services" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+              <div>
+                <div style="font-weight:700;margin-bottom:1rem">Đơn theo loại dịch vụ</div>
+                <div style="height:280px"><canvas id="servicesChart"></canvas></div>
+              </div>
+              <div class="table-container" style="border:1px solid var(--border);border-radius:var(--radius-md)">
+                <table class="table">
+                  <thead><tr><th>Dịch vụ</th><th>Đơn</th><th>Doanh thu</th><th>Đánh giá TB</th></tr></thead>
+                  <tbody>
+                    <tr><td>Dọn dẹp nhà</td><td style="font-weight:600">345</td><td style="color:var(--accent)">517M</td><td><span style="color:#FFC107">★ 4.8</span></td></tr>
+                    <tr><td>Giặt ủi</td><td style="font-weight:600">218</td><td style="color:var(--accent)">261M</td><td><span style="color:#FFC107">★ 4.7</span></td></tr>
+                    <tr><td>Nấu ăn</td><td style="font-weight:600">187</td><td style="color:var(--accent)">336M</td><td><span style="color:#FFC107">★ 4.9</span></td></tr>
+                    <tr><td>Chăm sóc NCT</td><td style="font-weight:600">124</td><td style="color:var(--accent)">298M</td><td><span style="color:#FFC107">★ 4.8</span></td></tr>
+                    <tr><td>Trông trẻ</td><td style="font-weight:600">156</td><td style="color:var(--accent)">374M</td><td><span style="color:#FFC107">★ 4.9</span></td></tr>
+                    <tr><td>Vệ sinh tổng thể</td><td style="font-weight:600">89</td><td style="color:var(--accent)">64M</td><td><span style="color:#FFC107">★ 4.6</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTV Tab -->
+          <div data-tab-panel="ctv" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+              <div>
+                <div style="font-weight:700;margin-bottom:1rem">Hiệu suất CTV</div>
+                <div style="height:280px"><canvas id="ctvRadarChart"></canvas></div>
+              </div>
+              <div>
+                <div style="font-weight:700;margin-bottom:1rem">Top 5 CTV xuất sắc</div>
+                <div style="display:flex;flex-direction:column;gap:0.75rem">
+                  <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FFD700,#FFA500);display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0">1</div>
+                    <div class="avatar avatar-sm">N</div>
+                    <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Nguyễn Thị Ngọc</div><div style="font-size:0.72rem;color:var(--text-muted)">Ưu tú · 98 đơn/tháng</div></div>
+                    <span style="color:#FFC107;font-weight:700">★ 4.98</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#C0C0C0,#A9A9A9);display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0">2</div>
+                    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div>
+                    <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Trần Thị Hoa</div><div style="font-size:0.72rem;color:var(--text-muted)">Ưu tú · 92 đơn/tháng</div></div>
+                    <span style="color:#FFC107;font-weight:700">★ 4.96</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#CD7F32,#A0522D);display:flex;align-items:center;justify-content:circle;font-weight:800;color:#fff;flex-shrink:0;justify-content:center">3</div>
+                    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div>
+                    <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Lê Thị Mai</div><div style="font-size:0.72rem;color:var(--text-muted)">Ưu tú · 87 đơn/tháng</div></div>
+                    <span style="color:#FFC107;font-weight:700">★ 4.95</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Complaints Tab -->
+          <div data-tab-panel="complaints" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+              <div>
+                <div style="font-weight:700;margin-bottom:1rem">Phân loại khiếu nại</div>
+                <div style="height:280px"><canvas id="complaintChart"></canvas></div>
+              </div>
+              <div>
+                <div style="font-weight:700;margin-bottom:1rem">Thống kê xử lý</div>
+                <div style="display:flex;flex-direction:column;gap:0.875rem;margin-bottom:1.25rem">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem"><span>Tỷ lệ giải quyết đúng hạn</span><span style="font-weight:700;color:var(--accent)">87%</span></div>
+                    <div class="progress"><div class="progress-bar success" style="width:87%"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem"><span>Khiếu nại hợp lệ</span><span style="font-weight:700;color:var(--warning)">62%</span></div>
+                    <div class="progress"><div class="progress-bar warning" style="width:62%"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem"><span>Tỷ lệ leo thang</span><span style="font-weight:700;color:var(--danger)">5%</span></div>
+                    <div class="progress"><div class="progress-bar danger" style="width:5%"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem"><span>Khách hàng hài lòng sau xử lý</span><span style="font-weight:700;color:var(--accent)">94%</span></div>
+                    <div class="progress"><div class="progress-bar success" style="width:94%"></div></div>
+                  </div>
+                </div>
+                <div style="padding:1rem;background:rgba(67,233,123,0.06);border:1px solid rgba(67,233,123,0.2);border-radius:var(--radius-md)">
+                  <div style="font-weight:700;margin-bottom:0.5rem;color:var(--accent)">✓ Thời gian xử lý TB</div>
+                  <div style="font-size:2rem;font-weight:800">2.4 ngày</div>
+                  <div style="font-size:0.8rem;color:var(--text-muted)">Giảm 0.6 ngày so với tháng trước</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+<script src="/js/charts.js"></script>
+</body>
+</html>

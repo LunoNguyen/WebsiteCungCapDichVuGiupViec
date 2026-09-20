@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Nhân viên – Giám đốc | GiupViec.vn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">🏠</div><span class="sidebar-logo-text">Giup<span>Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyễn Văn An</div><div class="sidebar-user-role">Giám đốc</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/giam-doc/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Quản lý</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/bao-cao" class="sidebar-item"><i class="ti ti-chart-bar item-icon"></i><span class="item-label">Thống kê & Báo cáo</span></a>
+          <a href="/giam-doc/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Quản lý khiếu nại</span><span class="item-badge">3</span></a>
+          <a href="/giam-doc/nhan-vien" class="sidebar-item active"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân viên</span></a>
+          <a href="/giam-doc/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Quản lý thông báo</span><span class="item-badge">2</span></a>
+          <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>GiupViec.vn</span><span class="sep">/</span>
+        <a href="/giam-doc/dashboard" style="color:var(--text-muted)">Giám đốc</a><span class="sep">/</span>
+        <span class="current">Quản lý Nhân viên</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="um4" style="cursor:pointer">GĐ</div>
+          <div class="dropdown-menu" id="um4"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Quản lý Nhân viên</h1>
+          <p class="page-subtitle">Xem thông tin & phê duyệt thay đổi nhân sự · UC-GD03</p>
+        </div>
+      </div>
+
+      <!-- Dept Tabs -->
+      <div class="tabs" style="margin-bottom:1.5rem;max-width:500px">
+        <button class="tab-btn active" data-tab="all">Tất cả</button>
+        <button class="tab-btn" data-tab="hcns">HCNS-KT</button>
+        <button class="tab-btn" data-tab="cskh">CSKH</button>
+        <button class="tab-btn" data-tab="mkt">Marketing</button>
+      </div>
+
+      <!-- Stats Cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:1.5rem">
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div>
+          <div><div class="quick-stat-val">24</div><div class="quick-stat-lbl">Tổng nhân viên</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
+          <div><div class="quick-stat-val">22</div><div class="quick-stat-lbl">Đang làm việc</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-user-pause" style="color:var(--warning)"></i></div>
+          <div><div class="quick-stat-val">2</div><div class="quick-stat-lbl">Tạm nghỉ</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-clipboard-list" style="color:var(--danger)"></i></div>
+          <div><div class="quick-stat-val">2</div><div class="quick-stat-lbl">Chờ phê duyệt</div></div>
+        </div>
+      </div>
+
+      <!-- Pending Approvals Alert -->
+      <div class="alert alert-warning" style="margin-bottom:1.25rem">
+        <i class="ti ti-alert-circle"></i>
+        <span><strong>2 đề xuất nhân sự</strong> từ Phòng HCNS-KT đang chờ phê duyệt của Giám đốc.</span>
+        <button class="btn btn-warning btn-sm" style="margin-left:auto" data-modal-open="approvalModal">Xem ngay</button>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-box" style="flex:1">
+          <i class="ti ti-search search-icon"></i>
+          <input type="text" class="form-control" placeholder="Tìm theo tên, mã NV..." data-table-search="staffTable">
+        </div>
+        <select class="filter-select">
+          <option>Tất cả phòng ban</option>
+          <option>Hành chính Nhân sự - Kế toán</option>
+          <option>Chăm sóc Khách hàng</option>
+          <option>Marketing</option>
+        </select>
+        <select class="filter-select">
+          <option>Tất cả trạng thái</option>
+          <option>Đang làm việc</option>
+          <option>Tạm nghỉ</option>
+          <option>Đã nghỉ</option>
+        </select>
+      </div>
+
+      <div class="card" style="padding:0">
+        <div class="table-container" style="border:none">
+          <table class="table" id="staffTable">
+            <thead>
+              <tr>
+                <th>Nhân viên</th>
+                <th>Mã NV</th>
+                <th>Phòng ban</th>
+                <th>Chức vụ</th>
+                <th>Ngày vào làm</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="user-cell"><div class="avatar avatar-sm">H</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hạnh</div><div class="sub">hanhnt@giupviec.vn</div></div></div></td>
+                <td style="font-size:0.8rem;font-weight:600">NV-001</td>
+                <td>HCNS - Kế toán</td>
+                <td>Trưởng phòng</td>
+                <td style="font-size:0.8rem">01/03/2023</td>
+                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span></td>
+                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
+              </tr>
+              <tr>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">C</div><div class="user-cell-info"><div class="name">Trần Văn Cường</div><div class="sub">cuongtv@giupviec.vn</div></div></div></td>
+                <td style="font-size:0.8rem;font-weight:600">NV-002</td>
+                <td>CSKH</td>
+                <td>Nhân viên</td>
+                <td style="font-size:0.8rem">15/06/2023</td>
+                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span></td>
+                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
+              </tr>
+              <tr>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">D</div><div class="user-cell-info"><div class="name">Hoàng Thị Dung</div><div class="sub">dunght@giupviec.vn</div></div></div></td>
+                <td style="font-size:0.8rem;font-weight:600">NV-003</td>
+                <td>CSKH</td>
+                <td>Nhân viên</td>
+                <td style="font-size:0.8rem">20/09/2023</td>
+                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span></td>
+                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
+              </tr>
+              <tr>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FFC107,#E6A800)">M</div><div class="user-cell-info"><div class="name">Phạm Văn Minh</div><div class="sub">minhpv@giupviec.vn</div></div></div></td>
+                <td style="font-size:0.8rem;font-weight:600">NV-005</td>
+                <td>Marketing</td>
+                <td>Nhân viên</td>
+                <td style="font-size:0.8rem">01/01/2024</td>
+                <td><span class="badge badge-warning">Tạm nghỉ</span></td>
+                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị 4 / 24 nhân viên</span>
+          <div class="pagination">
+            <button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">›</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Staff Detail Panel -->
+<div class="overlay" id="panelOverlay"></div>
+<div class="detail-panel" id="staffDetail">
+  <div class="detail-panel-header">
+    <div>
+      <h2 style="font-size:1.1rem;font-weight:700">Hồ sơ nhân viên</h2>
+      <span style="font-size:0.8rem;color:var(--text-muted)">NV-001</span>
+    </div>
+    <button class="modal-close" data-panel-close="staffDetail">✕</button>
+  </div>
+  <div class="detail-panel-body">
+    <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
+      <div class="avatar avatar-lg" style="margin:0 auto 0.875rem">H</div>
+      <div style="font-size:1.125rem;font-weight:700">Nguyễn Thị Hạnh</div>
+      <div style="font-size:0.875rem;color:var(--text-muted)">Trưởng phòng HCNS-KT</div>
+      <span class="badge badge-success" style="margin-top:0.625rem">Đang làm việc</span>
+    </div>
+    <div class="info-row"><span class="info-label">Mã nhân viên</span><span class="info-value">NV-001</span></div>
+    <div class="info-row"><span class="info-label">Email</span><span class="info-value">hanhnt@giupviec.vn</span></div>
+    <div class="info-row"><span class="info-label">Điện thoại</span><span class="info-value">0912 345 678</span></div>
+    <div class="info-row"><span class="info-label">Phòng ban</span><span class="info-value">HCNS - Kế toán</span></div>
+    <div class="info-row"><span class="info-label">Chức vụ</span><span class="info-value">Trưởng phòng</span></div>
+    <div class="info-row"><span class="info-label">Ngày vào làm</span><span class="info-value">01/03/2023</span></div>
+    <div class="info-row"><span class="info-label">Thâm niên</span><span class="info-value" style="color:var(--accent)">3 năm 6 tháng</span></div>
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Lịch sử công tác</div>
+      <div class="timeline">
+        <div class="timeline-item"><div class="timeline-dot done"></div><div class="timeline-date">03/2023</div><div class="timeline-content">Gia nhập công ty · Nhân viên HCNS</div></div>
+        <div class="timeline-item"><div class="timeline-dot done"></div><div class="timeline-date">09/2024</div><div class="timeline-content">Thăng chức Trưởng phòng HCNS-KT</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-secondary" data-panel-close="staffDetail">Đóng</button>
+    <button class="btn btn-warning" onclick="Toast.show('Đã gửi yêu cầu điều chỉnh nhân sự.')">Đề xuất thay đổi</button>
+  </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal-overlay" id="approvalModal">
+  <div class="modal" style="max-width:650px">
+    <div class="modal-header">
+      <h2 class="modal-title">Phê duyệt đề xuất nhân sự</h2>
+      <button class="modal-close" data-modal-close="approvalModal">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      <div style="padding:1.25rem;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-md)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+          <div><span class="badge badge-primary">Thăng chức</span></div>
+          <span style="font-size:0.75rem;color:var(--text-muted)">Từ: Phòng HCNS · 18/09/2026</span>
+        </div>
+        <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.375rem">Đề xuất thăng chức NV Trần Văn Cường</div>
+        <div style="font-size:0.825rem;color:var(--text-secondary)">Từ: Nhân viên CSKH → Trưởng nhóm CSKH. Lý do: hiệu suất cao trong 12 tháng liên tiếp.</div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.875rem">
+          <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt thăng chức!');document.getElementById('approvalModal').classList.remove('active')">Phê duyệt</button>
+          <button class="btn btn-danger btn-sm">Từ chối</button>
+          <button class="btn btn-outline btn-sm">Yêu cầu bổ sung tài liệu</button>
+        </div>
+      </div>
+      <div style="padding:1.25rem;background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.2);border-radius:var(--radius-md)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+          <div><span class="badge badge-warning">Điều chuyển</span></div>
+          <span style="font-size:0.75rem;color:var(--text-muted)">Từ: Phòng HCNS · 17/09/2026</span>
+        </div>
+        <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.375rem">Điều chuyển NV Phạm Văn Minh</div>
+        <div style="font-size:0.825rem;color:var(--text-secondary)">Từ: Phòng Marketing → Phòng CSKH theo yêu cầu tổ chức.</div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.875rem">
+          <button class="btn btn-success btn-sm">Phê duyệt</button>
+          <button class="btn btn-danger btn-sm">Từ chối</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-modal-close="approvalModal">Đóng</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+</body>
+</html>

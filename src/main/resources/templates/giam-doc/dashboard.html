@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – Giám đốc | GiupViec.vn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">🏠</div>
+      <span class="sidebar-logo-text">Giup<span>Viec</span>.vn</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Thu gọn"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+
+    <!-- User info -->
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">Nguyễn Văn An</div>
+        <div class="sidebar-user-role">Giám đốc</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/dashboard" class="sidebar-item active">
+            <i class="ti ti-dashboard item-icon"></i>
+            <span class="item-label">Dashboard</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Quản lý</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/bao-cao" class="sidebar-item">
+            <i class="ti ti-chart-bar item-icon"></i>
+            <span class="item-label">Thống kê & Báo cáo</span>
+          </a>
+          <a href="/giam-doc/khieu-nai" class="sidebar-item">
+            <i class="ti ti-alert-triangle item-icon"></i>
+            <span class="item-label">Quản lý khiếu nại</span>
+            <span class="item-badge">3</span>
+          </a>
+          <a href="/giam-doc/nhan-vien" class="sidebar-item">
+            <i class="ti ti-users item-icon"></i>
+            <span class="item-label">Quản lý nhân viên</span>
+          </a>
+          <a href="/giam-doc/thong-bao" class="sidebar-item">
+            <i class="ti ti-bell item-icon"></i>
+            <span class="item-label">Quản lý thông báo</span>
+            <span class="item-badge">2</span>
+          </a>
+          <a href="/giam-doc/tai-khoan" class="sidebar-item">
+            <i class="ti ti-key item-icon"></i>
+            <span class="item-label">Quản lý tài khoản</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items">
+          <a href="/login" class="sidebar-item">
+            <i class="ti ti-switch-horizontal item-icon"></i>
+            <span class="item-label">Đổi role demo</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/" class="sidebar-logout">
+        <i class="ti ti-logout item-icon"></i>
+        <span class="item-label">Đăng xuất</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN AREA ===== -->
+  <div class="main-area">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="topbar-icon-btn" id="mobileSidebarToggle" style="display:none"><i class="ti ti-menu-2"></i></button>
+      <div class="topbar-breadcrumb">
+        <span>GiupViec.vn</span>
+        <span class="sep">/</span>
+        <span class="current">Dashboard</span>
+      </div>
+
+      <div class="topbar-search hide-mobile">
+        <i class="ti ti-search search-icon"></i>
+        <input type="text" placeholder="Tìm kiếm...">
+      </div>
+
+      <div class="topbar-actions">
+        <div class="dropdown">
+          <button class="topbar-icon-btn" data-dropdown="notifMenu">
+            <i class="ti ti-bell"></i>
+            <span class="notif-dot"></span>
+          </button>
+          <div class="dropdown-menu notif-dropdown" id="notifMenu">
+            <div class="notif-header">
+              <span class="notif-title">Thông báo</span>
+              <button class="notif-mark-all">Đánh dấu đã đọc</button>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-dot-item"></div>
+              <div class="notif-content">
+                <p><strong>Khiếu nại leo thang mới</strong> – Khách hàng Trần Thị B yêu cầu xem xét lại.</p>
+                <span>5 phút trước</span>
+              </div>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-dot-item"></div>
+              <div class="notif-content">
+                <p>Đề xuất thăng chức nhân viên từ Phòng HCNS cần phê duyệt.</p>
+                <span>1 giờ trước</span>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-item" style="background:transparent;border:1px solid var(--border)"></div>
+              <div class="notif-content">
+                <p>Báo cáo tháng 9/2026 đã sẵn sàng để xem.</p>
+                <span>2 giờ trước</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <div style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.25rem 0.5rem;border-radius:var(--radius-md);transition:background 0.2s" data-dropdown="userMenu" onmouseover="this.style.background='var(--bg-card)'" onmouseout="this.style.background=''">
+            <div class="avatar avatar-sm">GĐ</div>
+            <span class="hide-mobile" style="font-size:0.85rem;font-weight:600">Nguyễn Văn An</span>
+            <i class="ti ti-chevron-down hide-mobile" style="color:var(--text-muted);font-size:0.875rem"></i>
+          </div>
+          <div class="dropdown-menu" id="userMenu">
+            <div class="dropdown-item"><i class="ti ti-user"></i> Hồ sơ cá nhân</div>
+            <div class="dropdown-item"><i class="ti ti-settings"></i> Cài đặt</div>
+            <hr class="dropdown-divider">
+            <a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Dashboard Giám đốc</h1>
+          <p class="page-subtitle">Tổng quan hoạt động kinh doanh · Tháng 9/2026</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary btn-sm" onclick="window.location.href='/giam-doc/bao-cao'">
+            <i class="ti ti-download"></i> Xuất báo cáo
+          </button>
+          <button class="btn btn-primary btn-sm">
+            <i class="ti ti-refresh"></i> Làm mới
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">💰</div>
+          <div class="stat-value" data-count="1850">0</div>
+          <div class="stat-label">Doanh thu tháng (triệu đồng)</div>
+          <div class="kpi-compare">
+            <span class="arrow-up">↑ 12.5%</span>
+            <span class="period">so với tháng trước</span>
+          </div>
+          <canvas id="spark1" style="height:40px;margin-top:0.75rem"></canvas>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📋</div>
+          <div class="stat-value" data-count="1247">0</div>
+          <div class="stat-label">Tổng đơn dịch vụ</div>
+          <div class="kpi-compare">
+            <span class="arrow-up">↑ 8.3%</span>
+            <span class="period">so với tháng trước</span>
+          </div>
+          <canvas id="spark2" style="height:40px;margin-top:0.75rem"></canvas>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">👤</div>
+          <div class="stat-value" data-count="348">0</div>
+          <div class="stat-label">Khách hàng mới</div>
+          <div class="kpi-compare">
+            <span class="arrow-up">↑ 15.2%</span>
+            <span class="period">so với tháng trước</span>
+          </div>
+          <canvas id="spark3" style="height:40px;margin-top:0.75rem"></canvas>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
+          <div class="stat-value">4.8</div>
+          <div class="stat-label">Điểm đánh giá trung bình</div>
+          <div class="kpi-compare">
+            <span class="arrow-up">↑ 0.2</span>
+            <span class="period">so với tháng trước</span>
+          </div>
+          <canvas id="spark4" style="height:40px;margin-top:0.75rem"></canvas>
+        </div>
+
+        <div class="stat-card" style="grid-column: span 1">
+          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">⚠️</div>
+          <div class="stat-value" data-count="23">0</div>
+          <div class="stat-label">Khiếu nại trong kỳ</div>
+          <div class="kpi-compare">
+            <span class="arrow-down">↓ 3.1%</span>
+            <span class="period">so với tháng trước</span>
+          </div>
+          <canvas id="spark5" style="height:40px;margin-top:0.75rem"></canvas>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="dashboard-grid" style="margin-bottom:1.5rem">
+        <!-- Revenue Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Doanh thu theo tháng</div>
+              <div class="chart-subtitle">Triệu đồng · Năm 2026</div>
+            </div>
+            <div class="chart-period-tabs">
+              <button class="chart-period-btn active">6T</button>
+              <button class="chart-period-btn">1N</button>
+              <button class="chart-period-btn">3N</button>
+            </div>
+          </div>
+          <div style="height:260px">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Orders Donut -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Trạng thái đơn</div>
+              <div class="chart-subtitle">Tháng 9/2026</div>
+            </div>
+          </div>
+          <div style="height:260px">
+            <canvas id="ordersDonut"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second Charts Row -->
+      <div class="dashboard-grid-3" style="margin-bottom:1.5rem">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Dịch vụ phổ biến</div>
+          </div>
+          <div style="height:220px">
+            <canvas id="servicesChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Phân phối đánh giá</div>
+          </div>
+          <div style="height:220px">
+            <canvas id="ratingChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Trạng thái khiếu nại</div>
+          </div>
+          <div style="height:220px">
+            <canvas id="complaintChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Orders + Pending Approvals -->
+      <div class="dashboard-grid">
+        <!-- Recent Orders -->
+        <div class="card" style="padding:0">
+          <div class="card-header" style="padding:1.25rem 1.5rem">
+            <div>
+              <div class="card-title">Đơn dịch vụ gần đây</div>
+              <div class="card-subtitle">10 đơn mới nhất hôm nay</div>
+            </div>
+            <a href="/cskh/don-dat-dich-vu" class="btn btn-outline btn-sm">Xem tất cả</a>
+          </div>
+          <div class="table-container" style="border:none;border-radius:0 0 var(--radius-lg) var(--radius-lg)">
+            <table class="table" id="recentOrders">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Khách hàng</th>
+                  <th>Dịch vụ</th>
+                  <th>Ngày thực hiện</th>
+                  <th>Thành tiền</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight:600;font-size:0.8rem">#DD-20260920</td>
+                  <td><div class="user-cell"><div class="avatar avatar-sm">H</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hoa</div><div class="sub">Q.1, TP.HCM</div></div></div></td>
+                  <td>Dọn dẹp nhà</td>
+                  <td>20/09/2026</td>
+                  <td style="font-weight:700;color:var(--accent)">240.000đ</td>
+                  <td><span class="badge badge-success">Hoàn thành</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;font-size:0.8rem">#DD-20260919</td>
+                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">M</div><div class="user-cell-info"><div class="name">Trần Văn Minh</div><div class="sub">Tân Bình</div></div></div></td>
+                  <td>Nấu ăn</td>
+                  <td>20/09/2026</td>
+                  <td style="font-weight:700;color:var(--accent)">180.000đ</td>
+                  <td><span class="badge badge-primary">Đang thực hiện</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;font-size:0.8rem">#DD-20260919</td>
+                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div><div class="user-cell-info"><div class="name">Phạm Thị Lan</div><div class="sub">Bình Thạnh</div></div></div></td>
+                  <td>Trông trẻ</td>
+                  <td>21/09/2026</td>
+                  <td style="font-weight:700;color:var(--accent)">360.000đ</td>
+                  <td><span class="badge badge-warning">Đã xác nhận</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;font-size:0.8rem">#DD-20260918</td>
+                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FFC107,#E6A800)">T</div><div class="user-cell-info"><div class="name">Lê Thị Thu</div><div class="sub">Q.3, TP.HCM</div></div></div></td>
+                  <td>Giặt ủi</td>
+                  <td>19/09/2026</td>
+                  <td style="font-weight:700;color:var(--accent)">120.000đ</td>
+                  <td><span class="badge badge-success">Hoàn thành</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;font-size:0.8rem">#DD-20260918</td>
+                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">D</div><div class="user-cell-info"><div class="name">Nguyễn Văn Đức</div><div class="sub">Q.7, TP.HCM</div></div></div></td>
+                  <td>Vệ sinh tổng thể</td>
+                  <td>22/09/2026</td>
+                  <td style="font-weight:700;color:var(--accent)">700.000đ</td>
+                  <td><span class="badge badge-secondary">Chờ duyệt</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pending Approvals -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Chờ phê duyệt</div>
+            <span class="badge badge-warning">5 mục</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:0.875rem">
+            <!-- Complaint -->
+            <div style="padding:0.875rem;background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:var(--radius-md)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+                <span class="badge badge-danger">Khiếu nại leo thang</span>
+                <span style="font-size:0.72rem;color:var(--text-muted)">5 phút trước</span>
+              </div>
+              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem">KH Trần Thị B không đồng ý kết quả xử lý của Phòng CSKH về tài sản hư hỏng.</p>
+              <div style="display:flex;gap:0.5rem">
+                <button class="btn btn-primary btn-sm" data-modal-open="approveModal">Xem xét</button>
+                <button class="btn btn-outline btn-sm">Bỏ qua</button>
+              </div>
+            </div>
+
+            <!-- HR Change -->
+            <div style="padding:0.875rem;background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-md)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+                <span class="badge badge-primary">Thay đổi nhân sự</span>
+                <span style="font-size:0.72rem;color:var(--text-muted)">1 giờ trước</span>
+              </div>
+              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem">Đề xuất thăng chức NV Nguyễn Thị C lên vị trí Trưởng phòng CSKH.</p>
+              <div style="display:flex;gap:0.5rem">
+                <button class="btn btn-success btn-sm">Phê duyệt</button>
+                <button class="btn btn-danger btn-sm">Từ chối</button>
+              </div>
+            </div>
+
+            <!-- Notification -->
+            <div style="padding:0.875rem;background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.2);border-radius:var(--radius-md)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+                <span class="badge badge-warning">Thông báo diện rộng</span>
+                <span style="font-size:0.72rem;color:var(--text-muted)">3 giờ trước</span>
+              </div>
+              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem">Phòng Marketing đề xuất gửi thông báo khuyến mãi 20% cho 15.000 KH.</p>
+              <div style="display:flex;gap:0.5rem">
+                <button class="btn btn-success btn-sm">Duyệt gửi</button>
+                <button class="btn btn-outline btn-sm">Xem trước</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Overlay for sidebar on mobile -->
+<div class="overlay" id="sidebarOverlay"></div>
+
+<!-- Complaint Modal -->
+<div class="modal-overlay" id="approveModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <h2 class="modal-title">Xem xét khiếu nại leo thang</h2>
+      <button class="modal-close" data-modal-close="approveModal">✕</button>
+    </div>
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
+        <div class="form-group">
+          <label class="form-label">Mã khiếu nại</label>
+          <div class="form-control" style="cursor:default">#KN-20260920-001</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Trạng thái</label>
+          <div><span class="badge badge-danger" style="font-size:0.85rem;padding:0.4rem 0.875rem">Leo thang</span></div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Nội dung khiếu nại</label>
+        <div class="form-control" style="cursor:default;height:auto;padding:0.75rem">Khách hàng phản ánh bình sứ bị vỡ sau khi CTV dọn dẹp. Phòng CSKH đã xử lý nhưng KH không đồng ý với mức bồi thường 500.000đ, yêu cầu bồi thường 2.000.000đ.</div>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Phương án xử lý của Giám đốc</label>
+        <select class="form-control">
+          <option>Phê duyệt mức bồi thường 2.000.000đ</option>
+          <option>Phê duyệt mức bồi thường 1.000.000đ (thương lượng)</option>
+          <option>Từ chối, giải thích thêm với KH</option>
+          <option>Yêu cầu bổ sung tài liệu</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ghi chú thêm</label>
+        <textarea class="form-control" rows="3" placeholder="Nhập ghi chú cho Phòng CSKH..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="approveModal">Hủy</button>
+      <button class="btn btn-danger">Từ chối</button>
+      <button class="btn btn-primary" onclick="document.getElementById('approveModal').classList.remove('active');Toast.show('Đã phê duyệt phương án xử lý thành công!')">Phê duyệt</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/main.js"></script>
+<script src="/js/charts.js"></script>
+</body>
+</html>
