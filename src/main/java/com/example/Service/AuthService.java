@@ -30,7 +30,7 @@ public class AuthService {
             return AuthenticationResult.failure("Tài khoản chưa được kích hoạt hoặc đã bị khóa.");
         }
 
-        return AuthenticationResult.success(taiKhoan, redirectFor(taiKhoan.getLoaiTaiKhoan()));
+      return AuthenticationResult.success(taiKhoan, redirectFor(taiKhoan));
     }
 
     private boolean passwordMatches(String input, String storedPassword) {
@@ -38,8 +38,30 @@ public class AuthService {
                 input.getBytes(StandardCharsets.UTF_8), storedPassword.getBytes(StandardCharsets.UTF_8));
     }
 
-    private String redirectFor(String loaiTaiKhoan) {
-        if ("NhanVien".equals(loaiTaiKhoan)) return "/giam-doc/dashboard";
+    private String redirectFor(TaiKhoan taiKhoan) {
+        String loaiTaiKhoan = taiKhoan.getLoaiTaiKhoan();
+        String maTK = taiKhoan.getMaTaiKhoan();
+
+        if ("NhanVien".equals(loaiTaiKhoan) && maTK != null) {
+            // Giám đốc -> Thống kê báo cáo
+            if (maTK.startsWith("TK-GD")) {
+                return "/giam-doc/bao-cao"; 
+            }
+            if (maTK.startsWith("TK-HCNS")) {
+                return "/hcns/nhan-vien"; 
+            }
+            // CSKH -> Quản lý khiếu nại
+            if (maTK.startsWith("TK-CSKH")) {
+                return "/cskh/khieu-nai"; 
+            }
+            // Marketing -> Quản lý thông báo
+            if (maTK.startsWith("TK-MKT")) {
+                return "/marketing/thong-bao"; 
+            }
+        }
+        
+    
+        
         return "/";
     }
 
