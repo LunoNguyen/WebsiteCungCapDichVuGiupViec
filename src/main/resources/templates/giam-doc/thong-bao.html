@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý Thông báo – Giám đốc | GiupViec.vn</title>
+  <title>Quản lý Thông báo – Giám đốc | Neatify</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
@@ -11,7 +11,10 @@
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo-icon">🏠</div><span class="sidebar-logo-text">Giup<span>Viec</span>.vn</span>
+      <a href="/giam-doc/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+        <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      </a>
       <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
     </div>
     <div class="sidebar-user">
@@ -28,11 +31,13 @@
           <a href="/giam-doc/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Quản lý khiếu nại</span><span class="item-badge">3</span></a>
           <a href="/giam-doc/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân viên</span></a>
           <a href="/giam-doc/thong-bao" class="sidebar-item active"><i class="ti ti-bell item-icon"></i><span class="item-label">Quản lý thông báo</span><span class="item-badge">2</span></a>
-          <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
         </div>
       </div>
       <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
-        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-shield-lock item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
+          <a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a>
+        </div>
       </div>
     </nav>
     <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
@@ -41,7 +46,7 @@
   <div class="main-area">
     <header class="topbar">
       <div class="topbar-breadcrumb">
-        <span>GiupViec.vn</span><span class="sep">/</span>
+        <span>Neatify</span><span class="sep">/</span>
         <a href="/giam-doc/dashboard" style="color:var(--text-muted)">Giám đốc</a><span class="sep">/</span>
         <span class="current">Quản lý Thông báo</span>
       </div>

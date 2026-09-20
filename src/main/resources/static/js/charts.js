@@ -1,19 +1,19 @@
 /* ==========================================================
    CHARTS.JS – Chart.js Configurations
-   GiupViec Platform
+   Neatify – Home Cleaning & Tasks
    ========================================================== */
 
 'use strict';
 
 // Chart.js global defaults
 if (typeof Chart !== 'undefined') {
-  Chart.defaults.color = '#A09DB5';
-  Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+  Chart.defaults.color = '#A8C4C8';
+  Chart.defaults.borderColor = 'rgba(13,155,163,0.10)';
   Chart.defaults.font.family = "'Inter', sans-serif";
   Chart.defaults.plugins.legend.labels.usePointStyle = true;
   Chart.defaults.plugins.legend.labels.pointStyleWidth = 8;
-  Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(10, 9, 24, 0.95)';
-  Chart.defaults.plugins.tooltip.borderColor = 'rgba(108, 99, 255, 0.3)';
+  Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(6, 13, 18, 0.96)';
+  Chart.defaults.plugins.tooltip.borderColor = 'rgba(13,155,163,0.35)';
   Chart.defaults.plugins.tooltip.borderWidth = 1;
   Chart.defaults.plugins.tooltip.padding = 12;
   Chart.defaults.plugins.tooltip.titleFont = { size: 13, weight: '700' };
@@ -41,7 +41,7 @@ function initRevenueChart(canvasId, data = null) {
   const labels = data?.labels || ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
   const values = data?.values || [42,58,75,62,90,110,98,125,142,118,160,185];
 
-  const gradient = createGradient(ctx, 'rgba(108,99,255,0.4)', 'rgba(108,99,255,0.02)');
+  const gradient = createGradient(ctx, 'rgba(13,155,163,0.45)', 'rgba(13,155,163,0.02)');
 
   return new Chart(ctx, {
     type: 'line',
@@ -52,9 +52,9 @@ function initRevenueChart(canvasId, data = null) {
         data: values,
         fill: true,
         backgroundColor: gradient,
-        borderColor: '#6C63FF',
+        borderColor: '#0D9BA3',
         borderWidth: 2.5,
-        pointBackgroundColor: '#6C63FF',
+        pointBackgroundColor: '#0D9BA3',
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
         pointRadius: 4,
@@ -80,7 +80,7 @@ function initRevenueChart(canvasId, data = null) {
           ticks: { font: { size: 11 } }
         },
         y: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
+          grid: { color: 'rgba(13,155,163,0.06)' },
           ticks: {
             font: { size: 11 },
             callback: (val) => val + ' tr'
@@ -92,32 +92,49 @@ function initRevenueChart(canvasId, data = null) {
 }
 
 // ============================================================
-// ORDERS BY STATUS – Doughnut
+// ORDERS BY STATUS – Bar Chart (thay thế Doughnut)
 // ============================================================
 function initOrdersDonut(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return null;
+  const ctx = canvas.getContext('2d');
 
-  return new Chart(canvas, {
-    type: 'doughnut',
+  return new Chart(ctx, {
+    type: 'bar',
     data: {
       labels: ['Hoàn thành', 'Đang thực hiện', 'Chờ duyệt', 'Đã hủy'],
       datasets: [{
-        data: [68, 18, 9, 5],
-        backgroundColor: ['#43E97B', '#6C63FF', '#FFC107', '#FF4757'],
-        borderColor: 'transparent',
-        borderWidth: 0,
-        hoverOffset: 6
+        label: 'Số đơn',
+        data: [848, 224, 112, 63],
+        backgroundColor: [
+          'rgba(56,212,138,0.85)',
+          'rgba(13,155,163,0.85)',
+          'rgba(245,158,11,0.85)',
+          'rgba(239,68,68,0.85)'
+        ],
+        borderRadius: 8,
+        borderSkipped: false
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '72%',
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { padding: 16, font: { size: 12 } }
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y} đơn`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(13,155,163,0.06)' },
+          ticks: { font: { size: 11 } }
         }
       }
     }
@@ -133,12 +150,12 @@ function initServicesBarChart(canvasId) {
   const ctx = canvas.getContext('2d');
 
   const gradients = [
-    createGradient(ctx, 'rgba(108,99,255,0.9)', 'rgba(108,99,255,0.5)'),
-    createGradient(ctx, 'rgba(255,101,132,0.9)', 'rgba(255,101,132,0.5)'),
-    createGradient(ctx, 'rgba(67,233,123,0.9)', 'rgba(67,233,123,0.5)'),
-    createGradient(ctx, 'rgba(255,193,7,0.9)', 'rgba(255,193,7,0.5)'),
-    createGradient(ctx, 'rgba(0,180,216,0.9)', 'rgba(0,180,216,0.5)'),
-    createGradient(ctx, 'rgba(168,85,247,0.9)', 'rgba(168,85,247,0.5)'),
+    createGradient(ctx, 'rgba(13,155,163,0.9)', 'rgba(13,155,163,0.5)'),
+    createGradient(ctx, 'rgba(21,133,192,0.9)', 'rgba(21,133,192,0.5)'),
+    createGradient(ctx, 'rgba(56,212,138,0.9)', 'rgba(56,212,138,0.5)'),
+    createGradient(ctx, 'rgba(245,158,11,0.9)', 'rgba(245,158,11,0.5)'),
+    createGradient(ctx, 'rgba(93,217,224,0.9)', 'rgba(93,217,224,0.5)'),
+    createGradient(ctx, 'rgba(10,123,130,0.9)', 'rgba(10,123,130,0.5)'),
   ];
 
   return new Chart(ctx, {
@@ -165,7 +182,7 @@ function initServicesBarChart(canvasId) {
           ticks: { font: { size: 11 } }
         },
         y: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
+          grid: { color: 'rgba(13,155,163,0.06)' },
           ticks: { font: { size: 11 } }
         }
       }
@@ -217,30 +234,48 @@ function initRatingChart(canvasId) {
 }
 
 // ============================================================
-// COMPLAINT STATUS – Pie
+// COMPLAINT STATUS – Horizontal Bar Chart (thay thế Pie)
 // ============================================================
 function initComplaintChart(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return null;
 
   return new Chart(canvas, {
-    type: 'pie',
+    type: 'bar',
     data: {
       labels: ['Đã giải quyết', 'Đang xử lý', 'Mới', 'Chờ xác minh', 'Leo thang'],
       datasets: [{
+        label: 'Số khiếu nại',
         data: [52, 24, 10, 9, 5],
-        backgroundColor: ['#43E97B', '#6C63FF', '#FFC107', '#00B4D8', '#FF4757'],
-        borderColor: 'transparent',
-        hoverOffset: 6
+        backgroundColor: [
+          'rgba(56,212,138,0.85)',
+          'rgba(13,155,163,0.85)',
+          'rgba(245,158,11,0.85)',
+          'rgba(20,191,201,0.85)',
+          'rgba(239,68,68,0.85)'
+        ],
+        borderRadius: 6,
+        borderSkipped: false
       }]
     },
     options: {
+      indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: 'right',
-          labels: { padding: 14, font: { size: 12 } }
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.parsed.x} khiếu nại` }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(13,155,163,0.06)' },
+          ticks: { font: { size: 11 } }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size: 11, weight: '600' } }
         }
       }
     }
@@ -302,14 +337,14 @@ function initComparisonChart(canvasId) {
         {
           label: 'Năm nay',
           data: [118, 160, 185],
-          backgroundColor: 'rgba(108,99,255,0.8)',
+          backgroundColor: 'rgba(13,155,163,0.85)',
           borderRadius: 6,
           borderSkipped: false
         },
         {
           label: 'Năm trước',
           data: [95, 130, 142],
-          backgroundColor: 'rgba(255,101,132,0.5)',
+          backgroundColor: 'rgba(21,133,192,0.45)',
           borderRadius: 6,
           borderSkipped: false
         }
@@ -324,7 +359,7 @@ function initComparisonChart(canvasId) {
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
         y: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
+          grid: { color: 'rgba(13,155,163,0.06)' },
           ticks: { callback: v => v + ' tr', font: { size: 11 } }
         }
       }
@@ -391,11 +426,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Sparklines (mini charts in stat cards)
   const sparklines = [
-    { id: 'spark1', data: [10,15,12,18,22,20,28,25,32,30,38,35], color: '#6C63FF' },
-    { id: 'spark2', data: [8,12,10,15,18,14,20,18,24,22,28,25], color: '#43E97B' },
-    { id: 'spark3', data: [5,8,7,10,9,12,11,14,13,16,15,18], color: '#FF6584' },
-    { id: 'spark4', data: [3,5,4,6,5,8,7,9,8,11,10,12], color: '#FFC107' },
-    { id: 'spark5', data: [2,4,3,5,4,6,5,7,6,8,7,9], color: '#00B4D8' },
+    { id: 'spark1', data: [10,15,12,18,22,20,28,25,32,30,38,35], color: '#0D9BA3' },
+    { id: 'spark2', data: [8,12,10,15,18,14,20,18,24,22,28,25], color: '#38D48A' },
+    { id: 'spark3', data: [5,8,7,10,9,12,11,14,13,16,15,18], color: '#1585C0' },
+    { id: 'spark4', data: [3,5,4,6,5,8,7,9,8,11,10,12], color: '#F59E0B' },
+    { id: 'spark5', data: [2,4,3,5,4,6,5,7,6,8,7,9], color: '#EF4444' },
   ];
   sparklines.forEach(s => initSparkline(s.id, s.data, s.color));
 });

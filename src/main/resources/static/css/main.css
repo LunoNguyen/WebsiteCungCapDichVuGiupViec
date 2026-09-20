@@ -387,13 +387,18 @@ select.form-control option { background: var(--bg-dark); color: var(--text-prima
    ========================================================== */
 .table-container {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  display: block;
 }
 
 .table {
   width: 100%;
+  min-width: 540px;
   border-collapse: collapse;
   font-size: var(--text-sm);
 }

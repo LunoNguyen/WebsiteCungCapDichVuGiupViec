@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Khách hàng – CSKH | Neatify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/cskh/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+        <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Hoàng Thị Dung</div><div class="sidebar-user-role">NV Chăm sóc Khách hàng</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/cskh/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Khách hàng</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/khach-hang" class="sidebar-item active"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span></a>
+          <a href="/cskh/don-dat-dich-vu" class="sidebar-item"><i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span><span class="item-badge">5</span></a>
+          <a href="/cskh/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span><span class="item-badge">8</span></a>
+          <a href="/cskh/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Vận hành</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/lich-phan-cong" class="sidebar-item"><i class="ti ti-calendar item-icon"></i><span class="item-label">Lịch phân công CTV</span></a>
+          <a href="/cskh/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Neatify</span><span class="sep">/</span>
+        <a href="/cskh/dashboard" style="color:var(--text-muted)">CSKH</a><span class="sep">/</span>
+        <span class="current">Quản lý Khách hàng</span>
+      </div>
+      <div class="topbar-search hide-mobile">
+        <i class="ti ti-search search-icon"></i><input type="text" placeholder="Tìm tên khách hàng, số điện thoại...">
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" data-modal-open="createCustomerModal"><i class="ti ti-user-plus"></i> Thêm khách hàng</button>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="cskhUser" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
+          <div class="dropdown-menu" id="cskhUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Hồ sơ Khách hàng</h1>
+          <p class="page-subtitle">Theo dõi lịch sử đơn hàng, địa chỉ, hạng thành viên và ghi chú chăm sóc</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
+          <div class="stat-value">2,840</div>
+          <div class="stat-label">Tổng khách hàng</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 120 tháng này</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">👑</div>
+          <div class="stat-value">315</div>
+          <div class="stat-label">Khách hàng VIP</div>
+          <div class="kpi-compare"><span class="arrow-up">> 10 đơn / tháng</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">💎</div>
+          <div class="stat-value">94.8%</div>
+          <div class="stat-label">Tỷ lệ quay lại đặt đơn</div>
+          <div class="kpi-compare"><span class="arrow-up">Rất cao</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">⚠️</div>
+          <div class="stat-value">8</div>
+          <div class="stat-label">Cần chăm sóc đặc biệt</div>
+          <div class="kpi-compare"><span style="color:var(--danger)">Có khiếu nại gần đây</span></div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <i class="ti ti-search search-icon"></i>
+          <input type="text" class="form-control" placeholder="Tìm theo tên, SĐT, email...">
+        </div>
+        <select class="filter-select">
+          <option value="">Tất cả phân khúc</option>
+          <option value="VIP">Khách VIP</option>
+          <option value="LOYAL">Khách thân thiết</option>
+          <option value="NEW">Khách mới</option>
+        </select>
+        <select class="filter-select">
+          <option value="">Tất cả khu vực</option>
+          <option value="Q1">Quận 1</option>
+          <option value="Q3">Quận 3</option>
+          <option value="Q7">Quận 7</option>
+          <option value="BT">Bình Thạnh</option>
+          <option value="TB">Tân Bình</option>
+        </select>
+      </div>
+
+      <!-- Customers Table -->
+      <div class="card" style="padding:0">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Mã KH</th>
+                <th>Khách hàng</th>
+                <th>Phân khúc</th>
+                <th>Địa chỉ mặc định</th>
+                <th>Đơn hoàn thành</th>
+                <th>Tổng chi tiêu</th>
+                <th>Đánh giá</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">#KH-0182</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm">H</div>
+                    <div class="user-cell-info">
+                      <div class="name">Nguyễn Thị Hoa</div>
+                      <div class="sub">0903 111 222 · hoa.nt@gmail.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-warning">★ VIP Diamond</span></td>
+                <td>120 Hai Bà Trưng, P. Đa Kao, Q.1</td>
+                <td style="font-weight:600">38 đơn</td>
+                <td style="font-weight:700;color:var(--accent)">12.450.000đ</td>
+                <td><span style="color:#FFC107">★ 5.0</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" onclick="showCustomerDetail('Nguyễn Thị Hoa', '0903 111 222', '120 Hai Bà Trưng, Q.1', '38 đơn', '12.450.000đ', 'Khách hàng thân thiết từ 2024, thường xuyên đặt dọn dẹp và nấu ăn.')"><i class="ti ti-eye"></i> Xem</button>
+                    <button class="btn btn-primary btn-sm" onclick="Toast.show('Đang tạo đơn nhanh cho Nguyễn Thị Hoa...')"><i class="ti ti-plus"></i> Đặt đơn</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">#KH-0245</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">M</div>
+                    <div class="user-cell-info">
+                      <div class="name">Trần Văn Minh</div>
+                      <div class="sub">0918 222 333 · minh.tv@gmail.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-primary">Thân thiết</span></td>
+                <td>45/2 Lê Văn Sỹ, P.13, Q.3</td>
+                <td style="font-weight:600">19 đơn</td>
+                <td style="font-weight:700;color:var(--accent)">5.820.000đ</td>
+                <td><span style="color:#FFC107">★ 4.8</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" onclick="showCustomerDetail('Trần Văn Minh', '0918 222 333', '45/2 Lê Văn Sỹ, Q.3', '19 đơn', '5.820.000đ', 'Nhà có nuôi thú cưng, lưu ý dặn CTV không dị ứng lông mèo.')"><i class="ti ti-eye"></i> Xem</button>
+                    <button class="btn btn-primary btn-sm" onclick="Toast.show('Đang tạo đơn nhanh cho Trần Văn Minh...')"><i class="ti ti-plus"></i> Đặt đơn</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">#KH-0309</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div>
+                    <div class="user-cell-info">
+                      <div class="name">Lê Thị Thu</div>
+                      <div class="sub">0933 444 555 · thult@gmail.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-secondary">Mới</span></td>
+                <td>88 Nguyễn Xí, P.26, Bình Thạnh</td>
+                <td style="font-weight:600">3 đơn</td>
+                <td style="font-weight:700;color:var(--accent)">720.000đ</td>
+                <td><span style="color:#FFC107">★ 4.5</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" onclick="showCustomerDetail('Lê Thị Thu', '0933 444 555', '88 Nguyễn Xí, Bình Thạnh', '3 đơn', '720.000đ', 'Khách hàng mới, hài lòng với dịch vụ nấu ăn.')"><i class="ti ti-eye"></i> Xem</button>
+                    <button class="btn btn-primary btn-sm" onclick="Toast.show('Đang tạo đơn nhanh cho Lê Thị Thu...')"><i class="ti ti-plus"></i> Đặt đơn</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">#KH-0412</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF4757,#FF6B81)">B</div>
+                    <div class="user-cell-info">
+                      <div class="name">Trần Thị Bình</div>
+                      <div class="sub">0944 555 666 · binh.tt@yahoo.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-danger">Cần CSKH gấp</span></td>
+                <td>12 Đinh Tiên Hoàng, P. Đa Kao, Q.1</td>
+                <td style="font-weight:600">12 đơn</td>
+                <td style="font-weight:700;color:var(--accent)">3.600.000đ</td>
+                <td><span style="color:#FFC107">★ 3.2</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" onclick="showCustomerDetail('Trần Thị Bình', '0944 555 666', '12 Đinh Tiên Hoàng, Q.1', '12 đơn', '3.600.000đ', 'Có khiếu nại về tài sản đang được Giám đốc xem xét bồi thường.')"><i class="ti ti-eye"></i> Xem</button>
+                    <button class="btn btn-danger btn-sm" onclick="Toast.show('Đang mở khiếu nại liên quan...')"><i class="ti ti-phone-call"></i> Liên hệ</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Customer Detail Panel -->
+<div class="overlay" id="panelOverlay"></div>
+<div class="detail-panel" id="customerDetailPanel">
+  <div class="detail-panel-header">
+    <div><h2 style="font-size:1.1rem;font-weight:700" id="detailName">Chi tiết Khách hàng</h2></div>
+    <button class="modal-close" data-panel-close="customerDetailPanel">✕</button>
+  </div>
+  <div class="detail-panel-body">
+    <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value" id="detailPhone">--</span></div>
+    <div class="info-row"><span class="info-label">Địa chỉ chính</span><span class="info-value" id="detailAddress">--</span></div>
+    <div class="info-row"><span class="info-label">Đơn hoàn thành</span><span class="info-value" id="detailOrders">--</span></div>
+    <div class="info-row"><span class="info-label">Tổng chi tiêu</span><span class="info-value" style="color:var(--accent);font-weight:700" id="detailSpent">--</span></div>
+    <div style="margin-top:1.25rem">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.5rem">Ghi chú chăm sóc khách hàng</div>
+      <div id="detailNotes" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;font-size:0.85rem;color:var(--text-secondary)">--</div>
+    </div>
+    <div style="margin-top:1.5rem">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Lịch sử đặt đơn gần đây</div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <div style="padding:0.6rem 0.75rem;background:rgba(13,155,163,0.06);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;font-size:0.8rem">
+          <span>🧹 Dọn dẹp nhà (3h)</span><span class="badge badge-success">240.000đ</span>
+        </div>
+        <div style="padding:0.6rem 0.75rem;background:rgba(13,155,163,0.06);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;font-size:0.8rem">
+          <span>🍳 Nấu ăn gia đình</span><span class="badge badge-success">180.000đ</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-primary btn-sm" onclick="Toast.show('Đang mở form gọi điện CSKH...');PanelManager.close('customerDetailPanel')"><i class="ti ti-phone"></i> Gọi điện</button>
+    <button class="btn btn-secondary btn-sm" data-panel-close="customerDetailPanel">Đóng</button>
+  </div>
+</div>
+
+<!-- Create Customer Modal -->
+<div class="modal-overlay" id="createCustomerModal">
+  <div class="modal" style="max-width:550px">
+    <div class="modal-header">
+      <h2 class="modal-title">Thêm khách hàng mới</h2>
+      <button class="modal-close" data-modal-close="createCustomerModal">✕</button>
+    </div>
+    <div>
+      <div class="form-group">
+        <label class="form-label">Họ và tên *</label>
+        <input type="text" class="form-control" placeholder="Nguyễn Văn A">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Số điện thoại *</label>
+          <input type="tel" class="form-control" placeholder="0909 xxx xxx">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" placeholder="email@domain.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Địa chỉ *</label>
+        <input type="text" class="form-control" placeholder="Số nhà, tên đường, phường, quận">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ghi chú yêu cầu phục vụ</label>
+        <textarea class="form-control" rows="2" placeholder="Ghi chú về thói quen, thú cưng, thời gian thuận tiện..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="createCustomerModal">Hủy</button>
+      <button class="btn btn-primary" onclick="ModalManager.close('createCustomerModal');Toast.show('Đã lưu hồ sơ khách hàng mới thành công!')">Lưu hồ sơ</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+<script>
+  function showCustomerDetail(name, phone, addr, orders, spent, notes) {
+    document.getElementById('detailName').textContent = name;
+    document.getElementById('detailPhone').textContent = phone;
+    document.getElementById('detailAddress').textContent = addr;
+    document.getElementById('detailOrders').textContent = orders;
+    document.getElementById('detailSpent').textContent = spent;
+    document.getElementById('detailNotes').textContent = notes;
+    PanelManager.open('customerDetailPanel');
+  }
+</script>
+</body>
+</html>

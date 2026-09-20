@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phân tích & Báo cáo – Marketing | Neatify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/marketing/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+        <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Phạm Văn Minh</div><div class="sidebar-user-role">NV Marketing</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/marketing/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Marketing</div>
+        <div class="sidebar-nav-items">
+          <a href="/marketing/khuyen-mai" class="sidebar-item"><i class="ti ti-discount item-icon"></i><span class="item-label">Khuyến mãi</span></a>
+          <a href="/marketing/thong-bao" class="sidebar-item"><i class="ti ti-send item-icon"></i><span class="item-label">Gửi thông báo</span><span class="item-badge">2</span></a>
+          <a href="/marketing/phan-tich" class="sidebar-item active"><i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích dữ liệu</span></a>
+          <a href="/marketing/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Quản lý đánh giá</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Neatify</span><span class="sep">/</span>
+        <a href="/marketing/dashboard" style="color:var(--text-muted)">Marketing</a><span class="sep">/</span>
+        <span class="current">Phân tích & Báo cáo</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xuất báo cáo marketing PDF...')"><i class="ti ti-download"></i> Xuất báo cáo</button>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
+          <div class="dropdown-menu" id="mkUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Báo cáo Hiệu quả Marketing & Chuyển đổi</h1>
+          <p class="page-subtitle">Theo dõi ROI chiến dịch, chi phí chuyển đổi (CAC), giá trị vòng đời (LTV) và tăng trưởng</p>
+        </div>
+        <div class="page-actions">
+          <div class="chart-period-tabs">
+            <button class="chart-period-btn active">Tháng này</button>
+            <button class="chart-period-btn">Quý 3/2026</button>
+            <button class="chart-period-btn">Năm 2026</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">🎯</div>
+          <div class="stat-value">68.000đ</div>
+          <div class="stat-label">Chi phí thu hút KH (CAC)</div>
+          <div class="kpi-compare"><span class="arrow-down" style="color:var(--accent)">↓ 12% so tháng trước</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">💎</div>
+          <div class="stat-value">1.450.000đ</div>
+          <div class="stat-label">Giá trị trọn đời KH (LTV)</div>
+          <div class="kpi-compare"><span class="arrow-up">LTV / CAC = 21.3</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">📈</div>
+          <div class="stat-value">18.2%</div>
+          <div class="stat-label">Tỷ lệ tải app -> đặt đơn</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 2.4%</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">🚀</div>
+          <div class="stat-value">460%</div>
+          <div class="stat-label">Tỷ suất sinh lời ROI</div>
+          <div class="kpi-compare"><span class="arrow-up">Mỗi 1đ chi ra mang lại 4.6đ</span></div>
+        </div>
+      </div>
+
+      <!-- Charts Section: ƯU TIÊN BIỂU ĐỒ CỘT -->
+      <div class="dashboard-grid" style="margin-bottom:1.5rem">
+        <!-- Channel Performance Column Bar Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Khách hàng mới theo kênh Marketing</div>
+              <div class="chart-subtitle">Biểu đồ cột so sánh số lượng chuyển đổi các kênh</div>
+            </div>
+          </div>
+          <div style="height:260px"><canvas id="channelBarChart"></canvas></div>
+        </div>
+
+        <!-- Coupon ROI Bar Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Doanh thu theo mã Coupon</div>
+              <div class="chart-subtitle">Triệu đồng doanh thu thực tế</div>
+            </div>
+          </div>
+          <div style="height:260px"><canvas id="couponBarChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Details Channel Table -->
+      <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem">
+          <div>
+            <div class="card-title">Chi tiết chi phí & chuyển đổi theo kênh tiếp thị</div>
+            <div class="card-subtitle">Tháng 9/2026</div>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Kênh Marketing</th>
+                <th>Ngân sách chi tiêu</th>
+                <th>Lượt cài đặt App</th>
+                <th>Khách hàng mới</th>
+                <th>Doanh thu tạo ra</th>
+                <th>Chi phí / KH (CAC)</th>
+                <th>Tỷ suất ROI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:700">📱 Facebook & Instagram Ads</td>
+                <td>25.000.000đ</td>
+                <td>2,150</td>
+                <td style="font-weight:600">310 KH</td>
+                <td style="font-weight:700;color:var(--accent)">142.000.000đ</td>
+                <td>80.600đ</td>
+                <td><span class="badge badge-success">468%</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:700">🔍 Google Search & Maps Ads</td>
+                <td>18.000.000đ</td>
+                <td>1,420</td>
+                <td style="font-weight:600">240 KH</td>
+                <td style="font-weight:700;color:var(--accent)">118.000.000đ</td>
+                <td>75.000đ</td>
+                <td><span class="badge badge-success">555%</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:700">🎵 TikTok Video Marketing</td>
+                <td>12.000.000đ</td>
+                <td>3,200</td>
+                <td style="font-weight:600">190 KH</td>
+                <td style="font-weight:700;color:var(--accent)">76.000.000đ</td>
+                <td>63.100đ</td>
+                <td><span class="badge badge-success">533%</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:700">🤝 Giới thiệu bạn bè (Referral)</td>
+                <td>5.000.000đ</td>
+                <td>540</td>
+                <td style="font-weight:600">145 KH</td>
+                <td style="font-weight:700;color:var(--accent)">68.000.000đ</td>
+                <td>34.400đ</td>
+                <td><span class="badge badge-warning">1260%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Chart === 'undefined') return;
+
+    // Channel Column Chart (Ưu tiên biểu đồ cột)
+    new Chart(document.getElementById('channelBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Facebook Ads', 'Google Ads', 'TikTok', 'Giới thiệu', 'SEO / Tự nhiên'],
+        datasets: [{
+          label: 'Khách hàng mới',
+          data: [310, 240, 190, 145, 110],
+          backgroundColor: [
+            'rgba(13,155,163,0.85)',
+            'rgba(21,133,192,0.85)',
+            'rgba(255,101,132,0.85)',
+            'rgba(245,158,11,0.85)',
+            'rgba(56,212,138,0.85)'
+          ],
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} khách hàng` } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+
+    // Coupon Revenue Horizontal Bar Chart
+    new Chart(document.getElementById('couponBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ['NEATIFY20', 'WELCOME50', 'VIPCARE15', 'WEEKENDCLEAN'],
+        datasets: [{
+          label: 'Doanh thu (triệu đồng)',
+          data: [195, 148, 86, 56],
+          backgroundColor: 'rgba(255,101,132,0.85)',
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} triệu VNĐ` } }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { callback: v => v + ' tr', font: { size: 11 } } },
+          y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
+        }
+      }
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thông báo – CSKH | Neatify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/cskh/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+        <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Hoàng Thị Dung</div><div class="sidebar-user-role">NV Chăm sóc Khách hàng</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/cskh/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Khách hàng</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/khach-hang" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span></a>
+          <a href="/cskh/don-dat-dich-vu" class="sidebar-item"><i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span><span class="item-badge">5</span></a>
+          <a href="/cskh/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span><span class="item-badge">8</span></a>
+          <a href="/cskh/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Vận hành</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/lich-phan-cong" class="sidebar-item"><i class="ti ti-calendar item-icon"></i><span class="item-label">Lịch phân công CTV</span></a>
+          <a href="/cskh/thong-bao" class="sidebar-item active"><i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Neatify</span><span class="sep">/</span>
+        <a href="/cskh/dashboard" style="color:var(--text-muted)">CSKH</a><span class="sep">/</span>
+        <span class="current">Thông báo CSKH</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" data-modal-open="createNotifModal"><i class="ti ti-send"></i> Gửi thông báo mới</button>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="cskhUser" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
+          <div class="dropdown-menu" id="cskhUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Thông báo Chăm sóc Khách hàng & CTV</h1>
+          <p class="page-subtitle">Gửi nhắc hẹn dịch vụ, thông báo tiến độ xử lý và tin nhắn hỗ trợ trực tiếp</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">📬</div>
+          <div class="stat-value">186</div>
+          <div class="stat-label">Thông báo gửi hôm nay</div>
+          <div class="kpi-compare"><span class="arrow-up">Đang hoạt động</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">👁️</div>
+          <div class="stat-value">94.2%</div>
+          <div class="stat-label">Tỷ lệ mở xem tin nhắn</div>
+          <div class="kpi-compare"><span class="arrow-up">Rất cao</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏰</div>
+          <div class="stat-value">52</div>
+          <div class="stat-label">Nhắc lịch hẹn dịch vụ</div>
+          <div class="kpi-compare"><span class="period">Gửi trước 2 giờ</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🛡️</div>
+          <div class="stat-value">8</div>
+          <div class="stat-label">Kết quả xử lý khiếu nại</div>
+          <div class="kpi-compare"><span class="period">Đã thông báo tới KH</span></div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <i class="ti ti-search search-icon"></i>
+          <input type="text" class="form-control" placeholder="Tìm kiếm tiêu đề, người nhận...">
+        </div>
+        <select class="filter-select">
+          <option value="">Tất cả loại thông báo</option>
+          <option>Nhắc hẹn dịch vụ</option>
+          <option>Ghép đơn CTV thành công</option>
+          <option>Xử lý khiếu nại</option>
+          <option>Tin nhắn chăm sóc cá nhân</option>
+        </select>
+        <select class="filter-select">
+          <option value="">Tất cả đối tượng</option>
+          <option>Khách hàng</option>
+          <option>Cộng tác viên</option>
+        </select>
+      </div>
+
+      <!-- History Table -->
+      <div class="card" style="padding:0">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tiêu đề thông báo</th>
+                <th>Người nhận</th>
+                <th>Đối tượng</th>
+                <th>Kênh gửi</th>
+                <th>Thời gian gửi</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600">🔔 Nhắc lịch dịch vụ dọn dẹp nhà lúc 14:00 hôm nay</td>
+                <td>Nguyễn Thị Hoa (0903 111 222)</td>
+                <td><span class="badge badge-primary">Khách hàng</span></td>
+                <td>App Push + SMS</td>
+                <td style="font-size:0.8rem">Hôm nay 12:00</td>
+                <td><span class="badge badge-success">Đã đọc</span></td>
+                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xem chi tiết thông báo...')">Xem</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">📋 Phân công đơn dịch vụ mới #DD-052</td>
+                <td>Trần Thị Hoa (CTV Ưu tú)</td>
+                <td><span class="badge badge-success">Cộng tác viên</span></td>
+                <td>App Push</td>
+                <td style="font-size:0.8rem">Hôm nay 11:45</td>
+                <td><span class="badge badge-success">Đã xác nhận nhận ca</span></td>
+                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xem chi tiết thông báo...')">Xem</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">✉ Thông báo giải quyết khiếu nại đơn #DD-048</td>
+                <td>Trần Văn Minh (0918 222 333)</td>
+                <td><span class="badge badge-primary">Khách hàng</span></td>
+                <td>Email + App Push</td>
+                <td style="font-size:0.8rem">Hôm qua 16:30</td>
+                <td><span class="badge badge-success">Đã gửi</span></td>
+                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xem chi tiết thông báo...')">Xem</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal Create Notification -->
+<div class="modal-overlay" id="createNotifModal">
+  <div class="modal" style="max-width:550px">
+    <div class="modal-header">
+      <h2 class="modal-title">Gửi thông báo CSKH</h2>
+      <button class="modal-close" data-modal-close="createNotifModal">✕</button>
+    </div>
+    <div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Đối tượng nhận tin</label>
+        <select class="form-control">
+          <option>Một khách hàng cụ thể</option>
+          <option>Một cộng tác viên cụ thể</option>
+          <option>Tất cả khách hàng có đơn hôm nay</option>
+          <option>Tất cả CTV đang trực ca</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Tiêu đề thông báo *</label>
+        <input type="text" class="form-control" placeholder="vd: Neatify xác nhận lịch hẹn của bạn">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Nội dung chi tiết *</label>
+        <textarea class="form-control" rows="4" placeholder="Nhập nội dung chi tiết tin nhắn..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kênh gửi</label>
+        <div style="display:flex;gap:1.5rem;margin-top:0.5rem">
+          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox" checked> App Push</label>
+          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox" checked> Tin nhắn SMS</label>
+          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox"> Email</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="createNotifModal">Hủy</button>
+      <button class="btn btn-primary" onclick="ModalManager.close('createNotifModal');Toast.show('Đã gửi thông báo thành công!')">Gửi ngay</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+</body>
+</html>

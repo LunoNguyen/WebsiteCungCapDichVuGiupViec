@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Đánh giá – Marketing | Neatify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/marketing/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+        <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Phạm Văn Minh</div><div class="sidebar-user-role">NV Marketing</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/marketing/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Marketing</div>
+        <div class="sidebar-nav-items">
+          <a href="/marketing/khuyen-mai" class="sidebar-item"><i class="ti ti-discount item-icon"></i><span class="item-label">Khuyến mãi</span></a>
+          <a href="/marketing/thong-bao" class="sidebar-item"><i class="ti ti-send item-icon"></i><span class="item-label">Gửi thông báo</span><span class="item-badge">2</span></a>
+          <a href="/marketing/phan-tich" class="sidebar-item"><i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích dữ liệu</span></a>
+          <a href="/marketing/danh-gia" class="sidebar-item active"><i class="ti ti-star item-icon"></i><span class="item-label">Quản lý đánh giá</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Neatify</span><span class="sep">/</span>
+        <a href="/marketing/dashboard" style="color:var(--text-muted)">Marketing</a><span class="sep">/</span>
+        <span class="current">Đánh giá & Phản hồi</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" onclick="Toast.show('Đã xuất bản đánh giá nổi bật lên trang chủ!')"><i class="ti ti-pin"></i> Xuất bản Testimonials</button>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
+          <div class="dropdown-menu" id="mkUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Quản trị Đánh giá & Chỉ số Hài lòng (CSAT / NPS)</h1>
+          <p class="page-subtitle">Phân tích tiếng nói khách hàng (VoC), trích xuất phản hồi 5 sao truyền thông thương hiệu</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
+          <div class="stat-value">4.85 / 5</div>
+          <div class="stat-label">Điểm đánh giá trung bình</div>
+          <div class="kpi-compare"><span class="arrow-up">1,248 lượt đánh giá</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">❤️</div>
+          <div class="stat-value">+64</div>
+          <div class="stat-label">Chỉ số NPS (Net Promoter)</div>
+          <div class="kpi-compare"><span class="arrow-up">Mức Xuất sắc (> 50)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">💬</div>
+          <div class="stat-value">94.6%</div>
+          <div class="stat-label">Tỷ lệ CSAT thỏa mãn</div>
+          <div class="kpi-compare"><span class="period">Khảo sát sau dịch vụ</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🌟</div>
+          <div class="stat-value">125</div>
+          <div class="stat-label">Đánh giá nổi bật (Testimonial)</div>
+          <div class="kpi-compare"><span class="period">Đã chọn lọc làm truyền thông</span></div>
+        </div>
+      </div>
+
+      <!-- Charts: Ưu tiên biểu đồ cột -->
+      <div class="dashboard-grid" style="margin-bottom:1.5rem">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Điểm hài lòng CSAT theo loại dịch vụ</div>
+              <div class="chart-subtitle">Thang điểm 5.0 (Biểu đồ cột)</div>
+            </div>
+          </div>
+          <div style="height:260px"><canvas id="serviceRatingBarChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Phân bổ đánh giá theo số sao (%)</div>
+              <div class="chart-subtitle">Tỷ lệ % từng mức sao</div>
+            </div>
+          </div>
+          <div style="height:260px"><canvas id="ratingDistributionBarChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Testimonial Selection Table -->
+      <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem">
+          <div>
+            <div class="card-title">Đánh giá 5 sao nổi bật có thể dùng làm tư liệu truyền thông</div>
+            <div class="card-subtitle">Lọc từ khách hàng thực tế sau khi sử dụng dịch vụ Neatify</div>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Khách hàng</th>
+                <th>Dịch vụ sử dụng</th>
+                <th>Xếp hạng</th>
+                <th>Nội dung cảm nhận nổi bật</th>
+                <th>Hiển thị trang chủ</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="name">Nguyễn Thị Hoa</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">Q.1, TP.HCM · VIP Diamond</div></td>
+                <td>Dọn dẹp nhà chuyên sâu</td>
+                <td><span style="color:#FFC107;font-weight:700">★★★★★</span></td>
+                <td style="max-width:340px;line-height:1.4">"Dịch vụ Neatify khiến mình hoàn toàn yên tâm. CTV làm việc chu đáo, tỉ mỉ từng góc nhà và thái độ cực kỳ lễ phép!"</td>
+                <td><span class="badge badge-success">Đang ghim trang chủ</span></td>
+                <td style="text-align:right">
+                  <button class="btn btn-outline btn-sm" onclick="Toast.show('Đã cập nhật trạng thái hiển thị!')"><i class="ti ti-check"></i> Đang ghim</button>
+                </td>
+              </tr>
+              <tr>
+                <td><div class="name">Trần Văn Minh</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">Q.3, TP.HCM · Khách thân thiết</div></td>
+                <td>Nấu ăn bữa tối gia đình</td>
+                <td><span style="color:#FFC107;font-weight:700">★★★★★</span></td>
+                <td style="max-width:340px;line-height:1.4">"Cả nhà đều khen món ăn ngon như ở nhà hàng, vừa khẩu vị gia đình có trẻ nhỏ. Ứng dụng đặt lịch rất tiện lợi và đúng giờ."</td>
+                <td><span class="badge badge-success">Đang ghim trang chủ</span></td>
+                <td style="text-align:right">
+                  <button class="btn btn-outline btn-sm" onclick="Toast.show('Đã cập nhật trạng thái hiển thị!')"><i class="ti ti-check"></i> Đang ghim</button>
+                </td>
+              </tr>
+              <tr>
+                <td><div class="name">Phạm Thị Lan</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">Tân Bình · Khách mới</div></td>
+                <td>Chăm sóc người cao tuổi</td>
+                <td><span style="color:#FFC107;font-weight:700">★★★★★</span></td>
+                <td style="max-width:340px;line-height:1.4">"Cô giúp việc có chuyên môn và rất kiên nhẫn với bà. Gia đình rất biết ơn Neatify đã hỗ trợ nhanh chóng khi nhà có việc gấp."</td>
+                <td><span class="badge badge-secondary">Chưa ghim</span></td>
+                <td style="text-align:right">
+                  <button class="btn btn-primary btn-sm" onclick="Toast.show('Đã ghim đánh giá lên trang chủ!')"><i class="ti ti-pin"></i> Ghim ngay</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Chart === 'undefined') return;
+
+    // Service Rating Bar Chart
+    new Chart(document.getElementById('serviceRatingBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Dọn dẹp nhà', 'Nấu ăn', 'Trông trẻ', 'Chăm sóc NCT', 'Giặt ủi', 'Tổng vệ sinh'],
+        datasets: [{
+          label: 'Điểm CSAT',
+          data: [4.9, 4.85, 4.88, 4.82, 4.75, 4.7],
+          backgroundColor: 'rgba(13,155,163,0.85)',
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` Điểm: ${ctx.parsed.y} / 5.0` } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { min: 4.0, max: 5.0, grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+
+    // Rating Distribution Horizontal Bar Chart (ưu tiên dùng cột/thanh thay tròn)
+    new Chart(document.getElementById('ratingDistributionBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ['5 sao', '4 sao', '3 sao', '2 sao', '1 sao'],
+        datasets: [{
+          label: 'Tỷ lệ %',
+          data: [82, 12, 4, 1.5, 0.5],
+          backgroundColor: ['#38D48A', '#0D9BA3', '#F59E0B', '#FF6584', '#EF4444'],
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x}%` } }
+        },
+        scales: {
+          x: { max: 100, grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { callback: v => v + '%', font: { size: 11 } } },
+          y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
+        }
+      }
+    });
+  });
+</script>
+</body>
+</html>

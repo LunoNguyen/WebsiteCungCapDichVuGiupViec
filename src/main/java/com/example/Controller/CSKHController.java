@@ -19,7 +19,7 @@ public class CSKHController {
     // UC-CSKH01 – Quản lý khách hàng
     @GetMapping("/khach-hang")
     public String khachHang() {
-        return "redirect:/cskh/dashboard";
+        return "cskh/khach-hang";
     }
 
     // UC-CSKH02 – Quản lý đơn đặt dịch vụ
@@ -37,18 +37,18 @@ public class CSKHController {
     // UC-CSKH04 – Quản lý đánh giá
     @GetMapping("/danh-gia")
     public String danhGia() {
-        return "redirect:/cskh/dashboard";
+        return "cskh/danh-gia";
     }
 
     // UC-CSKH05 – Lịch phân công CTV
     @GetMapping("/lich-phan-cong")
     public String lichPhanCong() {
-        return "redirect:/cskh/dashboard";
+        return "cskh/lich-phan-cong";
     }
 
     // UC-CSKH06 – Quản lý thông báo CSKH
     @GetMapping("/thong-bao")
     public String thongBao() {
-        return "redirect:/cskh/dashboard";
+        return "cskh/thong-bao";
     }
 }

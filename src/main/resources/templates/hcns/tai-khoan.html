@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Tài khoản – HCNS | Neatify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/hcns/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+        <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#43E97B,#38D46A);color:#000">HC</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyễn Thị Hạnh</div><div class="sidebar-user-role">NV HCNS - Kế toán</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/hcns/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Nhân sự</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Nhân viên</span></a>
+          <a href="/hcns/cong-tac-vien" class="sidebar-item"><i class="ti ti-user-star item-icon"></i><span class="item-label">Quản lý CTV</span><span class="item-badge">12</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Dịch vụ</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/danh-muc-dich-vu" class="sidebar-item"><i class="ti ti-category item-icon"></i><span class="item-label">Danh mục dịch vụ</span></a>
+          <a href="/hcns/dich-vu-bang-gia" class="sidebar-item"><i class="ti ti-receipt item-icon"></i><span class="item-label">Dịch vụ & Bảng giá</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/tai-khoan" class="sidebar-item active"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý Tài khoản</span></a>
+          <a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Neatify</span><span class="sep">/</span>
+        <a href="/hcns/dashboard" style="color:var(--text-muted)">HCNS</a><span class="sep">/</span>
+        <span class="current">Quản lý Tài khoản</span>
+      </div>
+      <div class="topbar-search hide-mobile">
+        <i class="ti ti-search search-icon"></i><input type="text" id="searchInput" placeholder="Tìm tên đăng nhập, email, họ tên...">
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" data-modal-open="createAccountModal"><i class="ti ti-plus"></i> Cấp tài khoản mới</button>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="hcUser" style="cursor:pointer;background:linear-gradient(135deg,#43E97B,#38D46A);color:#000">HC</div>
+          <div class="dropdown-menu" id="hcUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Quản lý Tài khoản Hệ thống</h1>
+          <p class="page-subtitle">Cấp phát, phân quyền, đặt lại mật khẩu và kiểm soát truy cập nhân viên & CTV</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
+          <div class="stat-value" data-count="3218">3,218</div>
+          <div class="stat-label">Tổng tài khoản</div>
+          <div class="kpi-compare"><span class="arrow-up">Toàn hệ thống</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🏢</div>
+          <div class="stat-value" data-count="14">14</div>
+          <div class="stat-label">Tài khoản Nội bộ</div>
+          <div class="kpi-compare"><span class="period">GĐ, HCNS, CSKH, Marketing</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🌟</div>
+          <div class="stat-value" data-count="452">452</div>
+          <div class="stat-label">Tài khoản CTV</div>
+          <div class="kpi-compare"><span class="arrow-up">438 đang hoạt động</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">🔒</div>
+          <div class="stat-value" data-count="5">5</div>
+          <div class="stat-label">Tài khoản tạm khóa</div>
+          <div class="kpi-compare"><span style="color:var(--danger)">Cần xem xét</span></div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <i class="ti ti-search search-icon"></i>
+          <input type="text" class="form-control" placeholder="Tìm theo tên đăng nhập, email, số điện thoại...">
+        </div>
+        <select class="filter-select" id="roleFilter">
+          <option value="">Tất cả loại tài khoản</option>
+          <option value="NV">Nhân viên nội bộ</option>
+          <option value="CTV">Cộng tác viên</option>
+          <option value="KH">Khách hàng</option>
+        </select>
+        <select class="filter-select" id="statusFilter">
+          <option value="">Tất cả trạng thái</option>
+          <option value="ACTIVE">Đang hoạt động</option>
+          <option value="LOCKED">Đang bị khóa</option>
+        </select>
+      </div>
+
+      <!-- Accounts Table -->
+      <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem">
+          <div>
+            <div class="card-title">Danh sách tài khoản</div>
+            <div class="card-subtitle">Hiển thị thông tin phân quyền và tình trạng đăng nhập</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xuất danh sách tài khoản...')"><i class="ti ti-download"></i> Xuất Excel</button>
+        </div>
+        <div class="table-container">
+          <table class="table" id="accountTable">
+            <thead>
+              <tr>
+                <th>Tên đăng nhập</th>
+                <th>Họ và tên</th>
+                <th>Phân quyền / Loại</th>
+                <th>Email / SĐT</th>
+                <th>Ngày tạo</th>
+                <th>Đăng nhập cuối</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">hanhnt</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm">H</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hạnh</div><div class="sub">Phòng HCNS</div></div></div></td>
+                <td><span class="badge badge-primary">HCNS - Kế toán</span></td>
+                <td><div>hanhnt@neatify.vn</div><div style="font-size:0.75rem;color:var(--text-muted)">0901 234 567</div></td>
+                <td style="font-size:0.8rem">10/01/2025</td>
+                <td style="font-size:0.8rem">Hôm nay 08:30</td>
+                <td><span class="badge badge-success">Hoạt động</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('hanhnt')"><i class="ti ti-key"></i></button>
+                    <button class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="toggleLock('hanhnt', true)"><i class="ti ti-lock"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">dunght</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">D</div><div class="user-cell-info"><div class="name">Hoàng Thị Dung</div><div class="sub">Phòng CSKH</div></div></div></td>
+                <td><span class="badge badge-info">CSKH</span></td>
+                <td><div>dunght@neatify.vn</div><div style="font-size:0.75rem;color:var(--text-muted)">0912 345 678</div></td>
+                <td style="font-size:0.8rem">12/01/2025</td>
+                <td style="font-size:0.8rem">Hôm nay 08:15</td>
+                <td><span class="badge badge-success">Hoạt động</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('dunght')"><i class="ti ti-key"></i></button>
+                    <button class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="toggleLock('dunght', true)"><i class="ti ti-lock"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">minhpv</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">M</div><div class="user-cell-info"><div class="name">Phạm Văn Minh</div><div class="sub">Phòng Marketing</div></div></div></td>
+                <td><span class="badge badge-warning">Marketing</span></td>
+                <td><div>minhpv@neatify.vn</div><div style="font-size:0.75rem;color:var(--text-muted)">0934 567 890</div></td>
+                <td style="font-size:0.8rem">15/02/2025</td>
+                <td style="font-size:0.8rem">Hôm nay 09:00</td>
+                <td><span class="badge badge-success">Hoạt động</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('minhpv')"><i class="ti ti-key"></i></button>
+                    <button class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="toggleLock('minhpv', true)"><i class="ti ti-lock"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">ctv_hoatt</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">H</div><div class="user-cell-info"><div class="name">Trần Thị Hoa</div><div class="sub">CTV Dọn dẹp nhà · Q.1</div></div></div></td>
+                <td><span class="badge badge-success">Cộng tác viên</span></td>
+                <td><div>hoatt@gmail.com</div><div style="font-size:0.75rem;color:var(--text-muted)">0978 123 456</div></td>
+                <td style="font-size:0.8rem">20/03/2025</td>
+                <td style="font-size:0.8rem">Hôm qua 19:40</td>
+                <td><span class="badge badge-success">Hoạt động</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('ctv_hoatt')"><i class="ti ti-key"></i></button>
+                    <button class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="toggleLock('ctv_hoatt', true)"><i class="ti ti-lock"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--primary-light)">ctv_nguyenvana</td>
+                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF4757,#FF6B81)">A</div><div class="user-cell-info"><div class="name">Nguyễn Văn An</div><div class="sub">CTV Nấu ăn · Bình Thạnh</div></div></div></td>
+                <td><span class="badge badge-success">Cộng tác viên</span></td>
+                <td><div>vana@gmail.com</div><div style="font-size:0.75rem;color:var(--text-muted)">0989 333 444</div></td>
+                <td style="font-size:0.8rem">05/04/2025</td>
+                <td style="font-size:0.8rem">15/09/2026</td>
+                <td><span class="badge badge-danger">Đã khóa (Vi phạm)</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('ctv_nguyenvana')"><i class="ti ti-key"></i></button>
+                    <button class="btn btn-success btn-sm" title="Mở khóa tài khoản" onclick="toggleLock('ctv_nguyenvana', false)"><i class="ti ti-lock-open"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal Create Account -->
+<div class="modal-overlay" id="createAccountModal">
+  <div class="modal" style="max-width:550px">
+    <div class="modal-header">
+      <h2 class="modal-title">Cấp tài khoản mới</h2>
+      <button class="modal-close" data-modal-close="createAccountModal">✕</button>
+    </div>
+    <div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Loại tài khoản</label>
+        <select class="form-control" id="newAccType">
+          <option value="NV">Nhân viên nội bộ</option>
+          <option value="CTV">Cộng tác viên (CTV)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tên đăng nhập *</label>
+          <input type="text" class="form-control" placeholder="vd: huonglt">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Họ và tên *</label>
+          <input type="text" class="form-control" placeholder="vd: Lê Thị Hương">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" class="form-control" placeholder="huonglt@neatify.vn">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số điện thoại *</label>
+          <input type="tel" class="form-control" placeholder="09xx xxx xxx">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Mật khẩu khởi tạo</label>
+        <input type="password" class="form-control" value="Neatify@2026" placeholder="Mật khẩu mặc định">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phân quyền chức vụ</label>
+        <select class="form-control">
+          <option>Nhân viên CSKH</option>
+          <option>Nhân viên HCNS - Kế toán</option>
+          <option>Nhân viên Marketing</option>
+          <option>Cộng tác viên Giúp việc</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="createAccountModal">Hủy</button>
+      <button class="btn btn-primary" onclick="createAccountSuccess()">Tạo tài khoản</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+<script>
+  function resetPassword(user) {
+    if (confirm('Bạn có chắc muốn đặt lại mật khẩu cho tài khoản ' + user + '?')) {
+      Toast.show('Đã gửi mật khẩu mới về email của ' + user + ' thành công!');
+    }
+  }
+  function toggleLock(user, lock) {
+    const action = lock ? 'khóa' : 'mở khóa';
+    if (confirm('Bạn có chắc muốn ' + action + ' tài khoản ' + user + '?')) {
+      Toast.show('Đã ' + action + ' tài khoản ' + user + ' thành công!');
+    }
+  }
+  function createAccountSuccess() {
+    ModalManager.close('createAccountModal');
+    Toast.show('Đã cấp tài khoản mới thành công! Thông tin đăng nhập đã gửi tới email.');
+  }
+</script>
+</body>
+</html>

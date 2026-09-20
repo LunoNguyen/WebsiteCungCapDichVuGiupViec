@@ -1,0 +1,228 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh muc Dich vu - HCNS | Neatify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <img src="/assets/Logo.png" class="sidebar-logo-img" alt="Neatify">
+      <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:var(--gradient-primary)">HC</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyen Thi Hanh</div><div class="sidebar-user-role">NV HCNS</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tong quan</div>
+        <div class="sidebar-nav-items"><a href="/hcns/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Nhan su</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quan ly Nhan vien</span></a>
+          <a href="/hcns/cong-tac-vien" class="sidebar-item"><i class="ti ti-user-star item-icon"></i><span class="item-label">Quan ly CTV</span><span class="item-badge">12</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Dich vu</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/danh-muc-dich-vu" class="sidebar-item active"><i class="ti ti-category item-icon"></i><span class="item-label">Danh muc dich vu</span></a>
+          <a href="/hcns/dich-vu-bang-gia" class="sidebar-item"><i class="ti ti-receipt item-icon"></i><span class="item-label">Dich vu &amp; Bang gia</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">He thong</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quan ly Tai khoan</span></a>
+          <a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Doi role</span></a>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Dang xuat</span></a></div>
+  </aside>
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Neatify</span><span class="sep">/</span>
+        <a href="/hcns/dashboard" style="color:var(--text-muted)">HCNS</a><span class="sep">/</span>
+        <span class="current">Danh muc Dich vu</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="dmUser" style="cursor:pointer;background:var(--gradient-primary)">HC</div>
+          <div class="dropdown-menu" id="dmUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Dang xuat</a></div>
+        </div>
+      </div>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Danh muc Dich vu</h1>
+          <p class="page-subtitle">Quan ly cac loai dich vu cung cap</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" data-modal-open="addCategoryModal"><i class="ti ti-plus"></i> Them danh muc</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:2rem">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base)" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+            <div style="font-size:2rem">&#129529;</div>
+            <span class="badge badge-success">Hoat dong</span>
+          </div>
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.25rem">Don dep nha</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.875rem">Ve sinh, don dep toan bo nha o</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem">
+            <span style="color:var(--text-muted)">845 CTV</span>
+            <span style="color:var(--accent);font-weight:700">345 don/thang</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:1rem">
+            <button class="btn btn-outline btn-sm" data-panel-open="catDetailPanel">Chi tiet</button>
+            <button class="btn btn-secondary btn-sm">Chinh sua</button>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base)" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+            <div style="font-size:2rem">&#128084;</div>
+            <span class="badge badge-success">Hoat dong</span>
+          </div>
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.25rem">Giat ui</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.875rem">Giat, sua, la quan ao</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem">
+            <span style="color:var(--text-muted)">412 CTV</span>
+            <span style="color:var(--accent);font-weight:700">218 don/thang</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:1rem">
+            <button class="btn btn-outline btn-sm" data-panel-open="catDetailPanel">Chi tiet</button>
+            <button class="btn btn-secondary btn-sm">Chinh sua</button>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base)" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+            <div style="font-size:2rem">&#127859;</div>
+            <span class="badge badge-success">Hoat dong</span>
+          </div>
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.25rem">Nau an</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.875rem">Nau cac bua an gia dinh</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem">
+            <span style="color:var(--text-muted)">287 CTV</span>
+            <span style="color:var(--accent);font-weight:700">187 don/thang</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:1rem">
+            <button class="btn btn-outline btn-sm" data-panel-open="catDetailPanel">Chi tiet</button>
+            <button class="btn btn-secondary btn-sm">Chinh sua</button>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base)" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+            <div style="font-size:2rem">&#128116;</div>
+            <span class="badge badge-success">Hoat dong</span>
+          </div>
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.25rem">Cham soc Nguoi cao tuoi</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.875rem">Ho tro cham soc suc khoe NCT</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem">
+            <span style="color:var(--text-muted)">156 CTV</span>
+            <span style="color:var(--accent);font-weight:700">124 don/thang</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:1rem">
+            <button class="btn btn-outline btn-sm" data-panel-open="catDetailPanel">Chi tiet</button>
+            <button class="btn btn-secondary btn-sm">Chinh sua</button>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base)" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+            <div style="font-size:2rem">&#128118;</div>
+            <span class="badge badge-success">Hoat dong</span>
+          </div>
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.25rem">Trong tre</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.875rem">Giu tre, cham soc tre nho</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem">
+            <span style="color:var(--text-muted)">198 CTV</span>
+            <span style="color:var(--accent);font-weight:700">156 don/thang</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:1rem">
+            <button class="btn btn-outline btn-sm" data-panel-open="catDetailPanel">Chi tiet</button>
+            <button class="btn btn-secondary btn-sm">Chinh sua</button>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base)" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+            <div style="font-size:2rem">&#10024;</div>
+            <span class="badge badge-secondary">An tam</span>
+          </div>
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:0.25rem">Ve sinh tong the</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.875rem">Ve sinh toan dien, dung may moc</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem">
+            <span style="color:var(--text-muted)">89 CTV</span>
+            <span style="color:var(--text-muted)">89 don/thang</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:1rem">
+            <button class="btn btn-outline btn-sm" data-panel-open="catDetailPanel">Chi tiet</button>
+            <button class="btn btn-success btn-sm" onclick="Toast.show('Da kich hoat danh muc!')">Kich hoat</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="panelOverlay"></div>
+<div class="detail-panel" id="catDetailPanel">
+  <div class="detail-panel-header">
+    <div><h2 style="font-size:1.1rem;font-weight:700">Chi tiet Danh muc</h2></div>
+    <button class="modal-close" data-panel-close="catDetailPanel">x</button>
+  </div>
+  <div class="detail-panel-body">
+    <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
+      <div style="font-size:4rem">&#129529;</div>
+      <div style="font-size:1.25rem;font-weight:700">Don dep nha</div>
+      <span class="badge badge-success" style="margin-top:0.5rem">Dang hoat dong</span>
+    </div>
+    <div class="info-row"><span class="info-label">So CTV dang ky</span><span class="info-value" style="color:var(--accent)">845 CTV</span></div>
+    <div class="info-row"><span class="info-label">Don thang nay</span><span class="info-value">345 don</span></div>
+    <div class="info-row"><span class="info-label">Danh gia trung binh</span><span class="info-value" style="color:#FFC107">4.8 sao</span></div>
+    <div class="info-row"><span class="info-label">Doanh thu thang</span><span class="info-value" style="color:var(--accent)">517.000.000d</span></div>
+    <div class="info-row"><span class="info-label">Mo tu</span><span class="info-value">Ve sinh, don dep toan bo nha o</span></div>
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Mo ta chi tiet</div>
+      <textarea class="form-control" rows="4">Don dep nha bao gom cac dich vu lau nha, hut bui, don phong, ve sinh bep va phong tam theo yeu cau khach hang.</textarea>
+    </div>
+  </div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-danger" onclick="Toast.show('Da an danh muc.','warning');PanelManager.close('catDetailPanel')">An</button>
+    <button class="btn btn-secondary" data-panel-close="catDetailPanel">Dong</button>
+    <button class="btn btn-primary" onclick="Toast.show('Da cap nhat danh muc!')">Luu</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addCategoryModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Them Danh muc Dich vu</h2>
+      <button class="modal-close" data-modal-close="addCategoryModal">x</button>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Ten danh muc *</label><input class="form-control" placeholder="VD: Ve sinh xe o to" required></div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Bieu tuong (emoji)</label><input class="form-control" placeholder="VD: &#128663;"></div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Mo ta</label><textarea class="form-control" rows="3" placeholder="Mo ta ngan gon ve dich vu..."></textarea></div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Trang thai</label>
+      <select class="form-control">
+        <option>Hoat dong</option>
+        <option>An tam</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="addCategoryModal">Huy</button>
+      <button class="btn btn-primary" onclick="document.getElementById('addCategoryModal').classList.remove('active');Toast.show('Da them danh muc thanh cong!')">Them moi</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+</body>
+</html>

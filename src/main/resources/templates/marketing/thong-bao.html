@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thông báo Marketing | Neatify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/marketing/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+        <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
+      <div class="sidebar-user-info"><div class="sidebar-user-name">Phạm Văn Minh</div><div class="sidebar-user-role">NV Marketing</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items"><a href="/marketing/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Marketing</div>
+        <div class="sidebar-nav-items">
+          <a href="/marketing/khuyen-mai" class="sidebar-item"><i class="ti ti-discount item-icon"></i><span class="item-label">Khuyến mãi</span></a>
+          <a href="/marketing/thong-bao" class="sidebar-item active"><i class="ti ti-send item-icon"></i><span class="item-label">Gửi thông báo</span><span class="item-badge">2</span></a>
+          <a href="/marketing/phan-tich" class="sidebar-item"><i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích dữ liệu</span></a>
+          <a href="/marketing/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Quản lý đánh giá</span></a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Neatify</span><span class="sep">/</span>
+        <a href="/marketing/dashboard" style="color:var(--text-muted)">Marketing</a><span class="sep">/</span>
+        <span class="current">Thông báo Marketing</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm" data-modal-open="createCampaignModal"><i class="ti ti-send"></i> Tạo chiến dịch gửi tin</button>
+        <div class="dropdown">
+          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
+          <div class="dropdown-menu" id="mkUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Chiến dịch Push Notification & Marketing</h1>
+          <p class="page-subtitle">Gửi tin nhắn quảng bá, chương trình ưu đãi hàng loạt đến Khách hàng và CTV</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">📢</div>
+          <div class="stat-value">18</div>
+          <div class="stat-label">Chiến dịch đã thực hiện</div>
+          <div class="kpi-compare"><span class="arrow-up">Tháng 9/2026</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
+          <div class="stat-value">45.2K</div>
+          <div class="stat-label">Lượt nhận thông báo</div>
+          <div class="kpi-compare"><span class="arrow-up">99.1% gửi thành công</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🎯</div>
+          <div class="stat-value">18.5%</div>
+          <div class="stat-label">Tỷ lệ tương tác (CTR)</div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 3.2% so với TB</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">🛒</div>
+          <div class="stat-value">1,240</div>
+          <div class="stat-label">Đơn đặt từ thông báo</div>
+          <div class="kpi-compare"><span class="period">Chuyển đổi cao</span></div>
+        </div>
+      </div>
+
+      <!-- Campaigns Table -->
+      <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem">
+          <div>
+            <div class="card-title">Danh sách chiến dịch đã gửi</div>
+            <div class="card-subtitle">Hiển thị số lượng tiếp cận và tỷ lệ chuyển đổi</div>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tên chiến dịch</th>
+                <th>Phân khúc nhận</th>
+                <th>Kênh gửi</th>
+                <th>Số lượng gửi</th>
+                <th>Tỷ lệ mở (CTR)</th>
+                <th>Thời gian gửi</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600">🍂 Siêu ưu đãi Mùa thu - Giảm 20% dọn dẹp</td>
+                <td>Tất cả Khách hàng</td>
+                <td>App Push + SMS</td>
+                <td>15,200</td>
+                <td><span style="font-weight:700;color:var(--accent)">22.4%</span></td>
+                <td style="font-size:0.8rem">18/09/2026 09:00</td>
+                <td><span class="badge badge-success">Đã hoàn thành</span></td>
+                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang tải báo cáo chiến dịch...')">Báo cáo</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">🎁 Tặng voucher VIPCARE15 cho thành viên Diamond</td>
+                <td>Khách hàng VIP</td>
+                <td>App Push</td>
+                <td>315</td>
+                <td><span style="font-weight:700;color:var(--accent)">64.8%</span></td>
+                <td style="font-size:0.8rem">15/09/2026 14:00</td>
+                <td><span class="badge badge-success">Đã hoàn thành</span></td>
+                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang tải báo cáo chiến dịch...')">Báo cáo</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">👩‍🔧 Thưởng nóng 50.000đ/đơn cuối tuần cho CTV</td>
+                <td>Tất cả Cộng tác viên</td>
+                <td>App CTV</td>
+                <td>450</td>
+                <td><span style="font-weight:700;color:var(--accent)">88.2%</span></td>
+                <td style="font-size:0.8rem">12/09/2026 17:00</td>
+                <td><span class="badge badge-success">Đã hoàn thành</span></td>
+                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang tải báo cáo chiến dịch...')">Báo cáo</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal Create Campaign -->
+<div class="modal-overlay" id="createCampaignModal">
+  <div class="modal" style="max-width:550px">
+    <div class="modal-header">
+      <h2 class="modal-title">Tạo chiến dịch gửi tin Marketing</h2>
+      <button class="modal-close" data-modal-close="createCampaignModal">✕</button>
+    </div>
+    <div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Tên chiến dịch *</label>
+        <input type="text" class="form-control" placeholder="vd: Khuyến mãi Siêu tiệc 10/10">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Đối tượng mục tiêu</label>
+        <select class="form-control">
+          <option>Toàn bộ khách hàng (Đang hoạt động)</option>
+          <option>Khách hàng VIP Diamond</option>
+          <option>Khách hàng chưa đặt lại đơn > 30 ngày</option>
+          <option>Toàn bộ Cộng tác viên</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Tiêu đề thông báo *</label>
+        <input type="text" class="form-control" placeholder="vd: 🌟 Neatify tặng bạn mã giảm 20% hôm nay!">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Nội dung chi tiết *</label>
+        <textarea class="form-control" rows="3" placeholder="Nhập nội dung quảng bá, ưu đãi..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kênh phân phối</label>
+        <div style="display:flex;gap:1.5rem;margin-top:0.5rem">
+          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox" checked> App Push Notification</label>
+          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox"> Tin nhắn SMS Brandname</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="createCampaignModal">Hủy</button>
+      <button class="btn btn-primary" onclick="ModalManager.close('createCampaignModal');Toast.show('Đã lên lịch và bắt đầu gửi chiến dịch thành công!')">Gửi chiến dịch</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<script src="/js/main.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard – CSKH | GiupViec.vn</title>
+  <title>Dashboard – CSKH | Neatify</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
@@ -12,8 +12,10 @@
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo-icon" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">📞</div>
-      <span class="sidebar-logo-text">Giup<span style="color:var(--info)">Viec</span>.vn</span>
+      <a href="/cskh/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+        <span class="sidebar-logo-text">Neat<span>ify</span></span>
+      </a>
       <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
     </div>
     <div class="sidebar-user">
@@ -47,7 +49,7 @@
 
   <div class="main-area">
     <header class="topbar">
-      <div class="topbar-breadcrumb"><span>GiupViec.vn</span><span class="sep">/</span><span class="current">CSKH – Dashboard</span></div>
+      <div class="topbar-breadcrumb"><span>Neatify</span><span class="sep">/</span><span class="current">CSKH – Dashboard</span></div>
       <div class="topbar-search hide-mobile"><i class="ti ti-search search-icon"></i><input type="text" placeholder="Tìm khách hàng, đơn hàng..."></div>
       <div class="topbar-actions">
         <div class="dropdown">
@@ -271,13 +273,29 @@
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;
     new Chart(document.getElementById('ordersDonut'), {
-      type: 'doughnut',
+      type: 'bar',
       data: {
         labels: ['Hoàn thành', 'Đang thực hiện', 'Chờ CTV', 'Đã hủy'],
-        datasets: [{ data: [42, 5, 5, 0], backgroundColor: ['#43E97B','#6C63FF','#FFC107','#FF4757'], borderColor:'transparent', hoverOffset:6 }]
+        datasets: [{
+          label: 'Số đơn',
+          data: [42, 5, 5, 0],
+          backgroundColor: ['#38D48A', '#0D9BA3', '#F59E0B', '#EF4444'],
+          borderRadius: 6,
+          borderSkipped: false
+        }]
       },
-      options: { responsive:true, maintainAspectRatio:false, cutout:'72%',
-        plugins: { legend: { position:'bottom', labels:{ padding:12, font:{size:11} } } } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} đơn` } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { font: { size: 11 }, precision: 0 } }
+        }
+      }
     });
   });
 </script>
