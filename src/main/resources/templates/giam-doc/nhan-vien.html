@@ -34,11 +34,8 @@
           <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
         </div>
       </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
-        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
-      </div>
     </nav>
-    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
   </aside>
 
   <div class="main-area">
@@ -49,10 +46,11 @@
         <span class="current">Quản lý Nhân viên</span>
       </div>
       <div class="topbar-actions">
-        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="um4" style="cursor:pointer">GĐ</div>
-          <div class="dropdown-menu" id="um4"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="um4" style="cursor:pointer" th:text="${session.userAvatar != null ? session.userAvatar : 'GĐ'}">GĐ</div>
+          <div class="dropdown-menu" id="um4"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
         </div>
       </div>
+
     </header>
 
     <main class="page-content">

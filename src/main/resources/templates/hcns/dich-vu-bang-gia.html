@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,11 +38,10 @@
       <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">He thong</div>
         <div class="sidebar-nav-items">
           <a href="/hcns/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quan ly Tai khoan</span></a>
-          <a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Doi role</span></a>
         </div>
       </div>
     </nav>
-    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Dang xuat</span></a></div>
+    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Dang xuat</span></a></div>
   </aside>
   <div class="main-area">
     <header class="topbar">
@@ -53,11 +52,12 @@
       </div>
       <div class="topbar-actions">
         <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="bgUser" style="cursor:pointer;background:var(--gradient-primary)">HC</div>
-          <div class="dropdown-menu" id="bgUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Dang xuat</a></div>
+          <div class="avatar avatar-sm" data-dropdown="bgUser" style="cursor:pointer;background:var(--gradient-primary)" th:text="${session.userAvatar != null ? session.userAvatar : 'HC'}">HC</div>
+          <div class="dropdown-menu" id="bgUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Dang xuat</a></div>
         </div>
       </div>
     </header>
+
     <main class="page-content">
       <div class="page-header">
         <div class="page-title-group">

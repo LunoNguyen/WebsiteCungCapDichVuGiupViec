@@ -40,11 +40,10 @@
       <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
         <div class="sidebar-nav-items">
           <a href="/hcns/tai-khoan" class="sidebar-item active"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý Tài khoản</span></a>
-          <a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a>
         </div>
       </div>
     </nav>
-    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
   </aside>
 
   <div class="main-area">
@@ -60,13 +59,14 @@
       <div class="topbar-actions">
         <button class="btn btn-primary btn-sm" data-modal-open="createAccountModal"><i class="ti ti-plus"></i> Cấp tài khoản mới</button>
         <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="hcUser" style="cursor:pointer;background:linear-gradient(135deg,#43E97B,#38D46A);color:#000">HC</div>
-          <div class="dropdown-menu" id="hcUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+          <div class="avatar avatar-sm" data-dropdown="hcUser" style="cursor:pointer;background:linear-gradient(135deg,#43E97B,#38D46A);color:#000" th:text="${session.userAvatar != null ? session.userAvatar : 'HC'}">HC</div>
+          <div class="dropdown-menu" id="hcUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
         </div>
       </div>
     </header>
 
     <main class="page-content">
+
       <div class="page-header">
         <div class="page-title-group">
           <h1 class="page-title">Quản lý Tài khoản Hệ thống</h1>
@@ -78,27 +78,27 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
-          <div class="stat-value" data-count="3218">3,218</div>
+          <div class="stat-value" th:attr="data-count=${taiKhoans != null ? #lists.size(taiKhoans) : 0}" th:text="${taiKhoans != null ? #lists.size(taiKhoans) : 0}">0</div>
           <div class="stat-label">Tổng tài khoản</div>
           <div class="kpi-compare"><span class="arrow-up">Toàn hệ thống</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🏢</div>
-          <div class="stat-value" data-count="14">14</div>
+          <div class="stat-value" data-count="4">4</div>
           <div class="stat-label">Tài khoản Nội bộ</div>
-          <div class="kpi-compare"><span class="period">GĐ, HCNS, CSKH, Marketing</span></div>
+          <div class="kpi-compare"><span class="period">Giám đốc, Hành chính Nhân sự, Chăm sóc Khách hàng, Marketing</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🌟</div>
-          <div class="stat-value" data-count="452">452</div>
-          <div class="stat-label">Tài khoản CTV</div>
-          <div class="kpi-compare"><span class="arrow-up">438 đang hoạt động</span></div>
+          <div class="stat-value" data-count="10">10</div>
+          <div class="stat-label">Tài khoản Cộng tác viên</div>
+          <div class="kpi-compare"><span class="arrow-up">Đang hoạt động</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,71,87,0.15)">🔒</div>
-          <div class="stat-value" data-count="5">5</div>
+          <div class="stat-value" data-count="0">0</div>
           <div class="stat-label">Tài khoản tạm khóa</div>
-          <div class="kpi-compare"><span style="color:var(--danger)">Cần xem xét</span></div>
+          <div class="kpi-compare"><span style="color:var(--success)">Bình thường</span></div>
         </div>
       </div>
 
@@ -145,80 +145,44 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style="font-weight:700;color:var(--primary-light)">hanhnt</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm">H</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hạnh</div><div class="sub">Phòng HCNS</div></div></div></td>
-                <td><span class="badge badge-primary">HCNS - Kế toán</span></td>
-                <td><div>hanhnt@neatify.vn</div><div style="font-size:0.75rem;color:var(--text-muted)">0901 234 567</div></td>
-                <td style="font-size:0.8rem">10/01/2025</td>
-                <td style="font-size:0.8rem">Hôm nay 08:30</td>
-                <td><span class="badge badge-success">Hoạt động</span></td>
+              <tr th:each="tk : ${taiKhoans}">
+                <td style="font-weight:700;color:var(--primary-light)" th:text="${tk.tenDangNhap}">admin</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm" th:text="${tk.tenDangNhap != null and !tk.tenDangNhap.isEmpty() ? #strings.toUpperCase(#strings.substring(tk.tenDangNhap, 0, 1)) : 'U'}">U</div>
+                    <div class="user-cell-info">
+                      <div class="name" th:text="${tk.tenDangNhap}">admin</div>
+                      <div class="sub" th:text="${tk.maTaiKhoan != null ? tk.maTaiKhoan : ''}">Mã TK</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span th:if="${tk.loaiTaiKhoan == 'NhanVien'}" class="badge badge-primary">Nhân viên</span>
+                  <span th:if="${tk.loaiTaiKhoan == 'CongTacVien'}" class="badge badge-success">Cộng tác viên</span>
+                  <span th:if="${tk.loaiTaiKhoan == 'KhachHang'}" class="badge badge-secondary">Khách hàng</span>
+                  <span th:if="${tk.loaiTaiKhoan != 'NhanVien' and tk.loaiTaiKhoan != 'CongTacVien' and tk.loaiTaiKhoan != 'KhachHang'}" class="badge badge-info" th:text="${tk.loaiTaiKhoan}">Khác</span>
+                </td>
+                <td>
+                  <div th:text="${tk.email != null ? tk.email : '---'}">user@neatify.vn</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${tk.soDienThoai != null ? tk.soDienThoai : ''}">0900000000</div>
+                </td>
+                <td style="font-size:0.8rem" th:text="${tk.ngayTao != null ? #temporals.format(tk.ngayTao, 'dd/MM/yyyy') : '---'}">01/01/2026</td>
+                <td style="font-size:0.8rem">Gần đây</td>
+                <td>
+                  <span th:if="${tk.trangThai == 'HoatDong'}" class="badge badge-success">Hoạt động</span>
+                  <span th:if="${tk.trangThai == 'BiKhoa'}" class="badge badge-danger">Đã khóa</span>
+                  <span th:if="${tk.trangThai != 'HoatDong' and tk.trangThai != 'BiKhoa'}" class="badge badge-warning" th:text="${tk.trangThai}">Chờ duyệt</span>
+                </td>
                 <td>
                   <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('hanhnt')"><i class="ti ti-key"></i></button>
-                    <button class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="toggleLock('hanhnt', true)"><i class="ti ti-lock"></i></button>
+                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="Toast.show('Đã gửi liên kết đổi mật khẩu!', 'success')"><i class="ti ti-key"></i></button>
+                    <button th:if="${tk.trangThai == 'HoatDong'}" class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="Toast.show('Đã khóa tài khoản!', 'warning')"><i class="ti ti-lock"></i></button>
+                    <button th:if="${tk.trangThai == 'BiKhoa'}" class="btn btn-success btn-sm" title="Mở khóa tài khoản" onclick="Toast.show('Đã mở khóa tài khoản!', 'success')"><i class="ti ti-lock-open"></i></button>
                   </div>
                 </td>
               </tr>
-              <tr>
-                <td style="font-weight:700;color:var(--primary-light)">dunght</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">D</div><div class="user-cell-info"><div class="name">Hoàng Thị Dung</div><div class="sub">Phòng CSKH</div></div></div></td>
-                <td><span class="badge badge-info">CSKH</span></td>
-                <td><div>dunght@neatify.vn</div><div style="font-size:0.75rem;color:var(--text-muted)">0912 345 678</div></td>
-                <td style="font-size:0.8rem">12/01/2025</td>
-                <td style="font-size:0.8rem">Hôm nay 08:15</td>
-                <td><span class="badge badge-success">Hoạt động</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('dunght')"><i class="ti ti-key"></i></button>
-                    <button class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="toggleLock('dunght', true)"><i class="ti ti-lock"></i></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-weight:700;color:var(--primary-light)">minhpv</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">M</div><div class="user-cell-info"><div class="name">Phạm Văn Minh</div><div class="sub">Phòng Marketing</div></div></div></td>
-                <td><span class="badge badge-warning">Marketing</span></td>
-                <td><div>minhpv@neatify.vn</div><div style="font-size:0.75rem;color:var(--text-muted)">0934 567 890</div></td>
-                <td style="font-size:0.8rem">15/02/2025</td>
-                <td style="font-size:0.8rem">Hôm nay 09:00</td>
-                <td><span class="badge badge-success">Hoạt động</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('minhpv')"><i class="ti ti-key"></i></button>
-                    <button class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="toggleLock('minhpv', true)"><i class="ti ti-lock"></i></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-weight:700;color:var(--primary-light)">ctv_hoatt</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">H</div><div class="user-cell-info"><div class="name">Trần Thị Hoa</div><div class="sub">CTV Dọn dẹp nhà · Q.1</div></div></div></td>
-                <td><span class="badge badge-success">Cộng tác viên</span></td>
-                <td><div>hoatt@gmail.com</div><div style="font-size:0.75rem;color:var(--text-muted)">0978 123 456</div></td>
-                <td style="font-size:0.8rem">20/03/2025</td>
-                <td style="font-size:0.8rem">Hôm qua 19:40</td>
-                <td><span class="badge badge-success">Hoạt động</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('ctv_hoatt')"><i class="ti ti-key"></i></button>
-                    <button class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="toggleLock('ctv_hoatt', true)"><i class="ti ti-lock"></i></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-weight:700;color:var(--primary-light)">ctv_nguyenvana</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF4757,#FF6B81)">A</div><div class="user-cell-info"><div class="name">Nguyễn Văn An</div><div class="sub">CTV Nấu ăn · Bình Thạnh</div></div></div></td>
-                <td><span class="badge badge-success">Cộng tác viên</span></td>
-                <td><div>vana@gmail.com</div><div style="font-size:0.75rem;color:var(--text-muted)">0989 333 444</div></td>
-                <td style="font-size:0.8rem">05/04/2025</td>
-                <td style="font-size:0.8rem">15/09/2026</td>
-                <td><span class="badge badge-danger">Đã khóa (Vi phạm)</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="resetPassword('ctv_nguyenvana')"><i class="ti ti-key"></i></button>
-                    <button class="btn btn-success btn-sm" title="Mở khóa tài khoản" onclick="toggleLock('ctv_nguyenvana', false)"><i class="ti ti-lock-open"></i></button>
-                  </div>
-                </td>
+              <tr th:if="${taiKhoans == null or #lists.isEmpty(taiKhoans)}">
+                <td colspan="8" style="text-align:center;color:var(--text-muted)">Không có tài khoản nào trong hệ thống</td>
               </tr>
             </tbody>
           </table>

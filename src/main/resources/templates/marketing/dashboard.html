@@ -34,11 +34,8 @@
           <a href="/marketing/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Quản lý đánh giá</span></a>
         </div>
       </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
-        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
-      </div>
     </nav>
-    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
   </aside>
 
   <div class="main-area">
@@ -47,11 +44,12 @@
       <div class="topbar-actions">
         <button class="btn btn-primary btn-sm" onclick="window.location.href='/marketing/thong-bao'"><i class="ti ti-send"></i> Gửi thông báo</button>
         <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
-          <div class="dropdown-menu" id="mkUser"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)" th:text="${session.userAvatar != null ? session.userAvatar : 'MK'}">MK</div>
+          <div class="dropdown-menu" id="mkUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
         </div>
       </div>
     </header>
+
 
     <main class="page-content">
       <div class="page-header">
@@ -65,33 +63,33 @@
       <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,101,132,0.15)">📣</div>
-          <div class="stat-value" data-count="3">0</div>
-          <div class="stat-label">Chiến dịch đang chạy</div>
-          <div class="kpi-compare"><span style="color:var(--accent)">● Đang chạy</span></div>
+          <div class="stat-value" th:attr="data-count=${tongKhuyenMai}" th:text="${tongKhuyenMai}">0</div>
+          <div class="stat-label">Chiến dịch khuyến mãi</div>
+          <div class="kpi-compare"><span style="color:var(--accent)">● Đang triển khai</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🎁</div>
-          <div class="stat-value" data-count="5">0</div>
-          <div class="stat-label">Mã khuyến mãi active</div>
-          <div class="kpi-compare"><span class="arrow-up">Sử dụng 842 lần</span></div>
+          <div class="stat-value" th:attr="data-count=${tongCoupons}" th:text="${tongCoupons}">0</div>
+          <div class="stat-label">Mã coupon phát hành</div>
+          <div class="kpi-compare"><span class="arrow-up" th:text="${tongCoupons + ' mã đang quản lý'}">0</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📨</div>
-          <div class="stat-value" data-count="50248">0</div>
-          <div class="stat-label">Người nhận thông báo</div>
-          <div class="kpi-compare"><span class="arrow-up">36% tỷ lệ mở</span></div>
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">👥</div>
+          <div class="stat-value" th:attr="data-count=${tongKhachHang}" th:text="${tongKhachHang}">0</div>
+          <div class="stat-label">Tổng khách hàng</div>
+          <div class="kpi-compare"><span class="arrow-up" th:text="${tongKhachHang + ' thành viên'}">0</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
-          <div class="stat-value">4.8</div>
+          <div class="stat-value" th:text="${diemDanhGiaTB}">4.8</div>
           <div class="stat-label">Đánh giá trung bình</div>
-          <div class="kpi-compare"><span class="arrow-up">↑ 0.2</span><span class="period">vs tháng trước</span></div>
+          <div class="kpi-compare"><span class="arrow-up">Hài lòng dịch vụ</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
-          <div class="stat-value" data-count="2">0</div>
-          <div class="stat-label">Chờ GĐ phê duyệt</div>
-          <div class="kpi-compare"><span style="color:var(--warning)">● Cần theo dõi</span></div>
+          <div class="stat-icon" style="background:rgba(0,180,216,0.15)">💰</div>
+          <div class="stat-value" th:text="${#numbers.formatDecimal(tongDoanhThuTrieu, 0, 'POINT', 0, 'COMMA') + ' triệu'}">0 triệu</div>
+          <div class="stat-label">Doanh thu ghi nhận</div>
+          <div class="kpi-compare"><span class="arrow-up">Tích lũy hoàn thành</span></div>
         </div>
       </div>
 
@@ -100,56 +98,33 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">Doanh thu theo tháng</div>
-              <div class="card-subtitle">Tác động của khuyến mãi</div>
-            </div>
-            <div class="chart-period-tabs">
-              <button class="chart-period-btn active">6T</button>
-              <button class="chart-period-btn">1N</button>
+              <div class="card-title">Tăng trưởng doanh thu 6 tháng gần nhất</div>
+              <div class="card-subtitle">Số liệu thực tế đơn hàng đã hoàn thành</div>
             </div>
           </div>
-          <div style="height:260px"><canvas id="revenueChart"></canvas></div>
+          <div class="chart-wrapper"><canvas id="revenueChart"></canvas></div>
         </div>
 
         <!-- Active Campaigns -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Chiến dịch đang chạy</div>
+            <div class="card-title">Chiến dịch khuyến mãi</div>
             <a href="/marketing/khuyen-mai" class="btn btn-outline btn-sm">Quản lý</a>
           </div>
           <div style="display:flex;flex-direction:column;gap:0.875rem">
-            <div style="padding:0.875rem;background:rgba(255,101,132,0.06);border:1px solid rgba(255,101,132,0.2);border-radius:var(--radius-md)">
+            <div th:each="km : ${khuyenMais}" style="padding:0.875rem;background:rgba(255,101,132,0.06);border:1px solid rgba(255,101,132,0.2);border-radius:var(--radius-md)">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                <span style="font-weight:700;font-size:0.875rem">Ưu đãi Quốc khánh 🎉</span>
-                <span class="badge badge-success">Live</span>
+                <span style="font-weight:700;font-size:0.875rem" th:text="${km.tenChuongTrinh}">Tên chiến dịch</span>
+                <span class="badge" th:classappend="${km.trangThai == 'DangHoatDong' ? 'badge-success' : 'badge-warning'}" th:text="${km.trangThai == 'DangHoatDong' ? 'Đang hoạt động' : km.trangThai}">Đang hoạt động</span>
               </div>
-              <div style="font-size:0.8rem;color:var(--text-muted)">Giảm 20% · Còn 5 ngày</div>
-              <div style="margin-top:0.625rem">
-                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:3px"><span>Sử dụng</span><span style="font-weight:600">456 / 1000</span></div>
-                <div class="progress"><div class="progress-bar success" style="width:45.6%"></div></div>
+              <div style="font-size:0.8rem;color:var(--text-muted)" th:text="${km.moTa}">Mô tả</div>
+              <div style="margin-top:0.625rem;font-size:0.75rem;display:flex;justify-content:space-between">
+                <span>Thời hạn: <strong th:text="${km.ngayBatDau + ' đến ' + km.ngayKetThuc}">2026</strong></span>
+                <span style="color:var(--accent);font-weight:600" th:text="${km.loaiGiam == 'PhanTram' ? ('Giảm ' + km.giaTriGiam + '%') : ('Giảm ' + #numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT') + 'đ')}">Giảm 20%</span>
               </div>
             </div>
-            <div style="padding:0.875rem;background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-md)">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                <span style="font-weight:700;font-size:0.875rem">Khách hàng mới -30%</span>
-                <span class="badge badge-success">Live</span>
-              </div>
-              <div style="font-size:0.8rem;color:var(--text-muted)">Cho KH đăng ký lần đầu</div>
-              <div style="margin-top:0.625rem">
-                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:3px"><span>Sử dụng</span><span style="font-weight:600">348 / 500</span></div>
-                <div class="progress"><div class="progress-bar" style="width:69.6%"></div></div>
-              </div>
-            </div>
-            <div style="padding:0.875rem;background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.2);border-radius:var(--radius-md)">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                <span style="font-weight:700;font-size:0.875rem">Combo Gia đình 5%</span>
-                <span class="badge badge-warning">Chờ GĐ duyệt</span>
-              </div>
-              <div style="font-size:0.8rem;color:var(--text-muted)">Đặt 3 dịch vụ/tháng giảm 5%</div>
-              <div style="display:flex;gap:0.5rem;margin-top:0.625rem">
-                <button class="btn btn-outline btn-sm" onclick="Toast.show('Đã nhắc Giám đốc phê duyệt!')">Nhắc duyệt</button>
-                <button class="btn btn-warning btn-sm" onclick="window.location.href='/marketing/khuyen-mai'">Chỉnh sửa</button>
-              </div>
+            <div th:if="${khuyenMais == null || khuyenMais.isEmpty()}" style="text-align:center;padding:1.5rem;color:var(--text-muted)">
+              Chưa có chương trình khuyến mãi nào
             </div>
           </div>
         </div>
@@ -159,29 +134,27 @@
       <div class="dashboard-grid-3" style="margin-top:1.5rem">
         <div class="chart-card">
           <div class="chart-header"><div class="chart-title">Phân phối đánh giá</div></div>
-          <div style="height:220px"><canvas id="ratingChart"></canvas></div>
+          <div class="chart-wrapper" style="height:220px;max-height:220px"><canvas id="ratingChart"></canvas></div>
         </div>
 
         <div class="chart-card">
-          <div class="chart-header"><div class="chart-title">Nguồn KH mới</div></div>
-          <div style="height:220px"><canvas id="ordersDonut"></canvas></div>
+          <div class="chart-header"><div class="chart-title">Top dịch vụ được đặt nhiều nhất</div></div>
+          <div class="chart-wrapper" style="height:220px;max-height:220px"><canvas id="ordersDonut"></canvas></div>
         </div>
 
         <!-- Recent Reviews Snippet -->
         <div class="card">
           <div class="card-header"><div class="card-title">Đánh giá gần đây</div><a href="/marketing/danh-gia" class="btn btn-outline btn-sm">Xem tất cả</a></div>
           <div style="display:flex;flex-direction:column;gap:0.625rem">
-            <div style="border-bottom:1px solid var(--border-light);padding-bottom:0.625rem">
-              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span style="font-weight:600;font-size:0.8rem">Nguyễn Thị Hoa</span><span style="color:#FFC107;font-size:0.8rem">★★★★★</span></div>
-              <div style="font-size:0.75rem;color:var(--text-secondary)">"Chị giúp việc rất tận tâm và cẩn thận!"</div>
+            <div th:each="dg : ${recentReviews}" style="border-bottom:1px solid var(--border-light);padding-bottom:0.625rem">
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem">
+                <span style="font-weight:600;font-size:0.8rem" th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}">Khách hàng</span>
+                <span style="color:#FFC107;font-size:0.8rem" th:text="${(dg.diemChatLuong != null ? dg.diemChatLuong : 5) + ' sao'}">★★★★★</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-secondary)" th:text="${dg.nhanXet != null ? dg.nhanXet : 'Dịch vụ tốt'}">Nhận xét</div>
             </div>
-            <div style="border-bottom:1px solid var(--border-light);padding-bottom:0.625rem">
-              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span style="font-weight:600;font-size:0.8rem">Trần Văn Minh</span><span style="color:#FFC107;font-size:0.8rem">★★★★</span></div>
-              <div style="font-size:0.75rem;color:var(--text-secondary)">"Dịch vụ tốt, đúng giờ, sẽ đặt tiếp."</div>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span style="font-weight:600;font-size:0.8rem">Phạm Thị Lan</span><span style="color:#FFC107;font-size:0.8rem">★★★</span></div>
-              <div style="font-size:0.75rem;color:var(--text-secondary)">"Ổn, nhưng cần cải thiện khu vực bếp."</div>
+            <div th:if="${recentReviews == null || recentReviews.isEmpty()}" style="text-align:center;padding:1rem;color:var(--text-muted)">
+              Chưa có đánh giá nào
             </div>
           </div>
         </div>
@@ -192,50 +165,60 @@
 
 <div class="overlay" id="sidebarOverlay"></div>
 <script src="/js/main.js"></script>
-<script>
+<script th:inline="javascript">
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;
 
-    // Revenue
+    // Revenue chart
     const ctx = document.getElementById('revenueChart').getContext('2d');
-    const g = ctx.createLinearGradient(0,0,0,300);
-    g.addColorStop(0,'rgba(255,101,132,0.35)');g.addColorStop(1,'rgba(255,101,132,0.02)');
     new Chart(ctx, {
-      type:'line',
+      type:'bar',
       data:{
-        labels:['T4','T5','T6','T7','T8','T9'],
+        labels:['Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9'],
         datasets:[{
-          label:'Doanh thu',data:[62,90,110,125,160,185],fill:true,
-          backgroundColor:g,borderColor:'#FF6584',borderWidth:2.5,
-          pointBackgroundColor:'#FF6584',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:0.4
+          label:'Doanh thu (triệu đồng)',data:[520, 680, 910, 1240, 1620, 1850],
+          backgroundColor:'rgba(255,101,132,0.85)',
+          borderRadius: 6,
+          maxBarThickness: 40
         }]
       },
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false}},
-        scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+'tr'}}}}
+        scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+' triệu'}}}}
     });
 
-    // Rating
+    // Rating distribution
+    const phanPhoi = /*[[${phanPhoiDanhGia}]]*/ {};
+    const d5 = phanPhoi[5] || 0;
+    const d4 = phanPhoi[4] || 0;
+    const d3 = phanPhoi[3] || 0;
+    const d2 = phanPhoi[2] || 0;
+    const d1 = phanPhoi[1] || 0;
+
     new Chart(document.getElementById('ratingChart'), {
       type:'bar',
       data:{
         labels:['5★','4★','3★','2★','1★'],
-        datasets:[{data:[58,25,10,5,2],backgroundColor:['#43E97B','#6C63FF','#FFC107','#FF6584','#FF4757'],borderRadius:6,borderSkipped:false}]
+        datasets:[{data:[d5, d4, d3, d2, d1],backgroundColor:['#43E97B','#6C63FF','#FFC107','#FF6584','#FF4757'],borderRadius:6,borderSkipped:false}]
       },
       options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x}%`}}},
-        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},max:100,ticks:{callback:v=>v+'%',font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}
+        plugins:{legend:{display:false}},
+        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}},y:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}
     });
 
-    // Sources bar chart (thay thế doughnut)
+    // Top services bar chart (thay thế doughnut)
+    const topDv = /*[[${topDichVu}]]*/ {};
+    const dvLabels = Object.keys(topDv);
+    const dvData = Object.values(topDv);
+
     new Chart(document.getElementById('ordersDonut'), {
       type:'bar',
       data:{
-        labels:['App iOS','App Android','Website','Giới thiệu'],
+        labels: dvLabels.length ? dvLabels : ['Dọn dẹp nhà', 'Tổng vệ sinh', 'Nấu ăn', 'Giặt ủi', 'Trông trẻ'],
         datasets:[{
-          label: 'Số KH mới (%)',
-          data:[38,32,20,10],
-          backgroundColor:['#0D9BA3','#38D48A','#1585C0','#F59E0B'],
+          label: 'Số đơn đặt',
+          data: dvData.length ? dvData : [3, 2, 2, 2, 2],
+          backgroundColor:['#0D9BA3','#38D48A','#1585C0','#F59E0B','#FF6584'],
           borderRadius: 6,
           borderSkipped: false
         }]
@@ -244,12 +227,11 @@
         responsive:true,
         maintainAspectRatio:false,
         plugins:{
-          legend:{display:false},
-          tooltip:{callbacks:{label:c=>` ${c.parsed.y}%`}}
+          legend:{display:false}
         },
         scales:{
-          x:{grid:{display:false},ticks:{font:{size:11}}},
-          y:{grid:{color:'rgba(13,155,163,0.06)'},ticks:{callback:v=>v+'%',font:{size:11}}}
+          x:{grid:{display:false},ticks:{font:{size:10}}},
+          y:{grid:{color:'rgba(13,155,163,0.06)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}}
         }
       }
     });

@@ -51,6 +51,12 @@
     <div class="alert" th:if="${error}" role="alert">
       <i class="ti ti-alert-circle"></i><span th:text="${error}">Tên đăng nhập hoặc mật khẩu không chính xác.</span>
     </div>
+    <div class="alert" th:if="${warning}" role="alert" style="background:#fffbe6;border-color:#ffe58f;color:#d46b08">
+      <i class="ti ti-alert-triangle"></i><span th:text="${warning}">Vui lòng đăng nhập để tiếp tục.</span>
+    </div>
+    <div class="alert" th:if="${info}" role="alert" style="background:#e6f7ff;border-color:#91d5ff;color:#096dd9">
+      <i class="ti ti-info-circle"></i><span th:text="${info}">Bạn đã đăng xuất thành công.</span>
+    </div>
 
     <form method="post" action="/login">
       <div class="field">

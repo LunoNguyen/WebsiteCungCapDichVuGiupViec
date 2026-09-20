@@ -39,11 +39,9 @@
           <a href="/cskh/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span></a>
         </div>
       </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
-        <div class="sidebar-nav-items"><a href="/login" class="sidebar-item"><i class="ti ti-switch-horizontal item-icon"></i><span class="item-label">Đổi role demo</span></a></div>
       </div>
     </nav>
-    <div class="sidebar-footer"><a href="/" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
+    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
   </aside>
 
   <div class="main-area">
@@ -55,11 +53,12 @@
       </div>
       <div class="topbar-actions">
         <button class="btn btn-primary btn-sm" data-modal-open="createOrderModal"><i class="ti ti-plus"></i> Tạo đơn mới</button>
-        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="cu1" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
-          <div class="dropdown-menu" id="cu1"><a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
+        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="cu1" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)" th:text="${session.userAvatar != null ? session.userAvatar : 'CS'}">CS</div>
+          <div class="dropdown-menu" id="cu1"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
         </div>
       </div>
     </header>
+
 
     <main class="page-content">
       <div class="page-header">
@@ -71,31 +70,45 @@
 
       <!-- Stats -->
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-clipboard-list" style="color:var(--primary)"></i></div><div><div class="quick-stat-val">1,247</div><div class="quick-stat-lbl">Tổng tháng này</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div><div><div class="quick-stat-val">5</div><div class="quick-stat-lbl">Chờ ghép CTV</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-loader" style="color:var(--primary)"></i></div><div><div class="quick-stat-val">18</div><div class="quick-stat-lbl">Đang thực hiện</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-check" style="color:var(--accent)"></i></div><div><div class="quick-stat-val">1,174</div><div class="quick-stat-lbl">Hoàn thành</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-x" style="color:var(--danger)"></i></div><div><div class="quick-stat-val">50</div><div class="quick-stat-lbl">Đã hủy</div></div></div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-clipboard-list" style="color:var(--primary)"></i></div>
+          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus) : 0}">0</div><div class="quick-stat-lbl">Tổng đơn hàng</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div>
+          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus.?[trangThai == 'ChoDuyet']) : 0}">0</div><div class="quick-stat-lbl">Chờ ghép Cộng tác viên</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-loader" style="color:var(--primary)"></i></div>
+          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus.?[trangThai == 'DangThucHien']) : 0}">0</div><div class="quick-stat-lbl">Đang thực hiện</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-check" style="color:var(--accent)"></i></div>
+          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus.?[trangThai == 'HoanThanh']) : 0}">0</div><div class="quick-stat-lbl">Hoàn thành</div></div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-x" style="color:var(--danger)"></i></div>
+          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus.?[trangThai == 'DaHuy']) : 0}">0</div><div class="quick-stat-lbl">Đã hủy</div></div>
+        </div>
       </div>
 
       <!-- Filter Bar -->
       <div class="filter-bar">
         <div class="search-box" style="flex:1">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm mã đơn, tên KH..." data-table-search="orderTable">
+          <input type="text" class="form-control" placeholder="Tìm theo mã đơn, tên khách hàng..." data-table-search="orderTable">
         </div>
         <select class="filter-select">
           <option>Tất cả trạng thái</option>
-          <option value="cho">Chờ ghép CTV</option>
-          <option value="dang">Đang thực hiện</option>
-          <option value="xong">Hoàn thành</option>
-          <option value="huy">Đã hủy</option>
+          <option value="ChoDuyet">Chờ duyệt</option>
+          <option value="DangThucHien">Đang thực hiện</option>
+          <option value="HoanThanh">Hoàn thành</option>
+          <option value="DaHuy">Đã hủy</option>
         </select>
         <select class="filter-select">
           <option>Tất cả dịch vụ</option>
-          <option>Dọn dẹp nhà</option><option>Giặt ủi</option><option>Nấu ăn</option><option>Trông trẻ</option><option>Chăm sóc NCT</option>
+          <option>Dọn dẹp nhà</option><option>Giặt ủi</option><option>Nấu ăn</option><option>Trông trẻ</option><option>Chăm sóc người cao tuổi</option>
         </select>
-        <input type="date" class="form-control" style="width:auto" value="2026-09-20">
       </div>
 
       <!-- Orders Table -->
@@ -104,83 +117,45 @@
           <table class="table" id="orderTable">
             <thead><tr>
               <th><input type="checkbox" id="selectAll" style="width:16px;height:16px;accent-color:var(--primary)"></th>
-              <th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>Địa chỉ</th><th>Thời gian</th><th>CTV phụ trách</th><th>Thành tiền</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th>
+              <th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>Thời gian</th><th>Thành tiền</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th>
             </tr></thead>
             <tbody>
-              <tr style="background:rgba(255,193,7,0.04)">
+              <tr th:each="order : ${donDatDichVus}">
                 <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
-                <td style="font-weight:600;font-size:0.8rem;color:var(--primary-light)">#DD-052</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm">N</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hoa</div><div class="sub">0912 345 678</div></div></div></td>
-                <td>Dọn dẹp nhà</td><td style="font-size:0.8rem">12 Lý Tự Trọng, Q.1</td>
-                <td style="font-size:0.8rem">20/09 · 14:00</td>
-                <td style="color:var(--text-muted);font-size:0.8rem">Chưa ghép</td>
-                <td style="font-weight:700;color:var(--accent)">240.000đ</td>
-                <td><span class="badge badge-warning">Chờ CTV</span></td>
-                <td><div class="table-actions">
-                  <button class="btn btn-primary btn-sm" data-modal-open="assignCtvModal">Ghép CTV</button>
-                  <button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem</button>
-                </div></td>
+                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)" th:text="${order.maDon != null ? order.maDon : ('#DD-' + order.id)}">#DD-001</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm" th:text="${order.khachHang != null and order.khachHang.hoTen != null ? #strings.toUpperCase(#strings.substring(order.khachHang.hoTen, 0, 1)) : 'K'}">K</div>
+                    <div class="user-cell-info">
+                      <div class="name" th:text="${order.khachHang != null ? order.khachHang.hoTen : 'Khách hàng'}">Khách hàng</div>
+                      <div class="sub" th:text="${order.khachHang != null ? order.khachHang.soDienThoai : ''}">0900000000</div>
+                    </div>
+                  </div>
+                </td>
+                <td th:text="${order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
+                <td style="font-size:0.8rem" th:text="${order.ngayTao != null ? #temporals.format(order.ngayTao, 'dd/MM/yyyy HH:mm') : '---'}">20/09/2026</td>
+                <td style="font-weight:700;color:var(--accent)" th:text="${order.thanhTien != null ? (#numbers.formatDecimal(order.thanhTien, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
+                <td>
+                  <span th:if="${order.trangThai == 'HoanThanh'}" class="badge badge-success">Hoàn thành</span>
+                  <span th:if="${order.trangThai == 'DangThucHien'}" class="badge badge-primary">Đang thực hiện</span>
+                  <span th:if="${order.trangThai == 'ChoDuyet'}" class="badge badge-warning">Chờ duyệt</span>
+                  <span th:if="${order.trangThai == 'DaHuy'}" class="badge badge-danger">Đã hủy</span>
+                  <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy'}" class="badge badge-info" th:text="${order.trangThai}">Khác</span>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem chi tiết</button>
+                  </div>
+                </td>
               </tr>
-              <tr style="background:rgba(255,71,87,0.03)">
-                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
-                <td style="font-weight:600;font-size:0.8rem;color:var(--danger)">#DD-048</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div><div class="user-cell-info"><div class="name">Trần Văn Minh</div><div class="sub">0987 654 321</div></div></div></td>
-                <td>Trông trẻ</td><td style="font-size:0.8rem">56 Hoàng Văn Thụ, Tân Bình</td>
-                <td style="font-size:0.8rem;color:var(--danger)">20/09 · 13:30 ⚠</td>
-                <td style="color:var(--text-muted);font-size:0.8rem">Chưa ghép</td>
-                <td style="font-weight:700;color:var(--accent)">360.000đ</td>
-                <td><span class="badge badge-danger">Quá hạn</span></td>
-                <td><div class="table-actions">
-                  <button class="btn btn-danger btn-sm" data-modal-open="assignCtvModal">Khẩn cấp</button>
-                  <button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
-                <td style="font-weight:600;font-size:0.8rem;color:var(--primary-light)">#DD-050</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div><div class="user-cell-info"><div class="name">Lê Thị Thu</div><div class="sub">0905 123 456</div></div></div></td>
-                <td>Nấu ăn</td><td style="font-size:0.8rem">45 Phan Xích Long, B.Thạnh</td>
-                <td style="font-size:0.8rem">20/09 · 17:00</td>
-                <td style="font-size:0.8rem;color:var(--accent)">Chị Hoa (CTV)</td>
-                <td style="font-weight:700;color:var(--accent)">180.000đ</td>
-                <td><span class="badge badge-primary">Đã ghép</span></td>
-                <td><div class="table-actions">
-                  <button class="btn btn-warning btn-sm" onclick="Toast.show('Đã đổi CTV khác!')">Đổi CTV</button>
-                  <button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
-                <td style="font-weight:600;font-size:0.8rem;color:var(--text-muted)">#DD-045</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FFC107,#E6A800)">P</div><div class="user-cell-info"><div class="name">Phạm Thị Mai</div><div class="sub">0901 888 999</div></div></div></td>
-                <td>Dọn dẹp nhà</td><td style="font-size:0.8rem">78 Nguyễn Trãi, Q.5</td>
-                <td style="font-size:0.8rem">19/09 · 09:00</td>
-                <td style="font-size:0.8rem">Chị Ngọc (CTV)</td>
-                <td style="font-weight:700;color:var(--accent)">240.000đ</td>
-                <td><span class="badge badge-success">Hoàn thành</span></td>
-                <td><div class="table-actions">
-                  <button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
-                <td style="font-weight:600;font-size:0.8rem;color:var(--text-muted)">#DD-039</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#A855F7,#9333EA)">H</div><div class="user-cell-info"><div class="name">Hoàng Văn Nam</div><div class="sub">0977 111 222</div></div></div></td>
-                <td>Vệ sinh tổng thể</td><td style="font-size:0.8rem">22 Đinh Tiên Hoàng, Q.7</td>
-                <td style="font-size:0.8rem">18/09 · 08:00</td>
-                <td style="font-size:0.8rem;color:var(--text-muted)">N/A</td>
-                <td style="font-weight:700;color:var(--text-muted)">700.000đ</td>
-                <td><span class="badge badge-danger">Đã hủy</span></td>
-                <td><div class="table-actions">
-                  <button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem</button>
-                </div></td>
+              <tr th:if="${donDatDichVus == null or #lists.isEmpty(donDatDichVus)}">
+                <td colspan="8" style="text-align:center;color:var(--text-muted)">Không có đơn đặt dịch vụ nào</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị 5 / 1.247 đơn</span>
-          <div class="pagination"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">...</button><button class="page-btn">›</button></div>
+          <span style="font-size:0.8rem;color:var(--text-muted)" th:text="${'Tổng cộng: ' + (donDatDichVus != null ? #lists.size(donDatDichVus) : 0) + ' đơn đặt dịch vụ'}">Tổng cộng: 0 đơn</span>
         </div>
       </div>
     </main>

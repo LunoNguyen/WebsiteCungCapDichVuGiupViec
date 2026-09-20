@@ -69,25 +69,16 @@
           </a>
         </div>
       </div>
-
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-group-label">Hệ thống</div>
-        <div class="sidebar-nav-items">
-          <a href="/login" class="sidebar-item">
-            <i class="ti ti-switch-horizontal item-icon"></i>
-            <span class="item-label">Đổi role demo</span>
-          </a>
-        </div>
-      </div>
     </nav>
 
     <div class="sidebar-footer">
-      <a href="/" class="sidebar-logout">
+      <a href="/logout" class="sidebar-logout">
         <i class="ti ti-logout item-icon"></i>
         <span class="item-label">Đăng xuất</span>
       </a>
     </div>
   </aside>
+
 
   <!-- ===== MAIN AREA ===== -->
   <div class="main-area">
@@ -142,15 +133,15 @@
 
         <div class="dropdown">
           <div style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.25rem 0.5rem;border-radius:var(--radius-md);transition:background 0.2s" data-dropdown="userMenu" onmouseover="this.style.background='var(--bg-card)'" onmouseout="this.style.background=''">
-            <div class="avatar avatar-sm">GĐ</div>
-            <span class="hide-mobile" style="font-size:0.85rem;font-weight:600">Nguyễn Văn An</span>
+            <div class="avatar avatar-sm" th:text="${session.userAvatar != null ? session.userAvatar : 'GĐ'}">GĐ</div>
+            <span class="hide-mobile" style="font-size:0.85rem;font-weight:600" th:text="${session.authenticatedFullName != null ? session.authenticatedFullName : 'Nguyễn Văn An'}">Nguyễn Văn An</span>
             <i class="ti ti-chevron-down hide-mobile" style="color:var(--text-muted);font-size:0.875rem"></i>
           </div>
           <div class="dropdown-menu" id="userMenu">
             <div class="dropdown-item"><i class="ti ti-user"></i> Hồ sơ cá nhân</div>
             <div class="dropdown-item"><i class="ti ti-settings"></i> Cài đặt</div>
             <hr class="dropdown-divider">
-            <a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a>
+            <a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a>
           </div>
         </div>
       </div>
@@ -162,13 +153,13 @@
       <div class="page-header">
         <div class="page-title-group">
           <h1 class="page-title">Dashboard Giám đốc</h1>
-          <p class="page-subtitle">Tổng quan hoạt động kinh doanh · Tháng 9/2026</p>
+          <p class="page-subtitle">Tổng quan hoạt động kinh doanh · Năm 2026</p>
         </div>
         <div class="page-actions">
           <button class="btn btn-secondary btn-sm" onclick="window.location.href='/giam-doc/bao-cao'">
             <i class="ti ti-download"></i> Xuất báo cáo
           </button>
-          <button class="btn btn-primary btn-sm">
+          <button class="btn btn-primary btn-sm" onclick="window.location.reload()">
             <i class="ti ti-refresh"></i> Làm mới
           </button>
         </div>
@@ -178,59 +169,60 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(108,99,255,0.15)">💰</div>
-          <div class="stat-value" data-count="1850">0</div>
-          <div class="stat-label">Doanh thu tháng (triệu đồng)</div>
+          <div class="stat-value" th:attr="data-count=${doanhThuTrieuDong != null ? doanhThuTrieuDong : 1850}" th:text="${doanhThuTrieuDong != null ? #numbers.formatDecimal(doanhThuTrieuDong, 0, 'POINT', 0, 'COMMA') : '1.850'}">1.850</div>
+          <div class="stat-label">Doanh thu tích lũy (triệu đồng)</div>
           <div class="kpi-compare">
             <span class="arrow-up">↑ 12.5%</span>
-            <span class="period">so với tháng trước</span>
+            <span class="period">tăng trưởng so với năm trước</span>
           </div>
-          <canvas id="spark1" style="height:40px;margin-top:0.75rem"></canvas>
+          <div class="sparkline-wrapper"><canvas id="spark1"></canvas></div>
         </div>
 
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📋</div>
-          <div class="stat-value" data-count="1247">0</div>
-          <div class="stat-label">Tổng đơn dịch vụ</div>
+          <div class="stat-value" th:attr="data-count=${tongDonHang != null ? tongDonHang : 11}" th:text="${tongDonHang != null ? tongDonHang : 11}">11</div>
+          <div class="stat-label">Tổng đơn đặt dịch vụ</div>
           <div class="kpi-compare">
             <span class="arrow-up">↑ 8.3%</span>
-            <span class="period">so với tháng trước</span>
+            <span class="period">tổng số đơn toàn hệ thống</span>
           </div>
-          <canvas id="spark2" style="height:40px;margin-top:0.75rem"></canvas>
+          <div class="sparkline-wrapper"><canvas id="spark2"></canvas></div>
         </div>
 
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,101,132,0.15)">👤</div>
-          <div class="stat-value" data-count="348">0</div>
-          <div class="stat-label">Khách hàng mới</div>
+          <div class="stat-value" th:attr="data-count=${tongKhachHang != null ? tongKhachHang : 6}" th:text="${tongKhachHang != null ? tongKhachHang : 6}">6</div>
+          <div class="stat-label">Khách hàng đăng ký</div>
           <div class="kpi-compare">
             <span class="arrow-up">↑ 15.2%</span>
-            <span class="period">so với tháng trước</span>
+            <span class="period">khách hàng kích hoạt</span>
           </div>
-          <canvas id="spark3" style="height:40px;margin-top:0.75rem"></canvas>
+          <div class="sparkline-wrapper"><canvas id="spark3"></canvas></div>
         </div>
 
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
-          <div class="stat-value">4.8</div>
+          <div class="stat-value" th:text="${diemDanhGiaTB != null ? diemDanhGiaTB : 4.9}">4.9</div>
           <div class="stat-label">Điểm đánh giá trung bình</div>
           <div class="kpi-compare">
             <span class="arrow-up">↑ 0.2</span>
-            <span class="period">so với tháng trước</span>
+            <span class="period">đánh giá từ khách hàng</span>
           </div>
-          <canvas id="spark4" style="height:40px;margin-top:0.75rem"></canvas>
+          <div class="sparkline-wrapper"><canvas id="spark4"></canvas></div>
         </div>
 
         <div class="stat-card" style="grid-column: span 1">
           <div class="stat-icon" style="background:rgba(255,71,87,0.15)">⚠️</div>
-          <div class="stat-value" data-count="23">0</div>
-          <div class="stat-label">Khiếu nại trong kỳ</div>
+          <div class="stat-value" th:attr="data-count=${tongKhieuNai != null ? tongKhieuNai : 3}" th:text="${tongKhieuNai != null ? tongKhieuNai : 3}">3</div>
+          <div class="stat-label">Tổng khiếu nại ghi nhận</div>
           <div class="kpi-compare">
-            <span class="arrow-down">↓ 3.1%</span>
-            <span class="period">so với tháng trước</span>
+            <span class="arrow-down" th:text="'Leo thang: ' + (${khieuNaiLeoThangCount != null ? khieuNaiLeoThangCount : 1})">Leo thang: 1</span>
+            <span class="period">cần xử lý ngay</span>
           </div>
-          <canvas id="spark5" style="height:40px;margin-top:0.75rem"></canvas>
+          <div class="sparkline-wrapper"><canvas id="spark5"></canvas></div>
         </div>
       </div>
+
 
       <!-- Charts Row -->
       <div class="dashboard-grid" style="margin-bottom:1.5rem">
@@ -239,15 +231,15 @@
           <div class="chart-header">
             <div>
               <div class="chart-title">Doanh thu theo tháng</div>
-              <div class="chart-subtitle">Triệu đồng · Năm 2026</div>
+              <div class="chart-subtitle">Đơn vị: Triệu đồng · Năm 2026</div>
             </div>
             <div class="chart-period-tabs">
-              <button class="chart-period-btn active">6T</button>
-              <button class="chart-period-btn">1N</button>
-              <button class="chart-period-btn">3N</button>
+              <button class="chart-period-btn active">6 tháng</button>
+              <button class="chart-period-btn">1 năm</button>
+              <button class="chart-period-btn">3 năm</button>
             </div>
           </div>
-          <div style="height:260px">
+          <div class="chart-wrapper">
             <canvas id="revenueChart"></canvas>
           </div>
         </div>
@@ -256,11 +248,11 @@
         <div class="chart-card">
           <div class="chart-header">
             <div>
-              <div class="chart-title">Trạng thái đơn</div>
+              <div class="chart-title">Trạng thái đơn đặt dịch vụ</div>
               <div class="chart-subtitle">Tháng 9/2026</div>
             </div>
           </div>
-          <div style="height:260px">
+          <div class="chart-wrapper">
             <canvas id="ordersDonut"></canvas>
           </div>
         </div>
@@ -272,7 +264,7 @@
           <div class="chart-header">
             <div class="chart-title">Dịch vụ phổ biến</div>
           </div>
-          <div style="height:220px">
+          <div class="chart-wrapper" style="height:220px;max-height:220px">
             <canvas id="servicesChart"></canvas>
           </div>
         </div>
@@ -281,7 +273,7 @@
           <div class="chart-header">
             <div class="chart-title">Phân phối đánh giá</div>
           </div>
-          <div style="height:220px">
+          <div class="chart-wrapper" style="height:220px;max-height:220px">
             <canvas id="ratingChart"></canvas>
           </div>
         </div>
@@ -290,7 +282,7 @@
           <div class="chart-header">
             <div class="chart-title">Trạng thái khiếu nại</div>
           </div>
-          <div style="height:220px">
+          <div class="chart-wrapper" style="height:220px;max-height:220px">
             <canvas id="complaintChart"></canvas>
           </div>
         </div>
@@ -303,7 +295,7 @@
           <div class="card-header" style="padding:1.25rem 1.5rem">
             <div>
               <div class="card-title">Đơn dịch vụ gần đây</div>
-              <div class="card-subtitle">10 đơn mới nhất hôm nay</div>
+              <div class="card-subtitle">Các đơn hàng mới nhất trên hệ thống</div>
             </div>
             <a href="/cskh/don-dat-dich-vu" class="btn btn-outline btn-sm">Xem tất cả</a>
           </div>
@@ -320,45 +312,27 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style="font-weight:600;font-size:0.8rem">#DD-20260920</td>
-                  <td><div class="user-cell"><div class="avatar avatar-sm">H</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hoa</div><div class="sub">Q.1, TP.HCM</div></div></div></td>
-                  <td>Dọn dẹp nhà</td>
-                  <td>20/09/2026</td>
-                  <td style="font-weight:700;color:var(--accent)">240.000đ</td>
-                  <td><span class="badge badge-success">Hoàn thành</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600;font-size:0.8rem">#DD-20260919</td>
-                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">M</div><div class="user-cell-info"><div class="name">Trần Văn Minh</div><div class="sub">Tân Bình</div></div></div></td>
-                  <td>Nấu ăn</td>
-                  <td>20/09/2026</td>
-                  <td style="font-weight:700;color:var(--accent)">180.000đ</td>
-                  <td><span class="badge badge-primary">Đang thực hiện</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600;font-size:0.8rem">#DD-20260919</td>
-                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div><div class="user-cell-info"><div class="name">Phạm Thị Lan</div><div class="sub">Bình Thạnh</div></div></div></td>
-                  <td>Trông trẻ</td>
-                  <td>21/09/2026</td>
-                  <td style="font-weight:700;color:var(--accent)">360.000đ</td>
-                  <td><span class="badge badge-warning">Đã xác nhận</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600;font-size:0.8rem">#DD-20260918</td>
-                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FFC107,#E6A800)">T</div><div class="user-cell-info"><div class="name">Lê Thị Thu</div><div class="sub">Q.3, TP.HCM</div></div></div></td>
-                  <td>Giặt ủi</td>
-                  <td>19/09/2026</td>
-                  <td style="font-weight:700;color:var(--accent)">120.000đ</td>
-                  <td><span class="badge badge-success">Hoàn thành</span></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600;font-size:0.8rem">#DD-20260918</td>
-                  <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">D</div><div class="user-cell-info"><div class="name">Nguyễn Văn Đức</div><div class="sub">Q.7, TP.HCM</div></div></div></td>
-                  <td>Vệ sinh tổng thể</td>
-                  <td>22/09/2026</td>
-                  <td style="font-weight:700;color:var(--accent)">700.000đ</td>
-                  <td><span class="badge badge-secondary">Chờ duyệt</span></td>
+                <tr th:each="order : ${recentOrders}">
+                  <td style="font-weight:600;font-size:0.8rem" th:text="${order.maDonDat}">#DD-01</td>
+                  <td>
+                    <div class="user-cell">
+                      <div class="avatar avatar-sm" th:text="${order.khachHang != null ? #strings.substring(order.khachHang.hoTen, 0, 1) : 'K'}">H</div>
+                      <div class="user-cell-info">
+                        <div class="name" th:text="${order.khachHang != null ? order.khachHang.hoTen : 'Khách hàng'}">Khách hàng</div>
+                        <div class="sub" th:text="${order.khachHang != null ? order.khachHang.soDienThoai : ''}">0901234567</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td th:text="${order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
+                  <td style="font-size:0.8rem" th:text="${order.ngayThucHien + ' ' + (order.gioBatDau != null ? order.gioBatDau : '')}">20/09/2026</td>
+                  <td style="font-weight:700;color:var(--accent)" th:text="${#numbers.formatDecimal(order.thanhTien != null ? order.thanhTien : 0, 0, 'COMMA', 0, 'POINT') + 'đ'}">240.000đ</td>
+                  <td>
+                    <span class="badge" 
+                          th:classappend="${order.trangThai == 'HoanThanh' ? 'badge-success' : (order.trangThai == 'DangThucHien' ? 'badge-primary' : (order.trangThai == 'DaXacNhan' ? 'badge-warning' : 'badge-secondary'))}"
+                          th:text="${order.trangThai == 'HoanThanh' ? 'Hoàn thành' : (order.trangThai == 'DangThucHien' ? 'Đang thực hiện' : (order.trangThai == 'DaXacNhan' ? 'Đã xác nhận' : (order.trangThai == 'ChoDuyet' ? 'Chờ duyệt' : order.trangThai)))}">
+                      Hoàn thành
+                    </span>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -368,51 +342,27 @@
         <!-- Pending Approvals -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Chờ phê duyệt</div>
-            <span class="badge badge-warning">5 mục</span>
+            <div class="card-title">Danh sách chờ phê duyệt</div>
+            <span class="badge badge-warning" th:text="${pendingComplaints != null ? pendingComplaints.size() + ' mục' : '0 mục'}">0 mục</span>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:0.875rem">
-            <!-- Complaint -->
-            <div style="padding:0.875rem;background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:var(--radius-md)">
+            <div th:each="kn : ${pendingComplaints}" style="padding:0.875rem;background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:var(--radius-md)">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-                <span class="badge badge-danger">Khiếu nại leo thang</span>
-                <span style="font-size:0.72rem;color:var(--text-muted)">5 phút trước</span>
+                <span class="badge" th:classappend="${kn.trangThai == 'LeoThang' || kn.trangThai == 'LeoCao' ? 'badge-danger' : 'badge-warning'}" th:text="${kn.trangThai == 'LeoThang' || kn.trangThai == 'LeoCao' ? 'Khiếu nại leo thang' : 'Khiếu nại ' + kn.trangThai}">Khiếu nại leo thang</span>
+                <span style="font-size:0.72rem;color:var(--text-muted)" th:text="${kn.maKhieuNai}">#KN</span>
               </div>
-              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem">KH Trần Thị B không đồng ý kết quả xử lý của Phòng CSKH về tài sản hư hỏng.</p>
+              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem" th:text="${kn.noiDung}">Nội dung khiếu nại...</p>
               <div style="display:flex;gap:0.5rem">
-                <button class="btn btn-primary btn-sm" data-modal-open="approveModal">Xem xét</button>
-                <button class="btn btn-outline btn-sm">Bỏ qua</button>
+                <a href="/giam-doc/khieu-nai" class="btn btn-primary btn-sm">Xem chi tiết & Xử lý</a>
               </div>
             </div>
-
-            <!-- HR Change -->
-            <div style="padding:0.875rem;background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-md)">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-                <span class="badge badge-primary">Thay đổi nhân sự</span>
-                <span style="font-size:0.72rem;color:var(--text-muted)">1 giờ trước</span>
-              </div>
-              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem">Đề xuất thăng chức NV Nguyễn Thị C lên vị trí Trưởng phòng CSKH.</p>
-              <div style="display:flex;gap:0.5rem">
-                <button class="btn btn-success btn-sm">Phê duyệt</button>
-                <button class="btn btn-danger btn-sm">Từ chối</button>
-              </div>
-            </div>
-
-            <!-- Notification -->
-            <div style="padding:0.875rem;background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.2);border-radius:var(--radius-md)">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-                <span class="badge badge-warning">Thông báo diện rộng</span>
-                <span style="font-size:0.72rem;color:var(--text-muted)">3 giờ trước</span>
-              </div>
-              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem">Phòng Marketing đề xuất gửi thông báo khuyến mãi 20% cho 15.000 KH.</p>
-              <div style="display:flex;gap:0.5rem">
-                <button class="btn btn-success btn-sm">Duyệt gửi</button>
-                <button class="btn btn-outline btn-sm">Xem trước</button>
-              </div>
+            <div th:if="${pendingComplaints == null || pendingComplaints.isEmpty()}" style="text-align:center;padding:1.5rem;color:var(--text-muted)">
+              Không có mục nào chờ phê duyệt
             </div>
           </div>
         </div>
+
       </div>
     </main>
   </div>

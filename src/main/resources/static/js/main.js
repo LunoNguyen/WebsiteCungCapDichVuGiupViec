@@ -419,6 +419,12 @@ document.addEventListener('DOMContentLoaded', () => {
   LandingPage.init();
   initCounters();
   initChartPeriodTabs();
+
+  // Show forbidden toast if redirected due to unauthorized role access
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('error') === 'forbidden') {
+    Toast.show('Bạn không có quyền truy cập vào đường dẫn yêu cầu! Hệ thống đã đưa bạn về trang thuộc quyền hạn của bạn.', 'error', 6000);
+  }
 });
 
 // Add form error style

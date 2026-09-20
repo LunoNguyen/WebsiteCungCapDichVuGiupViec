@@ -1,20 +1,34 @@
 package com.example.Service;
 
-import com.example.Model.TaiKhoan;
-import com.example.Repository.TaiKhoanRepository;
+import com.example.Model.*;
+import com.example.Repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
-/** Xac thuc tai khoan dang nhap tu bang TaiKhoan. */
+/**
+ * Xac thuc tai khoan va phan quyen tu CSDL.
+ */
 @Service
+@Transactional(readOnly = true)
 public class AuthService {
 
     private final TaiKhoanRepository taiKhoanRepository;
+    private final NhanVienRepository nhanVienRepository;
+    private final KhachHangRepository khachHangRepository;
+    private final CongTacVienRepository congTacVienRepository;
 
-    public AuthService(TaiKhoanRepository taiKhoanRepository) {
+    public AuthService(
+            TaiKhoanRepository taiKhoanRepository,
+            NhanVienRepository nhanVienRepository,
+            KhachHangRepository khachHangRepository,
+            CongTacVienRepository congTacVienRepository) {
         this.taiKhoanRepository = taiKhoanRepository;
+        this.nhanVienRepository = nhanVienRepository;
+        this.khachHangRepository = khachHangRepository;
+        this.congTacVienRepository = congTacVienRepository;
     }
 
     public AuthenticationResult authenticate(String tenDangNhap, String matKhau) {
@@ -26,11 +40,90 @@ public class AuthService {
         if (taiKhoan == null || !passwordMatches(matKhau, taiKhoan.getMatKhau())) {
             return AuthenticationResult.failure("Tên đăng nhập hoặc mật khẩu không chính xác.");
         }
-        if (!"HoatDong".equals(taiKhoan.getTrangThai())) {
+        if (!"HoatDong".equalsIgnoreCase(taiKhoan.getTrangThai())) {
             return AuthenticationResult.failure("Tài khoản chưa được kích hoạt hoặc đã bị khóa.");
         }
 
-      return AuthenticationResult.success(taiKhoan, redirectFor(taiKhoan));
+        return resolveUserRoleAndRedirect(taiKhoan);
+    }
+
+    private AuthenticationResult resolveUserRoleAndRedirect(TaiKhoan taiKhoan) {
+        String loaiTK = taiKhoan.getLoaiTaiKhoan();
+        String role = "ROLE_USER";
+        String redirectUrl = "/";
+        String fullName = taiKhoan.getTenDangNhap();
+        String avatar = "U";
+
+        if ("NhanVien".equalsIgnoreCase(loaiTK)) {
+            NhanVien nv = nhanVienRepository.findByTaiKhoan(taiKhoan)
+                    .orElseGet(() -> nhanVienRepository.findByTaiKhoan_Id(taiKhoan.getId()).orElse(null));
+
+            if (nv != null) {
+                fullName = nv.getHoTen();
+                ChucVu cv = nv.getChucVu();
+                String maChucVu = cv != null ? cv.getMaChucVu() : "";
+                String maPhongBan = (cv != null && cv.getPhongBan() != null) ? cv.getPhongBan().getMaPhongBan() : "";
+
+                if ("CV-GD".equalsIgnoreCase(maChucVu) || "PB-BGD".equalsIgnoreCase(maPhongBan) || "giamdoc".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                    role = "ROLE_GIAM_DOC";
+                    redirectUrl = "/giam-doc/dashboard";
+                    avatar = "GĐ";
+                } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu) || "CV-NVNS".equalsIgnoreCase(maChucVu) || "hanhnt".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                    role = "ROLE_HCNS";
+                    redirectUrl = "/hcns/dashboard";
+                    avatar = "HC";
+                } else if ("PB-CSKH".equalsIgnoreCase(maPhongBan) || "CV-CSKH".equalsIgnoreCase(maChucVu) || "dunght".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                    role = "ROLE_CSKH";
+                    redirectUrl = "/cskh/dashboard";
+                    avatar = "CS";
+                } else if ("PB-MKT".equalsIgnoreCase(maPhongBan) || "CV-MKT".equalsIgnoreCase(maChucVu) || "minhpv".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                    role = "ROLE_MARKETING";
+                    redirectUrl = "/marketing/dashboard";
+                    avatar = "MKT";
+                } else {
+                    role = "ROLE_HCNS";
+                    redirectUrl = "/hcns/dashboard";
+                    avatar = "NV";
+                }
+            } else {
+                // Fallback nếu tài khoản NhanVien nhưng chưa map NhanVien entity
+                if ("giamdoc".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                    role = "ROLE_GIAM_DOC";
+                    redirectUrl = "/giam-doc/dashboard";
+                    avatar = "GĐ";
+                } else if ("hanhnt".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                    role = "ROLE_HCNS";
+                    redirectUrl = "/hcns/dashboard";
+                    avatar = "HC";
+                } else if ("dunght".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                    role = "ROLE_CSKH";
+                    redirectUrl = "/cskh/dashboard";
+                    avatar = "CS";
+                } else if ("minhpv".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                    role = "ROLE_MARKETING";
+                    redirectUrl = "/marketing/dashboard";
+                    avatar = "MKT";
+                }
+            }
+        } else if ("KhachHang".equalsIgnoreCase(loaiTK)) {
+            role = "ROLE_KHACH_HANG";
+            redirectUrl = "/";
+            KhachHang kh = khachHangRepository.findByTaiKhoan(taiKhoan).orElse(null);
+            if (kh != null) {
+                fullName = kh.getHoTen();
+                avatar = "KH";
+            }
+        } else if ("CongTacVien".equalsIgnoreCase(loaiTK)) {
+            role = "ROLE_CTV";
+            redirectUrl = "/";
+            CongTacVien ctv = congTacVienRepository.findByTaiKhoan(taiKhoan).orElse(null);
+            if (ctv != null) {
+                fullName = ctv.getHoTen();
+                avatar = "CTV";
+            }
+        }
+
+        return AuthenticationResult.success(taiKhoan, role, fullName, avatar, redirectUrl);
     }
 
     private boolean passwordMatches(String input, String storedPassword) {
@@ -38,43 +131,35 @@ public class AuthService {
                 input.getBytes(StandardCharsets.UTF_8), storedPassword.getBytes(StandardCharsets.UTF_8));
     }
 
-    private String redirectFor(TaiKhoan taiKhoan) {
-        String loaiTaiKhoan = taiKhoan.getLoaiTaiKhoan();
-        String maTK = taiKhoan.getMaTaiKhoan();
-
-        if ("NhanVien".equals(loaiTaiKhoan) && maTK != null) {
-            // Giám đốc -> Thống kê báo cáo
-            if (maTK.startsWith("TK-GD")) {
-                return "/giam-doc/bao-cao"; 
-            }
-            if (maTK.startsWith("TK-HCNS")) {
-                return "/hcns/nhan-vien"; 
-            }
-            // CSKH -> Quản lý khiếu nại
-            if (maTK.startsWith("TK-CSKH")) {
-                return "/cskh/khieu-nai"; 
-            }
-            // Marketing -> Quản lý thông báo
-            if (maTK.startsWith("TK-MKT")) {
-                return "/marketing/thong-bao"; 
-            }
-        }
-        
-    
-        
-        return "/";
-    }
-
     private boolean isBlank(String value) { return value == null || value.isBlank(); }
 
-    public record AuthenticationResult(boolean success, String message, Integer taiKhoanId,
-                                       String tenDangNhap, String loaiTaiKhoan, String redirectUrl) {
-        static AuthenticationResult failure(String message) {
-            return new AuthenticationResult(false, message, null, null, null, null);
+    public record AuthenticationResult(
+            boolean success,
+            String message,
+            Integer taiKhoanId,
+            String tenDangNhap,
+            String loaiTaiKhoan,
+            String role,
+            String fullName,
+            String avatar,
+            String redirectUrl) {
+
+        public static AuthenticationResult failure(String message) {
+            return new AuthenticationResult(false, message, null, null, null, null, null, null, null);
         }
-        static AuthenticationResult success(TaiKhoan taiKhoan, String redirectUrl) {
-            return new AuthenticationResult(true, null, taiKhoan.getId(), taiKhoan.getTenDangNhap(),
-                    taiKhoan.getLoaiTaiKhoan(), redirectUrl);
+
+        public static AuthenticationResult success(TaiKhoan taiKhoan, String role, String fullName, String avatar, String redirectUrl) {
+            return new AuthenticationResult(
+                    true,
+                    null,
+                    taiKhoan.getId(),
+                    taiKhoan.getTenDangNhap(),
+                    taiKhoan.getLoaiTaiKhoan(),
+                    role,
+                    fullName,
+                    avatar,
+                    redirectUrl);
         }
     }
 }
+

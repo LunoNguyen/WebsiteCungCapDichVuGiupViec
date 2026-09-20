@@ -38,34 +38,26 @@ function initRevenueChart(canvasId, data = null) {
   if (!canvas) return null;
   const ctx = canvas.getContext('2d');
 
-  const labels = data?.labels || ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
-  const values = data?.values || [42,58,75,62,90,110,98,125,142,118,160,185];
-
-  const gradient = createGradient(ctx, 'rgba(13,155,163,0.45)', 'rgba(13,155,163,0.02)');
+  const labels = data?.labels || ['Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9'];
+  const values = data?.values || [520, 680, 910, 1240, 1620, 1850];
 
   return new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels,
       datasets: [{
         label: 'Doanh thu (triệu đồng)',
         data: values,
-        fill: true,
-        backgroundColor: gradient,
-        borderColor: '#0D9BA3',
-        borderWidth: 2.5,
-        pointBackgroundColor: '#0D9BA3',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 7,
-        tension: 0.4
+        backgroundColor: 'rgba(13,155,163,0.85)',
+        hoverBackgroundColor: '#0D9BA3',
+        borderRadius: 8,
+        borderSkipped: false,
+        maxBarThickness: 42
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -83,7 +75,7 @@ function initRevenueChart(canvasId, data = null) {
           grid: { color: 'rgba(13,155,163,0.06)' },
           ticks: {
             font: { size: 11 },
-            callback: (val) => val + ' tr'
+            callback: (val) => val.toLocaleString('vi-VN') + ' triệu'
           }
         }
       }

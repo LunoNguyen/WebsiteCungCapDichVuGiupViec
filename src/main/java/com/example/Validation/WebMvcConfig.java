@@ -15,6 +15,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(adminAuthenticationInterceptor)
-                .addPathPatterns("/giam-doc/**", "/hcns/**", "/cskh/**", "/marketing/**");
+                .addPathPatterns(
+                        "/giam-doc", "/giam-doc/**",
+                        "/hcns", "/hcns/**",
+                        "/cskh", "/cskh/**",
+                        "/marketing", "/marketing/**"
+                );
     }
 }
