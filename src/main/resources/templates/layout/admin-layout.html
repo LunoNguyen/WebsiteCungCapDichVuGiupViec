@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- ============================================================
+     ADMIN HEAD FRAGMENT
+     ============================================================ -->
+<head th:fragment="adminHead(pageTitle)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${pageTitle != null ? pageTitle + ' – Neatify' : 'Neatify – Quản trị hệ thống'}">Neatify – Quản trị hệ thống</title>
+  
+  <!-- Anti-flicker Theme Script (Instant Execution) -->
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('neatify_theme') || 'system';
+        var isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme-mode', saved);
+      } catch(e) {}
+    })();
+  </script>
+
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+  <!-- Core CSS -->
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+<!-- ============================================================
+     ADMIN SIDEBAR FRAGMENT
+     ============================================================ -->
+<aside class="sidebar" id="sidebar" th:fragment="adminSidebar(role, activeMenu)">
+  <!-- Sidebar Header -->
+  <div class="sidebar-header">
+    <a th:href="@{'/' + ${role} + '/dashboard'}" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+      <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+      <span class="sidebar-logo-text">Neat<span>ify</span></span>
+    </a>
+    <button class="sidebar-toggle" id="sidebarToggle" title="Thu gọn / Mở rộng"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+  </div>
+
+  <!-- Sidebar User Profile -->
+  <div class="sidebar-user">
+    <!-- Role specific avatar gradient -->
+    <div class="avatar" 
+         th:style="${role == 'giam-doc' ? 'background:linear-gradient(135deg,#6C63FF,#FF6584)' : (role == 'cskh' ? 'background:linear-gradient(135deg,#00B4D8,#0096B7)' : (role == 'hcns' ? 'background:linear-gradient(135deg,#43E97B,#38D46A);color:#000' : 'background:linear-gradient(135deg,#FF9966,#FF5E62)'))}"
+         th:text="${session.userAvatar != null ? session.userAvatar : (role == 'giam-doc' ? 'GĐ' : (role == 'cskh' ? 'CS' : (role == 'hcns' ? 'HC' : 'MKT')))}">CS</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name" th:text="${session.authenticatedFullName != null ? session.authenticatedFullName : (role == 'giam-doc' ? 'Nguyễn Văn An' : (role == 'cskh' ? 'Hoàng Thị Dung' : (role == 'hcns' ? 'Nguyễn Thị Hạnh' : 'Lê Minh Tuấn')))}">Họ và tên</div>
+      <div class="sidebar-user-role" th:text="${session.userRole != null ? session.userRole : (role == 'giam-doc' ? 'Giám đốc' : (role == 'cskh' ? 'NV Chăm sóc Khách hàng' : (role == 'hcns' ? 'NV HCNS - Kế toán' : 'Chuyên viên Marketing')))}">Chức vụ</div>
+    </div>
+  </div>
+
+  <!-- Sidebar Navigation -->
+  <nav class="sidebar-nav">
+    
+    <!-- 1. GIÁM ĐỐC MENU -->
+    <th:block th:if="${role == 'giam-doc'}">
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/dashboard" class="sidebar-item" th:classappend="${activeMenu == 'dashboard' ? 'active' : ''}">
+            <i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Quản trị & Báo cáo</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/bao-cao" class="sidebar-item" th:classappend="${activeMenu == 'bao-cao' ? 'active' : ''}">
+            <i class="ti ti-chart-bar item-icon"></i><span class="item-label">Thống kê & Báo cáo</span>
+          </a>
+          <a href="/giam-doc/khieu-nai" class="sidebar-item" th:classappend="${activeMenu == 'khieu-nai' ? 'active' : ''}">
+            <i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Giám sát khiếu nại</span>
+          </a>
+          <a href="/giam-doc/nhan-vien" class="sidebar-item" th:classappend="${activeMenu == 'nhan-vien' ? 'active' : ''}">
+            <i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân sự</span>
+          </a>
+          <a href="/giam-doc/thong-bao" class="sidebar-item" th:classappend="${activeMenu == 'thong-bao' ? 'active' : ''}">
+            <i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo hệ thống</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Cấu hình</div>
+        <div class="sidebar-nav-items">
+          <a href="/giam-doc/tai-khoan" class="sidebar-item" th:classappend="${activeMenu == 'tai-khoan' ? 'active' : ''}">
+            <i class="ti ti-shield-lock item-icon"></i><span class="item-label">Phân quyền & Tài khoản</span>
+          </a>
+        </div>
+      </div>
+    </th:block>
+
+    <!-- 2. CSKH MENU -->
+    <th:block th:if="${role == 'cskh'}">
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/dashboard" class="sidebar-item" th:classappend="${activeMenu == 'dashboard' ? 'active' : ''}">
+            <i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Khách hàng</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/khach-hang" class="sidebar-item" th:classappend="${activeMenu == 'khach-hang' ? 'active' : ''}">
+            <i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span>
+          </a>
+          <a href="/cskh/don-dat-dich-vu" class="sidebar-item" th:classappend="${activeMenu == 'don-dat-dich-vu' ? 'active' : ''}">
+            <i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span>
+          </a>
+          <a href="/cskh/khieu-nai" class="sidebar-item" th:classappend="${activeMenu == 'khieu-nai' ? 'active' : ''}">
+            <i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span>
+          </a>
+          <a href="/cskh/danh-gia" class="sidebar-item" th:classappend="${activeMenu == 'danh-gia' ? 'active' : ''}">
+            <i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Vận hành</div>
+        <div class="sidebar-nav-items">
+          <a href="/cskh/lich-phan-cong" class="sidebar-item" th:classappend="${activeMenu == 'lich-phan-cong' ? 'active' : ''}">
+            <i class="ti ti-calendar item-icon"></i><span class="item-label">Lịch phân công CTV</span>
+          </a>
+          <a href="/cskh/thong-bao" class="sidebar-item" th:classappend="${activeMenu == 'thong-bao' ? 'active' : ''}">
+            <i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span>
+          </a>
+        </div>
+      </div>
+    </th:block>
+
+    <!-- 3. HCNS - KẾ TOÁN MENU -->
+    <th:block th:if="${role == 'hcns'}">
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/dashboard" class="sidebar-item" th:classappend="${activeMenu == 'dashboard' ? 'active' : ''}">
+            <i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Nhân sự</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/nhan-vien" class="sidebar-item" th:classappend="${activeMenu == 'nhan-vien' ? 'active' : ''}">
+            <i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Nhân viên</span>
+          </a>
+          <a href="/hcns/cong-tac-vien" class="sidebar-item" th:classappend="${activeMenu == 'cong-tac-vien' ? 'active' : ''}">
+            <i class="ti ti-user-star item-icon"></i><span class="item-label">Quản lý CTV</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Dịch vụ & Bảng giá</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/danh-muc-dich-vu" class="sidebar-item" th:classappend="${activeMenu == 'danh-muc-dich-vu' ? 'active' : ''}">
+            <i class="ti ti-category item-icon"></i><span class="item-label">Danh mục dịch vụ</span>
+          </a>
+          <a href="/hcns/dich-vu-bang-gia" class="sidebar-item" th:classappend="${activeMenu == 'dich-vu-bang-gia' ? 'active' : ''}">
+            <i class="ti ti-receipt item-icon"></i><span class="item-label">Dịch vụ & Bảng giá</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Hệ thống</div>
+        <div class="sidebar-nav-items">
+          <a href="/hcns/tai-khoan" class="sidebar-item" th:classappend="${activeMenu == 'tai-khoan' ? 'active' : ''}">
+            <i class="ti ti-key item-icon"></i><span class="item-label">Quản lý Tài khoản</span>
+          </a>
+        </div>
+      </div>
+    </th:block>
+
+    <!-- 4. MARKETING MENU -->
+    <th:block th:if="${role == 'marketing'}">
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Tổng quan</div>
+        <div class="sidebar-nav-items">
+          <a href="/marketing/dashboard" class="sidebar-item" th:classappend="${activeMenu == 'dashboard' ? 'active' : ''}">
+            <i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Chiến dịch & Khuyến mãi</div>
+        <div class="sidebar-nav-items">
+          <a href="/marketing/khuyen-mai" class="sidebar-item" th:classappend="${activeMenu == 'khuyen-mai' ? 'active' : ''}">
+            <i class="ti ti-discount-2 item-icon"></i><span class="item-label">Khuyến mãi & Coupon</span>
+          </a>
+          <a href="/marketing/phan-tich" class="sidebar-item" th:classappend="${activeMenu == 'phan-tich' ? 'active' : ''}">
+            <i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích hiệu quả</span>
+          </a>
+        </div>
+      </div>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-group-label">Khách hàng & Tương tác</div>
+        <div class="sidebar-nav-items">
+          <a href="/marketing/danh-gia" class="sidebar-item" th:classappend="${activeMenu == 'danh-gia' ? 'active' : ''}">
+            <i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span>
+          </a>
+          <a href="/marketing/thong-bao" class="sidebar-item" th:classappend="${activeMenu == 'thong-bao' ? 'active' : ''}">
+            <i class="ti ti-speakerphone item-icon"></i><span class="item-label">Thông báo & Tin nhắn</span>
+          </a>
+        </div>
+      </div>
+    </th:block>
+
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="sidebar-footer">
+    <a href="/logout" class="sidebar-logout" title="Đăng xuất khỏi hệ thống">
+      <i class="ti ti-logout item-icon"></i>
+      <span class="item-label">Đăng xuất</span>
+    </a>
+  </div>
+</aside>
+
+
+<!-- ============================================================
+     ADMIN TOPBAR FRAGMENT
+     ============================================================ -->
+<header class="topbar" th:fragment="adminTopbar(roleLabel, rolePath, pageTitle)">
+  <!-- Breadcrumb -->
+  <div class="topbar-breadcrumb">
+    <span>Neatify</span>
+    <span class="sep">/</span>
+    <a th:href="${rolePath}" style="color:var(--text-muted);text-decoration:none" th:text="${roleLabel}">Phân hệ</a>
+    <span class="sep">/</span>
+    <span class="current" th:text="${pageTitle}">Trang hiện tại</span>
+  </div>
+
+  <!-- Global Quick Search -->
+  <div class="topbar-search hide-mobile">
+    <i class="ti ti-search search-icon"></i>
+    <input type="text" placeholder="Tìm kiếm nhanh...">
+  </div>
+
+  <!-- Actions -->
+  <div class="topbar-actions">
+    
+    <!-- THEME TOGGLE (Icon Bóng đèn 💡) -->
+    <div class="dropdown">
+      <button class="theme-toggle-btn" data-dropdown="themeMenu" id="themeToggleBtn" title="Chế độ giao diện (Sáng / Tối / Hệ thống)" aria-label="Đổi theme">
+        <i class="ti ti-bulb" id="themeIcon"></i>
+      </button>
+      <div class="dropdown-menu theme-dropdown-menu" id="themeMenu">
+        <button class="theme-menu-item" data-theme-set="light">
+          <i class="ti ti-sun theme-item-icon" style="color:#F59E0B"></i>
+          <span>Chế độ Sáng</span>
+          <i class="ti ti-check item-check"></i>
+        </button>
+        <button class="theme-menu-item" data-theme-set="dark">
+          <i class="ti ti-moon theme-item-icon" style="color:#6366F1"></i>
+          <span>Chế độ Tối</span>
+          <i class="ti ti-check item-check"></i>
+        </button>
+        <button class="theme-menu-item" data-theme-set="system">
+          <i class="ti ti-device-desktop theme-item-icon" style="color:#14BFC9"></i>
+          <span>Theo Hệ thống</span>
+          <i class="ti ti-check item-check"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Notification Button -->
+    <div class="dropdown">
+      <button class="topbar-icon-btn" data-dropdown="topbarNotif" title="Thông báo">
+        <i class="ti ti-bell"></i>
+        <span class="notif-dot"></span>
+      </button>
+      <div class="dropdown-menu notif-dropdown" id="topbarNotif">
+        <div class="notif-header">
+          <span class="notif-title">Thông báo hệ thống</span>
+        </div>
+        <div class="notif-item unread">
+          <div class="notif-dot-item"></div>
+          <div class="notif-content">
+            <p>Hệ thống hoạt động ổn định và sẵn sàng tiếp nhận dịch vụ.</p>
+            <span>Vừa xong</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Profile Dropdown -->
+    <div class="dropdown">
+      <div class="avatar avatar-sm" data-dropdown="userMenu" style="cursor:pointer;background:linear-gradient(135deg,var(--primary),var(--secondary));font-weight:700"
+           th:text="${session.userAvatar != null ? session.userAvatar : 'US'}">US</div>
+      <div class="dropdown-menu" id="userMenu">
+        <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border-light)">
+          <div style="font-weight:600;font-size:0.875rem" th:text="${session.authenticatedFullName != null ? session.authenticatedFullName : 'Người dùng'}">Người dùng</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${session.userRole != null ? session.userRole : 'Thành viên'}">Vai trò</div>
+        </div>
+        <a href="/logout" class="dropdown-item" style="color:var(--danger)">
+          <i class="ti ti-logout"></i> Đăng xuất
+        </a>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+
+<!-- ============================================================
+     ADMIN SCRIPTS FRAGMENT
+     ============================================================ -->
+<div th:fragment="adminScripts">
+  <!-- Toast notification container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Main JavaScript -->
+  <script src="/js/main.js"></script>
+</div>
+
+</body>
+</html>

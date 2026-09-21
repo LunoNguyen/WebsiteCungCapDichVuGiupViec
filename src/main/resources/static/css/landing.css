@@ -923,3 +923,48 @@
   .testimonials-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================
+   LANDING PAGE LIGHT THEME ADAPTATION
+   ========================================================== */
+[data-theme="light"] .landing-nav.scrolled {
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .hero-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(13,155,163,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(21,133,192,0.08) 0%, transparent 60%),
+    #F2F6F9;
+}
+
+[data-theme="light"] .hero-badge {
+  background: rgba(13, 155, 163, 0.12);
+  border-color: rgba(13, 155, 163, 0.25);
+  color: var(--primary-dark);
+}
+
+[data-theme="light"] .hero-brand-panel {
+  background: radial-gradient(ellipse at center, rgba(13, 155, 163, 0.14) 0%, transparent 70%);
+  border-color: rgba(13, 155, 163, 0.2);
+}
+
+[data-theme="light"] .hero-card-float {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(16, 42, 51, 0.1);
+}
+
+[data-theme="light"] .section-alt {
+  background: #E8EEF3;
+}
+
+[data-theme="light"] .service-card:hover {
+  box-shadow: 0 12px 32px rgba(16, 42, 51, 0.12), var(--shadow-primary);
+}
+
+[data-theme="light"] .mobile-menu {
+  background: #FFFFFF;
+}

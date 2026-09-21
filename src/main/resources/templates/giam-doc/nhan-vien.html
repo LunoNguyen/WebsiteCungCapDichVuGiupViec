@@ -1,57 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý Nhân viên – Giám đốc | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Quản lý Nhân viên – Giám đốc')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/giam-doc/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyễn Văn An</div><div class="sidebar-user-role">Giám đốc</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/giam-doc/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Quản lý</div>
-        <div class="sidebar-nav-items">
-          <a href="/giam-doc/bao-cao" class="sidebar-item"><i class="ti ti-chart-bar item-icon"></i><span class="item-label">Thống kê & Báo cáo</span></a>
-          <a href="/giam-doc/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Quản lý khiếu nại</span><span class="item-badge">3</span></a>
-          <a href="/giam-doc/nhan-vien" class="sidebar-item active"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân viên</span></a>
-          <a href="/giam-doc/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Quản lý thông báo</span><span class="item-badge">2</span></a>
-          <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
-        </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('giam-doc', 'nhan-vien')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/giam-doc/dashboard" style="color:var(--text-muted)">Giám đốc</a><span class="sep">/</span>
-        <span class="current">Quản lý Nhân viên</span>
-      </div>
-      <div class="topbar-actions">
-        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="um4" style="cursor:pointer" th:text="${session.userAvatar != null ? session.userAvatar : 'GĐ'}">GĐ</div>
-          <div class="dropdown-menu" id="um4"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('Giám đốc', '/giam-doc/dashboard', 'Quản lý Nhân viên')}"></header>
 
     <main class="page-content">
       <div class="page-header">
@@ -73,34 +28,39 @@
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:1.5rem">
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div>
-          <div><div class="quick-stat-val">24</div><div class="quick-stat-lbl">Tổng nhân viên</div></div>
+          <div>
+            <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</div>
+            <div class="quick-stat-lbl">Tổng nhân viên</div>
+          </div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
-          <div><div class="quick-stat-val">22</div><div class="quick-stat-lbl">Đang làm việc</div></div>
+          <div>
+            <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.dangLamViecCount : 0}">0</div>
+            <div class="quick-stat-lbl">Đang làm việc</div>
+          </div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-user-pause" style="color:var(--warning)"></i></div>
-          <div><div class="quick-stat-val">2</div><div class="quick-stat-lbl">Tạm nghỉ</div></div>
+          <div>
+            <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tamNghiCount : 0}">0</div>
+            <div class="quick-stat-lbl">Tạm nghỉ</div>
+          </div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-clipboard-list" style="color:var(--danger)"></i></div>
-          <div><div class="quick-stat-val">2</div><div class="quick-stat-lbl">Chờ phê duyệt</div></div>
+          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-user-x" style="color:var(--danger)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.nghiViecCount : 0}">0</div>
+            <div class="quick-stat-lbl">Đã nghỉ việc</div>
+          </div>
         </div>
-      </div>
-
-      <!-- Pending Approvals Alert -->
-      <div class="alert alert-warning" style="margin-bottom:1.25rem">
-        <i class="ti ti-alert-circle"></i>
-        <span><strong>2 đề xuất nhân sự</strong> từ Phòng HCNS-KT đang chờ phê duyệt của Giám đốc.</span>
-        <button class="btn btn-warning btn-sm" style="margin-left:auto" data-modal-open="approvalModal">Xem ngay</button>
       </div>
 
       <!-- Filter Bar -->
       <div class="filter-bar">
         <div class="search-box" style="flex:1">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm theo tên, mã NV..." data-table-search="staffTable">
+          <input type="text" class="form-control" placeholder="Tìm theo tên, mã nhân viên..." data-table-search="staffTable">
         </div>
         <select class="filter-select">
           <option>Tất cả phòng ban</option>
@@ -117,12 +77,16 @@
       </div>
 
       <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+          <div class="card-title">Danh sách nhân viên công ty</div>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</strong> nhân viên</span>
+        </div>
         <div class="table-container" style="border:none">
           <table class="table" id="staffTable">
             <thead>
               <tr>
                 <th>Nhân viên</th>
-                <th>Mã NV</th>
+                <th>Mã nhân viên</th>
                 <th>Phòng ban</th>
                 <th>Chức vụ</th>
                 <th>Ngày vào làm</th>
@@ -131,49 +95,37 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td><div class="user-cell"><div class="avatar avatar-sm">H</div><div class="user-cell-info"><div class="name">Nguyễn Thị Hạnh</div><div class="sub">hanhnt@giupviec.vn</div></div></div></td>
-                <td style="font-size:0.8rem;font-weight:600">NV-001</td>
-                <td>HCNS - Kế toán</td>
-                <td>Trưởng phòng</td>
-                <td style="font-size:0.8rem">01/03/2023</td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span></td>
+              <tr th:each="nv : ${nhanViens}">
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm" th:text="${#strings.substring(nv.hoTen, 0, 1)}">N</div>
+                    <div class="user-cell-info">
+                      <div class="name" th:text="${nv.hoTen}">Tên NV</div>
+                      <div class="sub" th:text="${nv.email}">email@neatify.vn</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="font-size:0.85rem;font-weight:600" th:text="${nv.maNhanVien}">NV-001</td>
+                <td th:text="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : '--'}">Phòng ban</td>
+                <td th:text="${nv.chucVu != null ? nv.chucVu.tenChucVu : '--'}">Chức vụ</td>
+                <td style="font-size:0.85rem" th:text="${nv.ngayVaoLam != null ? #temporals.format(nv.ngayVaoLam, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
+                <td>
+                  <span class="badge badge-success" th:if="${nv.trangThai == 'DangLamViec'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span>
+                  <span class="badge badge-warning" th:if="${nv.trangThai == 'TamNghi'}">Tạm nghỉ</span>
+                  <span class="badge badge-danger" th:if="${nv.trangThai == 'DaNghi' or nv.trangThai == 'NghiViec'}">Đã nghỉ việc</span>
+                </td>
                 <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
               </tr>
-              <tr>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">C</div><div class="user-cell-info"><div class="name">Trần Văn Cường</div><div class="sub">cuongtv@giupviec.vn</div></div></div></td>
-                <td style="font-size:0.8rem;font-weight:600">NV-002</td>
-                <td>CSKH</td>
-                <td>Nhân viên</td>
-                <td style="font-size:0.8rem">15/06/2023</td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
-              </tr>
-              <tr>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">D</div><div class="user-cell-info"><div class="name">Hoàng Thị Dung</div><div class="sub">dunght@giupviec.vn</div></div></div></td>
-                <td style="font-size:0.8rem;font-weight:600">NV-003</td>
-                <td>CSKH</td>
-                <td>Nhân viên</td>
-                <td style="font-size:0.8rem">20/09/2023</td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
-              </tr>
-              <tr>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FFC107,#E6A800)">M</div><div class="user-cell-info"><div class="name">Phạm Văn Minh</div><div class="sub">minhpv@giupviec.vn</div></div></div></td>
-                <td style="font-size:0.8rem;font-weight:600">NV-005</td>
-                <td>Marketing</td>
-                <td>Nhân viên</td>
-                <td style="font-size:0.8rem">01/01/2024</td>
-                <td><span class="badge badge-warning">Tạm nghỉ</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
+              <tr th:if="${nhanViens == null or #lists.isEmpty(nhanViens)}">
+                <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu nhân viên</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị 4 / 24 nhân viên</span>
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${nhanViens != null ? #lists.size(nhanViens) : 0}">0</span> nhân viên</span>
           <div class="pagination">
-            <button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">›</button>
+            <button class="page-btn active">1</button>
           </div>
         </div>
       </div>
@@ -257,7 +209,6 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

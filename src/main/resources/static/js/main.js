@@ -405,9 +405,88 @@ function initChartPeriodTabs() {
 }
 
 // ============================================================
+// THEME MANAGER (LIGHT, DARK, SYSTEM)
+// ============================================================
+const ThemeManager = {
+  STORAGE_KEY: 'neatify_theme',
+
+  init() {
+    const saved = localStorage.getItem(this.STORAGE_KEY) || 'system';
+    this.apply(saved);
+
+    try {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addEventListener('change', () => {
+        if (this.getCurrentMode() === 'system') {
+          this.apply('system');
+        }
+      });
+    } catch (err) {}
+
+    document.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-theme-set]');
+      if (item) {
+        e.preventDefault();
+        const mode = item.getAttribute('data-theme-set');
+        this.set(mode);
+        const parentMenu = item.closest('.dropdown-menu');
+        if (parentMenu) parentMenu.classList.remove('active');
+        const modeLabel = mode === 'light' ? 'Chế độ Sáng' : (mode === 'dark' ? 'Chế độ Tối' : 'Theo Hệ Thống');
+        if (typeof Toast !== 'undefined' && Toast.show) {
+          Toast.show(`Đã chuyển sang ${modeLabel}`, 'info', 2500);
+        }
+        return;
+      }
+
+      const directToggle = e.target.closest('.theme-direct-toggle');
+      if (directToggle) {
+        e.preventDefault();
+        const curr = this.getCurrentMode();
+        const next = curr === 'dark' ? 'light' : (curr === 'light' ? 'system' : 'dark');
+        this.set(next);
+        const nextLabel = next === 'light' ? 'Chế độ Sáng' : (next === 'dark' ? 'Chế độ Tối' : 'Theo Hệ Thống');
+        if (typeof Toast !== 'undefined' && Toast.show) {
+          Toast.show(`Đã chuyển sang ${nextLabel}`, 'info', 2500);
+        }
+      }
+    });
+  },
+
+  getCurrentMode() {
+    return localStorage.getItem(this.STORAGE_KEY) || 'system';
+  },
+
+  set(mode) {
+    localStorage.setItem(this.STORAGE_KEY, mode);
+    this.apply(mode);
+  },
+
+  apply(mode) {
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
+    
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme-mode', mode);
+
+    document.querySelectorAll('[data-theme-set]').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-theme-set') === mode);
+    });
+
+    document.querySelectorAll('.theme-toggle-btn i').forEach(icon => {
+      if (isDark) {
+        icon.className = 'ti ti-bulb theme-bulb-icon';
+      } else {
+        icon.className = 'ti ti-bulb-filled theme-bulb-icon';
+      }
+    });
+  }
+};
+
+// ============================================================
 // INIT ALL
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+  ThemeManager.init();
   SidebarManager.init();
   DropdownManager.init();
   ModalManager.init();

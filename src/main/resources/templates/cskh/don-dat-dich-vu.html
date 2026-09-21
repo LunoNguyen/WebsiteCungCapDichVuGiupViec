@@ -1,70 +1,22 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đơn đặt dịch vụ – CSKH | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Đơn đặt dịch vụ – CSKH')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/cskh/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Hoàng Thị Dung</div><div class="sidebar-user-role">NV Chăm sóc Khách hàng</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/cskh/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Khách hàng</div>
-        <div class="sidebar-nav-items">
-          <a href="/cskh/khach-hang" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span></a>
-          <a href="/cskh/don-dat-dich-vu" class="sidebar-item active"><i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span><span class="item-badge">5</span></a>
-          <a href="/cskh/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span><span class="item-badge">8</span></a>
-          <a href="/cskh/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Vận hành</div>
-        <div class="sidebar-nav-items">
-          <a href="/cskh/lich-phan-cong" class="sidebar-item"><i class="ti ti-calendar item-icon"></i><span class="item-label">Lịch phân công CTV</span></a>
-          <a href="/cskh/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span></a>
-        </div>
-      </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'don-dat-dich-vu')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/cskh/dashboard" style="color:var(--text-muted)">CSKH</a><span class="sep">/</span>
-        <span class="current">Đơn đặt dịch vụ</span>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn btn-primary btn-sm" data-modal-open="createOrderModal"><i class="ti ti-plus"></i> Tạo đơn mới</button>
-        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="cu1" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)" th:text="${session.userAvatar != null ? session.userAvatar : 'CS'}">CS</div>
-          <div class="dropdown-menu" id="cu1"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Đơn đặt dịch vụ')}"></header>
 
 
     <main class="page-content">
       <div class="page-header">
         <div class="page-title-group">
           <h1 class="page-title">Quản lý Đơn đặt dịch vụ</h1>
-          <p class="page-subtitle">Tạo, theo dõi, phân công và quản lý toàn bộ đơn hàng · UC-CSKH02</p>
+          <p class="page-subtitle">Theo dõi, phân công và quản lý toàn bộ đơn đặt dịch vụ thực tế</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" data-modal-open="createOrderModal"><i class="ti ti-plus"></i> Tạo đơn mới</button>
         </div>
       </div>
 
@@ -72,23 +24,23 @@
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-clipboard-list" style="color:var(--primary)"></i></div>
-          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus) : 0}">0</div><div class="quick-stat-lbl">Tổng đơn hàng</div></div>
+          <div><div class="quick-stat-val" th:text="${donHangStats != null ? donHangStats.tongDonHang : 0}">0</div><div class="quick-stat-lbl">Tổng đơn hàng</div></div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div>
-          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus.?[trangThai == 'ChoDuyet']) : 0}">0</div><div class="quick-stat-lbl">Chờ ghép Cộng tác viên</div></div>
+          <div><div class="quick-stat-val" th:text="${donHangStats != null ? donHangStats.choDuyetCount : 0}">0</div><div class="quick-stat-lbl">Chờ duyệt</div></div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-loader" style="color:var(--primary)"></i></div>
-          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus.?[trangThai == 'DangThucHien']) : 0}">0</div><div class="quick-stat-lbl">Đang thực hiện</div></div>
+          <div><div class="quick-stat-val" th:text="${donHangStats != null ? donHangStats.dangThucHienCount : 0}">0</div><div class="quick-stat-lbl">Đang thực hiện</div></div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-check" style="color:var(--accent)"></i></div>
-          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus.?[trangThai == 'HoanThanh']) : 0}">0</div><div class="quick-stat-lbl">Hoàn thành</div></div>
+          <div><div class="quick-stat-val" th:text="${donHangStats != null ? donHangStats.hoanThanhCount : 0}">0</div><div class="quick-stat-lbl">Hoàn thành</div></div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-x" style="color:var(--danger)"></i></div>
-          <div><div class="quick-stat-val" th:text="${donDatDichVus != null ? #lists.size(donDatDichVus.?[trangThai == 'DaHuy']) : 0}">0</div><div class="quick-stat-lbl">Đã hủy</div></div>
+          <div><div class="quick-stat-val" th:text="${donHangStats != null ? donHangStats.daHuyCount : 0}">0</div><div class="quick-stat-lbl">Đã hủy</div></div>
         </div>
       </div>
 
@@ -122,7 +74,7 @@
             <tbody>
               <tr th:each="order : ${donDatDichVus}">
                 <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
-                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)" th:text="${order.maDon != null ? order.maDon : ('#DD-' + order.id)}">#DD-001</td>
+                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)" th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
                 <td>
                   <div class="user-cell">
                     <div class="avatar avatar-sm" th:text="${order.khachHang != null and order.khachHang.hoTen != null ? #strings.toUpperCase(#strings.substring(order.khachHang.hoTen, 0, 1)) : 'K'}">K</div>
@@ -292,6 +244,6 @@ function selectCTV(el) {
   el.style.borderColor = 'rgba(67,233,123,0.3)';
 }
 </script>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

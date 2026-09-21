@@ -1,5 +1,6 @@
 package com.example.Controller;
 
+import com.example.DTO.*;
 import com.example.Repository.*;
 import com.example.Service.ThongKeService;
 import org.springframework.stereotype.Controller;
@@ -36,8 +37,10 @@ public class MarketingController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
-        model.addAttribute("tongKhuyenMai", chuongTrinhKhuyenMaiRepository.count());
-        model.addAttribute("tongCoupons", maCouponRepository.count());
+        var mktStats = thongKeService.getMarketingStats();
+        model.addAttribute("marketingStats", mktStats);
+        model.addAttribute("tongKhuyenMai", mktStats.getTongKhuyenMai());
+        model.addAttribute("tongCoupons", mktStats.getTongCoupons());
         model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
         model.addAttribute("diemDanhGiaTB", thongKeService.getDiemDanhGiaTrungBinh());
         model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
@@ -52,6 +55,7 @@ public class MarketingController {
     // UC-MKT01 – Quản lý khuyến mãi
     @GetMapping("/khuyen-mai")
     public String khuyenMai(Model model) {
+        model.addAttribute("marketingStats", thongKeService.getMarketingStats());
         model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
         model.addAttribute("coupons", maCouponRepository.findAll());
         return "marketing/khuyen-mai";
@@ -67,10 +71,14 @@ public class MarketingController {
     // UC-MKT03 – Phân tích & báo cáo marketing
     @GetMapping("/phan-tich")
     public String phanTich(Model model) {
-        model.addAttribute("tongKhuyenMai", chuongTrinhKhuyenMaiRepository.count());
-        model.addAttribute("tongCoupons", maCouponRepository.count());
+        var mktStats = thongKeService.getMarketingStats();
+        model.addAttribute("marketingStats", mktStats);
+        model.addAttribute("tongKhuyenMai", mktStats.getTongKhuyenMai());
+        model.addAttribute("tongCoupons", mktStats.getTongCoupons());
         model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
         model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
+        model.addAttribute("coupons", maCouponRepository.findAll());
+        model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
         return "marketing/phan-tich";
     }
 

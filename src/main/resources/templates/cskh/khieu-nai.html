@@ -1,62 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý Khiếu nại – CSKH | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Quản lý Khiếu nại – CSKH')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/cskh/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Hoàng Thị Dung</div><div class="sidebar-user-role">NV Chăm sóc Khách hàng</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/cskh/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Khách hàng</div>
-        <div class="sidebar-nav-items">
-          <a href="/cskh/khach-hang" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span></a>
-          <a href="/cskh/don-dat-dich-vu" class="sidebar-item"><i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span><span class="item-badge">5</span></a>
-          <a href="/cskh/khieu-nai" class="sidebar-item active"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span><span class="item-badge">8</span></a>
-          <a href="/cskh/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Vận hành</div>
-        <div class="sidebar-nav-items">
-          <a href="/cskh/lich-phan-cong" class="sidebar-item"><i class="ti ti-calendar item-icon"></i><span class="item-label">Lịch phân công CTV</span></a>
-          <a href="/cskh/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span></a>
-        </div>
-      </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'khieu-nai')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/cskh/dashboard" style="color:var(--text-muted)">CSKH</a><span class="sep">/</span>
-        <span class="current">Quản lý Khiếu nại</span>
-      </div>
-      <div class="topbar-actions">
-        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="cu2" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)" th:text="${session.userAvatar != null ? session.userAvatar : 'CS'}">CS</div>
-          <div class="dropdown-menu" id="cu2"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Quản lý Khiếu nại')}"></header>
 
 
     <main class="page-content">
@@ -69,81 +19,101 @@
 
       <!-- Stats -->
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-alert-circle" style="color:var(--danger)"></i></div><div><div class="quick-stat-val">8</div><div class="quick-stat-lbl">Chưa xử lý</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div><div><div class="quick-stat-val">15</div><div class="quick-stat-lbl">Đang xử lý</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(255,71,87,0.2)"><i class="ti ti-trending-up" style="color:var(--danger)"></i></div><div><div class="quick-stat-val">3</div><div class="quick-stat-lbl">Leo thang GĐ</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-check" style="color:var(--accent)"></i></div><div><div class="quick-stat-val">52</div><div class="quick-stat-lbl">Đã giải quyết (T9)</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-clock-hour-4" style="color:var(--primary)"></i></div><div><div class="quick-stat-val">2.4 ngày</div><div class="quick-stat-lbl">Thời gian TB</div></div></div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-alert-circle" style="color:var(--danger)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${khieuNaiStats != null ? khieuNaiStats.chuaXuLyCount : 0}">0</div>
+            <div class="quick-stat-lbl">Chưa xử lý</div>
+          </div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${khieuNaiStats != null ? khieuNaiStats.dangXuLyCount : 0}">0</div>
+            <div class="quick-stat-lbl">Đang xử lý</div>
+          </div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.2)"><i class="ti ti-trending-up" style="color:var(--danger)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${khieuNaiStats != null ? khieuNaiStats.leoThangCount : 0}">0</div>
+            <div class="quick-stat-lbl">Leo thang Giám đốc</div>
+          </div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-check" style="color:var(--accent)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${khieuNaiStats != null ? khieuNaiStats.daGiaiQuyetCount : 0}">0</div>
+            <div class="quick-stat-lbl">Đã giải quyết</div>
+          </div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-clock-hour-4" style="color:var(--primary)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${khieuNaiStats != null ? khieuNaiStats.thoiGianXuLyTrungBinhNgay + ' ngày' : '1.5 ngày'}">1.5 ngày</div>
+            <div class="quick-stat-lbl">Thời gian trung bình</div>
+          </div>
+        </div>
       </div>
 
       <!-- Filter Bar -->
       <div class="filter-bar">
         <div class="search-box" style="flex:1">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm mã KN, tên KH..." data-table-search="complainTable">
+          <input type="text" class="form-control" placeholder="Tìm theo mã khiếu nại, tên khách hàng..." data-table-search="complainTable">
         </div>
         <select class="filter-select">
           <option>Tất cả trạng thái</option>
-          <option>Mới</option><option>Đang xử lý</option><option>Chờ xác minh</option><option>Leo thang</option><option>Đã giải quyết</option>
+          <option>Mới</option><option>Đang xử lý</option><option>Leo thang</option><option>Đã giải quyết</option>
         </select>
         <select class="filter-select">
           <option>Loại vấn đề</option>
-          <option>Tài sản hư hỏng</option><option>Chất lượng dịch vụ</option><option>Thái độ phục vụ</option><option>Khác</option>
-        </select>
-        <select class="filter-select">
-          <option>Ưu tiên</option><option>Cao</option><option>Trung bình</option><option>Thấp</option>
+          <option>Tài sản hư hỏng</option><option>Chất lượng dịch vụ</option><option>Thái độ phục vụ</option>
         </select>
       </div>
 
       <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+          <div class="card-title">Danh sách Khiếu nại</div>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng cộng: <strong th:text="${khieuNaiStats != null ? khieuNaiStats.tongKhieuNai : 0}">0</strong> khiếu nại</span>
+        </div>
         <div class="table-container" style="border:none">
           <table class="table" id="complainTable">
             <thead><tr>
-              <th>Mã KN</th><th>Khách hàng</th><th>Loại vấn đề</th><th>Đơn liên quan</th><th>Ngày gửi</th><th>Phụ trách</th><th>Ưu tiên</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th>
+              <th>Mã khiếu nại</th><th>Khách hàng</th><th>Loại vấn đề</th><th>Đơn liên quan</th><th>Ngày gửi</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th>
             </tr></thead>
             <tbody>
-              <tr>
-                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)">#KN-001</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm">T</div><div class="user-cell-info"><div class="name">Trần Thị Bình</div><div class="sub">0912 345 678</div></div></div></td>
-                <td>Tài sản hư hỏng</td><td style="font-size:0.8rem">#DD-20260915</td><td style="font-size:0.8rem">18/09/2026</td>
-                <td style="font-size:0.8rem;color:var(--text-muted)">Chưa phân công</td>
-                <td><span class="badge badge-danger">Cao</span></td>
-                <td><span class="badge badge-danger">Leo thang GĐ</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="cmpDetail">Xem</button></div></td>
+              <tr th:each="kn : ${khieuNais}">
+                <td style="font-weight:700;font-size:0.85rem;color:var(--primary-light)" th:text="${kn.maKhieuNai}">#KN-001</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm" th:text="${kn.khachHang != null ? #strings.substring(kn.khachHang.hoTen, 0, 1) : 'K'}">K</div>
+                    <div class="user-cell-info">
+                      <div class="name" th:text="${kn.khachHang != null ? kn.khachHang.hoTen : 'Khách hàng'}">Tên KH</div>
+                      <div class="sub" th:text="${kn.khachHang != null ? kn.khachHang.soDienThoai : ''}">SĐT</div>
+                    </div>
+                  </div>
+                </td>
+                <td th:text="${kn.loaiVanDe}">Chất lượng dịch vụ</td>
+                <td style="font-size:0.85rem;font-weight:600" th:text="${kn.donDat != null ? kn.donDat.maDonDat : '--'}">#DD-001</td>
+                <td style="font-size:0.85rem" th:text="${kn.ngayGui != null ? #temporals.format(kn.ngayGui, 'dd/MM/yyyy HH:mm') : '--'}">20/09/2026</td>
+                <td>
+                  <span class="badge badge-danger" th:if="${kn.trangThai == 'LeoThang'}">Leo thang Giám đốc</span>
+                  <span class="badge badge-warning" th:if="${kn.trangThai == 'DangXuLy'}">Đang xử lý</span>
+                  <span class="badge badge-secondary" th:if="${kn.trangThai == 'Moi' or kn.trangThai == 'ChuaXuLy'}">Chưa xử lý</span>
+                  <span class="badge badge-success" th:if="${kn.trangThai == 'DaGiaiQuyet'}">Đã giải quyết</span>
+                </td>
+                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="cmpDetail">Chi tiết</button></div></td>
               </tr>
-              <tr>
-                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)">#KN-010</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">N</div><div class="user-cell-info"><div class="name">Nguyễn Văn Hùng</div><div class="sub">0987 111 222</div></div></div></td>
-                <td>Chất lượng dịch vụ</td><td style="font-size:0.8rem">#DD-20260918</td><td style="font-size:0.8rem">20/09/2026</td>
-                <td style="font-size:0.8rem">Chị Dung (CSKH)</td>
-                <td><span class="badge badge-warning">Trung bình</span></td>
-                <td><span class="badge badge-secondary">Mới</span></td>
-                <td><div class="table-actions"><button class="btn btn-primary btn-sm" data-panel-open="cmpDetail">Xử lý</button></div></td>
-              </tr>
-              <tr>
-                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)">#KN-009</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FFC107,#E6A800)">P</div><div class="user-cell-info"><div class="name">Phạm Thị Lan</div><div class="sub">0905 888 999</div></div></div></td>
-                <td>Thái độ phục vụ</td><td style="font-size:0.8rem">#DD-20260917</td><td style="font-size:0.8rem">19/09/2026</td>
-                <td style="font-size:0.8rem">Chị Dung (CSKH)</td>
-                <td><span class="badge badge-secondary">Thấp</span></td>
-                <td><span class="badge badge-warning">Đang xử lý</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="cmpDetail">Xem</button></div></td>
-              </tr>
-              <tr>
-                <td style="font-weight:700;font-size:0.8rem;color:var(--text-muted)">#KN-088</td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#A855F7,#9333EA)">L</div><div class="user-cell-info"><div class="name">Lê Thị Thu</div><div class="sub">0901 777 888</div></div></div></td>
-                <td>Chất lượng dịch vụ</td><td style="font-size:0.8rem">#DD-20260905</td><td style="font-size:0.8rem">08/09/2026</td>
-                <td style="font-size:0.8rem">Chị Dung (CSKH)</td>
-                <td><span class="badge badge-secondary">Thấp</span></td>
-                <td><span class="badge badge-success">Đã giải quyết</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="cmpDetail">Xem</button></div></td>
+              <tr th:if="${khieuNais == null or #lists.isEmpty(khieuNais)}">
+                <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có khiếu nại nào</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị 4 / 78 khiếu nại</span>
-          <div class="pagination"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">›</button></div>
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${khieuNais != null ? #lists.size(khieuNais) : 0}">0</span> / <span th:text="${khieuNaiStats != null ? khieuNaiStats.tongKhieuNai : 0}">0</span> khiếu nại</span>
+          <div class="pagination"><button class="page-btn active">1</button></div>
         </div>
       </div>
     </main>
@@ -194,7 +164,6 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Neatify - Nền tảng đặt dịch vụ chăm sóc nhà cửa đáng tin cậy, minh bạch và chuyên nghiệp.">
   <title>Neatify – Chăm sóc nhà cửa chuyên nghiệp</title>
+
+  <!-- Anti-flicker Theme Script -->
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('neatify_theme') || 'system';
+        var isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme-mode', saved);
+      } catch(e) {}
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -31,6 +44,30 @@
     </div>
 
     <div class="nav-actions">
+      <!-- Theme Toggle (💡) -->
+      <div class="dropdown">
+        <button class="theme-toggle-btn" data-dropdown="landingThemeMenu" id="landingThemeBtn" title="Chế độ giao diện (Sáng / Tối / Hệ thống)" aria-label="Đổi giao diện">
+          <i class="ti ti-bulb" id="landingThemeIcon"></i>
+        </button>
+        <div class="dropdown-menu theme-dropdown-menu" id="landingThemeMenu" style="right:0;left:auto">
+          <button class="theme-menu-item" data-theme-set="light">
+            <i class="ti ti-sun theme-item-icon" style="color:#F59E0B"></i>
+            <span>Chế độ Sáng</span>
+            <i class="ti ti-check item-check"></i>
+          </button>
+          <button class="theme-menu-item" data-theme-set="dark">
+            <i class="ti ti-moon theme-item-icon" style="color:#6366F1"></i>
+            <span>Chế độ Tối</span>
+            <i class="ti ti-check item-check"></i>
+          </button>
+          <button class="theme-menu-item" data-theme-set="system">
+            <i class="ti ti-device-desktop theme-item-icon" style="color:#14BFC9"></i>
+            <span>Theo Hệ thống</span>
+            <i class="ti ti-check item-check"></i>
+          </button>
+        </div>
+      </div>
+
       <a href="#services" class="btn btn-primary btn-sm">Đặt ngay</a>
       <button class="hamburger" id="hamburger" aria-label="Menu">
         <span></span><span></span><span></span>
@@ -46,6 +83,11 @@
   <a href="#how-it-works" class="nav-link">Cách hoạt động</a>
   <a href="#pricing" class="nav-link">Bảng giá</a>
   <a href="#testimonials" class="nav-link">Đánh giá</a>
+  <div style="display:flex;gap:0.5rem;justify-content:center;margin:1rem 0">
+    <button class="theme-menu-item" data-theme-set="light" style="width:auto;border:1px solid var(--border)"><i class="ti ti-sun" style="color:#F59E0B"></i> Sáng</button>
+    <button class="theme-menu-item" data-theme-set="dark" style="width:auto;border:1px solid var(--border)"><i class="ti ti-moon" style="color:#6366F1"></i> Tối</button>
+    <button class="theme-menu-item" data-theme-set="system" style="width:auto;border:1px solid var(--border)"><i class="ti ti-device-desktop" style="color:#14BFC9"></i> Tự động</button>
+  </div>
   <a href="#services" class="btn btn-primary btn-lg">Xem dịch vụ</a>
 </div>
 
@@ -546,8 +588,8 @@
   </div>
 </footer>
 
-<!-- Scroll to top -->
-<button class="scroll-top" id="scrollTop" aria-label="Lên đầu trang">↑</button>
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 
 <script src="/js/main.js"></script>
 </body>

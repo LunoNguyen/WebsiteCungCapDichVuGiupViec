@@ -1,5 +1,6 @@
 package com.example.Controller;
 
+import com.example.DTO.*;
 import com.example.Repository.*;
 import com.example.Service.ThongKeService;
 import org.springframework.stereotype.Controller;
@@ -42,24 +43,20 @@ public class HCNSController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
-        long tongNV = thongKeService.getTongNhanVien();
-        long tongCTV = thongKeService.getTongCongTacVien();
-        long tongDV = thongKeService.getTongDichVu();
+        var ctvStats = thongKeService.getCongTacVienStats();
+        var nvStats = thongKeService.getNhanVienStats();
         var ctvs = congTacVienRepository.findAll();
         var dvs = dichVuRepository.findAll();
 
-        long ctvChoDuyet = ctvs.stream().filter(c -> "ChoDuyet".equalsIgnoreCase(c.getTrangThai())).count();
-        long ctvMoi = ctvs.stream().filter(c -> "Moi".equalsIgnoreCase(c.getCapDo())).count();
-        long ctvThuong = ctvs.stream().filter(c -> "Thuong".equalsIgnoreCase(c.getCapDo())).count();
-        long ctvUuTu = ctvs.stream().filter(c -> "UuTu".equalsIgnoreCase(c.getCapDo())).count();
-
-        model.addAttribute("tongNhanVien", tongNV);
-        model.addAttribute("tongCongTacVien", tongCTV);
-        model.addAttribute("tongDichVu", tongDV);
-        model.addAttribute("ctvChoDuyetCount", ctvChoDuyet);
-        model.addAttribute("ctvMoiCount", ctvMoi);
-        model.addAttribute("ctvThuongCount", ctvThuong);
-        model.addAttribute("ctvUuTuCount", ctvUuTu);
+        model.addAttribute("congTacVienStats", ctvStats);
+        model.addAttribute("nhanVienStats", nvStats);
+        model.addAttribute("tongNhanVien", nvStats.getTongNhanVien());
+        model.addAttribute("tongCongTacVien", ctvStats.getTongCongTacVien());
+        model.addAttribute("tongDichVu", thongKeService.getTongDichVu());
+        model.addAttribute("ctvChoDuyetCount", ctvStats.getChoDuyetCount());
+        model.addAttribute("ctvMoiCount", ctvStats.getMoiCount());
+        model.addAttribute("ctvThuongCount", ctvStats.getThuongCount());
+        model.addAttribute("ctvUuTuCount", ctvStats.getUuTuCount());
         model.addAttribute("nhanViens", nhanVienRepository.findAll());
         model.addAttribute("congTacViens", ctvs);
         model.addAttribute("dichVus", dvs);
@@ -69,6 +66,7 @@ public class HCNSController {
     // UC-HCNS01 – Quản lý nhân viên
     @GetMapping("/nhan-vien")
     public String nhanVien(Model model) {
+        model.addAttribute("nhanVienStats", thongKeService.getNhanVienStats());
         model.addAttribute("nhanViens", nhanVienRepository.findAll());
         return "hcns/nhan-vien";
     }
@@ -76,6 +74,7 @@ public class HCNSController {
     // UC-HCNS02 – Quản lý CTV
     @GetMapping("/cong-tac-vien")
     public String congTacVien(Model model) {
+        model.addAttribute("congTacVienStats", thongKeService.getCongTacVienStats());
         model.addAttribute("congTacViens", congTacVienRepository.findAll());
         return "hcns/cong-tac-vien";
     }
@@ -84,6 +83,7 @@ public class HCNSController {
     @GetMapping("/danh-muc-dich-vu")
     public String danhMucDichVu(Model model) {
         model.addAttribute("loaiDichVus", loaiDichVuRepository.findAll());
+        model.addAttribute("dichVus", dichVuRepository.findAll());
         return "hcns/danh-muc-dich-vu";
     }
 

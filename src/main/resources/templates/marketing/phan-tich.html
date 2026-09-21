@@ -1,58 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phân tích & Báo cáo – Marketing | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Phân tích & Báo cáo – Marketing')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/marketing/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Phạm Văn Minh</div><div class="sidebar-user-role">NV Marketing</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/marketing/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Marketing</div>
-        <div class="sidebar-nav-items">
-          <a href="/marketing/khuyen-mai" class="sidebar-item"><i class="ti ti-discount item-icon"></i><span class="item-label">Khuyến mãi</span></a>
-          <a href="/marketing/thong-bao" class="sidebar-item"><i class="ti ti-send item-icon"></i><span class="item-label">Gửi thông báo</span><span class="item-badge">2</span></a>
-          <a href="/marketing/phan-tich" class="sidebar-item active"><i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích dữ liệu</span></a>
-          <a href="/marketing/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Quản lý đánh giá</span></a>
-        </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('marketing', 'phan-tich')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/marketing/dashboard" style="color:var(--text-muted)">Marketing</a><span class="sep">/</span>
-        <span class="current">Phân tích & Báo cáo</span>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xuất báo cáo marketing PDF...')"><i class="ti ti-download"></i> Xuất báo cáo</button>
-        <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)" th:text="${session.userAvatar != null ? session.userAvatar : 'MK'}">MK</div>
-          <div class="dropdown-menu" id="mkUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('Marketing', '/marketing/dashboard', 'Phân tích & Báo cáo')}"></header>
 
 
     <main class="page-content">
@@ -73,91 +27,77 @@
       <!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">🎯</div>
-          <div class="stat-value">68.000đ</div>
-          <div class="stat-label">Chi phí thu hút KH (CAC)</div>
-          <div class="kpi-compare"><span class="arrow-down" style="color:var(--accent)">↓ 12% so tháng trước</span></div>
+          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
+          <div class="stat-value" th:text="${tongKhachHang != null ? tongKhachHang : 0}">0</div>
+          <div class="stat-label">Tổng khách hàng mục tiêu</div>
+          <div class="kpi-compare"><span class="arrow-up">Hệ thống thực tế</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">💎</div>
-          <div class="stat-value">1.450.000đ</div>
-          <div class="stat-label">Giá trị trọn đời KH (LTV)</div>
-          <div class="kpi-compare"><span class="arrow-up">LTV / CAC = 21.3</span></div>
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🎟️</div>
+          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongCoupons : 0}">0</div>
+          <div class="stat-label">Tổng mã ưu đãi</div>
+          <div class="kpi-compare"><span class="arrow-up">Đang quản lý</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,101,132,0.15)">📈</div>
-          <div class="stat-value">18.2%</div>
-          <div class="stat-label">Tỷ lệ tải app -> đặt đơn</div>
-          <div class="kpi-compare"><span class="arrow-up">↑ 2.4%</span></div>
+          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongLuotSuDungCoupon : 0}">0</div>
+          <div class="stat-label">Lượt đã áp dụng mã</div>
+          <div class="kpi-compare"><span class="arrow-up">Chuyển đổi thực</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">🚀</div>
-          <div class="stat-value">460%</div>
-          <div class="stat-label">Tỷ suất sinh lời ROI</div>
-          <div class="kpi-compare"><span class="arrow-up">Mỗi 1đ chi ra mang lại 4.6đ</span></div>
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">💰</div>
+          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.doanhThuKhuyenMaiTrieuDong + ' triệu' : '0 triệu'}">0 triệu</div>
+          <div class="stat-label">Doanh thu hệ thống</div>
+          <div class="kpi-compare"><span class="arrow-up">Thực nhận</span></div>
         </div>
       </div>
 
-      <!-- Charts Section: ƯU TIÊN BIỂU ĐỒ CỘT -->
-      <div class="dashboard-grid" style="margin-bottom:1.5rem">
-        <!-- Channel Performance Column Bar Chart -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <div class="chart-title">Khách hàng mới theo kênh Marketing</div>
-              <div class="chart-subtitle">Biểu đồ cột so sánh số lượng chuyển đổi các kênh</div>
-            </div>
-          </div>
-          <div style="height:260px"><canvas id="channelBarChart"></canvas></div>
-        </div>
-
-        <!-- Coupon ROI Bar Chart -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <div class="chart-title">Doanh thu theo mã Coupon</div>
-              <div class="chart-subtitle">Triệu đồng doanh thu thực tế</div>
-            </div>
-          </div>
-          <div style="height:260px"><canvas id="couponBarChart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Details Channel Table -->
-      <div class="card" style="padding:0">
-        <div class="card-header" style="padding:1.25rem 1.5rem">
+      <!-- Details Campaign Table -->
+      <div class="card" style="padding:0;margin-top:1.5rem">
+        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
           <div>
-            <div class="card-title">Chi tiết chi phí & chuyển đổi theo kênh tiếp thị</div>
-            <div class="card-subtitle">Tháng 9/2026</div>
+            <div class="card-title">Chi tiết các chiến dịch khuyến mãi đang triển khai</div>
+            <div class="card-subtitle">Dữ liệu từ hệ thống</div>
           </div>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${khuyenMais != null ? #lists.size(khuyenMais) : 0}">0</strong> chiến dịch</span>
         </div>
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
-                <th>Kênh Marketing</th>
-                <th>Ngân sách chi tiêu</th>
-                <th>Lượt cài đặt App</th>
-                <th>Khách hàng mới</th>
-                <th>Doanh thu tạo ra</th>
-                <th>Chi phí / KH (CAC)</th>
-                <th>Tỷ suất ROI</th>
+                <th>Mã chiến dịch</th>
+                <th>Tên chiến dịch</th>
+                <th>Loại ưu đãi</th>
+                <th>Mức giảm</th>
+                <th>Đơn tối thiểu</th>
+                <th>Thời gian áp dụng</th>
+                <th>Trạng thái</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style="font-weight:700">📱 Facebook & Instagram Ads</td>
-                <td>25.000.000đ</td>
-                <td>2,150</td>
-                <td style="font-weight:600">310 KH</td>
-                <td style="font-weight:700;color:var(--accent)">142.000.000đ</td>
-                <td>80.600đ</td>
-                <td><span class="badge badge-success">468%</span></td>
+              <tr th:each="km : ${khuyenMais}">
+                <td style="font-weight:700;color:var(--primary-light)" th:text="${km.maChuongTrinh}">KM01</td>
+                <td>
+                  <div style="font-weight:600" th:text="${km.tenChuongTrinh}">Tên chiến dịch</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${km.moTa}">Mô tả</div>
+                </td>
+                <td th:text="${km.loaiGiam == 'PhanTram' ? 'Phần trăm' : 'Số tiền cố định'}">Phần trăm</td>
+                <td style="font-weight:700;color:var(--accent)" th:text="${km.loaiGiam == 'PhanTram' ? km.giaTriGiam + '%' : #numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT') + 'đ'}">20%</td>
+                <td th:text="${km.dieuKienToiThieu != null ? #numbers.formatDecimal(km.dieuKienToiThieu, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">100.000đ</td>
+                <td style="font-size:0.85rem" th:text="${#temporals.format(km.ngayBatDau, 'dd/MM/yyyy') + ' - ' + #temporals.format(km.ngayKetThuc, 'dd/MM/yyyy')}">01/09 - 30/09/2026</td>
+                <td>
+                  <span class="badge badge-success" th:if="${km.trangThai == 'DangHoatDong'}">Đang hoạt động</span>
+                  <span class="badge badge-warning" th:if="${km.trangThai == 'SapDienRa'}">Sắp diễn ra</span>
+                  <span class="badge badge-secondary" th:if="${km.trangThai == 'DaKetThuc'}">Đã kết thúc</span>
+                </td>
               </tr>
-              <tr>
-                <td style="font-weight:700">🔍 Google Search & Maps Ads</td>
-                <td>18.000.000đ</td>
-                <td>1,420</td>
+              <tr th:if="${khuyenMais == null or #lists.isEmpty(khuyenMais)}">
+                <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu chiến dịch</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
                 <td style="font-weight:600">240 KH</td>
                 <td style="font-weight:700;color:var(--accent)">118.000.000đ</td>
                 <td>75.000đ</td>
@@ -189,8 +129,7 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;

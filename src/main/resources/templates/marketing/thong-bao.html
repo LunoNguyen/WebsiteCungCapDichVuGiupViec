@@ -1,58 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thông báo Marketing | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Thông báo Marketing')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/marketing/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Phạm Văn Minh</div><div class="sidebar-user-role">NV Marketing</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/marketing/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Marketing</div>
-        <div class="sidebar-nav-items">
-          <a href="/marketing/khuyen-mai" class="sidebar-item"><i class="ti ti-discount item-icon"></i><span class="item-label">Khuyến mãi</span></a>
-          <a href="/marketing/thong-bao" class="sidebar-item active"><i class="ti ti-send item-icon"></i><span class="item-label">Gửi thông báo</span><span class="item-badge">2</span></a>
-          <a href="/marketing/phan-tich" class="sidebar-item"><i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích dữ liệu</span></a>
-          <a href="/marketing/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Quản lý đánh giá</span></a>
-        </div>
-      </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('marketing', 'thong-bao')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/marketing/dashboard" style="color:var(--text-muted)">Marketing</a><span class="sep">/</span>
-        <span class="current">Thông báo Marketing</span>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn btn-primary btn-sm" data-modal-open="createCampaignModal"><i class="ti ti-send"></i> Tạo chiến dịch gửi tin</button>
-        <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)" th:text="${session.userAvatar != null ? session.userAvatar : 'MK'}">MK</div>
-          <div class="dropdown-menu" id="mkUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('Marketing', '/marketing/dashboard', 'Thông báo Marketing')}"></header>
 
 
     <main class="page-content">
@@ -60,6 +14,9 @@
         <div class="page-title-group">
           <h1 class="page-title">Chiến dịch Push Notification & Marketing</h1>
           <p class="page-subtitle">Gửi tin nhắn quảng bá, chương trình ưu đãi hàng loạt đến Khách hàng và CTV</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" data-modal-open="createCampaignModal"><i class="ti ti-send"></i> Tạo chiến dịch gửi tin</button>
         </div>
       </div>
 
@@ -196,7 +153,6 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

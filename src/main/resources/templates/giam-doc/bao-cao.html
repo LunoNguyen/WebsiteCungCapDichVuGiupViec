@@ -1,75 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Báo cáo & Thống kê – Giám đốc | Neatify</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Báo cáo & Thống kê – Giám đốc')}"></head>
 <body>
 <div class="app-shell">
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <img src="/assets/Logo.png" class="sidebar-logo-img" alt="Neatify">
-      <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
-      <div class="sidebar-user-info">
-        <div class="sidebar-user-name">Nguyễn Văn An</div>
-        <div class="sidebar-user-role">Giám đốc</div>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items">
-          <a href="/giam-doc/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-group-label">Quản lý</div>
-        <div class="sidebar-nav-items">
-          <a href="/giam-doc/bao-cao" class="sidebar-item active"><i class="ti ti-chart-bar item-icon"></i><span class="item-label">Thống kê & Báo cáo</span></a>
-          <a href="/giam-doc/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Quản lý khiếu nại</span><span class="item-badge">3</span></a>
-          <a href="/giam-doc/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý nhân viên</span></a>
-          <a href="/giam-doc/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Quản lý thông báo</span><span class="item-badge">2</span></a>
-          <a href="/giam-doc/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý tài khoản</span></a>
-        </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer">
-      <a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a>
-    </div>
-  </aside>
-
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('giam-doc', 'bao-cao')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/giam-doc/dashboard" style="color:var(--text-muted)">Giám đốc</a><span class="sep">/</span>
-        <span class="current">Thống kê & Báo cáo</span>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn btn-primary btn-sm"><i class="ti ti-download"></i> Xuất báo cáo</button>
-        <div class="dropdown">
-          <div style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:4px 8px;border-radius:6px" data-dropdown="userMenu2">
-            <div class="avatar avatar-sm">GĐ</div>
-          </div>
-          <div class="dropdown-menu" id="userMenu2">
-            <a href="/" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a>
-          </div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('Giám đốc', '/giam-doc/dashboard', 'Thống kê & Báo cáo')}"></header>
 
     <main class="page-content">
       <div class="page-header">
@@ -149,7 +86,7 @@
                   <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>Thành tiền</th><th>Trạng thái</th></tr></thead>
                   <tbody>
                     <tr th:each="order : ${recentOrders}">
-                      <td style="font-weight:700;color:var(--primary-light)" th:text="${order.maDon != null ? order.maDon : ('#DD-' + order.id)}">#DD-001</td>
+                      <td style="font-weight:700;color:var(--primary-light)" th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
                       <td th:text="${order.khachHang != null ? order.khachHang.hoTen : 'Khách hàng'}">Nguyễn Văn A</td>
                       <td th:text="${order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
                       <td style="font-weight:700;color:var(--accent)" th:text="${order.thanhTien != null ? (#numbers.formatDecimal(order.thanhTien, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
@@ -270,8 +207,7 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 <script src="/js/charts.js"></script>
 </body>
 </html>

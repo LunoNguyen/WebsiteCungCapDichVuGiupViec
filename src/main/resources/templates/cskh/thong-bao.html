@@ -1,71 +1,22 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thông báo – CSKH | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Thông báo – CSKH')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/cskh/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Hoàng Thị Dung</div><div class="sidebar-user-role">NV Chăm sóc Khách hàng</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/cskh/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Khách hàng</div>
-        <div class="sidebar-nav-items">
-          <a href="/cskh/khach-hang" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span></a>
-          <a href="/cskh/don-dat-dich-vu" class="sidebar-item"><i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span><span class="item-badge">5</span></a>
-          <a href="/cskh/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span><span class="item-badge">8</span></a>
-          <a href="/cskh/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Vận hành</div>
-        <div class="sidebar-nav-items">
-          <a href="/cskh/lich-phan-cong" class="sidebar-item"><i class="ti ti-calendar item-icon"></i><span class="item-label">Lịch phân công CTV</span></a>
-          <a href="/cskh/thong-bao" class="sidebar-item active"><i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span></a>
-        </div>
-      </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'thong-bao')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/cskh/dashboard" style="color:var(--text-muted)">CSKH</a><span class="sep">/</span>
-        <span class="current">Thông báo CSKH</span>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn btn-primary btn-sm" data-modal-open="createNotifModal"><i class="ti ti-send"></i> Gửi thông báo mới</button>
-        <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="cskhUser" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)" th:text="${session.userAvatar != null ? session.userAvatar : 'CS'}">CS</div>
-          <div class="dropdown-menu" id="cskhUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Thông báo CSKH')}"></header>
 
 
     <main class="page-content">
       <div class="page-header">
         <div class="page-title-group">
-          <h1 class="page-title">Thông báo Chăm sóc Khách hàng & CTV</h1>
+          <h1 class="page-title">Thông báo Chăm sóc Khách hàng & Cộng tác viên</h1>
           <p class="page-subtitle">Gửi nhắc hẹn dịch vụ, thông báo tiến độ xử lý và tin nhắn hỗ trợ trực tiếp</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" data-modal-open="createNotifModal"><i class="ti ti-send"></i> Gửi thông báo mới</button>
         </div>
       </div>
 
@@ -73,27 +24,27 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(13,155,163,0.15)">📬</div>
-          <div class="stat-value">186</div>
-          <div class="stat-label">Thông báo gửi hôm nay</div>
-          <div class="kpi-compare"><span class="arrow-up">Đang hoạt động</span></div>
+          <div class="stat-value" th:text="${thongBaos != null ? #lists.size(thongBaos) : 0}">0</div>
+          <div class="stat-label">Tổng thông báo hệ thống</div>
+          <div class="kpi-compare"><span class="arrow-up">Hệ thống thực tế</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">👁️</div>
-          <div class="stat-value">94.2%</div>
-          <div class="stat-label">Tỷ lệ mở xem tin nhắn</div>
-          <div class="kpi-compare"><span class="arrow-up">Rất cao</span></div>
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Tỷ lệ truyền tải tin nhắn</div>
+          <div class="kpi-compare"><span class="arrow-up">Hoạt động tốt</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏰</div>
-          <div class="stat-value">52</div>
-          <div class="stat-label">Nhắc lịch hẹn dịch vụ</div>
-          <div class="kpi-compare"><span class="period">Gửi trước 2 giờ</span></div>
+          <div class="stat-value" th:text="${donHangStats != null ? donHangStats.choDuyetCount : 0}">0</div>
+          <div class="stat-label">Đơn cần điều phối</div>
+          <div class="kpi-compare"><span class="period">Cần gửi phân công</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🛡️</div>
-          <div class="stat-value">8</div>
-          <div class="stat-label">Kết quả xử lý khiếu nại</div>
-          <div class="kpi-compare"><span class="period">Đã thông báo tới KH</span></div>
+          <div class="stat-value" th:text="${khieuNaiStats != null ? khieuNaiStats.chuaXuLyCount : 0}">0</div>
+          <div class="stat-label">Khiếu nại cần xử lý</div>
+          <div class="kpi-compare"><span class="period">Cần phản hồi</span></div>
         </div>
       </div>
 
@@ -133,32 +84,17 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style="font-weight:600">🔔 Nhắc lịch dịch vụ dọn dẹp nhà lúc 14:00 hôm nay</td>
-                <td>Nguyễn Thị Hoa (0903 111 222)</td>
-                <td><span class="badge badge-primary">Khách hàng</span></td>
+              <tr th:each="tb : ${thongBaos}">
+                <td style="font-weight:600" th:text="${tb.tieuDe}">Tiêu đề thông báo</td>
+                <td th:text="${tb.nguoiGui != null ? tb.nguoiGui : 'Hệ thống Neatify'}">Người gửi</td>
+                <td><span class="badge badge-primary" th:text="${tb.nhomNhan}">Đối tượng</span></td>
                 <td>App Push + SMS</td>
-                <td style="font-size:0.8rem">Hôm nay 12:00</td>
-                <td><span class="badge badge-success">Đã đọc</span></td>
+                <td style="font-size:0.8rem" th:text="${tb.thoiGianGui != null ? #temporals.format(tb.thoiGianGui, 'dd/MM/yyyy HH:mm') : '--'}">Thời gian</td>
+                <td><span class="badge badge-success" th:text="${tb.trangThai}">Đã gửi</span></td>
                 <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xem chi tiết thông báo...')">Xem</button></td>
               </tr>
-              <tr>
-                <td style="font-weight:600">📋 Phân công đơn dịch vụ mới #DD-052</td>
-                <td>Trần Thị Hoa (CTV Ưu tú)</td>
-                <td><span class="badge badge-success">Cộng tác viên</span></td>
-                <td>App Push</td>
-                <td style="font-size:0.8rem">Hôm nay 11:45</td>
-                <td><span class="badge badge-success">Đã xác nhận nhận ca</span></td>
-                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xem chi tiết thông báo...')">Xem</button></td>
-              </tr>
-              <tr>
-                <td style="font-weight:600">✉ Thông báo giải quyết khiếu nại đơn #DD-048</td>
-                <td>Trần Văn Minh (0918 222 333)</td>
-                <td><span class="badge badge-primary">Khách hàng</span></td>
-                <td>Email + App Push</td>
-                <td style="font-size:0.8rem">Hôm qua 16:30</td>
-                <td><span class="badge badge-success">Đã gửi</span></td>
-                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xem chi tiết thông báo...')">Xem</button></td>
+              <tr th:if="${thongBaos == null or #lists.isEmpty(thongBaos)}">
+                <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu thông báo</td>
               </tr>
             </tbody>
           </table>
@@ -209,7 +145,6 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

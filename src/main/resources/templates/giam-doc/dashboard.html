@@ -1,151 +1,14 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard – Giám đốc | Neatify</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Dashboard – Giám đốc')}"></head>
 <body>
 
 <div class="app-shell">
-  <!-- ===== SIDEBAR ===== -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <img src="/assets/Logo.png" class="sidebar-logo-img" alt="Neatify">
-      <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      <button class="sidebar-toggle" id="sidebarToggle" title="Thu gọn"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-
-    <!-- User info -->
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">GĐ</div>
-      <div class="sidebar-user-info">
-        <div class="sidebar-user-name">Nguyễn Văn An</div>
-        <div class="sidebar-user-role">Giám đốc</div>
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items">
-          <a href="/giam-doc/dashboard" class="sidebar-item active">
-            <i class="ti ti-dashboard item-icon"></i>
-            <span class="item-label">Dashboard</span>
-          </a>
-        </div>
-      </div>
-
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-group-label">Quản lý</div>
-        <div class="sidebar-nav-items">
-          <a href="/giam-doc/bao-cao" class="sidebar-item">
-            <i class="ti ti-chart-bar item-icon"></i>
-            <span class="item-label">Thống kê & Báo cáo</span>
-          </a>
-          <a href="/giam-doc/khieu-nai" class="sidebar-item">
-            <i class="ti ti-alert-triangle item-icon"></i>
-            <span class="item-label">Quản lý khiếu nại</span>
-            <span class="item-badge">3</span>
-          </a>
-          <a href="/giam-doc/nhan-vien" class="sidebar-item">
-            <i class="ti ti-users item-icon"></i>
-            <span class="item-label">Quản lý nhân viên</span>
-          </a>
-          <a href="/giam-doc/thong-bao" class="sidebar-item">
-            <i class="ti ti-bell item-icon"></i>
-            <span class="item-label">Quản lý thông báo</span>
-            <span class="item-badge">2</span>
-          </a>
-          <a href="/giam-doc/tai-khoan" class="sidebar-item">
-            <i class="ti ti-key item-icon"></i>
-            <span class="item-label">Quản lý tài khoản</span>
-          </a>
-        </div>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
-      <a href="/logout" class="sidebar-logout">
-        <i class="ti ti-logout item-icon"></i>
-        <span class="item-label">Đăng xuất</span>
-      </a>
-    </div>
-  </aside>
-
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('giam-doc', 'dashboard')}"></aside>
 
   <!-- ===== MAIN AREA ===== -->
   <div class="main-area">
-    <!-- Topbar -->
-    <header class="topbar">
-      <button class="topbar-icon-btn" id="mobileSidebarToggle" style="display:none"><i class="ti ti-menu-2"></i></button>
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span>
-        <span class="sep">/</span>
-        <span class="current">Dashboard</span>
-      </div>
-
-      <div class="topbar-search hide-mobile">
-        <i class="ti ti-search search-icon"></i>
-        <input type="text" placeholder="Tìm kiếm...">
-      </div>
-
-      <div class="topbar-actions">
-        <div class="dropdown">
-          <button class="topbar-icon-btn" data-dropdown="notifMenu">
-            <i class="ti ti-bell"></i>
-            <span class="notif-dot"></span>
-          </button>
-          <div class="dropdown-menu notif-dropdown" id="notifMenu">
-            <div class="notif-header">
-              <span class="notif-title">Thông báo</span>
-              <button class="notif-mark-all">Đánh dấu đã đọc</button>
-            </div>
-            <div class="notif-item unread">
-              <div class="notif-dot-item"></div>
-              <div class="notif-content">
-                <p><strong>Khiếu nại leo thang mới</strong> – Khách hàng Trần Thị B yêu cầu xem xét lại.</p>
-                <span>5 phút trước</span>
-              </div>
-            </div>
-            <div class="notif-item unread">
-              <div class="notif-dot-item"></div>
-              <div class="notif-content">
-                <p>Đề xuất thăng chức nhân viên từ Phòng HCNS cần phê duyệt.</p>
-                <span>1 giờ trước</span>
-              </div>
-            </div>
-            <div class="notif-item">
-              <div class="notif-dot-item" style="background:transparent;border:1px solid var(--border)"></div>
-              <div class="notif-content">
-                <p>Báo cáo tháng 9/2026 đã sẵn sàng để xem.</p>
-                <span>2 giờ trước</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="dropdown">
-          <div style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.25rem 0.5rem;border-radius:var(--radius-md);transition:background 0.2s" data-dropdown="userMenu" onmouseover="this.style.background='var(--bg-card)'" onmouseout="this.style.background=''">
-            <div class="avatar avatar-sm" th:text="${session.userAvatar != null ? session.userAvatar : 'GĐ'}">GĐ</div>
-            <span class="hide-mobile" style="font-size:0.85rem;font-weight:600" th:text="${session.authenticatedFullName != null ? session.authenticatedFullName : 'Nguyễn Văn An'}">Nguyễn Văn An</span>
-            <i class="ti ti-chevron-down hide-mobile" style="color:var(--text-muted);font-size:0.875rem"></i>
-          </div>
-          <div class="dropdown-menu" id="userMenu">
-            <div class="dropdown-item"><i class="ti ti-user"></i> Hồ sơ cá nhân</div>
-            <div class="dropdown-item"><i class="ti ti-settings"></i> Cài đặt</div>
-            <hr class="dropdown-divider">
-            <a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a>
-          </div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('Giám đốc', '/giam-doc/dashboard', 'Dashboard')}"></header>
 
     <!-- Page Content -->
     <main class="page-content">
@@ -415,7 +278,7 @@
   </div>
 </div>
 
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 <script src="/js/charts.js"></script>
 </body>
 </html>

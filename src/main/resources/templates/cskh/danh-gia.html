@@ -1,66 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đánh giá Dịch vụ – CSKH | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Đánh giá Dịch vụ – CSKH')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/cskh/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#00B4D8,#0096B7)">CS</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Hoàng Thị Dung</div><div class="sidebar-user-role">NV Chăm sóc Khách hàng</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/cskh/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Khách hàng</div>
-        <div class="sidebar-nav-items">
-          <a href="/cskh/khach-hang" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span></a>
-          <a href="/cskh/don-dat-dich-vu" class="sidebar-item"><i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span><span class="item-badge">5</span></a>
-          <a href="/cskh/khieu-nai" class="sidebar-item"><i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span><span class="item-badge">8</span></a>
-          <a href="/cskh/danh-gia" class="sidebar-item active"><i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Vận hành</div>
-        <div class="sidebar-nav-items">
-          <a href="/cskh/lich-phan-cong" class="sidebar-item"><i class="ti ti-calendar item-icon"></i><span class="item-label">Lịch phân công CTV</span></a>
-          <a href="/cskh/thong-bao" class="sidebar-item"><i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span></a>
-        </div>
-      </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'danh-gia')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/cskh/dashboard" style="color:var(--text-muted)">CSKH</a><span class="sep">/</span>
-        <span class="current">Đánh giá Dịch vụ</span>
-      </div>
-      <div class="topbar-search hide-mobile">
-        <i class="ti ti-search search-icon"></i><input type="text" placeholder="Tìm theo mã đơn, khách hàng, CTV...">
-      </div>
-      <div class="topbar-actions">
-        <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="cskhUser" style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7)" th:text="${session.userAvatar != null ? session.userAvatar : 'CS'}">CS</div>
-          <div class="dropdown-menu" id="cskhUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Đánh giá Dịch vụ')}"></header>
 
 
     <main class="page-content">
@@ -75,27 +21,27 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
-          <div class="stat-value">4.82</div>
+          <div class="stat-value" th:text="${diemDanhGiaTB != null ? diemDanhGiaTB : '5.0'}">5.0</div>
           <div class="stat-label">Điểm đánh giá trung bình</div>
-          <div class="kpi-compare"><span class="arrow-up">↑ 0.05 tháng này</span></div>
+          <div class="kpi-compare"><span class="arrow-up">Thực tế hệ thống</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">👍</div>
-          <div class="stat-value">91.4%</div>
-          <div class="stat-label">Hài lòng (4-5 sao)</div>
-          <div class="kpi-compare"><span class="period">1,140 lượt đánh giá</span></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">⚠️</div>
-          <div class="stat-value">4</div>
-          <div class="stat-label">Đánh giá tiêu cực (<3 sao)</div>
-          <div class="kpi-compare"><span style="color:var(--danger)">Cần CSKH liên hệ ngay</span></div>
+          <div class="stat-value" th:text="${danhGias != null ? #lists.size(danhGias) : 0}">0</div>
+          <div class="stat-label">Tổng lượt đánh giá</div>
+          <div class="kpi-compare"><span class="period">Từ khách hàng</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(13,155,163,0.15)">💬</div>
-          <div class="stat-value">98.2%</div>
-          <div class="stat-label">Tỷ lệ đã phản hồi</div>
-          <div class="kpi-compare"><span class="arrow-up">Rất tích cực</span></div>
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Tỷ lệ hoàn thành dịch vụ</div>
+          <div class="kpi-compare"><span class="arrow-up">Được ghi nhận</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🌟</div>
+          <div class="stat-value">Tích cực</div>
+          <div class="stat-label">Xu hướng phản hồi</div>
+          <div class="kpi-compare"><span style="color:var(--accent)">Dịch vụ ổn định</span></div>
         </div>
       </div>
 
@@ -107,82 +53,62 @@
         </div>
         <select class="filter-select">
           <option value="">Tất cả xếp hạng</option>
-          <option value="5">5 sao (Xuất sắc)</option>
-          <option value="4">4 sao (Tốt)</option>
-          <option value="3">3 sao (Bình thường)</option>
-          <option value="2">1-2 sao (Tiêu cực / Cần liên hệ)</option>
-        </select>
-        <select class="filter-select">
-          <option value="">Tất cả dịch vụ</option>
-          <option>Dọn dẹp nhà</option>
-          <option>Nấu ăn gia đình</option>
-          <option>Giặt ủi</option>
-          <option>Trông trẻ</option>
-          <option>Chăm sóc NCT</option>
+          <option value="5">5 sao</option>
+          <option value="4">4 sao</option>
+          <option value="3">3 sao</option>
+          <option value="2">Dưới 3 sao</option>
         </select>
       </div>
 
       <!-- Feedback List Table -->
       <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+          <div class="card-title">Danh sách Đánh giá & Phản hồi</div>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng cộng: <strong th:text="${danhGias != null ? #lists.size(danhGias) : 0}">0</strong> đánh giá</span>
+        </div>
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
                 <th>Mã đơn</th>
                 <th>Khách hàng</th>
-                <th>Dịch vụ & CTV</th>
-                <th>Đánh giá sao</th>
+                <th>Cộng tác viên</th>
+                <th>Chất lượng</th>
+                <th>Thái độ</th>
                 <th>Nội dung nhận xét</th>
                 <th>Ngày gửi</th>
-                <th>Trạng thái CSKH</th>
+                <th>Trạng thái</th>
                 <th style="text-align:right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style="font-weight:700;color:var(--primary-light)">#DD-052</td>
-                <td><div class="name">Nguyễn Thị Hoa</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">0903 111 222</div></td>
-                <td><div>Dọn dẹp nhà</div><div style="font-size:0.75rem;color:var(--text-muted)">CTV: Trần Thị Hoa</div></td>
-                <td><span style="color:#FFC107;font-weight:700">★★★★★ (5.0)</span></td>
-                <td style="max-width:300px;line-height:1.4">"Chị Hoa dọn rất kỹ, sạch từ góc bếp đến ban công, rất đúng giờ và lịch sự!"</td>
-                <td style="font-size:0.8rem">Hôm nay 11:30</td>
-                <td><span class="badge badge-success">Đã cảm ơn</span></td>
+              <tr th:each="dg : ${danhGias}">
+                <td style="font-weight:700;color:var(--primary-light)" th:text="${dg.donDat != null ? dg.donDat.maDonDat : dg.maDanhGia}">#DD-001</td>
+                <td>
+                  <div class="name" th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}">Tên KH</div>
+                  <div class="sub" style="font-size:0.75rem;color:var(--text-muted)" th:text="${dg.khachHang != null ? dg.khachHang.soDienThoai : ''}">SĐT</div>
+                </td>
+                <td th:text="${dg.congTacVien != null ? dg.congTacVien.hoTen : '--'}">Tên CTV</td>
+                <td><span style="color:#FFC107;font-weight:700" th:text="${dg.diemChatLuong + ' ★'}">5 ★</span></td>
+                <td><span style="color:#FFC107;font-weight:700" th:text="${dg.diemThaiDo + ' ★'}">5 ★</span></td>
+                <td style="max-width:300px;line-height:1.4" th:text="${dg.nhanXet != null and !dg.nhanXet.isEmpty() ? dg.nhanXet : 'Hài lòng với dịch vụ'}">Nhận xét</td>
+                <td style="font-size:0.85rem" th:text="${dg.ngayDanhGia != null ? #temporals.format(dg.ngayDanhGia, 'dd/MM/yyyy') : '--'}">20/09/2026</td>
+                <td><span class="badge badge-success" th:text="${dg.trangThai}">Đã duyệt</span></td>
                 <td>
                   <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" onclick="openReplyModal('Nguyễn Thị Hoa', '5 sao')"><i class="ti ti-message-dots"></i> Phản hồi</button>
+                    <button class="btn btn-outline btn-sm" th:data-name="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}" onclick="openReplyModal(this.getAttribute('data-name'), '5 sao')"><i class="ti ti-message-dots"></i> Phản hồi</button>
                   </div>
                 </td>
               </tr>
-              <tr>
-                <td style="font-weight:700;color:var(--primary-light)">#DD-048</td>
-                <td><div class="name">Trần Văn Minh</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">0918 222 333</div></td>
-                <td><div>Trông trẻ</div><div style="font-size:0.75rem;color:var(--text-muted)">CTV: Lê Thị Lan</div></td>
-                <td><span style="color:#FF4757;font-weight:700">★★☆☆☆ (2.0)</span></td>
-                <td style="max-width:300px;line-height:1.4;color:var(--danger)">"CTV đến trễ 20 phút không báo trước, bé khóc nhiều."</td>
-                <td style="font-size:0.8rem">Hôm qua 15:00</td>
-                <td><span class="badge badge-danger">Cần gọi xử lý</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-danger btn-sm" onclick="openReplyModal('Trần Văn Minh', '2 sao')"><i class="ti ti-phone-call"></i> Xử lý ngay</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-weight:700;color:var(--primary-light)">#DD-044</td>
-                <td><div class="name">Lê Thị Thu</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">0933 444 555</div></td>
-                <td><div>Nấu ăn</div><div style="font-size:0.75rem;color:var(--text-muted)">CTV: Nguyễn Thị Mai</div></td>
-                <td><span style="color:#FFC107;font-weight:700">★★★★☆ (4.0)</span></td>
-                <td style="max-width:300px;line-height:1.4">"Món ăn nêm nếm vừa miệng, sạch sẽ. Lần sau sẽ đặt tiếp."</td>
-                <td style="font-size:0.8rem">19/09/2026</td>
-                <td><span class="badge badge-success">Đã cảm ơn</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" onclick="openReplyModal('Lê Thị Thu', '4 sao')"><i class="ti ti-message-dots"></i> Phản hồi</button>
-                  </div>
-                </td>
+              <tr th:if="${danhGias == null or #lists.isEmpty(danhGias)}">
+                <td colspan="9" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu đánh giá</td>
               </tr>
             </tbody>
           </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${danhGias != null ? #lists.size(danhGias) : 0}">0</span> đánh giá</span>
+          <div class="pagination"><button class="page-btn active">1</button></div>
         </div>
       </div>
     </main>
@@ -221,8 +147,7 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 <script>
   function openReplyModal(customer, rating) {
     document.getElementById('replyCustomerName').textContent = customer + ' (' + rating + ')';

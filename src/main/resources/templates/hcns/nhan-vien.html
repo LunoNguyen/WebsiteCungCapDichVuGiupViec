@@ -1,180 +1,131 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý Nhân viên – HCNS | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Quản lý Nhân viên – HCNS')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <img src="/assets/Logo.png" class="sidebar-logo-img" alt="Neatify">
-      <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:var(--gradient-primary)">HC</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyen Thi Hanh</div><div class="sidebar-user-role">NV HCNS - Ke toan</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tong quan</div>
-        <div class="sidebar-nav-items"><a href="/hcns/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Nhan su</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/nhan-vien" class="sidebar-item active"><i class="ti ti-users item-icon"></i><span class="item-label">Quan ly Nhan vien</span></a>
-          <a href="/hcns/cong-tac-vien" class="sidebar-item"><i class="ti ti-user-star item-icon"></i><span class="item-label">Quan ly CTV</span><span class="item-badge">12</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Dich vu</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/danh-muc-dich-vu" class="sidebar-item"><i class="ti ti-category item-icon"></i><span class="item-label">Danh muc dich vu</span></a>
-          <a href="/hcns/dich-vu-bang-gia" class="sidebar-item"><i class="ti ti-receipt item-icon"></i><span class="item-label">Dich vu &amp; Bang gia</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">He thong</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quan ly Tai khoan</span></a>
-        </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Dang xuat</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('hcns', 'nhan-vien')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/hcns/dashboard" style="color:var(--text-muted)">HCNS</a><span class="sep">/</span>
-        <span class="current">Quan ly Nhan vien</span>
-      </div>
-      <div class="topbar-search hide-mobile">
-        <i class="ti ti-search search-icon"></i><input type="text" placeholder="Tim kiem...">
-      </div>
-      <div class="topbar-actions">
-        <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="nvUser" style="cursor:pointer;background:var(--gradient-primary)" th:text="${session.userAvatar != null ? session.userAvatar : 'HC'}">HC</div>
-          <div class="dropdown-menu" id="nvUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Dang xuat</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Quản lý Nhân viên')}"></header>
 
 
-    <main class="page-content">
-      <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Quan ly Nhan vien</h1>
-          <p class="page-subtitle">Danh sach &amp; thong tin nhan vien noi bo</p>
-        </div>
-        <div class="page-actions">
-          <button class="btn btn-secondary btn-sm"><i class="ti ti-file-export"></i> Xuat Excel</button>
-          <button class="btn btn-primary btn-sm" data-modal-open="addStaffModal"><i class="ti ti-plus"></i> Them nhan vien</button>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(13,155,163,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div><div><div class="quick-stat-val">24</div><div class="quick-stat-lbl">Tong nhan vien</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(56,212,138,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div><div><div class="quick-stat-val">22</div><div class="quick-stat-lbl">Dang lam viec</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(245,158,11,0.15)"><i class="ti ti-clock-pause" style="color:var(--warning)"></i></div><div><div class="quick-stat-val">2</div><div class="quick-stat-lbl">Tam nghi</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(239,68,68,0.15)"><i class="ti ti-user-x" style="color:var(--danger)"></i></div><div><div class="quick-stat-val">0</div><div class="quick-stat-lbl">Nghi viec</div></div></div>
-      </div>
-
-      <div class="filter-bar">
-        <div class="search-box" style="flex:1">
-          <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tim ten, email, so dien thoai..." data-table-search="staffTable">
-        </div>
-        <select class="filter-select">
-          <option>Tat ca phong ban</option>
-          <option>Ban Giam doc</option>
-          <option>HCNS - Ke toan</option>
-          <option>Cham soc Khach hang</option>
-          <option>Marketing</option>
-        </select>
-        <select class="filter-select">
-          <option>Tat ca trang thai</option>
-          <option>Dang lam viec</option>
-          <option>Tam nghi</option>
-          <option>Nghi viec</option>
-        </select>
-      </div>
-
-      <div class="card" style="padding:0">
-        <div class="card-header" style="padding:1.25rem 1.5rem">
-          <div class="card-title">Danh sach nhan vien</div>
-          <span style="font-size:0.8rem;color:var(--text-muted)">24 nhan vien</span>
-        </div>
-        <div class="table-container" style="border:none;border-radius:0">
-          <table class="table" id="staffTable">
-            <thead><tr>
-              <th><input type="checkbox" id="selectAll"></th>
-              <th>Nhan vien</th>
-              <th>Phong ban</th>
-              <th>Chuc vu</th>
-              <th>Ngay vao lam</th>
-              <th>Luong co ban</th>
-              <th>Trang thai</th>
-              <th style="text-align:right">Thao tac</th>
-            </tr></thead>
-            <tbody>
-              <tr>
-                <td><input type="checkbox" class="row-checkbox"></td>
-                <td><div class="user-cell"><div class="avatar avatar-sm">A</div><div class="user-cell-info"><div class="name">Nguyen Van An</div><div class="sub">anngv@neatify.vn</div></div></div></td>
-                <td>Ban Giam doc</td><td>Giam doc</td><td>01/01/2020</td>
-                <td style="font-weight:700;color:var(--accent)">45.000.000d</td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Dang lam</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetailPanel">Chi tiet</button></div></td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-checkbox"></td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:var(--gradient-primary)">H</div><div class="user-cell-info"><div class="name">Nguyen Thi Hanh</div><div class="sub">hanhnth@neatify.vn</div></div></div></td>
-                <td>HCNS - Ke toan</td><td>NV HCNS</td><td>15/03/2022</td>
-                <td style="font-weight:700;color:var(--accent)">18.000.000d</td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Dang lam</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetailPanel">Chi tiet</button></div></td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-checkbox"></td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#1585C0,#0D9BA3)">M</div><div class="user-cell-info"><div class="name">Tran Thi Mai</div><div class="sub">maittt@neatify.vn</div></div></div></td>
-                <td>Cham soc KH</td><td>Truong phong CSKH</td><td>20/06/2021</td>
-                <td style="font-weight:700;color:var(--accent)">25.000.000d</td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Dang lam</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetailPanel">Chi tiet</button></div></td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-checkbox"></td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#F59E0B,#D97706)">P</div><div class="user-cell-info"><div class="name">Pham Quoc Phong</div><div class="sub">phongpq@neatify.vn</div></div></div></td>
-                <td>Marketing</td><td>NV Marketing</td><td>10/09/2023</td>
-                <td style="font-weight:700;color:var(--accent)">16.000.000d</td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Dang lam</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetailPanel">Chi tiet</button></div></td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-checkbox"></td>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#EF4444,#DC2626)">L</div><div class="user-cell-info"><div class="name">Le Van Long</div><div class="sub">longlv@neatify.vn</div></div></div></td>
-                <td>HCNS - Ke toan</td><td>Ke toan</td><td>05/01/2022</td>
-                <td style="font-weight:700;color:var(--accent)">17.000.000d</td>
-                <td><span class="badge badge-warning">Tam nghi</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetailPanel">Chi tiet</button><button class="btn btn-primary btn-sm" onclick="Toast.show('Da gui email kich hoat lai!')">Kich hoat</button></div></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hien thi 5 / 24 nhan vien</span>
-          <div class="pagination">
-            <button class="page-btn">&#8249;</button>
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">3</button>
-            <button class="page-btn">&#8250;</button>
+      <main class="page-content">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1 class="page-title">Quản lý Nhân viên</h1>
+            <p class="page-subtitle">Danh sách &amp; thông tin nhân viên nội bộ</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-secondary btn-sm"><i class="ti ti-file-export"></i> Xuất dữ liệu</button>
+            <button class="btn btn-primary btn-sm" data-modal-open="addStaffModal"><i class="ti ti-plus"></i> Thêm nhân viên</button>
           </div>
         </div>
-      </div>
-    </main>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
+          <div class="quick-stat">
+            <div class="quick-stat-icon" style="background:rgba(13,155,163,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div>
+            <div>
+              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</div>
+              <div class="quick-stat-lbl">Tổng nhân viên</div>
+            </div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat-icon" style="background:rgba(56,212,138,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
+            <div>
+              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.dangLamViecCount : 0}">0</div>
+              <div class="quick-stat-lbl">Đang làm việc</div>
+            </div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat-icon" style="background:rgba(245,158,11,0.15)"><i class="ti ti-clock-pause" style="color:var(--warning)"></i></div>
+            <div>
+              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tamNghiCount : 0}">0</div>
+              <div class="quick-stat-lbl">Tạm nghỉ</div>
+            </div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat-icon" style="background:rgba(239,68,68,0.15)"><i class="ti ti-user-x" style="color:var(--danger)"></i></div>
+            <div>
+              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.nghiViecCount : 0}">0</div>
+              <div class="quick-stat-lbl">Nghỉ việc</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-box" style="flex:1">
+            <i class="ti ti-search search-icon"></i>
+            <input type="text" class="form-control" placeholder="Tìm tên, email, số điện thoại..." data-table-search="staffTable">
+          </div>
+          <select class="filter-select">
+            <option>Tất cả phòng ban</option>
+            <option>Ban Giám đốc</option>
+            <option>Hành chính Nhân sự</option>
+            <option>Chăm sóc Khách hàng</option>
+            <option>Marketing</option>
+          </select>
+          <select class="filter-select">
+            <option>Tất cả trạng thái</option>
+            <option>Đang làm việc</option>
+            <option>Tạm nghỉ</option>
+            <option>Nghỉ việc</option>
+          </select>
+        </div>
+
+        <div class="card" style="padding:0">
+          <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+            <div class="card-title">Danh sách nhân viên</div>
+            <span style="font-size:0.8rem;color:var(--text-muted)">Tổng số <span th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</span> nhân viên</span>
+          </div>
+          <div class="table-container" style="border:none;border-radius:0">
+            <table class="table" id="staffTable">
+              <thead><tr>
+                <th><input type="checkbox" id="selectAll"></th>
+                <th>Nhân viên</th>
+                <th>Phòng ban</th>
+                <th>Chức vụ</th>
+                <th>Số điện thoại</th>
+                <th>Ngày vào làm</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr></thead>
+              <tbody>
+                <tr th:each="nv : ${nhanViens}">
+                  <td><input type="checkbox" class="row-checkbox"></td>
+                  <td>
+                    <div class="user-cell">
+                      <div class="avatar avatar-sm" th:text="${#strings.substring(nv.hoTen, 0, 1)}">N</div>
+                      <div class="user-cell-info">
+                        <div class="name" th:text="${nv.hoTen}">Họ tên</div>
+                        <div class="sub" th:text="${nv.email}">email@neatify.vn</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td th:text="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : '--'}">Phòng ban</td>
+                  <td th:text="${nv.chucVu != null ? nv.chucVu.tenChucVu : '--'}">Chức vụ</td>
+                  <td th:text="${nv.soDienThoai}">0900000000</td>
+                  <td th:text="${nv.ngayVaoLam != null ? #temporals.format(nv.ngayVaoLam, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
+                  <td>
+                    <span class="badge badge-success" th:if="${nv.trangThai == 'DangLamViec'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span>
+                    <span class="badge badge-warning" th:if="${nv.trangThai == 'TamNghi'}">Tạm nghỉ</span>
+                    <span class="badge badge-danger" th:if="${nv.trangThai == 'DaNghi' or nv.trangThai == 'NghiViec'}">Nghỉ việc</span>
+                  </td>
+                  <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetailPanel">Chi tiết</button></div></td>
+                </tr>
+                <tr th:if="${nhanViens == null or #lists.isEmpty(nhanViens)}">
+                  <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu nhân viên</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
+            <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${nhanViens != null ? #lists.size(nhanViens) : 0}">0</span> / <span th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</span> nhân viên</span>
+            <div class="pagination">
+              <button class="page-btn active">1</button>
+            </div>
+          </div>
+        </div>
+      </main>
   </div>
 </div>
 
@@ -249,7 +200,6 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

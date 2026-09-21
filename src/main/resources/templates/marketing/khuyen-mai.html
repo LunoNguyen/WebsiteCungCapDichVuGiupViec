@@ -1,62 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý Khuyến mãi – Marketing | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Khuyến mãi & Coupon – Marketing')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/marketing/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">MK</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Phạm Văn Minh</div><div class="sidebar-user-role">NV Marketing</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/marketing/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Marketing</div>
-        <div class="sidebar-nav-items">
-          <a href="/marketing/khuyen-mai" class="sidebar-item active"><i class="ti ti-discount item-icon"></i><span class="item-label">Khuyến mãi</span></a>
-          <a href="/marketing/thong-bao" class="sidebar-item"><i class="ti ti-send item-icon"></i><span class="item-label">Gửi thông báo</span><span class="item-badge">2</span></a>
-          <a href="/marketing/phan-tich" class="sidebar-item"><i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích dữ liệu</span></a>
-          <a href="/marketing/danh-gia" class="sidebar-item"><i class="ti ti-star item-icon"></i><span class="item-label">Quản lý đánh giá</span></a>
-        </div>
-      </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('marketing', 'khuyen-mai')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/marketing/dashboard" style="color:var(--text-muted)">Marketing</a><span class="sep">/</span>
-        <span class="current">Quản lý Khuyến mãi</span>
-      </div>
-      <div class="topbar-search hide-mobile">
-        <i class="ti ti-search search-icon"></i><input type="text" placeholder="Tìm kiếm mã coupon, chương trình...">
-      </div>
-      <div class="topbar-actions">
-        <button class="btn btn-primary btn-sm" data-modal-open="createPromoModal"><i class="ti ti-plus"></i> Tạo khuyến mãi mới</button>
-        <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="mkUser" style="cursor:pointer;background:linear-gradient(135deg,#FF6584,#FF8FA3)" th:text="${session.userAvatar != null ? session.userAvatar : 'MK'}">MK</div>
-          <div class="dropdown-menu" id="mkUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-    </header>
-
+    <header th:replace="~{layout/admin-layout :: adminTopbar('Marketing', '/marketing/dashboard', 'Khuyến mãi & Coupon')}"></header>
 
     <main class="page-content">
       <div class="page-header">
@@ -64,33 +14,36 @@
           <h1 class="page-title">Chương trình Khuyến mãi & Coupon</h1>
           <p class="page-subtitle">Quản lý chiến dịch ưu đãi, mã giảm giá, giới hạn lượt dùng và theo dõi ROI</p>
         </div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" data-modal-open="createPromoModal"><i class="ti ti-plus"></i> Tạo khuyến mãi mới</button>
+        </div>
       </div>
 
       <!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🏷️</div>
-          <div class="stat-value">6</div>
+          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.khuyenMaiDangChayCount : 0}">0</div>
           <div class="stat-label">Chiến dịch đang chạy</div>
           <div class="kpi-compare"><span class="arrow-up">Đang áp dụng</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(13,155,163,0.15)">🎟️</div>
-          <div class="stat-value">1,842</div>
+          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongCoupons : 0}">0</div>
+          <div class="stat-label">Tổng mã ưu đãi</div>
+          <div class="kpi-compare"><span class="arrow-up">Trong hệ thống</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📈</div>
+          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongLuotSuDungCoupon : 0}">0</div>
           <div class="stat-label">Lượt đã sử dụng mã</div>
-          <div class="kpi-compare"><span class="arrow-up">↑ 24% so tháng trước</span></div>
+          <div class="kpi-compare"><span class="arrow-up">Đã quy đổi</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">💰</div>
-          <div class="stat-value">485M</div>
-          <div class="stat-label">Doanh thu từ khuyến mãi</div>
-          <div class="kpi-compare"><span class="arrow-up">ROI x4.6</span></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">👥</div>
-          <div class="stat-value">348</div>
-          <div class="stat-label">Khách hàng mới chuyển đổi</div>
-          <div class="kpi-compare"><span class="period">Từ mã WELCOME50</span></div>
+          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">🎁</div>
+          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongKhuyenMai : 0}">0</div>
+          <div class="stat-label">Tổng chương trình khuyến mãi</div>
+          <div class="kpi-compare"><span class="period">Tất cả thời gian</span></div>
         </div>
       </div>
 
@@ -98,112 +51,70 @@
       <div class="filter-bar">
         <div class="search-box">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm theo mã coupon, tên chương trình...">
+          <input type="text" class="form-control" placeholder="Tìm theo mã ưu đãi, tên chương trình...">
         </div>
         <select class="filter-select">
           <option value="">Tất cả trạng thái</option>
-          <option>Đang diễn ra</option>
-          <option>Sắp diễn ra</option>
-          <option>Đã kết thúc</option>
-        </select>
-        <select class="filter-select">
-          <option value="">Tất cả hình thức</option>
-          <option>Giảm theo phần trăm (%)</option>
-          <option>Giảm theo số tiền (VNĐ)</option>
-          <option>Đồng giá dịch vụ</option>
+          <option>Hoạt động</option>
+          <option>Hết lượt</option>
+          <option>Hết hạn</option>
         </select>
       </div>
 
       <!-- Promo Table -->
       <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+          <div class="card-title">Danh sách Mã ưu đãi & Khuyến mãi</div>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${coupons != null ? #lists.size(coupons) : 0}">0</strong> mã ưu đãi</span>
+        </div>
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
-                <th>Mã Coupon</th>
+                <th>Mã ưu đãi</th>
                 <th>Chương trình khuyến mãi</th>
                 <th>Mức giảm</th>
                 <th>Đơn tối thiểu</th>
                 <th>Thời gian áp dụng</th>
-                <th>Tiến độ sử dụng</th>
+                <th>Lượt sử dụng</th>
                 <th>Trạng thái</th>
                 <th style="text-align:right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style="font-weight:800;color:var(--primary-light);font-size:0.95rem">NEATIFY20</td>
-                <td><div>Ưu đãi Chào thu 2026</div><div style="font-size:0.75rem;color:var(--text-muted)">Áp dụng tất cả dịch vụ dọn dẹp & nấu ăn</div></td>
-                <td><span class="badge badge-warning">Giảm 20% (Max 50K)</span></td>
-                <td>150.000đ</td>
-                <td style="font-size:0.8rem">01/09 - 30/09/2026</td>
-                <td style="min-width:140px">
-                  <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:3px"><span>680 / 1000 lượt</span><span>68%</span></div>
-                  <div class="progress"><div class="progress-bar" style="width:68%"></div></div>
+              <tr th:each="cp : ${coupons}">
+                <td style="font-weight:800;color:var(--primary-light);font-size:0.95rem" th:text="${cp.codeCoupon}">NEATIFY20</td>
+                <td>
+                  <div style="font-weight:600" th:text="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.tenChuongTrinh : '--'}">Tên chương trình</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.moTa : ''}">Mô tả</div>
                 </td>
-                <td><span class="badge badge-success">Đang chạy</span></td>
+                <td>
+                  <span class="badge badge-warning" th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam == 'PhanTram'}" th:text="'Giảm ' + ${cp.chuongTrinhKhuyenMai.giaTriGiam} + '%'">Giảm 20%</span>
+                  <span class="badge badge-primary" th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam != 'PhanTram'}" th:text="'Giảm ' + ${#numbers.formatDecimal(cp.chuongTrinhKhuyenMai.giaTriGiam, 0, 'COMMA', 0, 'POINT')} + 'đ'">Giảm 50.000đ</span>
+                </td>
+                <td th:text="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.dieuKienToiThieu != null ? #numbers.formatDecimal(cp.chuongTrinhKhuyenMai.dieuKienToiThieu, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">100.000đ</td>
+                <td style="font-size:0.85rem" th:text="${cp.chuongTrinhKhuyenMai != null ? #temporals.format(cp.chuongTrinhKhuyenMai.ngayBatDau, 'dd/MM/yyyy') + ' - ' + #temporals.format(cp.chuongTrinhKhuyenMai.ngayKetThuc, 'dd/MM/yyyy') : '--'}">01/01 - 31/12/2026</td>
+                <td style="font-weight:600" th:text="${cp.soLuotDaDung} + ' / ' + ${cp.soLuotToiDa} + ' lượt'">0 / 100 lượt</td>
+                <td>
+                  <span class="badge badge-success" th:if="${cp.trangThai == 'HoatDong'}">Hoạt động</span>
+                  <span class="badge badge-warning" th:if="${cp.trangThai == 'HetLuot'}">Hết lượt</span>
+                  <span class="badge badge-secondary" th:if="${cp.trangThai == 'HetHan'}">Hết hạn</span>
+                </td>
                 <td>
                   <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Sao chép mã" onclick="Toast.show('Đã sao chép mã NEATIFY20')"><i class="ti ti-copy"></i></button>
-                    <button class="btn btn-outline btn-sm" title="Tạm dừng" onclick="Toast.show('Đã tạm dừng mã')"><i class="ti ti-player-pause"></i></button>
+                    <button class="btn btn-outline btn-sm" title="Sao chép mã" th:data-code="${cp.codeCoupon}" onclick="Toast.show('Đã sao chép mã ' + this.getAttribute('data-code'))"><i class="ti ti-copy"></i></button>
                   </div>
                 </td>
               </tr>
-              <tr>
-                <td style="font-weight:800;color:var(--primary-light);font-size:0.95rem">WELCOME50</td>
-                <td><div>Chào bạn mới tải App</div><div style="font-size:0.75rem;color:var(--text-muted)">Chỉ áp dụng cho đơn đầu tiên của KH mới</div></td>
-                <td><span class="badge badge-primary">Giảm 50.000đ</span></td>
-                <td>100.000đ</td>
-                <td style="font-size:0.8rem">01/01 - 31/12/2026</td>
-                <td style="min-width:140px">
-                  <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:3px"><span>348 / 500 lượt</span><span>70%</span></div>
-                  <div class="progress"><div class="progress-bar success" style="width:70%"></div></div>
-                </td>
-                <td><span class="badge badge-success">Đang chạy</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Sao chép mã" onclick="Toast.show('Đã sao chép mã WELCOME50')"><i class="ti ti-copy"></i></button>
-                    <button class="btn btn-outline btn-sm" title="Tạm dừng" onclick="Toast.show('Đã tạm dừng mã')"><i class="ti ti-player-pause"></i></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-weight:800;color:var(--primary-light);font-size:0.95rem">VIPCARE15</td>
-                <td><div>Tri ân Khách hàng VIP Diamond</div><div style="font-size:0.75rem;color:var(--text-muted)">Dành riêng cho thành viên VIP từ 10 đơn/tháng</div></td>
-                <td><span class="badge badge-warning">Giảm 15%</span></td>
-                <td>200.000đ</td>
-                <td style="font-size:0.8rem">15/09 - 15/10/2026</td>
-                <td style="min-width:140px">
-                  <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:3px"><span>112 / 300 lượt</span><span>37%</span></div>
-                  <div class="progress"><div class="progress-bar warning" style="width:37%"></div></div>
-                </td>
-                <td><span class="badge badge-success">Đang chạy</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Sao chép mã" onclick="Toast.show('Đã sao chép mã VIPCARE15')"><i class="ti ti-copy"></i></button>
-                    <button class="btn btn-outline btn-sm" title="Tạm dừng" onclick="Toast.show('Đã tạm dừng mã')"><i class="ti ti-player-pause"></i></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-weight:800;color:var(--primary-light);font-size:0.95rem">WEEKENDCLEAN</td>
-                <td><div>Flash Sale Cuối tuần</div><div style="font-size:0.75rem;color:var(--text-muted)">Khung giờ vàng Thứ 7 & Chủ Nhật</div></td>
-                <td><span class="badge badge-primary">Giảm 30.000đ</span></td>
-                <td>180.000đ</td>
-                <td style="font-size:0.8rem">01/09 - 15/09/2026</td>
-                <td style="min-width:140px">
-                  <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:3px"><span>500 / 500 lượt</span><span>100%</span></div>
-                  <div class="progress"><div class="progress-bar danger" style="width:100%"></div></div>
-                </td>
-                <td><span class="badge badge-secondary">Đã kết thúc</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" onclick="Toast.show('Đang nhân bản chiến dịch Flash Sale...')"><i class="ti ti-refresh"></i> Gia hạn</button>
-                  </div>
-                </td>
+              <tr th:if="${coupons == null or #lists.isEmpty(coupons)}">
+                <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu mã ưu đãi</td>
               </tr>
             </tbody>
           </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${coupons != null ? #lists.size(coupons) : 0}">0</span> mã ưu đãi</span>
+          <div class="pagination"><button class="page-btn active">1</button></div>
         </div>
       </div>
     </main>
@@ -269,7 +180,6 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.example.Controller;
 
+import com.example.DTO.*;
 import com.example.Repository.*;
 import com.example.Service.ThongKeService;
 import org.springframework.stereotype.Controller;
@@ -43,12 +44,24 @@ public class GiamDocController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
-        model.addAttribute("tongDonHang", thongKeService.getTongDonHang());
-        model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
-        model.addAttribute("tongKhieuNai", thongKeService.getTongKhieuNai());
-        model.addAttribute("khieuNaiLeoThangCount", thongKeService.getKhieuNaiLeoThangCount());
+        var donStats = thongKeService.getDonHangStats();
+        var khStats = thongKeService.getKhachHangStats();
+        var knStats = thongKeService.getKhieuNaiStats();
+        var ctvStats = thongKeService.getCongTacVienStats();
+        var nvStats = thongKeService.getNhanVienStats();
+
+        model.addAttribute("donHangStats", donStats);
+        model.addAttribute("khachHangStats", khStats);
+        model.addAttribute("khieuNaiStats", knStats);
+        model.addAttribute("congTacVienStats", ctvStats);
+        model.addAttribute("nhanVienStats", nvStats);
+
+        model.addAttribute("tongDonHang", donStats.getTongDonHang());
+        model.addAttribute("tongKhachHang", khStats.getTongKhachHang());
+        model.addAttribute("tongKhieuNai", knStats.getTongKhieuNai());
+        model.addAttribute("khieuNaiLeoThangCount", knStats.getLeoThangCount());
         model.addAttribute("diemDanhGiaTB", thongKeService.getDiemDanhGiaTrungBinh());
-        model.addAttribute("doanhThuTrieuDong", thongKeService.getDoanhThuTrieuDong());
+        model.addAttribute("doanhThuTrieuDong", donStats.getDoanhThuTrieuDong());
         model.addAttribute("recentOrders", thongKeService.getDonHangGanDay(8));
         model.addAttribute("pendingComplaints", thongKeService.getKhieuNaiGanDay(5));
         model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDon());
@@ -58,11 +71,21 @@ public class GiamDocController {
     // UC-GD02 – Thống kê & Báo cáo
     @GetMapping("/bao-cao")
     public String baoCao(Model model) {
-        model.addAttribute("tongDonHang", thongKeService.getTongDonHang());
-        model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
-        model.addAttribute("tongKhieuNai", thongKeService.getTongKhieuNai());
-        model.addAttribute("tongCongTacVien", thongKeService.getTongCongTacVien());
-        model.addAttribute("doanhThuTrieuDong", thongKeService.getDoanhThuTrieuDong());
+        var donStats = thongKeService.getDonHangStats();
+        var ctvStats = thongKeService.getCongTacVienStats();
+        var khStats = thongKeService.getKhachHangStats();
+        var knStats = thongKeService.getKhieuNaiStats();
+
+        model.addAttribute("donHangStats", donStats);
+        model.addAttribute("congTacVienStats", ctvStats);
+        model.addAttribute("khachHangStats", khStats);
+        model.addAttribute("khieuNaiStats", knStats);
+
+        model.addAttribute("tongDonHang", donStats.getTongDonHang());
+        model.addAttribute("tongKhachHang", khStats.getTongKhachHang());
+        model.addAttribute("tongKhieuNai", knStats.getTongKhieuNai());
+        model.addAttribute("tongCongTacVien", ctvStats.getTongCongTacVien());
+        model.addAttribute("doanhThuTrieuDong", donStats.getDoanhThuTrieuDong());
         model.addAttribute("recentOrders", thongKeService.getDonHangGanDay(15));
         model.addAttribute("dichVus", dichVuRepository.findAll());
         model.addAttribute("topDichVu", thongKeService.getTopDichVu());
@@ -73,6 +96,7 @@ public class GiamDocController {
     // UC-GD01 – Xem xét khiếu nại leo thang
     @GetMapping("/khieu-nai")
     public String khieuNai(Model model) {
+        model.addAttribute("khieuNaiStats", thongKeService.getKhieuNaiStats());
         model.addAttribute("khieuNais", khieuNaiRepository.findAll());
         return "giam-doc/khieu-nai";
     }
@@ -80,6 +104,7 @@ public class GiamDocController {
     // UC-GD03 – Xem và phê duyệt thay đổi nhân sự
     @GetMapping("/nhan-vien")
     public String nhanVien(Model model) {
+        model.addAttribute("nhanVienStats", thongKeService.getNhanVienStats());
         model.addAttribute("nhanViens", nhanVienRepository.findAll());
         return "giam-doc/nhan-vien";
     }

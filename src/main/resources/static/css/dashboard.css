@@ -17,7 +17,7 @@
 .sidebar {
   width: 260px;
   height: 100%;
-  background: rgba(10, 9, 24, 0.95);
+  background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -266,7 +266,7 @@
    ========================================================== */
 .topbar {
   height: 68px;
-  background: rgba(10, 9, 24, 0.8);
+  background: var(--bg-topbar);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;

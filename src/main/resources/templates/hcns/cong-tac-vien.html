@@ -1,227 +1,152 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý Cộng tác viên – HCNS | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Quản lý Cộng tác viên – HCNS')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a href="/hcns/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
-        <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
-        <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      </a>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:linear-gradient(135deg,#43E97B,#38D46A);color:#000">HC</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyễn Thị Hạnh</div><div class="sidebar-user-role">NV HCNS - Kế toán</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tổng quan</div>
-        <div class="sidebar-nav-items"><a href="/hcns/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Nhân sự</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Nhân viên</span></a>
-          <a href="/hcns/cong-tac-vien" class="sidebar-item active"><i class="ti ti-user-star item-icon"></i><span class="item-label">Quản lý CTV</span><span class="item-badge">12</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Dịch vụ</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/danh-muc-dich-vu" class="sidebar-item"><i class="ti ti-category item-icon"></i><span class="item-label">Danh mục dịch vụ</span></a>
-          <a href="/hcns/dich-vu-bang-gia" class="sidebar-item"><i class="ti ti-receipt item-icon"></i><span class="item-label">Dịch vụ & Bảng giá</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Hệ thống</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quản lý Tài khoản</span></a>
-        </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Đăng xuất</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('hcns', 'cong-tac-vien')}"></aside>
 
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/hcns/dashboard" style="color:var(--text-muted)">HCNS</a><span class="sep">/</span>
-        <span class="current">Quản lý CTV</span>
-      </div>
-      <div class="topbar-actions">
-        <div class="dropdown"><div class="avatar avatar-sm" data-dropdown="hu1" style="cursor:pointer;background:linear-gradient(135deg,#43E97B,#38D46A);color:#000" th:text="${session.userAvatar != null ? session.userAvatar : 'HC'}">HC</div>
-          <div class="dropdown-menu" id="hu1"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Quản lý Cộng tác viên')}"></header>
 
 
     <main class="page-content">
       <div class="page-header">
         <div class="page-title-group">
           <h1 class="page-title">Quản lý Cộng tác viên</h1>
-          <p class="page-subtitle">Xét duyệt hồ sơ, quản lý thông tin CTV · UC-HCNS02</p>
+          <p class="page-subtitle">Xét duyệt hồ sơ, quản lý thông tin cộng tác viên</p>
         </div>
       </div>
 
       <!-- Stats Row -->
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div><div><div class="quick-stat-val">3.208</div><div class="quick-stat-lbl">Tổng CTV</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div><div><div class="quick-stat-val">2.945</div><div class="quick-stat-lbl">Hoạt động</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div><div><div class="quick-stat-val">12</div><div class="quick-stat-lbl">Chờ duyệt</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-user-x" style="color:var(--danger)"></i></div><div><div class="quick-stat-val">45</div><div class="quick-stat-lbl">Đình chỉ</div></div></div>
-        <div class="quick-stat"><div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-award" style="color:var(--warning)"></i></div><div><div class="quick-stat-val">245</div><div class="quick-stat-lbl">Ưu tú</div></div></div>
-      </div>
-
-      <!-- Tabs: Pending | Active | Suspended -->
-      <div class="tabs" style="margin-bottom:1.25rem;max-width:500px">
-        <button class="tab-btn active">Chờ duyệt (12)</button>
-        <button class="tab-btn">Đang hoạt động</button>
-        <button class="tab-btn">Đình chỉ</button>
-      </div>
-
-      <!-- Filter Bar for pending tab -->
-      <div class="filter-bar">
-        <div class="search-box" style="flex:1">
-          <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm theo tên, SDT..." data-table-search="ctvTable">
-        </div>
-        <select class="filter-select">
-          <option>Tất cả khu vực</option>
-          <option>TP.HCM</option><option>Hà Nội</option><option>Đà Nẵng</option>
-        </select>
-        <select class="filter-select">
-          <option>Tất cả dịch vụ</option>
-          <option>Dọn dẹp nhà</option><option>Giặt ủi</option><option>Nấu ăn</option><option>Trông trẻ</option>
-        </select>
-      </div>
-
-      <!-- Pending Applications Grid -->
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem;margin-bottom:1.5rem">
-        <!-- Application Card 1 -->
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
-          <div style="padding:1.25rem">
-            <div style="display:flex;align-items:center;gap:0.875rem;margin-bottom:1rem">
-              <div class="avatar avatar-lg">N</div>
-              <div>
-                <div style="font-weight:700">Nguyễn Thị Mới</div>
-                <div style="font-size:0.8rem;color:var(--text-muted)">0912 xxx xxx · Q.1, TP.HCM</div>
-                <span class="badge badge-warning" style="margin-top:0.25rem">Chờ duyệt</span>
-              </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.8rem;margin-bottom:1rem">
-              <div><span style="color:var(--text-muted)">Dịch vụ: </span><strong>Dọn dẹp nhà</strong></div>
-              <div><span style="color:var(--text-muted)">Khu vực: </span><strong>Q.1, Q.3</strong></div>
-              <div><span style="color:var(--text-muted)">Kinh nghiệm: </span><strong>2 năm</strong></div>
-              <div><span style="color:var(--text-muted)">Ngày nộp: </span><strong>20/09/2026</strong></div>
-            </div>
-            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
-              <span class="badge badge-info">CCCD ✓</span>
-              <span class="badge badge-info">Ảnh ✓</span>
-              <span class="badge badge-success">Lý lịch ✓</span>
-            </div>
-          </div>
-          <div style="padding:0.875rem 1.25rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
-            <button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Xem hồ sơ</button>
-            <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt! Tài khoản CTV đã được tạo và gửi thông tin đăng nhập.')">Phê duyệt</button>
-            <button class="btn btn-danger btn-sm" onclick="Toast.show('Đã từ chối hồ sơ.','error')">Từ chối</button>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.tongCongTacVien : 0}">0</div>
+            <div class="quick-stat-lbl">Tổng cộng tác viên</div>
           </div>
         </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.hoatDongCount : 0}">0</div>
+            <div class="quick-stat-lbl">Hoạt động</div>
+          </div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.choDuyetCount : 0}">0</div>
+            <div class="quick-stat-lbl">Chờ duyệt</div>
+          </div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-user-x" style="color:var(--danger)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.dinhChiCount : 0}">0</div>
+            <div class="quick-stat-lbl">Đình chỉ</div>
+          </div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-award" style="color:var(--warning)"></i></div>
+          <div>
+            <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.uuTuCount : 0}">0</div>
+            <div class="quick-stat-lbl">Ưu tú</div>
+          </div>
+        </div>
+      </div>
 
-        <!-- Application Card 2 -->
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
-          <div style="padding:1.25rem">
-            <div style="display:flex;align-items:center;gap:0.875rem;margin-bottom:1rem">
-              <div class="avatar avatar-lg" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div>
-              <div>
-                <div style="font-weight:700">Trần Văn Đăng</div>
-                <div style="font-size:0.8rem;color:var(--text-muted)">0987 xxx xxx · Tân Bình, TP.HCM</div>
-                <span class="badge badge-warning" style="margin-top:0.25rem">Chờ duyệt</span>
+      <!-- Pending Section if any -->
+      <div th:if="${congTacVienStats != null and congTacVienStats.choDuyetCount > 0}" style="margin-bottom:1.5rem">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem">Hồ sơ chờ phê duyệt</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:1.25rem">
+          <div th:each="ctv : ${congTacViens}" th:if="${ctv.trangThai == 'ChoDuyet'}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+            <div style="padding:1.25rem">
+              <div style="display:flex;align-items:center;gap:0.875rem;margin-bottom:1rem">
+                <div class="avatar avatar-lg" th:text="${#strings.substring(ctv.hoTen, 0, 1)}">C</div>
+                <div>
+                  <div style="font-weight:700" th:text="${ctv.hoTen}">Họ tên</div>
+                  <div style="font-size:0.8rem;color:var(--text-muted)" th:text="${ctv.soDienThoai} + ' · ' + ${ctv.noiCuTru}">SĐT · Nơi cư trú</div>
+                  <span class="badge badge-warning" style="margin-top:0.25rem">Chờ duyệt</span>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.8rem;margin-bottom:1rem">
+                <div><span style="color:var(--text-muted)">Nơi cư trú: </span><strong th:text="${ctv.noiCuTru}">--</strong></div>
+                <div><span style="color:var(--text-muted)">Cấp độ: </span><strong th:text="${ctv.capDo}">Mới</strong></div>
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.8rem;margin-bottom:1rem">
-              <div><span style="color:var(--text-muted)">Dịch vụ: </span><strong>Trông trẻ</strong></div>
-              <div><span style="color:var(--text-muted)">Khu vực: </span><strong>Tân Bình, Bình Thạnh</strong></div>
-              <div><span style="color:var(--text-muted)">Kinh nghiệm: </span><strong>3 năm</strong></div>
-              <div><span style="color:var(--text-muted)">Ngày nộp: </span><strong>19/09/2026</strong></div>
+            <div style="padding:0.875rem 1.25rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
+              <button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Xem hồ sơ</button>
+              <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt cộng tác viên thành công!')">Phê duyệt</button>
+              <button class="btn btn-danger btn-sm" onclick="Toast.show('Đã từ chối hồ sơ.','error')">Từ chối</button>
             </div>
-            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
-              <span class="badge badge-info">CCCD ✓</span>
-              <span class="badge badge-info">Ảnh ✓</span>
-              <span class="badge badge-warning">Lý lịch ⚠</span>
-            </div>
-            <div style="background:rgba(255,193,7,0.08);border:1px solid rgba(255,193,7,0.2);border-radius:6px;padding:0.5rem;font-size:0.75rem;color:var(--warning)">
-              ⚠ Thiếu giấy tờ lý lịch tư pháp. Cần yêu cầu bổ sung.
-            </div>
-          </div>
-          <div style="padding:0.875rem 1.25rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
-            <button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Xem hồ sơ</button>
-            <button class="btn btn-warning btn-sm" onclick="Toast.show('Đã gửi yêu cầu bổ sung tài liệu!','warning')">Yêu cầu bổ sung</button>
-            <button class="btn btn-danger btn-sm">Từ chối</button>
           </div>
         </div>
       </div>
 
       <!-- All CTV Table -->
-      <div class="card" style="padding:0;margin-top:1.5rem">
-        <div class="card-header" style="padding:1.25rem 1.5rem">
-          <div class="card-title">Danh sách CTV đang hoạt động</div>
-          <span style="font-size:0.8rem;color:var(--text-muted)">2.945 cộng tác viên</span>
+      <div class="card" style="padding:0;margin-top:1rem">
+        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="card-title">Danh sách Cộng tác viên</div>
+            <span style="font-size:0.8rem;color:var(--text-muted)">Tổng cộng <span th:text="${congTacVienStats != null ? congTacVienStats.tongCongTacVien : 0}">0</span> cộng tác viên trong hệ thống</span>
+          </div>
         </div>
         <div class="filter-bar" style="padding:0 1.25rem 1rem">
           <div class="search-box" style="flex:1">
             <i class="ti ti-search search-icon"></i>
-            <input type="text" class="form-control" placeholder="Tìm CTV..." data-table-search="ctvTable">
+            <input type="text" class="form-control" placeholder="Tìm theo tên, số điện thoại..." data-table-search="ctvTable">
           </div>
           <select class="filter-select"><option>Tất cả cấp độ</option><option>Mới</option><option>Thường</option><option>Ưu tú</option></select>
         </div>
         <div class="table-container" style="border:none">
           <table class="table" id="ctvTable">
             <thead><tr>
-              <th>Cộng tác viên</th><th>Khu vực</th><th>Dịch vụ</th><th>Số đơn (T9)</th><th>Đánh giá TB</th><th>Cấp độ</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th>
+              <th>Cộng tác viên</th><th>Số điện thoại</th><th>Nơi cư trú</th><th>Ngày đăng ký</th><th>Đánh giá</th><th>Cấp độ</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th>
             </tr></thead>
             <tbody>
-              <tr>
-                <td><div class="user-cell"><div class="avatar avatar-sm">N</div><div class="user-cell-info"><div class="name">Nguyễn Thị Ngọc</div><div class="sub">0901 234 567</div></div></div></td>
-                <td style="font-size:0.8rem">Q.1, Q.3, Q.5</td>
-                <td style="font-size:0.8rem">Dọn dẹp</td>
-                <td style="font-weight:700;color:var(--accent)">98</td>
-                <td><span style="color:#FFC107;font-weight:700">★ 4.98</span></td>
-                <td><span class="badge badge-warning">Ưu tú</span></td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Chi tiết</button><button class="btn btn-danger btn-sm" onclick="Toast.show('Tài khoản sẽ bị đình chỉ.','warning')">Đình chỉ</button></div></td>
+              <tr th:each="ctv : ${congTacViens}">
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar avatar-sm" th:text="${#strings.substring(ctv.hoTen, 0, 1)}">C</div>
+                    <div class="user-cell-info">
+                      <div class="name" th:text="${ctv.hoTen}">Tên CTV</div>
+                      <div class="sub" th:text="'Mã: ' + ${ctv.maCongTacVien}">Mã CTV</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="font-size:0.875rem" th:text="${ctv.soDienThoai}">0900000000</td>
+                <td style="font-size:0.875rem" th:text="${ctv.noiCuTru}">TP.HCM</td>
+                <td style="font-size:0.875rem" th:text="${ctv.ngayDangKy != null ? #temporals.format(ctv.ngayDangKy, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
+                <td>
+                  <span style="color:#FFC107;font-weight:700" th:text="'★ ' + ${ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0'}">★ 5.0</span>
+                </td>
+                <td>
+                  <span class="badge badge-warning" th:if="${ctv.capDo == 'UuTu'}">Ưu tú</span>
+                  <span class="badge badge-primary" th:if="${ctv.capDo == 'Thuong'}">Thường</span>
+                  <span class="badge badge-info" th:if="${ctv.capDo == 'Moi'}">Mới</span>
+                </td>
+                <td>
+                  <span class="badge badge-success" th:if="${ctv.trangThai == 'HoatDong'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span>
+                  <span class="badge badge-warning" th:if="${ctv.trangThai == 'ChoDuyet'}">Chờ duyệt</span>
+                  <span class="badge badge-danger" th:if="${ctv.trangThai == 'BiKhoa' or ctv.trangThai == 'DinhChi'}">Đình chỉ</span>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Chi tiết</button>
+                    <button class="btn btn-danger btn-sm" onclick="Toast.show('Đã cập nhật trạng thái cộng tác viên.','warning')">Đình chỉ</button>
+                  </div>
+                </td>
               </tr>
-              <tr>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div><div class="user-cell-info"><div class="name">Trần Thị Hoa</div><div class="sub">0912 345 678</div></div></div></td>
-                <td style="font-size:0.8rem">Tân Bình, Bình Thạnh</td>
-                <td style="font-size:0.8rem">Nấu ăn</td>
-                <td style="font-weight:700;color:var(--accent)">92</td>
-                <td><span style="color:#FFC107;font-weight:700">★ 4.96</span></td>
-                <td><span class="badge badge-warning">Ưu tú</span></td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Chi tiết</button><button class="btn btn-danger btn-sm">Đình chỉ</button></div></td>
-              </tr>
-              <tr>
-                <td><div class="user-cell"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,#6C63FF,#8B84FF)">P</div><div class="user-cell-info"><div class="name">Phạm Thị Bình</div><div class="sub">0908 765 432</div></div></div></td>
-                <td style="font-size:0.8rem">Q.7, Q.8</td>
-                <td style="font-size:0.8rem">Giặt ủi, Dọn dẹp</td>
-                <td style="font-weight:700;color:var(--accent)">45</td>
-                <td><span style="color:#FFC107;font-weight:700">★ 4.75</span></td>
-                <td><span class="badge badge-primary">Thường</span></td>
-                <td><span class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span></td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Chi tiết</button><button class="btn btn-danger btn-sm">Đình chỉ</button></div></td>
+              <tr th:if="${congTacViens == null or #lists.isEmpty(congTacViens)}">
+                <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu cộng tác viên</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị 3 / 2.945 CTV</span>
-          <div class="pagination"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">...</button><button class="page-btn">›</button></div>
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${congTacViens != null ? #lists.size(congTacViens) : 0}">0</span> / <span th:text="${congTacVienStats != null ? congTacVienStats.tongCongTacVien : 0}">0</span> cộng tác viên</span>
+          <div class="pagination"><button class="page-btn active">1</button></div>
         </div>
       </div>
     </main>
@@ -274,7 +199,6 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

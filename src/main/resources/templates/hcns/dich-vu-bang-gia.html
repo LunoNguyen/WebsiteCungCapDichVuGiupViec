@@ -1,62 +1,12 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dich vu &amp; Bang gia - HCNS | Neatify</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="/css/dashboard.css">
-</head>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/admin-layout :: adminHead('Dịch vụ & Bảng giá – HCNS')}"></head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <img src="/assets/Logo.png" class="sidebar-logo-img" alt="Neatify">
-      <span class="sidebar-logo-text">Neat<span>ify</span></span>
-      <button class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
-    </div>
-    <div class="sidebar-user">
-      <div class="avatar" style="background:var(--gradient-primary)">HC</div>
-      <div class="sidebar-user-info"><div class="sidebar-user-name">Nguyen Thi Hanh</div><div class="sidebar-user-role">NV HCNS</div></div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Tong quan</div>
-        <div class="sidebar-nav-items"><a href="/hcns/dashboard" class="sidebar-item"><i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span></a></div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Nhan su</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/nhan-vien" class="sidebar-item"><i class="ti ti-users item-icon"></i><span class="item-label">Quan ly Nhan vien</span></a>
-          <a href="/hcns/cong-tac-vien" class="sidebar-item"><i class="ti ti-user-star item-icon"></i><span class="item-label">Quan ly CTV</span><span class="item-badge">12</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">Dich vu</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/danh-muc-dich-vu" class="sidebar-item"><i class="ti ti-category item-icon"></i><span class="item-label">Danh muc dich vu</span></a>
-          <a href="/hcns/dich-vu-bang-gia" class="sidebar-item active"><i class="ti ti-receipt item-icon"></i><span class="item-label">Dich vu &amp; Bang gia</span></a>
-        </div>
-      </div>
-      <div class="sidebar-nav-group"><div class="sidebar-nav-group-label">He thong</div>
-        <div class="sidebar-nav-items">
-          <a href="/hcns/tai-khoan" class="sidebar-item"><i class="ti ti-key item-icon"></i><span class="item-label">Quan ly Tai khoan</span></a>
-        </div>
-      </div>
-    </nav>
-    <div class="sidebar-footer"><a href="/logout" class="sidebar-logout"><i class="ti ti-logout item-icon"></i><span class="item-label">Dang xuat</span></a></div>
-  </aside>
+  <aside th:replace="~{layout/admin-layout :: adminSidebar('hcns', 'dich-vu-bang-gia')}"></aside>
+
   <div class="main-area">
-    <header class="topbar">
-      <div class="topbar-breadcrumb">
-        <span>Neatify</span><span class="sep">/</span>
-        <a href="/hcns/dashboard" style="color:var(--text-muted)">HCNS</a><span class="sep">/</span>
-        <span class="current">Dich vu &amp; Bang gia</span>
-      </div>
-      <div class="topbar-actions">
-        <div class="dropdown">
-          <div class="avatar avatar-sm" data-dropdown="bgUser" style="cursor:pointer;background:var(--gradient-primary)" th:text="${session.userAvatar != null ? session.userAvatar : 'HC'}">HC</div>
-          <div class="dropdown-menu" id="bgUser"><a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Dang xuat</a></div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Dịch vụ & Bảng giá')}"></header>
 
     <main class="page-content">
       <div class="page-header">
@@ -69,120 +19,50 @@
           <button class="btn btn-primary btn-sm" data-modal-open="addPriceModal"><i class="ti ti-plus"></i> Them goi dich vu</button>
         </div>
       </div>
-      <div class="tabs" style="margin-bottom:1.5rem;max-width:600px">
-        <button class="tab-btn active" data-tab="don-dep">Don dep nha</button>
-        <button class="tab-btn" data-tab="giat-ui">Giat ui</button>
-        <button class="tab-btn" data-tab="nau-an">Nau an</button>
-        <button class="tab-btn" data-tab="trong-tre">Trong tre</button>
-      </div>
-      <div data-tabs-container>
-        <div data-tab-panel="don-dep">
-          <div class="card" style="padding:0">
-            <div class="card-header" style="padding:1.25rem 1.5rem">
-              <div><div class="card-title">Bang gia Don dep nha</div><div class="card-subtitle">Gia tinh theo gio · chua VAT</div></div>
-              <button class="btn btn-outline btn-sm" data-modal-open="addPriceModal"><i class="ti ti-edit"></i> Chinh sua</button>
-            </div>
-            <div class="table-container" style="border:none">
-              <table class="table">
-                <thead><tr>
-                  <th>Goi dich vu</th><th>Thoi gian</th><th>Gia co ban</th><th>Gia uu tien</th><th>Gia cuoi tuan</th><th>Hoa hong CTV</th><th>Trang thai</th><th>Thao tac</th>
-                </tr></thead>
-                <tbody>
-                  <tr>
-                    <td style="font-weight:700">Co ban (1 phong)</td>
-                    <td>2 gio</td>
-                    <td style="color:var(--accent);font-weight:700">120.000d</td>
-                    <td style="color:var(--primary-light)">150.000d</td>
-                    <td style="color:var(--warning)">160.000d</td>
-                    <td>70%</td>
-                    <td><span class="badge badge-success">Hoat dong</span></td>
-                    <td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:700">Tieu chuan (3 phong)</td>
-                    <td>4 gio</td>
-                    <td style="color:var(--accent);font-weight:700">240.000d</td>
-                    <td style="color:var(--primary-light)">290.000d</td>
-                    <td style="color:var(--warning)">310.000d</td>
-                    <td>70%</td>
-                    <td><span class="badge badge-success">Hoat dong</span></td>
-                    <td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:700">Nang cao (toan nha)</td>
-                    <td>6 gio</td>
-                    <td style="color:var(--accent);font-weight:700">360.000d</td>
-                    <td style="color:var(--primary-light)">420.000d</td>
-                    <td style="color:var(--warning)">450.000d</td>
-                    <td>72%</td>
-                    <td><span class="badge badge-success">Hoat dong</span></td>
-                    <td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:700">Ve sinh tong the</td>
-                    <td>8 gio</td>
-                    <td style="color:var(--accent);font-weight:700">700.000d</td>
-                    <td style="color:var(--primary-light)">800.000d</td>
-                    <td style="color:var(--warning)">850.000d</td>
-                    <td>75%</td>
-                    <td><span class="badge badge-success">Hoat dong</span></td>
-                    <td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+      <div class="card" style="padding:0">
+        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="card-title">Bảng giá dịch vụ hiện hành</div>
+            <div class="card-subtitle">Giá cước niêm yết áp dụng trong hệ thống Neatify</div>
           </div>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${bangGias != null ? #lists.size(bangGias) : 0}">0</strong> gói giá</span>
         </div>
-        <div data-tab-panel="giat-ui" style="display:none">
-          <div class="card" style="padding:0">
-            <div class="card-header" style="padding:1.25rem 1.5rem">
-              <div><div class="card-title">Bang gia Giat ui</div><div class="card-subtitle">Gia tinh theo kg</div></div>
-            </div>
-            <div class="table-container" style="border:none">
-              <table class="table">
-                <thead><tr><th>Goi</th><th>Khoi luong</th><th>Gia co ban</th><th>Hoa hong CTV</th><th>Trang thai</th><th>Thao tac</th></tr></thead>
-                <tbody>
-                  <tr><td style="font-weight:700">Nho (duoi 5kg)</td><td>1-5 kg</td><td style="color:var(--accent);font-weight:700">60.000d</td><td>70%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                  <tr><td style="font-weight:700">Vua (5-10kg)</td><td>5-10 kg</td><td style="color:var(--accent);font-weight:700">100.000d</td><td>70%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                  <tr><td style="font-weight:700">Lon (tren 10kg)</td><td>10+ kg</td><td style="color:var(--accent);font-weight:700">150.000d</td><td>72%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div data-tab-panel="nau-an" style="display:none">
-          <div class="card" style="padding:0">
-            <div class="card-header" style="padding:1.25rem 1.5rem">
-              <div><div class="card-title">Bang gia Nau an</div><div class="card-subtitle">Gia tinh theo bua</div></div>
-            </div>
-            <div class="table-container" style="border:none">
-              <table class="table">
-                <thead><tr><th>Goi</th><th>So bua</th><th>Gia co ban</th><th>Hoa hong CTV</th><th>Trang thai</th><th>Thao tac</th></tr></thead>
-                <tbody>
-                  <tr><td style="font-weight:700">1 bua</td><td>1 bua/ngay</td><td style="color:var(--accent);font-weight:700">150.000d</td><td>68%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                  <tr><td style="font-weight:700">2 bua</td><td>2 bua/ngay</td><td style="color:var(--accent);font-weight:700">250.000d</td><td>70%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                  <tr><td style="font-weight:700">Goi thang</td><td>60 bua/thang</td><td style="color:var(--accent);font-weight:700">3.500.000d</td><td>72%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div data-tab-panel="trong-tre" style="display:none">
-          <div class="card" style="padding:0">
-            <div class="card-header" style="padding:1.25rem 1.5rem">
-              <div><div class="card-title">Bang gia Trong tre</div><div class="card-subtitle">Gia tinh theo gio</div></div>
-            </div>
-            <div class="table-container" style="border:none">
-              <table class="table">
-                <thead><tr><th>Goi</th><th>Thoi gian</th><th>Gia co ban</th><th>Hoa hong CTV</th><th>Trang thai</th><th>Thao tac</th></tr></thead>
-                <tbody>
-                  <tr><td style="font-weight:700">Theo gio</td><td>1 gio</td><td style="color:var(--accent);font-weight:700">80.000d/gio</td><td>70%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                  <tr><td style="font-weight:700">Ban ngay (4h)</td><td>4 gio</td><td style="color:var(--accent);font-weight:700">280.000d</td><td>72%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                  <tr><td style="font-weight:700">Ca ngay (8h)</td><td>8 gio</td><td style="color:var(--accent);font-weight:700">500.000d</td><td>75%</td><td><span class="badge badge-success">Hoat dong</span></td><td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Sua</button></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div class="table-container" style="border:none">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Mã bảng giá</th>
+                <th>Dịch vụ</th>
+                <th>Loại hình đặt</th>
+                <th>Đơn vị tính</th>
+                <th>Đơn giá niêm yết</th>
+                <th>Ngày áp dụng</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="bg : ${bangGias}">
+                <td style="font-weight:700;color:var(--primary-light)" th:text="${bg.maBangGia}">BG01</td>
+                <td style="font-weight:600" th:text="${bg.dichVu != null ? bg.dichVu.tenDichVu : '--'}">Dọn dẹp nhà</td>
+                <td>
+                  <span class="badge badge-primary" th:if="${bg.loaiHinhDat == 'TheoLan'}">Theo lần</span>
+                  <span class="badge badge-info" th:if="${bg.loaiHinhDat == 'GoiThang'}">Gói tháng</span>
+                </td>
+                <td th:text="${bg.donViTinh}">Giờ</td>
+                <td style="color:var(--accent);font-weight:700;font-size:0.95rem" th:text="${#numbers.formatDecimal(bg.donGia, 0, 'COMMA', 0, 'POINT')} + 'đ'">120.000đ</td>
+                <td style="font-size:0.85rem" th:text="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
+                <td>
+                  <span class="badge badge-success" th:if="${bg.trangThai == 'DangApDung'}">Đang áp dụng</span>
+                  <span class="badge badge-secondary" th:unless="${bg.trangThai == 'DangApDung'}">Hết hạn</span>
+                </td>
+                <td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Chỉnh sửa</button></td>
+              </tr>
+              <tr th:if="${bangGias == null or #lists.isEmpty(bangGias)}">
+                <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu bảng giá</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </main>
@@ -226,7 +106,6 @@
   </div>
 </div>
 
-<div class="overlay" id="sidebarOverlay"></div>
-<script src="/js/main.js"></script>
+<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>
