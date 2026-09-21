@@ -8,7 +8,6 @@
   <div class="main-area">
     <header th:replace="~{layout/admin-layout :: adminTopbar('Giám đốc', '/giam-doc/dashboard', 'Quản lý Thông báo')}"></header>
 
-
     <main class="page-content">
       <div class="page-header">
         <div class="page-title-group">
@@ -22,46 +21,45 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">Chờ phê duyệt từ Marketing</div>
-            <span class="badge badge-warning">2 thông báo</span>
+            <span class="badge badge-warning" th:text="${dsChoDuyet != null ? dsChoDuyet.size() : 0} + ' thông báo'">0 thông báo</span>
           </div>
           <div style="display:flex;flex-direction:column;gap:0.875rem">
-            <div style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
+            
+            <div th:each="tb : ${dsChoDuyet}" style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
               <div style="padding:1rem;background:var(--bg-card)">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.625rem">
-                  <span style="font-weight:700;font-size:0.875rem">Khuyến mãi 20% nhân Lễ Quốc khánh</span>
-                  <span class="badge badge-warning">Chờ duyệt</span>
+                  <span style="font-weight:700;font-size:0.875rem" th:text="${tb.tieuDe}">Tiêu đề thông báo</span>
+                  <span class="badge badge-warning" th:text="${tb.trangThai}">Chờ duyệt</span>
                 </div>
-                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Gửi đến: <strong style="color:var(--text-secondary)">Tất cả khách hàng</strong> (ước tính 50.000 người)</div>
-                <div style="font-size:0.8rem;color:var(--text-secondary);background:var(--bg-glass);padding:0.625rem;border-radius:var(--radius-sm)">
-                  🎉 Nhân dịp Lễ Quốc khánh 2/9, GiupViec.vn tri ân Quý khách với ưu đãi giảm 20% tất cả dịch vụ từ ngày 1-5/09/2026...
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">
+                  Gửi đến: <strong style="color:var(--text-secondary)" th:text="${tb.nhomNhan}">Nhóm nhận</strong>
                 </div>
-                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem">Đề xuất bởi: NV Marketing · 18/09/2026</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);background:var(--bg-glass);padding:0.625rem;border-radius:var(--radius-sm)" th:text="${tb.noiDung}">
+                  Nội dung thông báo...
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem">
+                  Đề xuất bởi: <span th:text="${tb.nguoiGui}">Người gửi</span> · <span th:text="${#temporals.format(tb.thoiGianGui, 'dd/MM/yyyy')}">Ngày</span>
+                </div>
               </div>
               <div style="padding:0.75rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.5rem">
-                <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt thông báo và gửi đến 50.000 khách hàng!')">Duyệt & Gửi</button>
-                <button class="btn btn-danger btn-sm">Từ chối</button>
+                <!-- Nút Duyệt -->
+                <form th:action="@{/giam-doc/thong-bao/duyet}" method="post" style="margin:0;">
+                  <input type="hidden" name="id" th:value="${tb.id}" />
+                  <button type="submit" class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt thông báo!')">Duyệt & Gửi</button>
+                </form>
+                <!-- Nút Từ chối -->
+                <form th:action="@{/giam-doc/thong-bao/tu-choi}" method="post" style="margin:0;">
+                  <input type="hidden" name="id" th:value="${tb.id}" />
+                  <button type="submit" class="btn btn-danger btn-sm">Từ chối</button>
+                </form>
                 <button class="btn btn-outline btn-sm">Xem trước</button>
               </div>
             </div>
 
-            <div style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden">
-              <div style="padding:1rem;background:var(--bg-card)">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.625rem">
-                  <span style="font-weight:700;font-size:0.875rem">Ra mắt tính năng đặt lịch mới</span>
-                  <span class="badge badge-warning">Chờ duyệt</span>
-                </div>
-                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Gửi đến: <strong style="color:var(--text-secondary)">Tất cả khách hàng + CTV</strong></div>
-                <div style="font-size:0.8rem;color:var(--text-secondary);background:var(--bg-glass);padding:0.625rem;border-radius:var(--radius-sm)">
-                  🆕 GiupViec.vn vừa ra mắt tính năng đặt lịch định kỳ thông minh...
-                </div>
-                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem">Đề xuất bởi: NV Marketing · 17/09/2026</div>
-              </div>
-              <div style="padding:0.75rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.5rem">
-                <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt và lên lịch gửi!')">Duyệt & Gửi</button>
-                <button class="btn btn-danger btn-sm">Từ chối</button>
-                <button class="btn btn-outline btn-sm">Chỉnh sửa</button>
-              </div>
+            <div th:if="${dsChoDuyet == null || dsChoDuyet.isEmpty()}" style="padding: 1rem; text-align: center; color: var(--text-muted);">
+              Không có thông báo nào đang chờ duyệt.
             </div>
+
           </div>
         </div>
 
@@ -70,46 +68,47 @@
           <div class="card-header">
             <div class="card-title">Thông báo nội bộ mới</div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:1rem">
-            <div class="form-group">
-              <label class="form-label">Tiêu đề</label>
-              <input type="text" class="form-control" placeholder="Nhập tiêu đề thông báo...">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Nội dung</label>
-              <textarea class="form-control" rows="5" placeholder="Nhập nội dung thông báo nội bộ..."></textarea>
-            </div>
-            <div class="form-row">
+          <form th:action="@{/giam-doc/thong-bao/tao-moi}" method="post">
+            <div style="display:flex;flex-direction:column;gap:1rem">
               <div class="form-group">
-                <label class="form-label">Gửi đến</label>
-                <select class="form-control">
-                  <option>Toàn bộ nhân viên</option>
-                  <option>Phòng HCNS-KT</option>
-                  <option>Phòng CSKH</option>
-                  <option>Phòng Marketing</option>
-                </select>
+                <label class="form-label">Tiêu đề</label>
+                <input type="text" name="tieuDe" class="form-control" placeholder="Nhập tiêu đề thông báo..." required>
               </div>
               <div class="form-group">
-                <label class="form-label">Ưu tiên</label>
-                <select class="form-control">
-                  <option>Thông thường</option>
-                  <option>Quan trọng</option>
-                  <option>Khẩn cấp</option>
-                </select>
+                <label class="form-label">Nội dung</label>
+                <textarea name="noiDung" class="form-control" rows="5" placeholder="Nhập nội dung thông báo nội bộ..." required></textarea>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Gửi đến</label>
+                  <select name="nhomNhan" class="form-control">
+                    <option value="NhanVien">Toàn bộ nhân viên</option>
+                    <option value="KhachHang">Tất cả Khách Hàng</option>
+                    <option value="CongTacVien">Cộng Tác Viên</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Ưu tiên</label>
+                  <select class="form-control">
+                    <option>Thông thường</option>
+                    <option>Quan trọng</option>
+                    <option>Khẩn cấp</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Thời gian gửi</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                  <button type="submit" class="btn btn-primary" style="justify-content:center" onclick="Toast.show('Thông báo đã được gửi thành công!')">
+                    <i class="ti ti-send"></i> Gửi ngay
+                  </button>
+                  <button type="button" class="btn btn-secondary" style="justify-content:center">
+                    <i class="ti ti-calendar"></i> Lên lịch gửi
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Thời gian gửi</label>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
-                <button class="btn btn-primary" style="justify-content:center" onclick="Toast.show('Thông báo đã được gửi thành công!')">
-                  <i class="ti ti-send"></i> Gửi ngay
-                </button>
-                <button class="btn btn-secondary" style="justify-content:center">
-                  <i class="ti ti-calendar"></i> Lên lịch gửi
-                </button>
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -120,11 +119,28 @@
         </div>
         <div class="table-container" style="border:none">
           <table class="table">
-            <thead><tr><th>Tiêu đề</th><th>Nhóm nhận</th><th>Người gửi</th><th>Thời gian gửi</th><th>Đã đọc</th><th>Trạng thái</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Tiêu đề</th>
+                <th>Nhóm nhận</th>
+                <th>Người gửi</th>
+                <th>Thời gian gửi</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr><td style="font-weight:600">Họp toàn công ty tháng 9</td><td><span class="badge badge-info">Toàn bộ NV</span></td><td style="font-size:0.8rem">Nguyễn Văn An (GĐ)</td><td style="font-size:0.8rem">15/09/2026 09:00</td><td style="font-size:0.8rem">24/24</td><td><span class="badge badge-success">Đã gửi</span></td></tr>
-              <tr><td style="font-weight:600">Cập nhật quy trình xử lý khiếu nại</td><td><span class="badge badge-secondary">CSKH</span></td><td style="font-size:0.8rem">Nguyễn Văn An (GĐ)</td><td style="font-size:0.8rem">10/09/2026 14:30</td><td style="font-size:0.8rem">8/8</td><td><span class="badge badge-success">Đã gửi</span></td></tr>
-              <tr><td style="font-weight:600">Khuyến mãi Quốc khánh 2/9 🎉</td><td><span class="badge badge-primary">Tất cả KH</span></td><td style="font-size:0.8rem">Phòng Marketing</td><td style="font-size:0.8rem">01/09/2026 08:00</td><td style="font-size:0.8rem">18.245/50K</td><td><span class="badge badge-success">Đã gửi</span></td></tr>
+              <tr th:each="tb : ${dsDaGui}">
+                <td style="font-weight:600" th:text="${tb.tieuDe}">Tiêu đề</td>
+                <td><span class="badge badge-info" th:text="${tb.nhomNhan}">Nhóm nhận</span></td>
+                <td style="font-size:0.8rem" th:text="${tb.nguoiGui}">Người gửi</td>
+                <td style="font-size:0.8rem" th:text="${#temporals.format(tb.thoiGianGui, 'dd/MM/yyyy HH:mm')}">Thời gian</td>
+                <td>
+                  <span th:class="${tb.trangThai == 'DaGui' ? 'badge badge-success' : (tb.trangThai == 'TuChoi' ? 'badge badge-danger' : 'badge badge-secondary')}" th:text="${tb.trangThai == 'DaGui' ? 'Đã gửi' : tb.trangThai}">Trạng thái</span>
+                </td>
+              </tr>
+              <tr th:if="${dsDaGui == null || dsDaGui.isEmpty()}">
+                <td colspan="6" style="text-align:center; color: var(--text-muted); padding: 1rem;">Chưa có dữ liệu lịch sử.</td>
+              </tr>
             </tbody>
           </table>
         </div>

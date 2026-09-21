@@ -16,14 +16,18 @@
         </div>
         <div class="page-actions">
           <!-- Period Filter -->
-          <select class="filter-select" id="periodFilter" onchange="updateCharts()">
-            <option value="month">Tháng này</option>
-            <option value="quarter">Quý này</option>
-            <option value="year">Năm nay</option>
-            <option value="custom">Tùy chọn</option>
+<select class="filter-select" id="periodFilter" onchange="location.href='/giam-doc/bao-cao?period=' + this.value">
+            <option value="month" th:selected="${param.period == 'month' or param.period == null}">Tháng này</option>
+            <option value="quarter" th:selected="${param.period == 'quarter'}">Quý này</option>
+            <option value="year" th:selected="${param.period == 'year'}">Năm nay</option>
+            <option value="all" th:selected="${param.period == 'all'}">Toàn thời gian</option>
           </select>
-          <button class="btn btn-secondary btn-sm"><i class="ti ti-file-type-pdf"></i> PDF</button>
-          <button class="btn btn-success btn-sm"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()">
+  <i class="ti ti-file-type-pdf"></i> PDF
+</button>
+<a th:href="@{/giam-doc/bao-cao/export-excel}" class="btn btn-success btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
+  <i class="ti ti-file-spreadsheet"></i> Excel
+</a>
         </div>
       </div>
 
@@ -118,11 +122,14 @@
                 <table class="table">
                   <thead><tr><th>Dịch vụ</th><th>Thời lượng ước tính</th><th>Giá tham khảo</th><th>Trạng thái</th></tr></thead>
                   <tbody>
-                    <tr th:each="dv : ${dichVus}">
+                                        <tr th:each="dv : ${dichVus}">
                       <td style="font-weight:600" th:text="${dv.tenDichVu}">Dọn dẹp nhà</td>
-                      <td th:text="${dv.thoiLuongUocTinh != null ? (dv.thoiLuongUocTinh + ' giờ') : 'Theo yêu cầu'}">2 giờ</td>
-                      <td style="color:var(--accent);font-weight:700" th:text="${dv.giaThamKhao != null ? (#numbers.formatDecimal(dv.giaThamKhao, 0, 'POINT', 0, 'COMMA') + 'đ') : 'Theo thỏa thuận'}">150.000đ</td>
-                      <td><span class="badge badge-success" th:text="${dv.trangThai != null ? dv.trangThai : 'Hoạt động'}">Hoạt động</span></td>
+                      <td th:text="${dv.donViTinh != null ? dv.donViTinh : '---'}">Lần / Giờ</td>
+                      <td style="color:var(--text-secondary);font-size:0.85rem;" th:text="${dv.moTaChiTiet != null ? dv.moTaChiTiet : '---'}">Mô tả chi tiết</td>
+                      <td>
+                        <span class="badge badge-success" th:if="${dv.trangThai == 'HoatDong'}">Hoạt động</span>
+                        <span class="badge badge-secondary" th:if="${dv.trangThai == 'An'}">Ẩn</span>
+                      </td>
                     </tr>
                     <tr th:if="${dichVus == null or #lists.isEmpty(dichVus)}">
                       <td colspan="4" style="text-align:center;color:var(--text-muted)">Chưa có dịch vụ nào</td>
@@ -208,6 +215,64 @@
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+<script th:inline="javascript">
+    var doanhThuDb = /*[[${doanhThuHienTai != null ? doanhThuHienTai : 250}]]*/ 250;
+</script>
+
 <script src="/js/charts.js"></script>
+
+<script>
+    // Tự động cập nhật biểu đồ doanh thu bên trang Báo cáo bằng dữ liệu thật từ DB
+    document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(function() {
+            const canvas = document.getElementById('revenueChart');
+            if (canvas && window.Chart) {
+                // Tìm instance chart cũ nếu có và hủy để vẽ lại bằng data thật
+                let existingChart = Chart.getChart(canvas);
+                if (existingChart) {
+                    existingChart.data.datasets[0].data[existingChart.data.datasets[0].data.length - 1] = doanhThuDb;
+                    existingChart.update();
+                }
+            }
+        }, 200); // Đợi file charts.js chạy xong rồi ghi đè dữ liệu thật vào
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(function() {
+            const canvas = document.getElementById('revenueChart');
+            if (canvas && window.Chart) {
+                let existingChart = Chart.getChart(canvas);
+                if (existingChart) {
+                    existingChart.data.datasets[0].data[existingChart.data.datasets[0].data.length - 1] = doanhThuDb;
+                    existingChart.update();
+                }
+            }
+        }, 200);
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".tab-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var tabId = btn.getAttribute("data-tab");
+                var idMap = {
+                    services: "servicesChart",
+                    ctv: "ctvRadarChart",
+                    complaints: "complaintChart"
+                };
+                var canvasId = idMap[tabId];
+                if (canvasId) {
+                    setTimeout(function () {
+                        var chart = Chart.getChart(canvasId);
+                        if (chart) chart.resize();
+                    }, 50);
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

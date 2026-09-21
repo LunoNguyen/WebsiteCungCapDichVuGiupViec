@@ -42,7 +42,7 @@
         <div class="quick-stat">
           <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-chart-line" style="color:var(--primary)"></i></div>
           <div>
-            <div class="quick-stat-val" th:text="${khieuNaiStats != null ? khieuNaiStats.thoiGianXuLyTrungBinhNgay + ' ngày' : '1.5 ngày'}">1.5 ngày</div>
+            <div class="quick-stat-val" th:text="${khieuNaiStats != null ? khieuNaiStats.thoiGianXuLyTrungBinhNgay + ' ngày' : '0 ngày'}">1.5 ngày</div>
             <div class="quick-stat-lbl">Thời gian xử lý trung bình</div>
           </div>
         </div>
@@ -54,17 +54,19 @@
           <i class="ti ti-search search-icon"></i>
           <input type="text" class="form-control" placeholder="Tìm theo mã khiếu nại, tên khách hàng..." data-table-search="complaintTable">
         </div>
-        <select class="filter-select">
-          <option value="">Tất cả trạng thái</option>
-          <option value="LeoThang">Leo thang Giám đốc</option>
-          <option value="DangXuLy">Đang xử lý</option>
-          <option value="DaGiaiQuyet">Đã giải quyết</option>
+        <select class="filter-select" id="statusFilter">
+          <option value="Tất cả trạng thái">Tất cả trạng thái</option>
+          <option value="Leo thang">Leo thang Giám đốc</option>
+          <option value="Đang xử lý">Đang xử lý</option>
+          <option value="Đã giải quyết">Đã giải quyết</option>
+          <option value="Chưa xử lý">Chưa xử lý</option>
         </select>
-        <select class="filter-select">
-          <option value="">Loại vấn đề</option>
-          <option>Chất lượng dịch vụ</option>
-          <option>Tài sản hư hỏng</option>
-          <option>Thái độ phục vụ</option>
+        <select class="filter-select" id="issueFilter">
+          <option value="Loại vấn đề">Tất cả loại vấn đề</option>
+          <!-- Tự động sinh danh sách loại vấn đề từ database hoặc để tĩnh nếu ít -->
+          <option value="Chất lượng dịch vụ">Chất lượng dịch vụ</option>
+          <option value="Tài sản hư hỏng">Tài sản hư hỏng</option>
+          <option value="Thái độ phục vụ">Thái độ phục vụ</option>
         </select>
       </div>
 
@@ -72,7 +74,7 @@
       <div class="card" style="padding:0">
         <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
           <div class="card-title">Danh sách khiếu nại cần Giám đốc theo dõi</div>
-          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${khieuNaiStats != null ? khieuNaiStats.tongKhieuNai : 0}">0</strong> khiếu nại</span>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${khieuNais != null ? #lists.size(khieuNais) : 0}">0</strong> khiếu nại</span>
         </div>
         <div class="table-container" style="border:none">
           <table class="table" id="complaintTable">
@@ -88,6 +90,7 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Lặp danh sách khiếu nại -->
               <tr th:each="kn : ${khieuNais}">
                 <td style="font-weight:700;font-size:0.85rem;color:var(--primary-light)" th:text="${kn.maKhieuNai}">#KN-001</td>
                 <td>
@@ -99,18 +102,18 @@
                     </div>
                   </div>
                 </td>
-                <td th:text="${kn.loaiVanDe}">Tài sản hư hỏng</td>
+                <td th:text="${kn.loaiVanDe}">Loại vấn đề</td>
                 <td style="font-size:0.85rem" th:text="${kn.donDat != null ? kn.donDat.maDonDat : '--'}">#DD-001</td>
                 <td style="font-size:0.85rem" th:text="${kn.ngayGui != null ? #temporals.format(kn.ngayGui, 'dd/MM/yyyy HH:mm') : '--'}">18/09/2026</td>
                 <td>
-                  <span class="badge badge-danger" th:if="${kn.trangThai == 'LeoThang'}">Leo thang Giám đốc</span>
+                  <span class="badge badge-danger" th:if="${kn.trangThai == 'LeoThang'}">Leo thang</span>
                   <span class="badge badge-warning" th:if="${kn.trangThai == 'DangXuLy'}">Đang xử lý</span>
                   <span class="badge badge-secondary" th:if="${kn.trangThai == 'Moi' or kn.trangThai == 'ChuaXuLy'}">Chưa xử lý</span>
                   <span class="badge badge-success" th:if="${kn.trangThai == 'DaGiaiQuyet'}">Đã giải quyết</span>
                 </td>
                 <td>
-                  <div class="table-actions">
-                    <button class="btn btn-primary btn-sm" data-panel-open="complaintDetail">Xem xét</button>
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="btn btn-primary btn-sm" th:attr="data-panel-open='complaintDetail_' + ${kn.id}">Xem xét</button>
                   </div>
                 </td>
               </tr>
@@ -120,104 +123,126 @@
             </tbody>
           </table>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${khieuNais != null ? #lists.size(khieuNais) : 0}">0</span> khiếu nại</span>
-          <div class="pagination">
-            <button class="page-btn active">1</button>
-          </div>
-        </div>
       </div>
     </main>
   </div>
 </div>
 
-<!-- Detail Panel -->
 <div class="overlay" id="panelOverlay"></div>
-<div class="detail-panel" id="complaintDetail">
-  <div class="detail-panel-header">
-    <div>
-      <h2 style="font-size:1.1rem;font-weight:700">#KN-001 · Tài sản hư hỏng</h2>
-      <span class="badge badge-danger" style="margin-top:0.25rem">Leo thang – Chờ GĐ xem xét</span>
-    </div>
-    <button class="modal-close" data-panel-close="complaintDetail">✕</button>
-  </div>
 
-  <div class="detail-panel-body">
-    <!-- KH Info -->
-    <div style="padding:1rem;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border);margin-bottom:1.25rem">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Thông tin khách hàng</div>
-      <div class="info-row"><span class="info-label">Họ tên</span><span class="info-value">Trần Thị Bình</span></div>
-      <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value">0912 345 678</span></div>
-      <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value">123 Nguyễn Huệ, Q.1</span></div>
-      <div class="info-row"><span class="info-label">Đơn liên quan</span><span class="info-value" style="color:var(--primary-light)">#DD-20260915</span></div>
+<!-- Vòng lặp tạo Modal Chi tiết cho từng khiếu nại -->
+<th:block th:each="kn : ${khieuNais}">
+  <div class="detail-panel" th:id="'complaintDetail_' + ${kn.id}">
+    <div class="detail-panel-header">
+      <div>
+        <h2 style="font-size:1.1rem;font-weight:700" th:text="${kn.maKhieuNai + ' · ' + kn.loaiVanDe}">#KN-001 · Vấn đề</h2>
+        
+        <span class="badge badge-danger" th:if="${kn.trangThai == 'LeoThang'}" style="margin-top:0.25rem">Leo thang – Chờ GĐ xem xét</span>
+        <span class="badge badge-warning" th:if="${kn.trangThai == 'DangXuLy'}" style="margin-top:0.25rem">Đang xử lý</span>
+        <span class="badge badge-success" th:if="${kn.trangThai == 'DaGiaiQuyet'}" style="margin-top:0.25rem">Đã giải quyết</span>
+        <span class="badge badge-secondary" th:if="${kn.trangThai == 'Moi' or kn.trangThai == 'ChuaXuLy'}" style="margin-top:0.25rem">Mới tiếp nhận</span>
+      </div>
+      <button class="modal-close" th:attr="data-panel-close='complaintDetail_' + ${kn.id}">✕</button>
     </div>
 
-    <!-- Complaint content -->
-    <div style="margin-bottom:1.25rem">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Nội dung khiếu nại</div>
-      <div style="background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:var(--radius-md);padding:1rem;font-size:0.875rem;color:var(--text-secondary);line-height:1.6">
-        Chiếc bình hoa gia truyền bị vỡ sau khi cộng tác viên dọn dẹp. Gia đình yêu cầu bồi thường 2.000.000đ nhưng Phòng CSKH chỉ phê duyệt 500.000đ dựa trên giá thị trường. Chúng tôi không đồng ý với kết quả này.
+    <div class="detail-panel-body">
+      <!-- KH Info -->
+      <div style="padding:1rem;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border);margin-bottom:1.25rem">
+        <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Thông tin khách hàng</div>
+        <div class="info-row"><span class="info-label">Họ tên</span><span class="info-value" th:text="${kn.khachHang != null ? kn.khachHang.hoTen : '---'}">---</span></div>
+        <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value" th:text="${kn.khachHang != null ? kn.khachHang.soDienThoai : '---'}">---</span></div>
+        <div class="info-row"><span class="info-label">Email</span><span class="info-value" th:text="${kn.khachHang != null ? kn.khachHang.email : '---'}">---</span></div>
+        <div class="info-row"><span class="info-label">Đơn liên quan</span><span class="info-value" style="color:var(--primary-light)" th:text="${kn.donDat != null ? kn.donDat.maDonDat : '---'}">---</span></div>
       </div>
-    </div>
 
-    <!-- CSKH decision -->
-    <div style="margin-bottom:1.25rem">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Kết quả xử lý của CSKH</div>
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;font-size:0.875rem;color:var(--text-secondary)">
-        Sau khi xem xét hình ảnh và biên bản hiện trạng, xác nhận CTV gây vỡ bình hoa. Đề xuất bồi thường 500.000đ theo giá thị trường.
+      <!-- Complaint content -->
+      <div style="margin-bottom:1.25rem">
+        <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Nội dung khiếu nại</div>
+        <div style="background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:var(--radius-md);padding:1rem;font-size:0.875rem;color:var(--text-secondary);line-height:1.6" th:text="${kn.noiDung}">
+          Nội dung chi tiết...
+        </div>
       </div>
-    </div>
 
-    <!-- Timeline -->
-    <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Lịch sử xử lý</div>
-    <div class="timeline">
-      <div class="timeline-item">
-        <div class="timeline-dot danger"></div>
-        <div class="timeline-date">18/09/2026 14:32</div>
-        <div class="timeline-content"><span class="timeline-actor">Khách hàng</span> gửi khiếu nại và yêu cầu leo thang lên Giám đốc.</div>
+      <!-- GD Decision Form (Gửi dữ liệu về Server) -->
+      <form th:action="@{/giam-doc/khieu-nai/xu-ly}" method="post" style="margin-top:1.25rem" th:if="${kn.trangThai != 'DaGiaiQuyet'}">
+        <input type="hidden" name="id" th:value="${kn.id}" />
+        <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem;color:var(--primary-light)">Phê duyệt của Giám đốc</div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Phương án xử lý</label>
+          <select class="form-control" name="phuongAn" required>
+            <option value="PheDuyetYeuCau">Phê duyệt bồi thường theo yêu cầu KH</option>
+            <option value="ThuongLuong">Bồi thường (thương lượng)</option>
+            <option value="GiuNguyen">Giữ nguyên quyết định của CSKH</option>
+            <option value="BoSungTaiLieu">Yêu cầu bổ sung tài liệu trước khi quyết định</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ghi chú cho Phòng CSKH</label>
+          <textarea class="form-control" name="ghiChu" rows="3" placeholder="Hướng dẫn thực thi..."></textarea>
+        </div>
+        
+        <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
+          <button type="button" class="btn btn-danger" th:attr="data-panel-close='complaintDetail_' + ${kn.id}">Hủy / Đóng</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center" th:onclick="'Toast.show(\'Đã cập nhật phương án xử lý!\');'">Phê duyệt & Chuyển CSKH</button>
+        </div>
+      </form>
+      
+      <!-- Hiện thông báo nếu đã giải quyết -->
+      <div th:if="${kn.trangThai == 'DaGiaiQuyet'}" style="padding:1rem;background:rgba(67,233,123,0.1);border:1px solid var(--success);border-radius:var(--radius-md);text-align:center;color:var(--success);font-weight:600;margin-top:1rem;">
+        Khiếu nại này đã được giải quyết xong.
       </div>
-      <div class="timeline-item">
-        <div class="timeline-dot"></div>
-        <div class="timeline-date">17/09/2026 10:15</div>
-        <div class="timeline-content"><span class="timeline-actor">NV Hoàng Thị Dung (CSKH)</span> kết luận bồi thường 500.000đ, thông báo cho khách hàng.</div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-dot"></div>
-        <div class="timeline-date">16/09/2026 09:00</div>
-        <div class="timeline-content"><span class="timeline-actor">CTV Nguyễn Thị E</span> nộp biểu mẫu hiện trạng trước và sau dịch vụ.</div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-dot"></div>
-        <div class="timeline-date">15/09/2026 20:45</div>
-        <div class="timeline-content"><span class="timeline-actor">Khách hàng</span> gửi khiếu nại về tài sản hư hỏng.</div>
-      </div>
-    </div>
 
-    <!-- GD Decision -->
-    <div style="margin-top:1.25rem">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem;color:var(--primary-light)">Phê duyệt của Giám đốc</div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Phương án xử lý</label>
-        <select class="form-control">
-          <option>Phê duyệt bồi thường 2.000.000đ theo yêu cầu KH</option>
-          <option>Bồi thường 1.000.000đ (thương lượng)</option>
-          <option>Giữ nguyên quyết định 500.000đ của CSKH</option>
-          <option>Yêu cầu bổ sung tài liệu trước khi quyết định</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Ghi chú cho Phòng CSKH</label>
-        <textarea class="form-control" rows="3" placeholder="Hướng dẫn thực thi..."></textarea>
-      </div>
     </div>
   </div>
-
-  <div class="detail-panel-footer">
-    <button class="btn btn-danger" onclick="Toast.show('Đã từ chối khiếu nại.','error');PanelManager.close('complaintDetail')">Từ chối</button>
-    <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="Toast.show('Đã phê duyệt phương án xử lý!');PanelManager.close('complaintDetail')">Phê duyệt & Chuyển CSKH</button>
-  </div>
-</div>
+</th:block>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+<!-- SCRIPT LỌC DỮ LIỆU ĐỒNG BỘ CHO KHIẾU NẠI -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('[data-table-search="complaintTable"]');
+    const statusSelect = document.getElementById('statusFilter');
+    const issueSelect = document.getElementById('issueFilter');
+
+    function applyFilters() {
+        const searchText = searchInput ? searchInput.value.toLowerCase() : '';
+        const statusVal = statusSelect ? statusSelect.value : 'Tất cả trạng thái';
+        const issueVal = issueSelect ? issueSelect.value : 'Loại vấn đề';
+
+        const rows = document.querySelectorAll('#complaintTable tbody tr');
+
+        rows.forEach(row => {
+            if (row.children.length < 7) return; // Bỏ qua dòng trống
+
+            const rowTextContent = row.textContent.toLowerCase();
+            const issueText = row.children[2].textContent.trim();
+            const statusText = row.children[5].textContent.trim();
+
+            // 1. Kiểm tra Text Search
+            const matchSearch = rowTextContent.includes(searchText);
+
+            // 2. Kiểm tra Combobox Trạng thái
+            let matchStatus = false;
+            if (statusVal === 'Tất cả trạng thái') matchStatus = true;
+            else if (statusVal === 'Leo thang' && statusText.includes('Leo thang')) matchStatus = true;
+            else if (statusText.includes(statusVal)) matchStatus = true;
+
+            // 3. Kiểm tra Combobox Loại vấn đề
+            const matchIssue = (issueVal === 'Loại vấn đề' || issueVal === 'Tất cả loại vấn đề') || issueText.includes(issueVal);
+
+            if (matchSearch && matchStatus && matchIssue) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+    if (issueSelect) issueSelect.addEventListener('change', applyFilters);
+});
+</script>
 </body>
 </html>

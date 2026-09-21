@@ -66,42 +66,41 @@ public class AuthService {
 
                 if ("CV-GD".equalsIgnoreCase(maChucVu) || "PB-BGD".equalsIgnoreCase(maPhongBan) || "giamdoc".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_GIAM_DOC";
-                    redirectUrl = "/giam-doc/dashboard";
+                    redirectUrl = "/giam-doc/bao-cao";
                     avatar = "GĐ";
                 } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu) || "CV-NVNS".equalsIgnoreCase(maChucVu) || "hanhnt".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_HCNS";
-                    redirectUrl = "/hcns/dashboard";
+                    redirectUrl = "/hcns/nhan-vien";
                     avatar = "HC";
                 } else if ("PB-CSKH".equalsIgnoreCase(maPhongBan) || "CV-CSKH".equalsIgnoreCase(maChucVu) || "dunght".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_CSKH";
-                    redirectUrl = "/cskh/dashboard";
+                    redirectUrl = "/cskh/khieu-nai";
                     avatar = "CS";
                 } else if ("PB-MKT".equalsIgnoreCase(maPhongBan) || "CV-MKT".equalsIgnoreCase(maChucVu) || "minhpv".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_MARKETING";
-                    redirectUrl = "/marketing/dashboard";
+                    redirectUrl = "/marketing/thong-bao";
                     avatar = "MKT";
                 } else {
                     role = "ROLE_HCNS";
-                    redirectUrl = "/hcns/dashboard";
+                    redirectUrl = "/hcns/nhan-vien";
                     avatar = "NV";
                 }
             } else {
-                // Fallback nếu tài khoản NhanVien nhưng chưa map NhanVien entity
                 if ("giamdoc".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_GIAM_DOC";
-                    redirectUrl = "/giam-doc/dashboard";
+                    redirectUrl = "/giam-doc/bao-cao";
                     avatar = "GĐ";
                 } else if ("hanhnt".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_HCNS";
-                    redirectUrl = "/hcns/dashboard";
+                    redirectUrl = "/hcns/nhan-vien";
                     avatar = "HC";
                 } else if ("dunght".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_CSKH";
-                    redirectUrl = "/cskh/dashboard";
+                    redirectUrl = "/cskh/khieu-nai";
                     avatar = "CS";
                 } else if ("minhpv".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_MARKETING";
-                    redirectUrl = "/marketing/dashboard";
+                    redirectUrl = "/marketing/thong-bao";
                     avatar = "MKT";
                 }
             }
@@ -162,4 +161,3 @@ public class AuthService {
         }
     }
 }
-
