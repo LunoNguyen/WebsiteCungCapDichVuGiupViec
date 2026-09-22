@@ -18,19 +18,19 @@ public class MarketingController {
 
     private final ThongKeService thongKeService;
     private final ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository;
-    private final MaCouponRepository maCouponRepository;
+    private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final ThongBaoRepository thongBaoRepository;
     private final DanhGiaRepository danhGiaRepository;
 
     public MarketingController(
             ThongKeService thongKeService,
             ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository,
-            MaCouponRepository maCouponRepository,
+            MaKhuyenMaiRepository maKhuyenMaiRepository,
             ThongBaoRepository thongBaoRepository,
             DanhGiaRepository danhGiaRepository) {
         this.thongKeService = thongKeService;
         this.chuongTrinhKhuyenMaiRepository = chuongTrinhKhuyenMaiRepository;
-        this.maCouponRepository = maCouponRepository;
+        this.maKhuyenMaiRepository = maKhuyenMaiRepository;
         this.thongBaoRepository = thongBaoRepository;
         this.danhGiaRepository = danhGiaRepository;
     }
@@ -48,7 +48,7 @@ public class MarketingController {
         model.addAttribute("topDichVu", thongKeService.getTopDichVu());
         model.addAttribute("recentReviews", danhGiaRepository.findAll());
         model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
-        model.addAttribute("coupons", maCouponRepository.findAll());
+        model.addAttribute("coupons", maKhuyenMaiRepository.findAll());
         return "marketing/dashboard";
     }
 
@@ -57,7 +57,7 @@ public class MarketingController {
     public String khuyenMai(Model model) {
         model.addAttribute("marketingStats", thongKeService.getMarketingStats());
         model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
-        model.addAttribute("coupons", maCouponRepository.findAll());
+        model.addAttribute("coupons", maKhuyenMaiRepository.findAll());
         return "marketing/khuyen-mai";
     }
 
@@ -77,7 +77,7 @@ public class MarketingController {
         model.addAttribute("tongCoupons", mktStats.getTongCoupons());
         model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
         model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
-        model.addAttribute("coupons", maCouponRepository.findAll());
+        model.addAttribute("coupons", maKhuyenMaiRepository.findAll());
         model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
         return "marketing/phan-tich";
     }
@@ -89,4 +89,3 @@ public class MarketingController {
         return "marketing/danh-gia";
     }
 }
-

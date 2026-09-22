@@ -24,6 +24,14 @@ public class DichVu {
     @Column(name = "MoTaChiTiet", columnDefinition = "TEXT")
     private String moTaChiTiet;
 
+    // --- CỘT MỚI: Thời gian thực hiện (phút) ---
+    @Column(name = "ThoiGianThucHien")
+    private Integer thoiGianThucHien;
+
+    // --- CỘT MỚI: Loại hình đặt (TheoLan hoặc GoiThang) ---
+    @Column(name = "LoaiHinhDat", nullable = false, length = 20)
+    private String loaiHinhDat;
+
     @Column(name = "DonViTinh", nullable = false, length = 30)
     private String donViTinh;
 
@@ -33,5 +41,6 @@ public class DichVu {
     @PrePersist
     protected void onCreate() {
         if (trangThai == null) trangThai = "HoatDong";
+        if (loaiHinhDat == null) loaiHinhDat = "TheoLan";
     }
 }

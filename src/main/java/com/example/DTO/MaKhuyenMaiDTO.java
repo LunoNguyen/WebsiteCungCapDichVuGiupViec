@@ -1,14 +1,13 @@
 package com.example.DTO;
 import lombok.*;
-import java.math.BigDecimal;
-import java.time.*;
-/** DTO cho MaCoupon. Quan he duoc truyen bang khoa ngoai id. */
+
+/** DTO cho MaKhuyenMai. Quan he duoc truyen bang khoa ngoai id. */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class MaCouponDTO {
+public class MaKhuyenMaiDTO {
     private Integer id;
-    private String maCoupon;
+    private String maKhuyenMai;
     private Integer chuongTrinhKhuyenMaiId;
-    private String codeCoupon;
+    private String codeKhuyenMai;
     private Integer soLuotToiDa;
     private Integer soLuotDaDung;
     private String trangThai;

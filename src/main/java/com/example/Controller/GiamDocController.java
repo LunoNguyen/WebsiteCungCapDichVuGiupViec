@@ -78,6 +78,12 @@ public class GiamDocController {
         model.addAttribute("recentOrders", thongKeService.getDonHangGanDay(8));
         model.addAttribute("pendingComplaints", thongKeService.getKhieuNaiGanDay(5));
         model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDon());
+        model.addAttribute("doanhThuTheoThang", thongKeService.getDoanhThu12Thang());
+        model.addAttribute("trangThaiKhieuNai", thongKeService.getTrangThaiKhieuNai());
+        model.addAttribute("tyLeDungHan", thongKeService.getTyLeGiaiQuyetDungHan());
+        model.addAttribute("tyLeHopLe", thongKeService.getTyLeKhieuNaiHopLe());
+        model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
+        model.addAttribute("tyLeHaiLong", thongKeService.getTyLeKhachHangHaiLong());
         return "giam-doc/dashboard";
     }
 
@@ -103,7 +109,13 @@ public class GiamDocController {
         model.addAttribute("topDichVu", thongKeService.getTopDichVu());
         model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDon());
         model.addAttribute("doanhThuHienTai", donStats.getDoanhThuTrieuDong() != null ? donStats.getDoanhThuTrieuDong() : 0);
-
+        model.addAttribute("doanhThuTheoThang", thongKeService.getDoanhThu12Thang());
+        model.addAttribute("trangThaiKhieuNai", thongKeService.getTrangThaiKhieuNai());
+        model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
+        model.addAttribute("tyLeDungHan", thongKeService.getTyLeGiaiQuyetDungHan());
+        model.addAttribute("tyLeHopLe", thongKeService.getTyLeKhieuNaiHopLe());
+        model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
+        model.addAttribute("tyLeHaiLong", thongKeService.getTyLeKhachHangHaiLong());
         return "giam-doc/bao-cao";
     }
 
@@ -291,6 +303,147 @@ public class GiamDocController {
             khieuNaiRepository.save(kn);
         });
         return "redirect:/giam-doc/khieu-nai";
+    }
+    // Hàm kiểm tra xem chuỗi có chứa khoảng trắng hay không
+    private boolean hasWhiteSpace(String str) {
+        if (str == null) return false;
+        return str.chars().anyMatch(Character::isWhitespace);
+    }
+// Xử lý thêm tài khoản mới (Chặn khoảng trắng, chặn SĐT quá 11 số, chặn trùng lặp)
+    @PostMapping("/tai-khoan/them")
+    public String themTaiKhoan(@RequestParam String tenDangNhap,
+                               @RequestParam String matKhau,
+                               @RequestParam String email,
+                               @RequestParam String soDienThoai,
+                               @RequestParam String loaiTaiKhoan,
+                               HttpServletRequest request,
+                               org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        
+        // 1. Kiểm tra khoảng trắng
+        if (hasWhiteSpace(tenDangNhap) || hasWhiteSpace(email) || hasWhiteSpace(matKhau) || hasWhiteSpace(soDienThoai)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Các trường thông tin không được chứa khoảng trắng (space)!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 2. Kiểm tra độ dài và định dạng Số điện thoại (chỉ chứa số, tối đa 11 kí tự)
+        if (!soDienThoai.matches("\\d{1,11}")) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại chỉ được chứa số và không được vượt quá 11 kí tự!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 3. Kiểm tra độ dài mật khẩu (ví dụ tối thiểu 6 kí tự)
+        if (matKhau.length() < 6) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Mật khẩu phải có ít nhất 6 ký tự!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 4. Kiểm tra trùng Tên đăng nhập
+        if (taiKhoanRepository.findByTenDangNhap(tenDangNhap).isPresent()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập '" + tenDangNhap + "' đã tồn tại trên hệ thống!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 5. Kiểm tra trùng Email
+        if (taiKhoanRepository.findByEmail(email).isPresent()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Email '" + email + "' đã được sử dụng bởi tài khoản khác!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 6. Kiểm tra trùng Số điện thoại
+        if (taiKhoanRepository.findBySoDienThoai(soDienThoai).isPresent()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại '" + soDienThoai + "' đã được sử dụng bởi tài khoản khác!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        TaiKhoan tk = new TaiKhoan();
+        tk.setMaTaiKhoan("TK-" + System.currentTimeMillis());
+        tk.setTenDangNhap(tenDangNhap);
+        tk.setMatKhau(matKhau); 
+        tk.setEmail(email);
+        tk.setSoDienThoai(soDienThoai);
+        tk.setLoaiTaiKhoan(loaiTaiKhoan);
+        tk.setTrangThai("HoatDong");
+        tk.setNgayTao(LocalDateTime.now());
+        
+        taiKhoanRepository.save(tk);
+
+        // Ghi log hệ thống
+        NhatKyTaiKhoan log = new NhatKyTaiKhoan();
+        log.setTaiKhoan(tk);
+        log.setHanhDong("Thêm TK");
+        log.setDiaChiIP(request.getRemoteAddr());
+        log.setThietBi(request.getHeader("User-Agent"));
+        log.setKetQua("ThanhCong");
+        nhatKyTaiKhoanRepository.save(log);
+
+        redirectAttributes.addFlashAttribute("successMessage", "Thêm tài khoản thành công!");
+        return "redirect:/giam-doc/tai-khoan";
+    }
+
+    // Xử lý cập nhật / sửa tài khoản (Kiểm tra khoảng trắng, SĐT tối đa 11 số, chặn trùng)
+    @PostMapping("/tai-khoan/sua")
+    public String suaTaiKhoan(@RequestParam Integer id,
+                              @RequestParam String tenDangNhap,
+                              @RequestParam String email,
+                              @RequestParam String soDienThoai,
+                              @RequestParam String loaiTaiKhoan,
+                              HttpServletRequest request,
+                              org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        
+        // 1. Kiểm tra khoảng trắng
+        if (hasWhiteSpace(tenDangNhap) || hasWhiteSpace(email) || hasWhiteSpace(soDienThoai)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập, email và số điện thoại không được chứa khoảng trắng!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 2. Kiểm tra định dạng số điện thoại (tối đa 11 số, chỉ chứa chữ số)
+        if (!soDienThoai.matches("\\d{1,11}")) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại chỉ được chứa số và tối đa 11 kí tự!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 3. Kiểm tra trùng Tên đăng nhập với ID khác
+        var existingTk = taiKhoanRepository.findByTenDangNhap(tenDangNhap);
+        if (existingTk.isPresent() && !existingTk.get().getId().equals(id)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập '" + tenDangNhap + "' đã thuộc về tài khoản khác!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 4. Kiểm tra trùng Email với ID khác
+        var existingEmail = taiKhoanRepository.findByEmail(email);
+        if (existingEmail.isPresent() && !existingEmail.get().getId().equals(id)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Email '" + email + "' đã thuộc về tài khoản khác!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        // 5. Kiểm tra trùng Số điện thoại với ID khác
+        var existingPhone = taiKhoanRepository.findBySoDienThoai(soDienThoai);
+        if (existingPhone.isPresent() && !existingPhone.get().getId().equals(id)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại '" + soDienThoai + "' đã thuộc về tài khoản khác!");
+            return "redirect:/giam-doc/tai-khoan";
+        }
+
+        taiKhoanRepository.findById(id).ifPresent(tk -> {
+            tk.setTenDangNhap(tenDangNhap);
+            tk.setEmail(email);
+            tk.setSoDienThoai(soDienThoai);
+            tk.setLoaiTaiKhoan(loaiTaiKhoan);
+            tk.setNgayCapNhat(LocalDateTime.now());
+            
+            taiKhoanRepository.save(tk);
+
+            // Ghi log hệ thống
+            NhatKyTaiKhoan log = new NhatKyTaiKhoan();
+            log.setTaiKhoan(tk);
+            log.setHanhDong("Sửa TK");
+            log.setDiaChiIP(request.getRemoteAddr());
+            log.setThietBi(request.getHeader("User-Agent"));
+            log.setKetQua("ThanhCong");
+            nhatKyTaiKhoanRepository.save(log);
+        });
+        
+        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật tài khoản thành công!");
+        return "redirect:/giam-doc/tai-khoan";
     }
     // Xuất báo cáo thống kê ra Excel
     @GetMapping("/bao-cao/export-excel")
