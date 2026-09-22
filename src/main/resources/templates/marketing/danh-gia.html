@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Đánh giá & Phản hồi – Marketing')}"></head>
+<head th:replace="~{layout/marketing-layout :: marketingHead('Đánh giá & Phản hồi – Marketing')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('marketing', 'danh-gia')}"></aside>
+  <aside th:replace="~{layout/marketing-layout :: marketingSidebar('danh-gia')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('Marketing', '/marketing/dashboard', 'Đánh giá & Phản hồi')}"></header>
+    <header th:replace="~{layout/marketing-layout :: marketingTopbar('Đánh giá & Phản hồi')}"></header>
 
     <main class="page-content">
       <div class="page-header">
@@ -129,7 +129,7 @@
   </div>
 </div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<div th:replace="~{layout/marketing-layout :: marketingScripts}"></div>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;

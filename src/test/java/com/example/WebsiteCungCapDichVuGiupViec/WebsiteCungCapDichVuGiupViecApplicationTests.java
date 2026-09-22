@@ -17,12 +17,25 @@ class WebsiteCungCapDichVuGiupViecApplicationTests {
 	private ThongKeService thongKeService;
 
 	@Autowired
-	private com.example.Validation.AdminAuthenticationInterceptor interceptor;
+	private com.example.Repository.TaiKhoanRepository taiKhoanRepository;
 
 	@Test
 	void testRoleAuthenticationAndDatabaseData() {
+		com.example.Model.TaiKhoan tk = taiKhoanRepository.findByTenDangNhap("giamdoc").orElse(null);
+		if (tk != null) {
+			System.out.println("=== GIAMDOC FOUND: TenDangNhap=" + tk.getTenDangNhap()
+					+ ", MatKhau=" + tk.getMatKhau()
+					+ ", TrangThai=" + tk.getTrangThai()
+					+ ", LoaiTaiKhoan=" + tk.getLoaiTaiKhoan() + " ===");
+		} else {
+			System.out.println("=== GIAMDOC NOT FOUND IN DB ===");
+			taiKhoanRepository.findAll()
+					.forEach(t -> System.out.println("ALL TK: " + t.getTenDangNhap() + " -> " + t.getTrangThai()));
+		}
+
 		// 1. Kiem tra xac thuc Role Giam doc
 		AuthService.AuthenticationResult gdRes = authService.authenticate("giamdoc", "123456");
+		System.out.println("GD AUTH RESULT: success=" + gdRes.success() + ", message=" + gdRes.message());
 		Assertions.assertTrue(gdRes.success(), "Dang nhap giamdoc phai thanh cong");
 		Assertions.assertEquals("ROLE_GIAM_DOC", gdRes.role());
 		Assertions.assertEquals("/giam-doc/dashboard", gdRes.redirectUrl());
@@ -33,21 +46,24 @@ class WebsiteCungCapDichVuGiupViecApplicationTests {
 		Assertions.assertTrue(hcnsRes.success(), "Dang nhap hanhnt phai thanh cong");
 		Assertions.assertEquals("ROLE_HCNS", hcnsRes.role());
 		Assertions.assertEquals("/hcns/dashboard", hcnsRes.redirectUrl());
-		System.out.println("HCNS Auth OK: " + hcnsRes.fullName() + " -> " + hcnsRes.role() + " -> " + hcnsRes.redirectUrl());
+		System.out.println(
+				"HCNS Auth OK: " + hcnsRes.fullName() + " -> " + hcnsRes.role() + " -> " + hcnsRes.redirectUrl());
 
 		// 3. Kiem tra xac thuc Role CSKH
 		AuthService.AuthenticationResult cskhRes = authService.authenticate("dunght", "123456");
 		Assertions.assertTrue(cskhRes.success(), "Dang nhap dunght phai thanh cong");
 		Assertions.assertEquals("ROLE_CSKH", cskhRes.role());
 		Assertions.assertEquals("/cskh/dashboard", cskhRes.redirectUrl());
-		System.out.println("CSKH Auth OK: " + cskhRes.fullName() + " -> " + cskhRes.role() + " -> " + cskhRes.redirectUrl());
+		System.out.println(
+				"CSKH Auth OK: " + cskhRes.fullName() + " -> " + cskhRes.role() + " -> " + cskhRes.redirectUrl());
 
 		// 4. Kiem tra xac thuc Role Marketing
 		AuthService.AuthenticationResult mktRes = authService.authenticate("minhpv", "123456");
 		Assertions.assertTrue(mktRes.success(), "Dang nhap minhpv phai thanh cong");
 		Assertions.assertEquals("ROLE_MARKETING", mktRes.role());
 		Assertions.assertEquals("/marketing/dashboard", mktRes.redirectUrl());
-		System.out.println("MKT Auth OK: " + mktRes.fullName() + " -> " + mktRes.role() + " -> " + mktRes.redirectUrl());
+		System.out
+				.println("MKT Auth OK: " + mktRes.fullName() + " -> " + mktRes.role() + " -> " + mktRes.redirectUrl());
 
 		// 5. Kiem tra du lieu dong tu CSDL
 		Assertions.assertTrue(thongKeService.getTongDonHang() > 0, "Tong don hang phai > 0 tu DB");
@@ -67,7 +83,8 @@ class WebsiteCungCapDichVuGiupViecApplicationTests {
 		request.setRequestURI("/giam-doc/dashboard");
 		boolean allowedWithoutLogin = interceptor.preHandle(request, response, new Object());
 		Assertions.assertFalse(allowedWithoutLogin, "Chua dang nhap phai bi chan");
-		Assertions.assertTrue(response.getRedirectedUrl().contains("/login?unauthorized=true"), "Phai redirect ve trang login");
+		Assertions.assertTrue(response.getRedirectedUrl().contains("/login?unauthorized=true"),
+				"Phai redirect ve trang login");
 
 		// Case 2: Role HCNS go truc tiep /giam-doc/dashboard (khong du quyen)
 		request = new org.springframework.mock.web.MockHttpServletRequest();
@@ -86,7 +103,8 @@ class WebsiteCungCapDichVuGiupViecApplicationTests {
 		boolean allowedAdmin = interceptor.preHandle(request, response, new Object());
 		Assertions.assertTrue(allowedAdmin, "Dung role phai cho phep truy cap");
 
-		// Case 4: Role GIAM_DOC sua URL sang /hcns/cong-tac-vien (khong cho phep chéo role)
+		// Case 4: Role GIAM_DOC sua URL sang /hcns/cong-tac-vien (khong cho phep chéo
+		// role)
 		request = new org.springframework.mock.web.MockHttpServletRequest();
 		response = new org.springframework.mock.web.MockHttpServletResponse();
 		request.setRequestURI("/hcns/cong-tac-vien");

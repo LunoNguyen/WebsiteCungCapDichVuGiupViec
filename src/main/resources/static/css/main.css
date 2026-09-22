@@ -630,8 +630,12 @@ select.form-control option { background: var(--bg-dark); color: var(--text-prima
 }
 
 /* ==========================================================
-   DROPDOWN
+   DROPDOWN & TOPBAR STACKING
    ========================================================== */
+.topbar {
+  position: relative;
+  z-index: 100;
+}
 .dropdown { position: relative; }
 .dropdown-menu {
   position: absolute;
@@ -642,7 +646,7 @@ select.form-control option { background: var(--bg-dark); color: var(--text-prima
   border-radius: var(--radius-lg);
   min-width: 180px;
   box-shadow: var(--shadow-lg);
-  z-index: 200;
+  z-index: 1000;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-6px);

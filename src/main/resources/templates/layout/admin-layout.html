@@ -233,7 +233,7 @@
 <!-- ============================================================
      ADMIN TOPBAR FRAGMENT
      ============================================================ -->
-<header class="topbar" th:fragment="adminTopbar(roleLabel, rolePath, pageTitle)">
+<header class="topbar" style="position:relative;z-index:100" th:fragment="adminTopbar(roleLabel, rolePath, pageTitle)">
   <!-- Breadcrumb -->
   <div class="topbar-breadcrumb">
     <span>Neatify</span>
@@ -298,12 +298,13 @@
 
     <!-- User Profile Dropdown -->
     <div class="dropdown">
-      <div class="avatar avatar-sm" data-dropdown="userMenu" style="cursor:pointer;background:linear-gradient(135deg,var(--primary),var(--secondary));font-weight:700"
-           th:text="${session.userAvatar != null ? session.userAvatar : 'US'}">US</div>
+      <div class="avatar avatar-sm" data-dropdown="userMenu" 
+           th:style="${rolePath.contains('giam-doc') ? 'cursor:pointer;background:linear-gradient(135deg,#6C63FF,#FF6584);font-weight:700' : (rolePath.contains('cskh') ? 'cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7);font-weight:700' : (rolePath.contains('hcns') ? 'cursor:pointer;background:linear-gradient(135deg,#43E97B,#38D46A);color:#000;font-weight:700' : 'cursor:pointer;background:linear-gradient(135deg,#FF9966,#FF5E62);font-weight:700'))}"
+           th:text="${session.userAvatar != null ? session.userAvatar : (rolePath.contains('giam-doc') ? 'GĐ' : (rolePath.contains('cskh') ? 'CS' : (rolePath.contains('hcns') ? 'HC' : 'MKT')))}">US</div>
       <div class="dropdown-menu" id="userMenu">
         <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border-light)">
-          <div style="font-weight:600;font-size:0.875rem" th:text="${session.authenticatedFullName != null ? session.authenticatedFullName : 'Người dùng'}">Người dùng</div>
-          <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${session.userRole != null ? session.userRole : 'Thành viên'}">Vai trò</div>
+          <div style="font-weight:600;font-size:0.875rem" th:text="${session.authenticatedFullName != null ? session.authenticatedFullName : (rolePath.contains('giam-doc') ? 'Nguyễn Văn An' : (rolePath.contains('cskh') ? 'Hoàng Thị Dung' : (rolePath.contains('hcns') ? 'Nguyễn Thị Hạnh' : 'Lê Minh Tuấn')))}">Người dùng</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${session.userRole != null ? session.userRole : (rolePath.contains('giam-doc') ? 'Giám đốc' : (rolePath.contains('cskh') ? 'NV Chăm sóc Khách hàng' : (rolePath.contains('hcns') ? 'NV HCNS - Kế toán' : 'Chuyên viên Marketing')))}">Vai trò</div>
         </div>
         <a href="/logout" class="dropdown-item" style="color:var(--danger)">
           <i class="ti ti-logout"></i> Đăng xuất

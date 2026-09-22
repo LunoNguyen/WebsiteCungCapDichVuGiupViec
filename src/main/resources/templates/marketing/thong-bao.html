@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Thông báo Marketing')}"></head>
+<head th:replace="~{layout/marketing-layout :: marketingHead('Thông báo Marketing')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('marketing', 'thong-bao')}"></aside>
+  <aside th:replace="~{layout/marketing-layout :: marketingSidebar('thong-bao')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('Marketing', '/marketing/dashboard', 'Thông báo Marketing')}"></header>
+    <header th:replace="~{layout/marketing-layout :: marketingTopbar('Thông báo Marketing')}"></header>
 
 
     <main class="page-content">
@@ -153,6 +153,6 @@
   </div>
 </div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<div th:replace="~{layout/marketing-layout :: marketingScripts}"></div>
 </body>
 </html>

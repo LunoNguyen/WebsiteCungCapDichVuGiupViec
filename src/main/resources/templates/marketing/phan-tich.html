@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Phân tích & Báo cáo – Marketing')}"></head>
+<head th:replace="~{layout/marketing-layout :: marketingHead('Phân tích & Báo cáo – Marketing')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('marketing', 'phan-tich')}"></aside>
+  <aside th:replace="~{layout/marketing-layout :: marketingSidebar('phan-tich')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('Marketing', '/marketing/dashboard', 'Phân tích & Báo cáo')}"></header>
-
+    <header th:replace="~{layout/marketing-layout :: marketingTopbar('Phân tích & Báo cáo')}"></header>
 
     <main class="page-content">
       <div class="page-header">
@@ -49,6 +48,31 @@
           <div class="stat-value" th:text="${marketingStats != null ? marketingStats.doanhThuKhuyenMaiTrieuDong + ' triệu' : '0 triệu'}">0 triệu</div>
           <div class="stat-label">Doanh thu hệ thống</div>
           <div class="kpi-compare"><span class="arrow-up">Thực nhận</span></div>
+        </div>
+      </div>
+
+      <!-- Charts Section: ƯU TIÊN BIỂU ĐỒ CỘT -->
+      <div class="dashboard-grid" style="margin-top:1.5rem;margin-bottom:1.5rem">
+        <!-- Channel Performance Column Bar Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Khách hàng mới theo kênh Marketing</div>
+              <div class="chart-subtitle">Biểu đồ cột so sánh số lượng chuyển đổi các kênh</div>
+            </div>
+          </div>
+          <div style="height:260px"><canvas id="channelBarChart"></canvas></div>
+        </div>
+
+        <!-- Coupon ROI Bar Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Doanh thu theo mã Coupon</div>
+              <div class="chart-subtitle">Triệu đồng doanh thu thực tế</div>
+            </div>
+          </div>
+          <div style="height:260px"><canvas id="couponBarChart"></canvas></div>
         </div>
       </div>
 
@@ -98,6 +122,42 @@
           </table>
         </div>
       </div>
+
+      <!-- Details Channel Performance Table -->
+      <div class="card" style="padding:0;margin-top:1.5rem">
+        <div class="card-header" style="padding:1.25rem 1.5rem">
+          <div>
+            <div class="card-title">Chi tiết chi phí & chuyển đổi theo kênh tiếp thị</div>
+            <div class="card-subtitle">Thống kê chiến dịch marketing tháng 9/2026</div>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Kênh Marketing</th>
+                <th>Ngân sách chi tiêu</th>
+                <th>Lượt tương tác</th>
+                <th>Khách hàng mới</th>
+                <th>Doanh thu tạo ra</th>
+                <th>Chi phí / KH (CAC)</th>
+                <th>Tỷ suất ROI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:700">📱 Facebook & Instagram Ads</td>
+                <td>25.000.000đ</td>
+                <td>2,150</td>
+                <td style="font-weight:600">310 KH</td>
+                <td style="font-weight:700;color:var(--accent)">142.000.000đ</td>
+                <td>80.600đ</td>
+                <td><span class="badge badge-success">468%</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:700">🔍 Google Search & Maps Ads</td>
+                <td>18.000.000đ</td>
+                <td>1,420</td>
                 <td style="font-weight:600">240 KH</td>
                 <td style="font-weight:700;color:var(--accent)">118.000.000đ</td>
                 <td>75.000đ</td>
@@ -129,7 +189,7 @@
   </div>
 </div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<div th:replace="~{layout/marketing-layout :: marketingScripts}"></div>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;
