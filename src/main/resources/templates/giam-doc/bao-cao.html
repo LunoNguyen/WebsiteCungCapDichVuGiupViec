@@ -16,14 +16,18 @@
         </div>
         <div class="page-actions">
           <!-- Period Filter -->
-          <select class="filter-select" id="periodFilter" onchange="updateCharts()">
-            <option value="month">Tháng này</option>
-            <option value="quarter">Quý này</option>
-            <option value="year">Năm nay</option>
-            <option value="custom">Tùy chọn</option>
+<select class="filter-select" id="periodFilter" onchange="location.href='/giam-doc/bao-cao?period=' + this.value">
+            <option value="month" th:selected="${param.period == 'month' or param.period == null}">Tháng này</option>
+            <option value="quarter" th:selected="${param.period == 'quarter'}">Quý này</option>
+            <option value="year" th:selected="${param.period == 'year'}">Năm nay</option>
+            <option value="all" th:selected="${param.period == 'all'}">Toàn thời gian</option>
           </select>
-          <button class="btn btn-secondary btn-sm"><i class="ti ti-file-type-pdf"></i> PDF</button>
-          <button class="btn btn-success btn-sm"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()">
+  <i class="ti ti-file-type-pdf"></i> PDF
+</button>
+<a th:href="@{/giam-doc/bao-cao/export-excel}" class="btn btn-success btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
+  <i class="ti ti-file-spreadsheet"></i> Excel
+</a>
         </div>
       </div>
 
@@ -118,11 +122,14 @@
                 <table class="table">
                   <thead><tr><th>Dịch vụ</th><th>Thời lượng ước tính</th><th>Giá tham khảo</th><th>Trạng thái</th></tr></thead>
                   <tbody>
-                    <tr th:each="dv : ${dichVus}">
+                                        <tr th:each="dv : ${dichVus}">
                       <td style="font-weight:600" th:text="${dv.tenDichVu}">Dọn dẹp nhà</td>
-                      <td th:text="${dv.thoiLuongUocTinh != null ? (dv.thoiLuongUocTinh + ' giờ') : 'Theo yêu cầu'}">2 giờ</td>
-                      <td style="color:var(--accent);font-weight:700" th:text="${dv.giaThamKhao != null ? (#numbers.formatDecimal(dv.giaThamKhao, 0, 'POINT', 0, 'COMMA') + 'đ') : 'Theo thỏa thuận'}">150.000đ</td>
-                      <td><span class="badge badge-success" th:text="${dv.trangThai != null ? dv.trangThai : 'Hoạt động'}">Hoạt động</span></td>
+                      <td th:text="${dv.donViTinh != null ? dv.donViTinh : '---'}">Lần / Giờ</td>
+                      <td style="color:var(--text-secondary);font-size:0.85rem;" th:text="${dv.moTaChiTiet != null ? dv.moTaChiTiet : '---'}">Mô tả chi tiết</td>
+                      <td>
+                        <span class="badge badge-success" th:if="${dv.trangThai == 'HoatDong'}">Hoạt động</span>
+                        <span class="badge badge-secondary" th:if="${dv.trangThai == 'An'}">Ẩn</span>
+                      </td>
                     </tr>
                     <tr th:if="${dichVus == null or #lists.isEmpty(dichVus)}">
                       <td colspan="4" style="text-align:center;color:var(--text-muted)">Chưa có dịch vụ nào</td>
@@ -165,34 +172,57 @@
               </div>
             </div>
           </div>
-
-          <!-- Complaints Tab -->
+<!-- Complaints Tab -->
           <div data-tab-panel="complaints" style="display:none">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+              <!-- Cột trái: Biểu đồ -->
               <div>
                 <div style="font-weight:700;margin-bottom:1rem">Phân loại khiếu nại</div>
                 <div class="chart-wrapper"><canvas id="complaintChart"></canvas></div>
               </div>
+              
+              <!-- Cột phải: Thống kê & Thời gian -->
               <div>
                 <div style="font-weight:700;margin-bottom:1rem">Thống kê xử lý khiếu nại</div>
                 <div style="display:flex;flex-direction:column;gap:0.875rem;margin-bottom:1.25rem">
+                  <!-- 1. Tỷ lệ giải quyết -->
                   <div>
-                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem"><span>Tỷ lệ giải quyết đúng hạn</span><span style="font-weight:700;color:var(--accent)">100%</span></div>
-                    <div class="progress"><div class="progress-bar success" style="width:100%"></div></div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem">
+                      <span>Tỷ lệ giải quyết đúng hạn</span>
+                      <span style="font-weight:700;color:var(--accent)" th:text="${tyLeDungHan + '%'}">100%</span>
+                    </div>
+                    <div class="progress"><div class="progress-bar success" th:style="'width: ' + ${tyLeDungHan} + '%'"></div></div>
                   </div>
+
+                  <!-- 2. Khiếu nại hợp lệ -->
                   <div>
-                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem"><span>Khiếu nại hợp lệ</span><span style="font-weight:700;color:var(--warning)">67%</span></div>
-                    <div class="progress"><div class="progress-bar warning" style="width:67%"></div></div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem">
+                      <span>Khiếu nại hợp lệ</span>
+                      <span style="font-weight:700;color:var(--warning)" th:text="${tyLeHopLe + '%'}">67%</span>
+                    </div>
+                    <div class="progress"><div class="progress-bar warning" th:style="'width: ' + ${tyLeHopLe} + '%'"></div></div>
                   </div>
+
+                  <!-- 3. Tỷ lệ khiếu nại leo thang -->
                   <div>
-                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem"><span>Tỷ lệ khiếu nại leo thang</span><span style="font-weight:700;color:var(--danger)">33%</span></div>
-                    <div class="progress"><div class="progress-bar danger" style="width:33%"></div></div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem">
+                      <span>Tỷ lệ khiếu nại leo thang</span>
+                      <span style="font-weight:700;color:var(--danger)" th:text="${tyLeLeoThang + '%'}">33%</span>
+                    </div>
+                    <div class="progress"><div class="progress-bar danger" th:style="'width: ' + ${tyLeLeoThang} + '%'"></div></div>
                   </div>
+
+                  <!-- 4. Khách hàng hài lòng sau xử lý -->
                   <div>
-                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem"><span>Khách hàng hài lòng sau xử lý</span><span style="font-weight:700;color:var(--accent)">95%</span></div>
-                    <div class="progress"><div class="progress-bar success" style="width:95%"></div></div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem">
+                      <span>Khách hàng hài lòng sau xử lý</span>
+                      <span style="font-weight:700;color:var(--accent)" th:text="${tyLeHaiLong + '%'}">95%</span>
+                    </div>
+                    <div class="progress"><div class="progress-bar success" th:style="'width: ' + ${tyLeHaiLong} + '%'"></div></div>
                   </div>
                 </div>
+
+                <!-- Khối Thời gian xử lý trung bình -->
                 <div style="padding:1rem;background:rgba(67,233,123,0.06);border:1px solid rgba(67,233,123,0.2);border-radius:var(--radius-md)">
                   <div style="font-weight:700;margin-bottom:0.5rem;color:var(--accent)">✓ Thời gian xử lý trung bình</div>
                   <div style="font-size:2rem;font-weight:800">1.5 ngày</div>
@@ -201,6 +231,7 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
       </div>
     </main>
@@ -208,6 +239,40 @@
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+<script th:inline="javascript">
+    window.chartData = {
+        doanhThuTrieu: /*[[${tongDoanhThuTrieu != null ? tongDoanhThuTrieu : 0}]]*/ 0,
+        topDichVu: /*[[${topDichVu}]]*/ {},
+        phanPhoiDanhGia: /*[[${phanPhoiDanhGia}]]*/ {},
+        doanhThuTheoThang: /*[[${doanhThuTheoThang}]]*/ {}, // Dòng quan trọng nhất để vẽ 12 tháng!
+        trangThaiKhieuNai: /*[[${trangThaiKhieuNai}]]*/ {}
+    };
+</script>
+
 <script src="/js/charts.js"></script>
+
+<script>
+    // Logic Resize lại biểu đồ khi bấm chuyển Tab để tránh bị méo hình
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".tab-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var tabId = btn.getAttribute("data-tab");
+                var idMap = {
+                    services: "servicesChart",
+                    ctv: "ctvRadarChart",
+                    complaints: "complaintChart"
+                };
+                var canvasId = idMap[tabId];
+                if (canvasId) {
+                    setTimeout(function () {
+                        var chart = Chart.getChart(canvasId);
+                        if (chart) chart.resize();
+                    }, 50);
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

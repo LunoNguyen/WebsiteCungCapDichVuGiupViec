@@ -96,11 +96,11 @@
               <div class="chart-title">Doanh thu theo tháng</div>
               <div class="chart-subtitle">Đơn vị: Triệu đồng · Năm 2026</div>
             </div>
-            <div class="chart-period-tabs">
-              <button class="chart-period-btn active">6 tháng</button>
-              <button class="chart-period-btn">1 năm</button>
-              <button class="chart-period-btn">3 năm</button>
-            </div>
+          <div class="chart-period-tabs">
+            <button class="chart-period-btn active" onclick="changeRevenuePeriod(this, '6month')">6 tháng</button>
+            <button class="chart-period-btn" onclick="changeRevenuePeriod(this, '1year')">1 năm</button>
+            <button class="chart-period-btn" onclick="changeRevenuePeriod(this, '3year')">3 năm</button>
+          </div>
           </div>
           <div class="chart-wrapper">
             <canvas id="revenueChart"></canvas>
@@ -160,7 +160,7 @@
               <div class="card-title">Đơn dịch vụ gần đây</div>
               <div class="card-subtitle">Các đơn hàng mới nhất trên hệ thống</div>
             </div>
-            <a href="/cskh/don-dat-dich-vu" class="btn btn-outline btn-sm">Xem tất cả</a>
+            <a href="/giam-doc/bao-cao" class="btn btn-outline btn-sm">Xem tất cả</a>
           </div>
           <div class="table-container" style="border:none;border-radius:0 0 var(--radius-lg) var(--radius-lg)">
             <table class="table" id="recentOrders">
@@ -279,6 +279,17 @@
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+<script th:inline="javascript">
+    window.chartData = {
+        doanhThuTrieu: /*[[${tongDoanhThuTrieu != null ? tongDoanhThuTrieu : 0}]]*/ 0,
+        topDichVu: /*[[${topDichVu}]]*/ {},
+        phanPhoiDanhGia: /*[[${phanPhoiDanhGia}]]*/ {},
+        doanhThuTheoThang: /*[[${doanhThuTheoThang}]]*/ {}, // Dòng quan trọng nhất để vẽ 12 tháng!
+        trangThaiKhieuNai: /*[[${trangThaiKhieuNai}]]*/ {}
+    };
+</script>
+
 <script src="/js/charts.js"></script>
 </body>
 </html>

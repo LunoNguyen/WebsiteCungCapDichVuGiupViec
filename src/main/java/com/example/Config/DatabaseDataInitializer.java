@@ -26,7 +26,7 @@ public class DatabaseDataInitializer implements CommandLineRunner {
     private final DiaChiKhachHangRepository diaChiKhachHangRepository;
     private final CongTacVienRepository congTacVienRepository;
     private final ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository;
-    private final MaCouponRepository maCouponRepository;
+    private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final DonDatDichVuRepository donDatDichVuRepository;
     private final KhieuNaiRepository khieuNaiRepository;
     private final DanhGiaRepository danhGiaRepository;
@@ -41,7 +41,7 @@ public class DatabaseDataInitializer implements CommandLineRunner {
             DiaChiKhachHangRepository diaChiKhachHangRepository,
             CongTacVienRepository congTacVienRepository,
             ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository,
-            MaCouponRepository maCouponRepository,
+           MaKhuyenMaiRepository maKhuyenMaiRepository,
             DonDatDichVuRepository donDatDichVuRepository,
             KhieuNaiRepository khieuNaiRepository,
             DanhGiaRepository danhGiaRepository,
@@ -54,7 +54,7 @@ public class DatabaseDataInitializer implements CommandLineRunner {
         this.diaChiKhachHangRepository = diaChiKhachHangRepository;
         this.congTacVienRepository = congTacVienRepository;
         this.chuongTrinhKhuyenMaiRepository = chuongTrinhKhuyenMaiRepository;
-        this.maCouponRepository = maCouponRepository;
+        this.maKhuyenMaiRepository = maKhuyenMaiRepository;
         this.donDatDichVuRepository = donDatDichVuRepository;
         this.khieuNaiRepository = khieuNaiRepository;
         this.danhGiaRepository = danhGiaRepository;
@@ -135,9 +135,9 @@ public class DatabaseDataInitializer implements CommandLineRunner {
         ChuongTrinhKhuyenMai km3 = chuongTrinhKhuyenMaiRepository.save(ChuongTrinhKhuyenMai.builder()
                 .maChuongTrinh("KM-2026-03").tenChuongTrinh("Mùa tựu trường - Gia đình an tâm").moTa("Giảm 15% gói trông trẻ và nấu ăn").loaiGiam("PhanTram").giaTriGiam(new BigDecimal("15.00")).giaTriGiamToiDa(new BigDecimal("80000")).dieuKienToiThieu(new BigDecimal("250000")).ngayBatDau(LocalDate.of(2026, 8, 15)).ngayKetThuc(LocalDate.of(2026, 10, 15)).trangThai("DangHoatDong").build());
 
-        maCouponRepository.save(MaCoupon.builder().maCoupon("CP-001").chuongTrinhKhuyenMai(km1).codeCoupon("NEAT20").soLuotToiDa(500).soLuotDaDung(128).trangThai("HoatDong").build());
-        maCouponRepository.save(MaCoupon.builder().maCoupon("CP-002").chuongTrinhKhuyenMai(km2).codeCoupon("WEEKEND50").soLuotToiDa(300).soLuotDaDung(95).trangThai("HoatDong").build());
-        maCouponRepository.save(MaCoupon.builder().maCoupon("CP-003").chuongTrinhKhuyenMai(km3).codeCoupon("FAMILY15").soLuotToiDa(200).soLuotDaDung(42).trangThai("HoatDong").build());
+        maKhuyenMaiRepository.save(MaKhuyenMai.builder().maKhuyenMai("CP-001").chuongTrinhKhuyenMai(km1).codeKhuyenMai("NEAT20").soLuotToiDa(500).soLuotDaDung(128).trangThai("HoatDong").build());
+        maKhuyenMaiRepository.save(MaKhuyenMai.builder().maKhuyenMai("CP-002").chuongTrinhKhuyenMai(km2).codeKhuyenMai("WEEKEND50").soLuotToiDa(300).soLuotDaDung(95).trangThai("HoatDong").build());
+        maKhuyenMaiRepository.save(MaKhuyenMai.builder().maKhuyenMai("CP-003").chuongTrinhKhuyenMai(km3).codeKhuyenMai("FAMILY15").soLuotToiDa(200).soLuotDaDung(42).trangThai("HoatDong").build());
 
         // 7. DonDatDichVu
         NhanVien nv = nhanVienRepository.findAll().stream().findFirst().orElse(null);

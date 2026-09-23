@@ -1,8 +1,10 @@
 package com.example.Repository;
 
-import com.example.Model.LichSuSuDungCoupon;
+import com.example.Model.MaKhuyenMai;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LichSuSuDungCouponRepository extends JpaRepository<LichSuSuDungCoupon, Integer> { }
+public interface MaKhuyenMaiRepository extends JpaRepository<MaKhuyenMai, Integer> {
+    
+}

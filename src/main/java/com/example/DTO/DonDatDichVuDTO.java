@@ -2,6 +2,7 @@ package com.example.DTO;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.*;
+
 /** DTO cho DonDatDichVu. Quan he duoc truyen bang khoa ngoai id. */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class DonDatDichVuDTO {
@@ -13,7 +14,10 @@ public class DonDatDichVuDTO {
     private Integer dichVuId;
     private Integer bangGiaId;
     private Integer goiDichVuId;
-    private Integer couponId;
+    
+    // Đổi tên trường từ couponId sang khuyenMaiId
+    private Integer khuyenMaiId; 
+    
     private String loaiHinhDat;
     private LocalDate ngayThucHien;
     private LocalTime gioBatDau;

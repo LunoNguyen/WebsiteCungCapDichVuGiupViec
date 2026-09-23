@@ -3,23 +3,23 @@ package com.example.Model;
 import jakarta.persistence.*;
 import lombok.*;
 
-/** Bang 20: MaCoupon */
-@Entity @Table(name = "MaCoupon")
+/** Bang 20: MaKhuyenMai (thay the cho MaCoupon) */
+@Entity @Table(name = "MaKhuyenMai")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class MaCoupon {
+public class MaKhuyenMai {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "MaCoupon", nullable = false, unique = true, length = 20)
-    private String maCoupon;
+    @Column(name = "MaKhuyenMai", nullable = false, unique = true, length = 20)
+    private String maKhuyenMai;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chuongTrinhKMId", nullable = false)
     private ChuongTrinhKhuyenMai chuongTrinhKhuyenMai;
 
-    @Column(name = "CodeCoupon", nullable = false, unique = true, length = 50)
-    private String codeCoupon;
+    @Column(name = "CodeKhuyenMai", nullable = false, unique = true, length = 50)
+    private String codeKhuyenMai;
 
     @Column(name = "SoLuotToiDa", nullable = false)
     private Integer soLuotToiDa;

@@ -15,28 +15,38 @@
           <p class="page-subtitle">Kiểm soát toàn diện tài khoản hệ thống · UC-GD05</p>
         </div>
       </div>
+      <main class="page-content">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Quản lý Tài khoản</h1>
+          <p class="page-subtitle">Kiểm soát toàn diện tài khoản hệ thống · UC-GD05</p>
+        </div>
+      </div>
+      <!-- Hiển thị thông báo lỗi hoặc thành công từ Controller -->
+<div th:if="${errorMessage}" style="padding:1rem;background:rgba(255,71,87,0.1);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600;" th:text="${errorMessage}"></div>
+<div th:if="${successMessage}" style="padding:1rem;background:rgba(67,233,123,0.1);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600;" th:text="${successMessage}"></div>
 
       <!-- Stats -->
       <div class="stats-grid" style="margin-bottom:1.5rem">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(108,99,255,0.15)">👤</div>
-          <div class="stat-value" th:attr="data-count=${taiKhoans != null ? #lists.size(taiKhoans) : 0}" th:text="${taiKhoans != null ? #lists.size(taiKhoans) : 0}">0</div>
+          <div class="stat-value" th:text="${taiKhoans != null ? #lists.size(taiKhoans) : 0}">0</div>
           <div class="stat-label">Tổng tài khoản</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">✅</div>
-          <div class="stat-value" th:attr="data-count=${taiKhoans != null ? #lists.size(taiKhoans) : 0}" th:text="${taiKhoans != null ? #lists.size(taiKhoans) : 0}">0</div>
+          <div class="stat-value" th:text="${taiKhoans != null ? #lists.size(taiKhoans.?[trangThai == 'HoatDong']) : 0}">0</div>
           <div class="stat-label">Đang hoạt động</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,71,87,0.15)">🔒</div>
-          <div class="stat-value" data-count="0">0</div>
+          <div class="stat-value" th:text="${taiKhoans != null ? #lists.size(taiKhoans.?[trangThai == 'BiKhoa']) : 0}">0</div>
           <div class="stat-label">Đã khóa</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
-          <div class="stat-value" data-count="0">0</div>
-          <div class="stat-label">Chờ duyệt (Cộng tác viên)</div>
+          <div class="stat-value" th:text="${taiKhoans != null ? #lists.size(taiKhoans.?[trangThai == 'ChoDuyet']) : 0}">0</div>
+          <div class="stat-label">Chờ duyệt</div>
         </div>
       </div>
 
@@ -54,19 +64,29 @@
           <i class="ti ti-search search-icon"></i>
           <input type="text" class="form-control" placeholder="Tìm theo tên, email, số điện thoại..." data-table-search="accountTable">
         </div>
-        <select class="filter-select">
+        <select class="filter-select" id="statusFilter">
           <option>Tất cả trạng thái</option>
           <option>Hoạt động</option>
           <option>Đã khóa</option>
           <option>Chờ duyệt</option>
         </select>
-        <select class="filter-select">
-          <option>Tất cả loại tài khoản</option>
-          <option>Nhân viên</option>
-          <option>Cộng tác viên</option>
-          <option>Khách hàng</option>
-        </select>
-        <button class="btn btn-secondary btn-sm"><i class="ti ti-download"></i> Xuất Excel</button>
+      <select class="filter-select" id="typeFilter">
+      <option value="all">Tất cả loại tài khoản</option>
+      <option value="NhanVien">Nhân viên</option>
+      <option value="CongTacVien">Cộng tác viên</option>
+      <option value="KhachHang">Khách hàng</option>
+    </select>
+        <!-- NÚT THÊM TÀI KHOẢN MỚI -->
+    <button class="btn btn-primary btn-sm" data-panel-open="addAccountModal" style="display:flex; align-items:center; gap:0.5rem">
+        <i class="ti ti-plus"></i> Thêm tài khoản
+    </button>
+
+    <a th:href="@{/giam-doc/tai-khoan/export}" class="btn btn-secondary btn-sm" style="text-decoration:none; display:flex; align-items:center; gap:0.5rem">
+        <i class="ti ti-download"></i> Xuất Excel
+    </a>
+       <a th:href="@{/giam-doc/tai-khoan/export}" class="btn btn-secondary btn-sm" style="text-decoration:none; display:flex; align-items:center; gap:0.5rem">
+  <i class="ti ti-download"></i> Xuất Excel
+</a>
       </div>
 
       <div class="card" style="padding:0">
@@ -92,15 +112,15 @@
                     <div class="avatar avatar-sm" th:text="${tk.tenDangNhap != null and !tk.tenDangNhap.isEmpty() ? #strings.toUpperCase(#strings.substring(tk.tenDangNhap, 0, 1)) : 'U'}">U</div>
                     <div class="user-cell-info">
                       <div class="name" th:text="${tk.tenDangNhap}">admin</div>
-                      <div class="sub" th:text="${tk.maTaiKhoan != null ? tk.maTaiKhoan : ''}">@admin</div>
+                      <div class="sub" th:text="${tk.maTaiKhoan}">@admin</div>
                     </div>
                   </div>
                 </td>
                 <td>
                   <span th:if="${tk.loaiTaiKhoan == 'NhanVien'}" class="badge badge-primary">Nhân viên</span>
                   <span th:if="${tk.loaiTaiKhoan == 'CongTacVien'}" class="badge badge-success">Cộng tác viên</span>
-                  <span th:if="${tk.loaiTaiKhoan == 'KhachHang'}" class="badge badge-secondary">Khách hàng</span>
-                  <span th:if="${tk.loaiTaiKhoan != 'NhanVien' and tk.loaiTaiKhoan != 'CongTacVien' and tk.loaiTaiKhoan != 'KhachHang'}" class="badge badge-info" th:text="${tk.loaiTaiKhoan}">Khác</span>
+                  <span th:if="${tk.loaiTaiKhoan == 'KhachHang' or tk.loaiTaiKhoan == 'khachHang'}" class="badge badge-secondary">Khách hàng</span>
+                  <span th:if="${tk.loaiTaiKhoan != 'NhanVien' and tk.loaiTaiKhoan != 'CongTacVien' and tk.loaiTaiKhoan != 'KhachHang' and tk.loaiTaiKhoan != 'khachHang'}" class="badge badge-info" th:text="${tk.loaiTaiKhoan}">Khác</span>
                 </td>
                 <td style="font-size:0.8rem" th:text="${tk.email != null ? tk.email : '---'}">user@giupviec.vn</td>
                 <td style="font-size:0.8rem" th:text="${tk.ngayTao != null ? #temporals.format(tk.ngayTao, 'dd/MM/yyyy') : '---'}">01/01/2026</td>
@@ -108,18 +128,32 @@
                 <td>
                   <span th:if="${tk.trangThai == 'HoatDong'}" class="badge badge-success"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span>
                   <span th:if="${tk.trangThai == 'BiKhoa'}" class="badge badge-danger"><span class="dot dot-red" style="width:6px;height:6px"></span>Đã khóa</span>
-                  <span th:if="${tk.trangThai != 'HoatDong' and tk.trangThai != 'BiKhoa'}" class="badge badge-warning" th:text="${tk.trangThai}">Chờ duyệt</span>
+                  <span th:if="${tk.trangThai == 'ChoDuyet'}" class="badge badge-warning">Chờ duyệt</span>
+                  <span th:if="${tk.trangThai != 'HoatDong' and tk.trangThai != 'BiKhoa' and tk.trangThai != 'ChoDuyet'}" class="badge badge-warning" th:text="${tk.trangThai}">Khác</span>
                 </td>
                 <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" data-panel-open="accountDetail">Chi tiết</button>
-                    <button th:if="${tk.trangThai == 'HoatDong'}" class="btn btn-danger btn-sm" onclick="Toast.show('Đã gửi yêu cầu khóa tài khoản!', 'warning')">Khóa tài khoản</button>
-                    <button th:if="${tk.trangThai == 'BiKhoa'}" class="btn btn-success btn-sm" onclick="Toast.show('Đã mở khóa tài khoản!', 'success')">Mở khóa</button>
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <!-- Nút Chi tiết -->
+                    <button class="btn btn-outline btn-sm" th:attr="data-panel-open='accountDetail_' + ${tk.id}">Chi tiết</button>
+                    <!-- Nút Sửa -->
+                  <button class="btn btn-secondary btn-sm" th:attr="data-panel-open='editAccountModal_' + ${tk.id}">Sửa</button>
+                    <!-- Nút Khóa (Khi đang hoạt động) -->
+                    <form th:if="${tk.trangThai == 'HoatDong'}" th:action="@{/giam-doc/tai-khoan/khoa}" method="post" style="margin:0; display:inline-block;">
+                      <input type="hidden" name="id" th:value="${tk.id}" />
+                      <button type="submit" class="btn btn-danger btn-sm" onclick="Toast.show('Đã gửi yêu cầu khóa tài khoản!', 'warning')">Khóa</button>
+                    </form>
+                    <!-- Nút Mở khóa (Khi đã bị khóa) -->
+                    <form th:if="${tk.trangThai == 'BiKhoa'}" th:action="@{/giam-doc/tai-khoan/mo-khoa}" method="post" style="margin:0; display:inline-block;">
+                      <input type="hidden" name="id" th:value="${tk.id}" />
+                      <button type="submit" class="btn btn-success btn-sm" onclick="Toast.show('Đã mở khóa tài khoản!', 'success')">Mở khóa</button>
+                    </form>
+                    <!-- NÚT XÓA (ĐANG XEM XÉT TRIỂN KHAI) -->
+    <button type="button" class="btn btn-outline btn-sm" style="color:var(--danger); border-color:var(--danger);" onclick="Toast.show('Chức năng xóa đang xem xét để triển khai!', 'warning')">Xóa</button>
                   </div>
                 </td>
               </tr>
               <tr th:if="${taiKhoans == null or #lists.isEmpty(taiKhoans)}">
-                <td colspan="8" style="text-align:center;color:var(--text-muted)">Không có tài khoản nào</td>
+                <td colspan="8" style="text-align:center;color:var(--text-muted);padding:2rem;">Không có tài khoản nào trong hệ thống</td>
               </tr>
             </tbody>
           </table>
@@ -136,81 +170,243 @@
           <button class="btn btn-outline btn-sm">Xem tất cả log</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
-          <div style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem">
-            <span style="color:var(--text-muted);white-space:nowrap">20/09 08:34</span>
-            <span class="badge badge-success">Đăng nhập</span>
-            <span style="color:var(--text-secondary)">Nguyễn Thị Hạnh đăng nhập từ IP 192.168.1.5</span>
+          
+          <!-- Vòng lặp lấy 5 lịch sử mới nhất -->
+          <div th:each="nk : ${nhatKys}" style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem">
+            <span style="color:var(--text-muted);white-space:nowrap" th:text="${#temporals.format(nk.thoiGian, 'dd/MM HH:mm')}">--/--</span>
+            
+            <span th:if="${nk.hanhDong == 'Khóa TK'}" class="badge badge-danger">Khóa TK</span>
+            <span th:if="${nk.hanhDong == 'Mở khóa TK'}" class="badge badge-success">Mở khóa TK</span>
+            <span th:if="${nk.hanhDong != 'Khóa TK' and nk.hanhDong != 'Mở khóa TK'}" class="badge badge-primary" th:text="${nk.hanhDong}">Hành động</span>
+            
+            <span style="color:var(--text-secondary)" th:text="${'Tài khoản ' + nk.taiKhoan.tenDangNhap + ' đã bị ' + nk.hanhDong.toLowerCase() + ' từ IP ' + nk.diaChiIP}">Chi tiết hành động</span>
           </div>
-          <div style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem">
-            <span style="color:var(--text-muted);white-space:nowrap">20/09 08:15</span>
-            <span class="badge badge-warning">Đặt lại MK</span>
-            <span style="color:var(--text-secondary)">NV Hạnh đặt lại mật khẩu cho TK CTV Nguyễn Thị E</span>
+
+          <!-- Hiển thị khi chưa có log nào -->
+          <div th:if="${nhatKys == null or #lists.isEmpty(nhatKys)}" style="padding:1rem;text-align:center;color:var(--text-muted)">
+            Chưa có nhật ký hoạt động nào.
           </div>
-          <div style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem">
-            <span style="color:var(--text-muted);white-space:nowrap">19/09 17:20</span>
-            <span class="badge badge-danger">Khóa TK</span>
-            <span style="color:var(--text-secondary)">NV Hạnh khóa tài khoản Lê Văn Xấu do vi phạm điều khoản</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:1rem;padding:0.625rem 0;font-size:0.8rem">
-            <span style="color:var(--text-muted);white-space:nowrap">19/09 14:05</span>
-            <span class="badge badge-primary">Tạo TK</span>
-            <span style="color:var(--text-secondary)">Hệ thống tự động tạo tài khoản CTV Trần Thị Mới sau phê duyệt</span>
-          </div>
+          
         </div>
       </div>
-    </main>
+
+<div class="overlay" id="panelOverlay"></div>
+
+<!-- Modal Chi tiết -->
+<th:block th:each="tk : ${taiKhoans}">
+  <div class="detail-panel" th:id="'accountDetail_' + ${tk.id}">
+    <div class="detail-panel-header">
+      <div><h2 style="font-size:1.1rem;font-weight:700">Chi tiết tài khoản</h2></div>
+      <button class="modal-close" th:attr="data-panel-close='accountDetail_' + ${tk.id}">✕</button>
+    </div>
+    <div class="detail-panel-body">
+      <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
+        <div class="avatar avatar-lg" style="margin:0 auto 0.875rem" th:text="${tk.tenDangNhap != null and !tk.tenDangNhap.isEmpty() ? #strings.toUpperCase(#strings.substring(tk.tenDangNhap, 0, 1)) : 'U'}">H</div>
+        <div style="font-size:1.125rem;font-weight:700" th:text="${tk.tenDangNhap}">Tên đăng nhập</div>
+        <div style="font-size:0.875rem;color:var(--text-muted)" th:text="${'@' + tk.maTaiKhoan + ' · ' + tk.loaiTaiKhoan}">@admin · Nhân viên</div>
+        
+        <span th:if="${tk.trangThai == 'HoatDong'}" class="badge badge-success" style="margin-top:0.5rem">Hoạt động</span>
+        <span th:if="${tk.trangThai == 'BiKhoa'}" class="badge badge-danger" style="margin-top:0.5rem">Đã khóa</span>
+      </div>
+      <div class="info-row"><span class="info-label">Mã tài khoản</span><span class="info-value" th:text="${tk.maTaiKhoan}">---</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-value" th:text="${tk.email}">---</span></div>
+      <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value" th:text="${tk.soDienThoai}">---</span></div>
+      <div class="info-row"><span class="info-label">Ngày tạo</span><span class="info-value" th:text="${tk.ngayTao != null ? #temporals.format(tk.ngayTao, 'dd/MM/yyyy HH:mm') : '---'}">---</span></div>
+      <div class="info-row"><span class="info-label">Cập nhật lần cuối</span><span class="info-value" style="color:var(--accent)" th:text="${tk.ngayCapNhat != null ? #temporals.format(tk.ngayCapNhat, 'dd/MM/yyyy HH:mm') : 'Chưa cập nhật'}">---</span></div>
+    </div>
+    <div class="detail-panel-footer">
+      <form th:if="${tk.trangThai == 'HoatDong'}" th:action="@{/giam-doc/tai-khoan/khoa}" method="post" style="margin:0;">
+        <input type="hidden" name="id" th:value="${tk.id}" />
+        <button type="submit" class="btn btn-danger" th:onclick="'Toast.show(\'Đã khóa tài khoản!\',\'error\'); PanelManager.close(\'accountDetail_' + ${tk.id} + '\')'">Khóa TK</button>
+      </form>
+      <form th:if="${tk.trangThai == 'BiKhoa'}" th:action="@{/giam-doc/tai-khoan/mo-khoa}" method="post" style="margin:0;">
+        <input type="hidden" name="id" th:value="${tk.id}" />
+        <button type="submit" class="btn btn-success" th:onclick="'Toast.show(\'Đã mở khóa tài khoản!\',\'success\'); PanelManager.close(\'accountDetail_' + ${tk.id} + '\')'">Mở khóa</button>
+      </form>
+      <button class="btn btn-secondary" th:attr="data-panel-close='accountDetail_' + ${tk.id}">Đóng</button>
+    </div>
   </div>
+</th:block>
+<!-- PANEL THÊM TÀI KHOẢN MỚI -->
+<div class="detail-panel" id="addAccountModal">
+  <div class="detail-panel-header">
+    <div><h2 style="font-size:1.1rem;font-weight:700">Thêm tài khoản mới</h2></div>
+    <button class="modal-close" data-panel-close="addAccountModal">✕</button>
+  </div>
+  <form th:action="@{/giam-doc/tai-khoan/them}" method="post">
+    <div class="detail-panel-body">
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Tên đăng nhập</label>
+        <input type="text" class="form-control" name="tenDangNhap" required placeholder="Nhập tên đăng nhập...">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Mật khẩu</label>
+        <input type="password" class="form-control" name="matKhau" required placeholder="Nhập mật khẩu...">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" required placeholder="example@domain.com">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Số điện thoại</label>
+        <input type="text" class="form-control" name="soDienThoai" placeholder="0901234567">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Loại tài khoản</label>
+        <select class="form-control" name="loaiTaiKhoan">
+          <option value="NhanVien">Nhân viên</option>
+          <option value="CongTacVien">Cộng tác viên</option>
+          <option value="KhachHang">Khách hàng</option>
+        </select>
+      </div>
+    </div>
+    <div class="detail-panel-footer">
+      <button type="submit" class="btn btn-primary" style="flex:1">Lưu tài khoản</button>
+      <button type="button" class="btn btn-secondary" data-panel-close="addAccountModal">Hủy</button>
+    </div>
+  </form>
 </div>
 
-<!-- Account Detail Panel -->
-<div class="overlay" id="panelOverlay"></div>
-<div class="detail-panel" id="accountDetail">
-  <div class="detail-panel-header">
-    <div><h2 style="font-size:1.1rem;font-weight:700">Chi tiết tài khoản</h2></div>
-    <button class="modal-close" data-panel-close="accountDetail">✕</button>
-  </div>
-  <div class="detail-panel-body">
-    <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
-      <div class="avatar avatar-lg" style="margin:0 auto 0.875rem">H</div>
-      <div style="font-size:1.125rem;font-weight:700">Nguyễn Thị Hạnh</div>
-      <div style="font-size:0.875rem;color:var(--text-muted)">@hanhnt · Nhân viên</div>
-      <span class="badge badge-success" style="margin-top:0.5rem">Hoạt động</span>
+<!-- VÒNG LẶP PANEL CHỈNH SỬA CHO TỪNG TÀI KHOẢN -->
+<th:block th:each="tk : ${taiKhoans}">
+  <div class="detail-panel" th:id="'editAccountModal_' + ${tk.id}">
+    <div class="detail-panel-header">
+      <div><h2 style="font-size:1.1rem;font-weight:700">Chỉnh sửa tài khoản</h2></div>
+      <button class="modal-close" th:attr="data-panel-close='editAccountModal_' + ${tk.id}">✕</button>
     </div>
-    <div class="info-row"><span class="info-label">Email</span><span class="info-value">hanhnt@giupviec.vn</span></div>
-    <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value">0912 345 678</span></div>
-    <div class="info-row"><span class="info-label">Ngày tạo</span><span class="info-value">01/03/2023</span></div>
-    <div class="info-row"><span class="info-label">Đăng nhập gần nhất</span><span class="info-value" style="color:var(--accent)">20/09/2026 08:34</span></div>
-    <div class="info-row"><span class="info-label">Thiết bị</span><span class="info-value">Chrome · Windows 11</span></div>
-    <div class="info-row"><span class="info-label">IP</span><span class="info-value">192.168.1.5</span></div>
-    <div class="info-row"><span class="info-label">Số lần đăng nhập</span><span class="info-value">428 lần</span></div>
-    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Quyền truy cập</div>
-      <div style="display:flex;flex-direction:column;gap:0.5rem">
-        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
-          <span>Quản lý nhân viên</span><span style="color:var(--accent)">✓ Có</span>
+    <form th:action="@{/giam-doc/tai-khoan/sua}" method="post">
+      <div class="detail-panel-body">
+        <input type="hidden" name="id" th:value="${tk.id}" />
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Tên đăng nhập</label>
+          <input type="text" class="form-control" name="tenDangNhap" th:value="${tk.tenDangNhap}" required>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
-          <span>Quản lý CTV</span><span style="color:var(--accent)">✓ Có</span>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" name="email" th:value="${tk.email}" required>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
-          <span>Quản lý dịch vụ</span><span style="color:var(--accent)">✓ Có</span>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Số điện thoại</label>
+          <input type="text" class="form-control" name="soDienThoai" th:value="${tk.soDienThoai}">
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
-          <span>Quản lý tài khoản</span><span style="color:var(--accent)">✓ Có</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:0.875rem;align-items:center">
-          <span>Xem báo cáo</span><span style="color:var(--text-muted)">✗ Không</span>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Loại tài khoản</label>
+          <select class="form-control" name="loaiTaiKhoan">
+            <option value="NhanVien" th:selected="${tk.loaiTaiKhoan == 'NhanVien'}">Nhân viên</option>
+            <option value="CongTacVien" th:selected="${tk.loaiTaiKhoan == 'CongTacVien'}">Cộng tác viên</option>
+            <option value="KhachHang" th:selected="${tk.loaiTaiKhoan == 'Khách hàng'}">Khách hàng</option>
+          </select>
         </div>
       </div>
-    </div>
+      <div class="detail-panel-footer">
+        <button type="submit" class="btn btn-primary" style="flex:1" onclick="Toast.show('Cập nhật tài khoản thành công!')">Cập nhật</button>
+        <button type="button" class="btn btn-secondary" th:attr="data-panel-close='editAccountModal_' + ${tk.id}">Hủy</button>
+      </div>
+    </form>
   </div>
-  <div class="detail-panel-footer">
-    <button class="btn btn-warning" onclick="Toast.show('Đã gửi link đặt lại mật khẩu!')">Đặt lại MK</button>
-    <button class="btn btn-danger" onclick="Toast.show('Đã khóa tài khoản!','error');PanelManager.close('accountDetail')">Khóa TK</button>
-    <button class="btn btn-secondary" data-panel-close="accountDetail">Đóng</button>
-  </div>
-</div>
+</th:block>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+<!-- SCRIPT LỌC DỮ LIỆU ĐỒNG BỘ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('[data-table-search="accountTable"]');
+    const statusSelect = document.getElementById('statusFilter');
+    const typeSelect = document.getElementById('typeFilter');
+    const tabs = document.querySelectorAll('.tab-btn');
+
+function applyFilters() {
+        const searchText = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const statusVal = statusSelect ? statusSelect.value.trim() : 'Tất cả trạng thái';
+        const typeVal = typeSelect ? typeSelect.value.trim() : 'all';
+        
+        const activeTab = document.querySelector('.tab-btn.active');
+        const tabData = activeTab ? activeTab.getAttribute('data-tab') : 'all';
+
+        const rows = document.querySelectorAll('#accountTable tbody tr');
+
+        rows.forEach(row => {
+            // Bỏ qua dòng thông báo "Không có tài khoản nào" (colspan=8)
+            if (row.children.length < 8) return;
+
+            const rowTextContent = row.textContent.toLowerCase();
+            const typeText = row.children[2].textContent.trim().toLowerCase(); // Ép về chữ thường
+            const statusText = row.children[6].textContent.trim();
+
+            // 1. Kiểm tra Search
+            const matchSearch = rowTextContent.includes(searchText);
+
+            // 2. Kiểm tra Dropdown Trạng thái
+            const matchStatus = (statusVal === 'Tất cả trạng thái') || statusText.includes(statusVal);
+
+            // 3. Kiểm tra Dropdown Loại tài khoản (so sánh theo value thực tế của <option>)
+            let matchTypeSelect = false;
+            if (typeVal === 'all') {
+                matchTypeSelect = true;
+            } else if (typeVal === 'NhanVien' && typeText.includes('nhân viên')) {
+                matchTypeSelect = true;
+            } else if (typeVal === 'CongTacVien' && typeText.includes('cộng tác viên')) {
+                matchTypeSelect = true;
+            } else if (typeVal === 'KhachHang' && typeText.includes('khách hàng')) {
+                matchTypeSelect = true;
+            }
+
+            // 4. Kiểm tra Tab Loại tài khoản
+            let matchTab = false;
+            if (tabData === 'all') {
+                matchTab = true;
+            } else if (tabData === 'nv' && typeText.includes('nhân viên')) {
+                matchTab = true;
+            } else if (tabData === 'ctv' && typeText.includes('cộng tác viên')) {
+                matchTab = true;
+            } else if (tabData === 'kh' && (typeText.includes('khách hàng') || typeText.includes('khach hang'))) {
+                matchTab = true;
+            }
+
+            // Nếu thỏa mãn toàn bộ điều kiện lọc thì hiển thị
+            if (matchSearch && matchStatus && matchTypeSelect && matchTab) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Gắn sự kiện Search
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+
+    // Gắn sự kiện Dropdown Trạng thái
+    if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+
+    // Gắn sự kiện Dropdown Loại tài khoản (Và đồng bộ giao diện Tab)
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            if (this.value === 'NhanVien') document.querySelector('[data-tab="nv"]').classList.add('active');
+            else if (this.value === 'CongTacVien') document.querySelector('[data-tab="ctv"]').classList.add('active');
+            else if (this.value === 'KhachHang') document.querySelector('[data-tab="kh"]').classList.add('active');
+            else document.querySelector('[data-tab="all"]').classList.add('active');
+            applyFilters();
+        });
+    }
+
+    // Gắn sự kiện Click Tab (Và đồng bộ giao diện Dropdown)
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            const targetTab = this.getAttribute('data-tab');
+            if (targetTab === 'nv') typeSelect.value = 'NhanVien';
+            else if (targetTab === 'ctv') typeSelect.value = 'CongTacVien';
+            else if (targetTab === 'kh') typeSelect.value = 'KhachHang';
+            else typeSelect.value = 'all';
+            
+            applyFilters();
+        });
+    });
+});
+</script>
 </body>
 </html>

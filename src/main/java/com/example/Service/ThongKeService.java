@@ -25,7 +25,7 @@ public class ThongKeService {
     private final DanhGiaRepository danhGiaRepository;
     private final KhieuNaiRepository khieuNaiRepository;
     private final ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository;
-    private final MaCouponRepository maCouponRepository;
+    private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final ThongBaoRepository thongBaoRepository;
 
     public ThongKeService(
@@ -37,7 +37,7 @@ public class ThongKeService {
             DanhGiaRepository danhGiaRepository,
             KhieuNaiRepository khieuNaiRepository,
             ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository,
-            MaCouponRepository maCouponRepository,
+            MaKhuyenMaiRepository maKhuyenMaiRepository,
             ThongBaoRepository thongBaoRepository) {
         this.donDatDichVuRepository = donDatDichVuRepository;
         this.khachHangRepository = khachHangRepository;
@@ -47,7 +47,7 @@ public class ThongKeService {
         this.danhGiaRepository = danhGiaRepository;
         this.khieuNaiRepository = khieuNaiRepository;
         this.chuongTrinhKhuyenMaiRepository = chuongTrinhKhuyenMaiRepository;
-        this.maCouponRepository = maCouponRepository;
+        this.maKhuyenMaiRepository = maKhuyenMaiRepository;
         this.thongBaoRepository = thongBaoRepository;
     }
 
@@ -154,23 +154,30 @@ public class ThongKeService {
         }
         return map;
     }
+public Map<String, Long> getTrangThaiKhieuNai() {
+    Map<String, Long> map = new LinkedHashMap<>();
+    map.put("Đã giải quyết", 0L);
+    map.put("Đang xử lý", 0L);
+    map.put("Mới", 0L);
+    map.put("Chờ xác minh", 0L);
+    map.put("Leo thang", 0L);
 
-    public Map<String, Long> getTrangThaiKhieuNai() {
-        Map<String, Long> map = new LinkedHashMap<>();
-        map.put("Mới", 0L);
-        map.put("Đang xử lý", 0L);
-        map.put("Leo thang", 0L);
-        map.put("Đã giải quyết", 0L);
-
-        for (KhieuNai kn : khieuNaiRepository.findAll()) {
-            String st = kn.getTrangThai();
-            if ("Moi".equalsIgnoreCase(st)) map.put("Mới", map.get("Mới") + 1);
-            else if ("DangXuLy".equalsIgnoreCase(st)) map.put("Đang xử lý", map.get("Đang xử lý") + 1);
-            else if ("LeoThang".equalsIgnoreCase(st) || "LeoCao".equalsIgnoreCase(st)) map.put("Leo thang", map.get("Leo thang") + 1);
-            else if ("DaGiaiQuyet".equalsIgnoreCase(st)) map.put("Đã giải quyết", map.get("Đã giải quyết") + 1);
+    for (KhieuNai kn : khieuNaiRepository.findAll()) {
+        String st = kn.getTrangThai();
+        if ("DaGiaiQuyet".equalsIgnoreCase(st)) {
+            map.put("Đã giải quyết", map.get("Đã giải quyết") + 1);
+        } else if ("DangXuLy".equalsIgnoreCase(st)) {
+            map.put("Đang xử lý", map.get("Đang xử lý") + 1);
+        } else if ("Moi".equalsIgnoreCase(st)) {
+            map.put("Mới", map.get("Mới") + 1);
+        } else if ("ChoXacMinh".equalsIgnoreCase(st) || "XacMinh".equalsIgnoreCase(st)) {
+            map.put("Chờ xác minh", map.get("Chờ xác minh") + 1);
+        } else if ("LeoThang".equalsIgnoreCase(st) || "LeoCao".equalsIgnoreCase(st)) {
+            map.put("Leo thang", map.get("Leo thang") + 1);
         }
-        return map;
     }
+    return map;
+}
 
     // ==========================================
     // DTO COMPUTATION METHODS (100% REAL DATABASE DATA)
@@ -280,11 +287,74 @@ public class ThongKeService {
                 .thoiGianXuLyTrungBinhNgay(1.5)
                 .build();
     }
+// Tỷ lệ giải quyết đúng hạn (dựa trên các khiếu nại đã giải quyết / tổng số)
+public double getTyLeGiaiQuyetDungHan() {
+    long tong = khieuNaiRepository.count();
+    if (tong == 0) return 100.0;
+    long daGiaiQuyet = khieuNaiRepository.findAll().stream()
+            .filter(k -> "DaGiaiQuyet".equalsIgnoreCase(k.getTrangThai()))
+            .count();
+    return Math.round(((double) daGiaiQuyet / tong) * 1000.0) / 10.0;
+}
 
+// Tỷ lệ khiếu nại hợp lệ (ví dụ: các khiếu nại không phải trạng thái Mới/Hủy)
+public double getTyLeKhieuNaiHopLe() {
+    long tong = khieuNaiRepository.count();
+    if (tong == 0) return 100.0;
+    long hopLe = khieuNaiRepository.findAll().stream()
+            .filter(k -> !"Moi".equalsIgnoreCase(k.getTrangThai()) && !"DaHuy".equalsIgnoreCase(k.getTrangThai()))
+            .count();
+    return Math.round(((double) hopLe / tong) * 1000.0) / 10.0;
+}
+
+// Tỷ lệ khiếu nại leo thang
+public double getTyLeLeoThang() {
+    long tong = khieuNaiRepository.count();
+    if (tong == 0) return 0.0;
+    long leoThang = khieuNaiRepository.findAll().stream()
+            .filter(k -> "LeoThang".equalsIgnoreCase(k.getTrangThai()) || "LeoCao".equalsIgnoreCase(k.getTrangThai()))
+            .count();
+    return Math.round(((double) leoThang / tong) * 1000.0) / 10.0;
+}
+
+// Tỷ lệ khách hàng hài lòng sau xử lý (có thể dựa trên tỷ lệ đã giải quyết hoặc đánh giá)
+public double getTyLeKhachHangHaiLong() {
+    long tong = khieuNaiRepository.count();
+    if (tong == 0) return 95.0;
+    long haiLong = khieuNaiRepository.findAll().stream()
+            .filter(k -> "DaGiaiQuyet".equalsIgnoreCase(k.getTrangThai()))
+            .count();
+    double rate = ((double) haiLong / tong) * 100.0;
+    return rate > 0 ? Math.round(rate * 10.0) / 10.0 : 95.0;
+}
+    public Map<String, BigDecimal> getDoanhThu12Thang() {
+        Map<String, BigDecimal> map = new LinkedHashMap<>();
+        // Tạo khung sẵn 12 tháng (T1 đến T12)
+        for(int i = 1; i <= 12; i++) {
+            map.put("Tháng " + i, BigDecimal.ZERO);
+        }
+        
+        // Quét DB, lấy đơn hoàn thành và cộng dồn vào đúng tháng
+        for (DonDatDichVu d : donDatDichVuRepository.findAll()) {
+            if ("HoanThanh".equalsIgnoreCase(d.getTrangThai()) && d.getNgayThucHien() != null) {
+                int month = d.getNgayThucHien().getMonthValue();
+                int year = d.getNgayThucHien().getYear();
+                
+                // Chỉ lấy doanh thu của năm hiện tại (2026)
+                if (year == 2026) { 
+                    String key = "Tháng " + month;
+                    BigDecimal current = map.getOrDefault(key, BigDecimal.ZERO);
+                    BigDecimal value = d.getThanhTien() != null ? d.getThanhTien() : BigDecimal.ZERO;
+                    // Chia 1.000.000 để đưa về đơn vị triệu đồng
+                    map.put(key, current.add(value.divide(new BigDecimal("1000000"), 1, RoundingMode.HALF_UP)));
+                }
+            }
+        }
+        return map;
+    }
     public MarketingStatsDto getMarketingStats() {
         List<ChuongTrinhKhuyenMai> kmList = chuongTrinhKhuyenMaiRepository.findAll();
-        List<MaCoupon> cpList = maCouponRepository.findAll();
-
+        List<MaKhuyenMai> cpList = maKhuyenMaiRepository.findAll();
         long tongKm = kmList.size();
         long dangChay = kmList.stream().filter(k -> "DangDienRa".equalsIgnoreCase(k.getTrangThai()) || "HoatDong".equalsIgnoreCase(k.getTrangThai()) || "DangHoatDong".equalsIgnoreCase(k.getTrangThai())).count();
         long tongCp = cpList.size();

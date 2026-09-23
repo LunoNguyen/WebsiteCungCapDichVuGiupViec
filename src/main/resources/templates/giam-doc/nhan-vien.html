@@ -60,26 +60,26 @@
       <div class="filter-bar">
         <div class="search-box" style="flex:1">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm theo tên, mã nhân viên..." data-table-search="staffTable">
+          <input type="text" class="form-control" placeholder="Tìm theo tên, mã nhân viên, email..." data-table-search="staffTable">
         </div>
-        <select class="filter-select">
+        <select class="filter-select" id="deptFilter">
           <option>Tất cả phòng ban</option>
           <option>Hành chính Nhân sự - Kế toán</option>
           <option>Chăm sóc Khách hàng</option>
           <option>Marketing</option>
         </select>
-        <select class="filter-select">
+        <select class="filter-select" id="statusFilter">
           <option>Tất cả trạng thái</option>
           <option>Đang làm việc</option>
           <option>Tạm nghỉ</option>
-          <option>Đã nghỉ</option>
+          <option>Đã nghỉ việc</option>
         </select>
       </div>
 
       <div class="card" style="padding:0">
         <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
           <div class="card-title">Danh sách nhân viên công ty</div>
-          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</strong> nhân viên</span>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${nhanViens != null ? #lists.size(nhanViens) : 0}">0</strong> nhân viên</span>
         </div>
         <div class="table-container" style="border:none">
           <table class="table" id="staffTable">
@@ -95,13 +95,14 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Vòng lặp xuất nhân viên -->
               <tr th:each="nv : ${nhanViens}">
                 <td>
                   <div class="user-cell">
-                    <div class="avatar avatar-sm" th:text="${#strings.substring(nv.hoTen, 0, 1)}">N</div>
+                    <div class="avatar avatar-sm" th:text="${nv.hoTen != null and !nv.hoTen.isEmpty() ? #strings.toUpperCase(#strings.substring(nv.hoTen, 0, 1)) : 'N'}">N</div>
                     <div class="user-cell-info">
                       <div class="name" th:text="${nv.hoTen}">Tên NV</div>
-                      <div class="sub" th:text="${nv.email}">email@neatify.vn</div>
+                      <div class="sub" th:text="${nv.email != null ? nv.email : '---'}">email@neatify.vn</div>
                     </div>
                   </div>
                 </td>
@@ -114,7 +115,12 @@
                   <span class="badge badge-warning" th:if="${nv.trangThai == 'TamNghi'}">Tạm nghỉ</span>
                   <span class="badge badge-danger" th:if="${nv.trangThai == 'DaNghi' or nv.trangThai == 'NghiViec'}">Đã nghỉ việc</span>
                 </td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetail">Xem hồ sơ</button></div></td>
+                <td>
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <!-- Mở modal tương ứng với ID của nhân viên -->
+                    <button class="btn btn-outline btn-sm" th:attr="data-panel-open='staffDetail_' + ${nv.id}">Xem hồ sơ</button>
+                  </div>
+                </td>
               </tr>
               <tr th:if="${nhanViens == null or #lists.isEmpty(nhanViens)}">
                 <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu nhân viên</td>
@@ -122,93 +128,141 @@
             </tbody>
           </table>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${nhanViens != null ? #lists.size(nhanViens) : 0}">0</span> nhân viên</span>
-          <div class="pagination">
-            <button class="page-btn active">1</button>
-          </div>
-        </div>
       </div>
     </main>
   </div>
 </div>
 
-<!-- Staff Detail Panel -->
 <div class="overlay" id="panelOverlay"></div>
-<div class="detail-panel" id="staffDetail">
-  <div class="detail-panel-header">
-    <div>
-      <h2 style="font-size:1.1rem;font-weight:700">Hồ sơ nhân viên</h2>
-      <span style="font-size:0.8rem;color:var(--text-muted)">NV-001</span>
-    </div>
-    <button class="modal-close" data-panel-close="staffDetail">✕</button>
-  </div>
-  <div class="detail-panel-body">
-    <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
-      <div class="avatar avatar-lg" style="margin:0 auto 0.875rem">H</div>
-      <div style="font-size:1.125rem;font-weight:700">Nguyễn Thị Hạnh</div>
-      <div style="font-size:0.875rem;color:var(--text-muted)">Trưởng phòng HCNS-KT</div>
-      <span class="badge badge-success" style="margin-top:0.625rem">Đang làm việc</span>
-    </div>
-    <div class="info-row"><span class="info-label">Mã nhân viên</span><span class="info-value">NV-001</span></div>
-    <div class="info-row"><span class="info-label">Email</span><span class="info-value">hanhnt@giupviec.vn</span></div>
-    <div class="info-row"><span class="info-label">Điện thoại</span><span class="info-value">0912 345 678</span></div>
-    <div class="info-row"><span class="info-label">Phòng ban</span><span class="info-value">HCNS - Kế toán</span></div>
-    <div class="info-row"><span class="info-label">Chức vụ</span><span class="info-value">Trưởng phòng</span></div>
-    <div class="info-row"><span class="info-label">Ngày vào làm</span><span class="info-value">01/03/2023</span></div>
-    <div class="info-row"><span class="info-label">Thâm niên</span><span class="info-value" style="color:var(--accent)">3 năm 6 tháng</span></div>
-    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Lịch sử công tác</div>
-      <div class="timeline">
-        <div class="timeline-item"><div class="timeline-dot done"></div><div class="timeline-date">03/2023</div><div class="timeline-content">Gia nhập công ty · Nhân viên HCNS</div></div>
-        <div class="timeline-item"><div class="timeline-dot done"></div><div class="timeline-date">09/2024</div><div class="timeline-content">Thăng chức Trưởng phòng HCNS-KT</div></div>
-      </div>
-    </div>
-  </div>
-  <div class="detail-panel-footer">
-    <button class="btn btn-secondary" data-panel-close="staffDetail">Đóng</button>
-    <button class="btn btn-warning" onclick="Toast.show('Đã gửi yêu cầu điều chỉnh nhân sự.')">Đề xuất thay đổi</button>
-  </div>
-</div>
 
-<!-- Approval Modal -->
-<div class="modal-overlay" id="approvalModal">
-  <div class="modal" style="max-width:650px">
-    <div class="modal-header">
-      <h2 class="modal-title">Phê duyệt đề xuất nhân sự</h2>
-      <button class="modal-close" data-modal-close="approvalModal">✕</button>
+<!-- Vòng lặp tạo Modal Chi tiết cho từng nhân viên -->
+<th:block th:each="nv : ${nhanViens}">
+  <div class="detail-panel" th:id="'staffDetail_' + ${nv.id}">
+    <div class="detail-panel-header">
+      <div>
+        <h2 style="font-size:1.1rem;font-weight:700">Hồ sơ nhân viên</h2>
+        <span style="font-size:0.8rem;color:var(--text-muted)" th:text="${nv.maNhanVien}">NV-001</span>
+      </div>
+      <button class="modal-close" th:attr="data-panel-close='staffDetail_' + ${nv.id}">✕</button>
     </div>
-    <div style="display:flex;flex-direction:column;gap:1rem">
-      <div style="padding:1.25rem;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-md)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
-          <div><span class="badge badge-primary">Thăng chức</span></div>
-          <span style="font-size:0.75rem;color:var(--text-muted)">Từ: Phòng HCNS · 18/09/2026</span>
-        </div>
-        <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.375rem">Đề xuất thăng chức NV Trần Văn Cường</div>
-        <div style="font-size:0.825rem;color:var(--text-secondary)">Từ: Nhân viên CSKH → Trưởng nhóm CSKH. Lý do: hiệu suất cao trong 12 tháng liên tiếp.</div>
-        <div style="display:flex;gap:0.5rem;margin-top:0.875rem">
-          <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt thăng chức!');document.getElementById('approvalModal').classList.remove('active')">Phê duyệt</button>
-          <button class="btn btn-danger btn-sm">Từ chối</button>
-          <button class="btn btn-outline btn-sm">Yêu cầu bổ sung tài liệu</button>
+    <div class="detail-panel-body">
+      <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
+        <div class="avatar avatar-lg" style="margin:0 auto 0.875rem" th:text="${nv.hoTen != null and !nv.hoTen.isEmpty() ? #strings.toUpperCase(#strings.substring(nv.hoTen, 0, 1)) : 'N'}">H</div>
+        <div style="font-size:1.125rem;font-weight:700" th:text="${nv.hoTen}">Tên nhân viên</div>
+        <div style="font-size:0.875rem;color:var(--text-muted)" th:text="${(nv.chucVu != null ? nv.chucVu.tenChucVu : '') + ' ' + (nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : '')}">Chức vụ</div>
+        
+        <span class="badge badge-success" th:if="${nv.trangThai == 'DangLamViec'}" style="margin-top:0.625rem">Đang làm việc</span>
+        <span class="badge badge-warning" th:if="${nv.trangThai == 'TamNghi'}" style="margin-top:0.625rem">Tạm nghỉ</span>
+        <span class="badge badge-danger" th:if="${nv.trangThai == 'DaNghi' or nv.trangThai == 'NghiViec'}" style="margin-top:0.625rem">Đã nghỉ việc</span>
+      </div>
+      <div class="info-row"><span class="info-label">Mã nhân viên</span><span class="info-value" th:text="${nv.maNhanVien}">---</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-value" th:text="${nv.email != null ? nv.email : '---'}">---</span></div>
+      <div class="info-row"><span class="info-label">Điện thoại</span><span class="info-value" th:text="${nv.soDienThoai != null ? nv.soDienThoai : '---'}">---</span></div>
+      <div class="info-row"><span class="info-label">Phòng ban</span><span class="info-value" th:text="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : '---'}">---</span></div>
+      <div class="info-row"><span class="info-label">Chức vụ</span><span class="info-value" th:text="${nv.chucVu != null ? nv.chucVu.tenChucVu : '---'}">---</span></div>
+      <div class="info-row"><span class="info-label">Ngày vào làm</span><span class="info-value" th:text="${nv.ngayVaoLam != null ? #temporals.format(nv.ngayVaoLam, 'dd/MM/yyyy') : '---'}">---</span></div>
+      <div class="info-row"><span class="info-label">Thâm niên</span><span class="info-value" style="color:var(--accent)" th:text="${nv.ngayVaoLam != null ? (2026 - nv.ngayVaoLam.getYear()) + ' năm' : '---'}">---</span></div>
+      <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
+        <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Lịch sử công tác</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot done"></div>
+            <div class="timeline-date" th:text="${nv.ngayVaoLam != null ? #temporals.format(nv.ngayVaoLam, 'MM/yyyy') : '--/----'}">03/2023</div>
+            <div class="timeline-content">Gia nhập công ty</div>
+          </div>
         </div>
       </div>
-      <div style="padding:1.25rem;background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.2);border-radius:var(--radius-md)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
-          <div><span class="badge badge-warning">Điều chuyển</span></div>
-          <span style="font-size:0.75rem;color:var(--text-muted)">Từ: Phòng HCNS · 17/09/2026</span>
-        </div>
-        <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.375rem">Điều chuyển NV Phạm Văn Minh</div>
-        <div style="font-size:0.825rem;color:var(--text-secondary)">Từ: Phòng Marketing → Phòng CSKH theo yêu cầu tổ chức.</div>
-        <div style="display:flex;gap:0.5rem;margin-top:0.875rem">
-          <button class="btn btn-success btn-sm">Phê duyệt</button>
-          <button class="btn btn-danger btn-sm">Từ chối</button>
-        </div>
-      </div>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" data-modal-close="approvalModal">Đóng</button></div>
+    <div class="detail-panel-footer">
+      <button class="btn btn-secondary" th:attr="data-panel-close='staffDetail_' + ${nv.id}">Đóng</button>
+      <button class="btn btn-warning" onclick="Toast.show('Đã gửi yêu cầu điều chỉnh nhân sự.')">Đề xuất thay đổi</button>
+    </div>
   </div>
-</div>
+</th:block>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+<!-- SCRIPT LỌC DỮ LIỆU ĐỒNG BỘ CHO NHÂN VIÊN -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('[data-table-search="staffTable"]');
+    const deptSelect = document.getElementById('deptFilter');
+    const statusSelect = document.getElementById('statusFilter');
+    const tabs = document.querySelectorAll('.tab-btn');
+
+    function applyFilters() {
+        const searchText = searchInput ? searchInput.value.toLowerCase() : '';
+        const deptVal = deptSelect ? deptSelect.value : 'Tất cả phòng ban';
+        const statusVal = statusSelect ? statusSelect.value : 'Tất cả trạng thái';
+        
+        const activeTab = document.querySelector('.tab-btn.active');
+        const tabData = activeTab ? activeTab.getAttribute('data-tab') : 'all';
+
+        const rows = document.querySelectorAll('#staffTable tbody tr');
+
+        rows.forEach(row => {
+            if (row.children.length < 7) return; // Bỏ qua dòng "Không có dữ liệu"
+
+            const rowTextContent = row.textContent.toLowerCase();
+            const deptText = row.children[2].textContent.trim();
+            const statusText = row.children[5].textContent.trim();
+
+            // 1. Kiểm tra Text Search
+            const matchSearch = rowTextContent.includes(searchText);
+
+            // 2. Kiểm tra Combobox Phòng ban
+            const matchDeptSelect = (deptVal === 'Tất cả phòng ban') || deptText.includes(deptVal);
+
+            // 3. Kiểm tra Combobox Trạng thái
+            const matchStatusSelect = (statusVal === 'Tất cả trạng thái') || statusText.includes(statusVal);
+
+            // 4. Kiểm tra Tab Phòng ban
+            let matchTab = false;
+            if (tabData === 'all') matchTab = true;
+            else if (tabData === 'hcns' && (deptText.includes('Hành chính') || deptText.includes('Kế toán'))) matchTab = true;
+            else if (tabData === 'cskh' && deptText.includes('Khách hàng')) matchTab = true;
+            else if (tabData === 'mkt' && deptText.includes('Marketing')) matchTab = true;
+
+            // Hiển thị nếu khớp tất cả các bộ lọc
+            if (matchSearch && matchDeptSelect && matchStatusSelect && matchTab) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+
+    // Đồng bộ Dropdown phòng ban với Tab
+    if (deptSelect) {
+        deptSelect.addEventListener('change', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            if (this.value === 'Hành chính Nhân sự - Kế toán') document.querySelector('[data-tab="hcns"]').classList.add('active');
+            else if (this.value === 'Chăm sóc Khách hàng') document.querySelector('[data-tab="cskh"]').classList.add('active');
+            else if (this.value === 'Marketing') document.querySelector('[data-tab="mkt"]').classList.add('active');
+            else document.querySelector('[data-tab="all"]').classList.add('active');
+            applyFilters();
+        });
+    }
+
+    // Đồng bộ Tab với Dropdown phòng ban
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            const targetTab = this.getAttribute('data-tab');
+            if (targetTab === 'hcns') deptSelect.value = 'Hành chính Nhân sự - Kế toán';
+            else if (targetTab === 'cskh') deptSelect.value = 'Chăm sóc Khách hàng';
+            else if (targetTab === 'mkt') deptSelect.value = 'Marketing';
+            else deptSelect.value = 'Tất cả phòng ban';
+            
+            applyFilters();
+        });
+    });
+});
+</script>
 </body>
 </html>
