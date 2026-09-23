@@ -64,43 +64,43 @@ public class AuthService {
                 String maChucVu = cv != null ? cv.getMaChucVu() : "";
                 String maPhongBan = (cv != null && cv.getPhongBan() != null) ? cv.getPhongBan().getMaPhongBan() : "";
 
-                if ("CV-GD".equalsIgnoreCase(maChucVu) || "PB-BGD".equalsIgnoreCase(maPhongBan) || "giamdoc".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                if ("CV-GD".equalsIgnoreCase(maChucVu) || "PB-BGD".equalsIgnoreCase(maPhongBan)) {
                     role = "ROLE_GIAM_DOC";
-                    redirectUrl = "/giam-doc/bao-cao";
+                    redirectUrl = "/giam-doc/dashboard";
                     avatar = "GĐ";
-                } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu) || "CV-NVNS".equalsIgnoreCase(maChucVu) || "hanhnt".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu) || "CV-NVNS".equalsIgnoreCase(maChucVu)) {
                     role = "ROLE_HCNS";
-                    redirectUrl = "/hcns/nhan-vien";
+                    redirectUrl = "/hcns/dashboard";
                     avatar = "HC";
-                } else if ("PB-CSKH".equalsIgnoreCase(maPhongBan) || "CV-CSKH".equalsIgnoreCase(maChucVu) || "dunght".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                } else if ("PB-CSKH".equalsIgnoreCase(maPhongBan) || "CV-CSKH".equalsIgnoreCase(maChucVu)) {
                     role = "ROLE_CSKH";
-                    redirectUrl = "/cskh/khieu-nai";
+                    redirectUrl = "/cskh/dashboard";
                     avatar = "CS";
-                } else if ("PB-MKT".equalsIgnoreCase(maPhongBan) || "CV-MKT".equalsIgnoreCase(maChucVu) || "minhpv".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
+                } else if ("PB-MKT".equalsIgnoreCase(maPhongBan) || "CV-MKT".equalsIgnoreCase(maChucVu)) {
                     role = "ROLE_MARKETING";
-                    redirectUrl = "/marketing/thong-bao";
+                    redirectUrl = "/marketing/dashboard";
                     avatar = "MKT";
                 } else {
                     role = "ROLE_HCNS";
-                    redirectUrl = "/hcns/nhan-vien";
+                    redirectUrl = "/hcns/dashboard";
                     avatar = "NV";
                 }
             } else {
                 if ("giamdoc".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_GIAM_DOC";
-                    redirectUrl = "/giam-doc/bao-cao";
+                    redirectUrl = "/giam-doc/dashboard";
                     avatar = "GĐ";
                 } else if ("hanhnt".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_HCNS";
-                    redirectUrl = "/hcns/nhan-vien";
+                    redirectUrl = "/hcns/dashboard";
                     avatar = "HC";
                 } else if ("dunght".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_CSKH";
-                    redirectUrl = "/cskh/khieu-nai";
+                    redirectUrl = "/cskh/dashboard";
                     avatar = "CS";
                 } else if ("minhpv".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_MARKETING";
-                    redirectUrl = "/marketing/thong-bao";
+                    redirectUrl = "/marketing/dashboard";
                     avatar = "MKT";
                 }
             }

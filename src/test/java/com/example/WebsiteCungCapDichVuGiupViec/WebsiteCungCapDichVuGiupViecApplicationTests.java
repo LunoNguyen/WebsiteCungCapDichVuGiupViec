@@ -2,6 +2,7 @@ package com.example.WebsiteCungCapDichVuGiupViec;
 
 import com.example.Service.AuthService;
 import com.example.Service.ThongKeService;
+import com.example.Validation.AdminAuthenticationInterceptor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,9 @@ class WebsiteCungCapDichVuGiupViecApplicationTests {
 
 	@Autowired
 	private com.example.Repository.TaiKhoanRepository taiKhoanRepository;
+
+	@Autowired
+	private AdminAuthenticationInterceptor interceptor;
 
 	@Test
 	void testRoleAuthenticationAndDatabaseData() {
