@@ -19,29 +19,32 @@
         </div>
       </div>
 
-      <!-- Stats Grid -->
+<!-- Stats Grid (Dữ liệu động) -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
-          <div class="stat-value">4.85 / 5</div>
+          <div class="stat-value" th:text="${diemDanhGiaTB} + ' / 5'">4.85 / 5</div>
           <div class="stat-label">Điểm đánh giá trung bình</div>
-          <div class="kpi-compare"><span class="arrow-up">1,248 lượt đánh giá</span></div>
+          <div class="kpi-compare"><span class="arrow-up" th:text="${#numbers.formatInteger(tongLuotDanhGia, 0, 'COMMA')} + ' lượt đánh giá'">1,248 lượt đánh giá</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">❤️</div>
-          <div class="stat-value">+64</div>
+          <div class="stat-value" th:text="'+' + ${chiSoNPS}">+64</div>
           <div class="stat-label">Chỉ số NPS (Net Promoter)</div>
-          <div class="kpi-compare"><span class="arrow-up">Mức Xuất sắc (> 50)</span></div>
+          <div class="kpi-compare">
+             <span th:if="${chiSoNPS > 50}" class="arrow-up">Mức Xuất sắc (> 50)</span>
+             <span th:if="${chiSoNPS <= 50}" class="period">Mức Tốt</span>
+          </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(13,155,163,0.15)">💬</div>
-          <div class="stat-value">94.6%</div>
+          <div class="stat-value" th:text="${tyLeCSAT} + '%'">94.6%</div>
           <div class="stat-label">Tỷ lệ CSAT thỏa mãn</div>
           <div class="kpi-compare"><span class="period">Khảo sát sau dịch vụ</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🌟</div>
-          <div class="stat-value">125</div>
+          <div class="stat-value" th:text="${tongTestimonial}">125</div>
           <div class="stat-label">Đánh giá nổi bật (Testimonial)</div>
           <div class="kpi-compare"><span class="period">Đã chọn lọc làm truyền thông</span></div>
         </div>
@@ -70,8 +73,7 @@
         </div>
       </div>
 
-      <!-- Testimonial Selection Table -->
-      <div class="card" style="padding:0">
+<div class="card" style="padding:0">
         <div class="card-header" style="padding:1.25rem 1.5rem">
           <div>
             <div class="card-title">Đánh giá 5 sao nổi bật có thể dùng làm tư liệu truyền thông</div>
@@ -91,35 +93,43 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td><div class="name">Nguyễn Thị Hoa</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">Q.1, TP.HCM · VIP Diamond</div></td>
-                <td>Dọn dẹp nhà chuyên sâu</td>
-                <td><span style="color:#FFC107;font-weight:700">★★★★★</span></td>
-                <td style="max-width:340px;line-height:1.4">"Dịch vụ Neatify khiến mình hoàn toàn yên tâm. CTV làm việc chu đáo, tỉ mỉ từng góc nhà và thái độ cực kỳ lễ phép!"</td>
-                <td><span class="badge badge-success">Đang ghim trang chủ</span></td>
-                <td style="text-align:right">
-                  <button class="btn btn-outline btn-sm" onclick="Toast.show('Đã cập nhật trạng thái hiển thị!')"><i class="ti ti-check"></i> Đang ghim</button>
+              <!-- Lặp qua danh sách Đánh giá (Lọc các đánh giá >= 4 sao) -->
+              <tr th:each="dg : ${danhGias}" th:if="${dg.diemChatLuong >= 4}">
+                <td>
+                  <div class="name" th:text="${dg.khachHang.hoTen}">Tên KH</div>
+                  <div class="sub" style="font-size:0.75rem;color:var(--text-muted)" th:text="${dg.khachHang.soDienThoai} + ' · Khách hàng'">SĐT</div>
+                </td>
+                <td th:text="${dg.donDat != null and dg.donDat.dichVu != null ? dg.donDat.dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp</td>
+                <td>
+                    <!-- Vẽ số sao tương ứng với điểm -->
+                    <span style="color:#FFC107;font-weight:700" th:utext="${'★'.repeat(dg.diemChatLuong) + '☆'.repeat(5 - dg.diemChatLuong)}">★★★★★</span>
+                </td>
+                <td style="max-width:340px;line-height:1.4" th:text="${dg.nhanXet != null ? '&quot;' + dg.nhanXet + '&quot;' : 'Đánh giá tốt'}">Nội dung</td>
+<td>
+                  <span th:if="${dg.trangThai == 'HienThi'}" class="badge badge-success">Đang ghim trang chủ</span>
+                  <span th:if="${dg.trangThai != 'HienThi'}" class="badge badge-secondary">Chưa ghim</span>
+                </td>
+<td style="text-align:right">
+                    <!-- Nút Bỏ Ghim (nếu đang ghim) -->
+                    <form th:if="${dg.trangThai == 'HienThi'}" th:action="@{/marketing/danh-gia/cap-nhat-trang-thai}" method="post" style="display:inline;">
+                        <input type="hidden" name="id" th:value="${dg.id}">
+                        <input type="hidden" name="trangThai" value="An">
+                        <button type="submit" class="btn btn-outline btn-sm" onclick="Toast.show('Đã gỡ khỏi trang chủ!')"><i class="ti ti-x"></i> Bỏ ghim</button>
+                    </form>
+                    
+                    <!-- Nút Ghim (nếu chưa ghim) -->
+                    <form th:if="${dg.trangThai != 'HienThi'}" th:action="@{/marketing/danh-gia/cap-nhat-trang-thai}" method="post" style="display:inline;">
+                        <input type="hidden" name="id" th:value="${dg.id}">
+                        <input type="hidden" name="trangThai" value="HienThi">
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="Toast.show('Đã ghim đánh giá lên trang chủ!')"><i class="ti ti-pin"></i> Ghim ngay</button>
+                    </form>
                 </td>
               </tr>
-              <tr>
-                <td><div class="name">Trần Văn Minh</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">Q.3, TP.HCM · Khách thân thiết</div></td>
-                <td>Nấu ăn bữa tối gia đình</td>
-                <td><span style="color:#FFC107;font-weight:700">★★★★★</span></td>
-                <td style="max-width:340px;line-height:1.4">"Cả nhà đều khen món ăn ngon như ở nhà hàng, vừa khẩu vị gia đình có trẻ nhỏ. Ứng dụng đặt lịch rất tiện lợi và đúng giờ."</td>
-                <td><span class="badge badge-success">Đang ghim trang chủ</span></td>
-                <td style="text-align:right">
-                  <button class="btn btn-outline btn-sm" onclick="Toast.show('Đã cập nhật trạng thái hiển thị!')"><i class="ti ti-check"></i> Đang ghim</button>
-                </td>
-              </tr>
-              <tr>
-                <td><div class="name">Phạm Thị Lan</div><div class="sub" style="font-size:0.75rem;color:var(--text-muted)">Tân Bình · Khách mới</div></td>
-                <td>Chăm sóc người cao tuổi</td>
-                <td><span style="color:#FFC107;font-weight:700">★★★★★</span></td>
-                <td style="max-width:340px;line-height:1.4">"Cô giúp việc có chuyên môn và rất kiên nhẫn với bà. Gia đình rất biết ơn Neatify đã hỗ trợ nhanh chóng khi nhà có việc gấp."</td>
-                <td><span class="badge badge-secondary">Chưa ghim</span></td>
-                <td style="text-align:right">
-                  <button class="btn btn-primary btn-sm" onclick="Toast.show('Đã ghim đánh giá lên trang chủ!')"><i class="ti ti-pin"></i> Ghim ngay</button>
-                </td>
+              <!-- Hiển thị khi không có đánh giá tốt nào -->
+              <tr th:if="${#lists.isEmpty(danhGias)}">
+                  <td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+                      Chưa có đánh giá nào từ khách hàng.
+                  </td>
               </tr>
             </tbody>
           </table>
@@ -130,18 +140,22 @@
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
-<script>
+<script th:inline="javascript">
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;
 
-    // Service Rating Bar Chart
+    // --- Inject dữ liệu từ Backend ---
+    const rawDataCSAT = /*[[${diemCSATTheoDichVu}]]*/ {};
+    const rawDataPhanBo = /*[[${tyLePhanBoSao}]]*/ {};
+
+    // 1. Service Rating Bar Chart
     new Chart(document.getElementById('serviceRatingBarChart'), {
       type: 'bar',
       data: {
-        labels: ['Dọn dẹp nhà', 'Nấu ăn', 'Trông trẻ', 'Chăm sóc NCT', 'Giặt ủi', 'Tổng vệ sinh'],
+        labels: Object.keys(rawDataCSAT),
         datasets: [{
           label: 'Điểm CSAT',
-          data: [4.9, 4.85, 4.88, 4.82, 4.75, 4.7],
+          data: Object.values(rawDataCSAT),
           backgroundColor: 'rgba(13,155,163,0.85)',
           borderRadius: 6,
           borderSkipped: false
@@ -150,25 +164,23 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: ctx => ` Điểm: ${ctx.parsed.y} / 5.0` } }
-        },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` Điểm: ${ctx.parsed.y} / 5.0` } } },
         scales: {
           x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-          y: { min: 4.0, max: 5.0, grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { font: { size: 11 } } }
+          y: { min: 3.5, max: 5.0, grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { font: { size: 11 } } }
         }
       }
     });
 
-    // Rating Distribution Horizontal Bar Chart (ưu tiên dùng cột/thanh thay tròn)
+    // 2. Rating Distribution Horizontal Bar Chart
     new Chart(document.getElementById('ratingDistributionBarChart'), {
       type: 'bar',
       data: {
-        labels: ['5 sao', '4 sao', '3 sao', '2 sao', '1 sao'],
+        // Key từ 5->1
+        labels: Object.keys(rawDataPhanBo).map(k => k + ' sao'), 
         datasets: [{
           label: 'Tỷ lệ %',
-          data: [82, 12, 4, 1.5, 0.5],
+          data: Object.values(rawDataPhanBo),
           backgroundColor: ['#38D48A', '#0D9BA3', '#F59E0B', '#FF6584', '#EF4444'],
           borderRadius: 6,
           borderSkipped: false
@@ -178,10 +190,7 @@
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x}%` } }
-        },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x}%` } } },
         scales: {
           x: { max: 100, grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { callback: v => v + '%', font: { size: 11 } } },
           y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
