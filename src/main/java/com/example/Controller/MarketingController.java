@@ -213,23 +213,64 @@ public class MarketingController {
     }
 @PostMapping("/khuyen-mai/tao-moi")
     public String taoMoiKhuyenMai(
-            @RequestParam String tenChuongTrinh, @RequestParam String maCoupon,
+           @RequestParam String tenChuongTrinh, @RequestParam String maCoupon,
             @RequestParam String loaiGiamGia, @RequestParam java.math.BigDecimal mucGiam,
             @RequestParam java.math.BigDecimal dieuKienToiThieu, @RequestParam Integer gioiHanLuot,
             @RequestParam String ngayBatDau, @RequestParam String ngayKetThuc,
             RedirectAttributes redirectAttributes) {
             
-        // Kiểm tra trùng Mã Coupon
+        // 1. Kiểm tra trùng Mã Coupon
         boolean isExist = maKhuyenMaiRepository.findAll().stream()
                 .anyMatch(c -> c.getCodeKhuyenMai().equalsIgnoreCase(maCoupon.trim()));
         if (isExist) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon '" + maCoupon + "' đã tồn tại!");
             return "redirect:/marketing/khuyen-mai";
+        } 
+
+        // 2. Kiểm tra ràng buộc Mức giảm (Bao quát cả % và tiền mặt)
+        if ("PhanTram".equals(loaiGiamGia)) {
+            if (mucGiam.compareTo(java.math.BigDecimal.ZERO) <= 0 || mucGiam.compareTo(new java.math.BigDecimal("100")) > 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Mức giảm phần trăm phải từ 1% đến 100%!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+        } else {
+            if (mucGiam.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm phải lớn hơn 0đ!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+        }
+        // Kiểm tra Tên chương trình (Chặn nhập toàn dấu cách)
+        String tenChuongTrinhClean = (tenChuongTrinh == null) ? "" : tenChuongTrinh.trim().replaceAll("\\s+", " ");
+        
+        if (tenChuongTrinhClean.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Tên chương trình không được để trống!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+
+        // Kiểm tra Mã Coupon (Bắt buộc chỉ chứa chữ và số, KHÔNG dấu cách, KHÔNG ký tự đặc biệt)
+        String maKhuyenMaiClean = maCoupon.trim();
+        if (maKhuyenMaiClean.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon không được để trống!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+        if (!maKhuyenMaiClean.matches("^[a-zA-Z0-9]+$")) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon viết liền không dấu, chỉ gồm chữ cái và số!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+        // 3. Kiểm tra giới hạn lượt dùng
+        if (gioiHanLuot <= 0) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Giới hạn số lượt dùng phải lớn hơn 0!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+        // 2. Kiểm tra đơn hàng tối thiểu không được âm
+        if (dieuKienToiThieu != null && dieuKienToiThieu.compareTo(java.math.BigDecimal.ZERO) < 0) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Đơn hàng tối thiểu không được là số âm!");
+            return "redirect:/marketing/khuyen-mai";
         }
         
         com.example.Model.ChuongTrinhKhuyenMai ct = new com.example.Model.ChuongTrinhKhuyenMai();
         ct.setMaChuongTrinh("CT-" + (System.currentTimeMillis() % 100000));
-        ct.setTenChuongTrinh(tenChuongTrinh);
+        ct.setTenChuongTrinh(tenChuongTrinhClean);
         ct.setLoaiGiam(loaiGiamGia);
         ct.setGiaTriGiam(mucGiam);
         ct.setDieuKienToiThieu(dieuKienToiThieu);
@@ -313,22 +354,66 @@ public class MarketingController {
             @RequestParam String loaiGiamGia, @RequestParam java.math.BigDecimal mucGiam,
             @RequestParam java.math.BigDecimal dieuKienToiThieu, @RequestParam Integer gioiHanLuot,
             @RequestParam String ngayBatDau, @RequestParam String ngayKetThuc,
-            // ĐÃ XÓA @RequestParam String trangThai VÌ KHÔNG CHO NGƯỜI DÙNG CHỈNH TAY NỮA!
             RedirectAttributes redirectAttributes) {
 
-        try {
-            boolean isExist = maKhuyenMaiRepository.findAll().stream()
-                    .anyMatch(c -> c.getCodeKhuyenMai().equalsIgnoreCase(maCoupon.trim()) && !c.getId().equals(id));
-            
-            if (isExist) {
-                redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon '" + maCoupon + "' bị trùng với mã khác!");
+        // 1. Kiểm tra Tên chương trình (Chặn nhập toàn dấu cách)
+        String tenChuongTrinhClean = (tenChuongTrinh == null) ? "" : tenChuongTrinh.trim().replaceAll("\\s+", " ");
+        
+        if (tenChuongTrinhClean.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Tên chương trình không được để trống!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+
+        // 2. Kiểm tra Mã Coupon (Bắt buộc chỉ chứa chữ và số, KHÔNG dấu cách, KHÔNG ký tự đặc biệt)
+        String maKhuyenMaiClean = maCoupon.trim();
+        if (maKhuyenMaiClean.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon không được để trống!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+        if (!maKhuyenMaiClean.matches("^[a-zA-Z0-9]+$")) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon viết liền không dấu, chỉ gồm chữ cái và số!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+
+        // 3. Kiểm tra trùng Mã Coupon (bỏ qua ID hiện tại đang sửa)
+        boolean isExist = maKhuyenMaiRepository.findAll().stream()
+                .anyMatch(c -> c.getCodeKhuyenMai().equalsIgnoreCase(maKhuyenMaiClean) && !c.getId().equals(id));
+        if (isExist) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon '" + maKhuyenMaiClean + "' bị trùng với một mã khác!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+
+        // 4. Kiểm tra ràng buộc Mức giảm (Bao quát cả % và tiền mặt)
+        if ("PhanTram".equals(loaiGiamGia)) {
+            if (mucGiam.compareTo(java.math.BigDecimal.ZERO) <= 0 || mucGiam.compareTo(new java.math.BigDecimal("100")) > 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Mức giảm phần trăm phải từ 1% đến 100%!");
                 return "redirect:/marketing/khuyen-mai";
             }
+        } else {
+            if (mucGiam.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm phải lớn hơn 0đ!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+        }
 
+        // 5. Kiểm tra giới hạn lượt dùng
+        if (gioiHanLuot <= 0) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Giới hạn số lượt dùng phải lớn hơn 0!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+
+        // 6. Kiểm tra đơn hàng tối thiểu không được âm
+        if (dieuKienToiThieu != null && dieuKienToiThieu.compareTo(java.math.BigDecimal.ZERO) < 0) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: Đơn hàng tối thiểu không được là số âm!");
+            return "redirect:/marketing/khuyen-mai";
+        }
+
+        // NẾU VƯỢT QUA TẤT CẢ RÀO CHẮN TRÊN, BẮT ĐẦU CẬP NHẬT DATABASE
+        try {
             maKhuyenMaiRepository.findById(id).ifPresent(mk -> {
                 com.example.Model.ChuongTrinhKhuyenMai ct = mk.getChuongTrinhKhuyenMai();
 
-                ct.setTenChuongTrinh(tenChuongTrinh);
+                ct.setTenChuongTrinh(tenChuongTrinhClean.trim());
                 ct.setLoaiGiam(loaiGiamGia);
                 ct.setGiaTriGiam(mucGiam);
                 ct.setDieuKienToiThieu(dieuKienToiThieu);
@@ -337,6 +422,7 @@ public class MarketingController {
                 java.time.LocalDate start = java.time.LocalDate.parse(ngayBatDau, formatter);
                 java.time.LocalDate end = java.time.LocalDate.parse(ngayKetThuc, formatter);
                 
+                // Tránh lỗi kết thúc trước bắt đầu
                 if (end.isBefore(start)) {
                     throw new RuntimeException("INVALID_DATE");
                 }
@@ -345,20 +431,17 @@ public class MarketingController {
                 ct.setNgayKetThuc(end);
 
                 // ========================================================
-                // TỰ ĐỘNG TÍNH TOÁN TRẠNG THÁI 100% DỰA VÀO HÔM NAY (23/09/2026)
+                // TỰ ĐỘNG TÍNH TOÁN TRẠNG THÁI THEO THỜI GIAN THỰC TẾ
                 // ========================================================
                 java.time.LocalDate today = java.time.LocalDate.now();
                 
                 if (end.isBefore(today)) {
-                    // Ngày kết thúc nhỏ hơn hôm nay -> Hết hạn / Đã kết thúc
                     ct.setTrangThai("DaKetThuc");
                     mk.setTrangThai("HetHan");
                 } else if (start.isAfter(today)) {
-                    // Ngày bắt đầu lớn hơn hôm nay -> Sắp diễn ra
                     ct.setTrangThai("SapDienRa");
-                     mk.setTrangThai("SapDienRa"); 
+                    mk.setTrangThai("SapDienRa"); 
                 } else {
-                    // Nằm trong khoảng thời gian hiện tại -> Đang hoạt động
                     ct.setTrangThai("DangHoatDong");
                     mk.setTrangThai("HoatDong");
                 }
@@ -366,17 +449,20 @@ public class MarketingController {
 
                 chuongTrinhKhuyenMaiRepository.save(ct); 
 
-                mk.setCodeKhuyenMai(maCoupon.trim().toUpperCase());
+                mk.setCodeKhuyenMai(maKhuyenMaiClean.toUpperCase());
                 mk.setSoLuotToiDa(gioiHanLuot);
                 maKhuyenMaiRepository.save(mk); 
             });
 
-            redirectAttributes.addFlashAttribute("success", "Đã cập nhật mã " + maCoupon.toUpperCase() + " thành công!");
-        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("success", "Đã cập nhật mã " + maKhuyenMaiClean.toUpperCase() + " thành công!");
+      } catch (Exception e) {
+            e.printStackTrace(); 
+            
             if ("INVALID_DATE".equals(e.getMessage())) {
                 redirectAttributes.addFlashAttribute("error", "Lỗi: Ngày kết thúc không được nhỏ hơn ngày bắt đầu!");
             } else {
-                redirectAttributes.addFlashAttribute("error", "Lỗi định dạng dữ liệu khi cập nhật!");
+                // Nối thêm thông báo gốc của Java vào giao diện để biết nguyên nhân thật sự
+                redirectAttributes.addFlashAttribute("error", "Lỗi hệ thống: " + e.getMessage());
             }
         }
         
