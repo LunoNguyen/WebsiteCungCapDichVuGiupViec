@@ -125,15 +125,6 @@ public class CustomerApiService {
             throw new IllegalArgumentException("Tên đăng nhập đã tồn tại, vui lòng chọn tên khác.");
         }
 
-        if (req.getNgaySinh() != null) {
-            if (req.getNgaySinh().plusYears(18).isAfter(LocalDate.now())) {
-                throw new IllegalArgumentException("Khách hàng phải từ đủ 18 tuổi trở lên.");
-            }
-            if (req.getNgaySinh().isBefore(LocalDate.now().minusYears(100))) {
-                throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
-            }
-        }
-
         long suffix = System.currentTimeMillis() % 1000000;
         String maTaiKhoan = "TK-KH-" + suffix;
         String maKhachHang = "KH-" + suffix;
@@ -361,16 +352,6 @@ public class CustomerApiService {
         }
         if (taiKhoanRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email này đã được đăng ký trên hệ thống.");
-        }
-
-        if (req.getNgaySinh() == null) {
-            throw new IllegalArgumentException("Vui lòng nhập ngày sinh.");
-        }
-        if (req.getNgaySinh().plusYears(18).isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Cộng tác viên phải từ đủ 18 tuổi trở lên.");
-        }
-        if (req.getNgaySinh().isBefore(LocalDate.now().minusYears(100))) {
-            throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
         }
 
         long suffix = System.currentTimeMillis() % 1000000;

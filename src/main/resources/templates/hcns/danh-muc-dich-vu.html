@@ -8,173 +8,88 @@
   <div class="main-area">
     <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Danh mục Dịch vụ')}"></header>
 
-    <main class="page-content">
-      <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Danh mục Dịch vụ</h1>
-          <p class="page-subtitle">Quản lý các nhóm và loại dịch vụ cung cấp</p>
+      <main class="page-content">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1 class="page-title">Danh mục Dịch vụ</h1>
+            <p class="page-subtitle">Quản lý các nhóm và loại dịch vụ cung cấp</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary btn-sm" data-modal-open="addCategoryModal"><i class="ti ti-plus"></i> Thêm danh mục</button>
+          </div>
         </div>
-        <div class="page-actions">
-          <button class="btn btn-primary btn-sm" data-modal-open="addCategoryModal"><i class="ti ti-plus"></i> Thêm danh mục</button>
-        </div>
-      </div>
 
-      <!-- Thông báo hệ thống -->
-      <div th:if="${errorMessage}" style="padding:1rem;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
-      <div th:if="${successMessage}" style="padding:1rem;background:rgba(67,233,123,0.12);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
-
-      <!-- Grid danh mục dịch vụ -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:1.25rem;margin-bottom:2rem">
-        <div th:each="ldv : ${loaiDichVus}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base);display:flex;flex-direction:column;justify-content:space-between">
-          <div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:1.25rem;margin-bottom:2rem">
+          <div th:each="ldv : ${loaiDichVus}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base)">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
               <div style="font-size:1.75rem;color:var(--primary)"><i class="ti ti-category"></i></div>
-              <span class="badge badge-success" th:if="${ldv.trangThai == 'HienThi'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Hiển thị</span>
-              <span class="badge badge-secondary" th:unless="${ldv.trangThai == 'HienThi'}">Đang ẩn</span>
+              <span class="badge badge-success" th:if="${ldv.trangThai == 'HienThi'}">Hoạt động</span>
+              <span class="badge badge-secondary" th:unless="${ldv.trangThai == 'HienThi'}">Ẩn</span>
             </div>
             <div style="font-weight:700;font-size:1.1rem;margin-bottom:0.25rem" th:text="${ldv.tenLoaiDichVu}">Tên danh mục</div>
             <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;min-height:2.5rem" th:text="${ldv.moTa != null ? ldv.moTa : 'Dịch vụ tiện ích gia đình chất lượng cao'}">Mô tả</div>
-          </div>
-
-          <div>
-            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.75rem 0;border-top:1px solid var(--border-light)">
-              <span style="color:var(--text-muted)">Mã: <strong th:text="${ldv.maLoaiDichVu}">LDV01</strong></span>
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding-top:0.75rem;border-top:1px solid var(--border-light)">
+              <span style="color:var(--text-muted)">Mã danh mục: <strong th:text="${ldv.maLoaiDichVu}">LDV01</strong></span>
               <span style="color:var(--accent);font-weight:600">Thứ tự: <strong th:text="${ldv.thuTuHienThi}">1</strong></span>
             </div>
-            <div style="display:flex;gap:0.4rem;margin-top:0.75rem;align-items:center">
-              <button class="btn btn-secondary btn-sm" style="flex:1"
-                      th:data-id="${ldv.id}"
-                      th:data-ten="${ldv.tenLoaiDichVu}"
-                      th:data-mota="${ldv.moTa}"
-                      th:data-thutu="${ldv.thuTuHienThi}"
-                      th:data-trangthai="${ldv.trangThai}"
-                      onclick="openEditCategoryModal(this)">
-                <i class="ti ti-edit"></i> Sửa
-              </button>
-              <form th:if="${ldv.trangThai == 'HienThi'}" th:action="@{/hcns/danh-muc-dich-vu/sua}" method="post" style="display:inline">
-                <input type="hidden" name="id" th:value="${ldv.id}">
-                <input type="hidden" name="tenLoaiDichVu" th:value="${ldv.tenLoaiDichVu}">
-                <input type="hidden" name="moTa" th:value="${ldv.moTa}">
-                <input type="hidden" name="thuTuHienThi" th:value="${ldv.thuTuHienThi}">
-                <input type="hidden" name="trangThai" value="An">
-                <button type="submit" class="btn btn-outline btn-sm" title="Ẩn tạm danh mục"><i class="ti ti-eye-off"></i></button>
-              </form>
-              <form th:if="${ldv.trangThai != 'HienThi'}" th:action="@{/hcns/danh-muc-dich-vu/sua}" method="post" style="display:inline">
-                <input type="hidden" name="id" th:value="${ldv.id}">
-                <input type="hidden" name="tenLoaiDichVu" th:value="${ldv.tenLoaiDichVu}">
-                <input type="hidden" name="moTa" th:value="${ldv.moTa}">
-                <input type="hidden" name="thuTuHienThi" th:value="${ldv.thuTuHienThi}">
-                <input type="hidden" name="trangThai" value="HienThi">
-                <button type="submit" class="btn btn-success btn-sm" title="Hiển thị lại"><i class="ti ti-eye"></i></button>
-              </form>
-              <form th:action="@{/hcns/danh-muc-dich-vu/xoa}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn danh mục này khỏi hệ thống?');">
-                <input type="hidden" name="id" th:value="${ldv.id}">
-                <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger,#ef4444);border-color:rgba(239,68,68,0.3)" title="Xóa danh mục"><i class="ti ti-trash"></i></button>
-              </form>
+            <div style="display:flex;gap:0.5rem;margin-top:1rem">
+              <button class="btn btn-outline btn-sm" data-panel-open="catDetailPanel">Chi tiết</button>
+              <button class="btn btn-secondary btn-sm">Chỉnh sửa</button>
             </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
   </div>
 </div>
 
-<!-- ============================================================
-     MODAL: THÊM DANH MỤC DỊCH VỤ (CREATE)
-     ============================================================ -->
+<div class="overlay" id="panelOverlay"></div>
+<div class="detail-panel" id="catDetailPanel">
+  <div class="detail-panel-header">
+    <div><h2 style="font-size:1.1rem;font-weight:700">Chi tiet Danh muc</h2></div>
+    <button class="modal-close" data-panel-close="catDetailPanel">x</button>
+  </div>
+  <div class="detail-panel-body">
+    <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
+      <div style="font-size:3rem;color:var(--primary)"><i class="ti ti-category"></i></div>
+      <div style="font-size:1.25rem;font-weight:700">Chi tiết Danh mục</div>
+      <span class="badge badge-success" style="margin-top:0.5rem">Đang áp dụng</span>
+    </div>
+    <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value" style="color:var(--accent)">Hoạt động</span></div>
+    <div class="info-row"><span class="info-label">Quy mô</span><span class="info-value">Toàn hệ thống</span></div>
+    <div class="info-row"><span class="info-label">Hình thức cung cấp</span><span class="info-value">Theo giờ / Theo gói</span></div>
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Mô tả dịch vụ</div>
+      <textarea class="form-control" rows="4">Dịch vụ tiện ích chuyên nghiệp của Neatify đáp ứng nhu cầu gia đình tiêu chuẩn cao với cộng tác viên được xác minh lý lịch rõ ràng.</textarea>
+    </div>
+  </div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-secondary" data-panel-close="catDetailPanel">Đóng</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="addCategoryModal">
-  <div class="modal" style="max-width:560px">
+  <div class="modal">
     <div class="modal-header">
-      <h2 class="modal-title"><i class="ti ti-folder-plus"></i> Thêm Danh mục Dịch vụ</h2>
-      <button class="modal-close" data-modal-close="addCategoryModal">✕</button>
+      <h2 class="modal-title">Them Danh muc Dich vu</h2>
+      <button class="modal-close" data-modal-close="addCategoryModal">x</button>
     </div>
-    <form th:action="@{/hcns/danh-muc-dich-vu/them}" method="post">
-      <div style="padding:1.5rem">
-        <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label">Tên danh mục *</label>
-          <input class="form-control" name="tenLoaiDichVu" placeholder="VD: Dọn Dẹp, Vệ Sinh Nhà Cửa" required>
-        </div>
-        <div class="form-row" style="margin-bottom:1rem">
-          <div class="form-group">
-            <label class="form-label">Thứ tự hiển thị</label>
-            <input class="form-control" type="number" name="thuTuHienThi" value="1" min="1">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Trạng thái</label>
-            <select class="form-control" name="trangThai">
-              <option value="HienThi">Hiển thị</option>
-              <option value="An">Ẩn tạm</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Mô tả ngắn</label>
-          <textarea class="form-control" name="moTa" rows="3" placeholder="Mô tả tóm tắt về loại dịch vụ này..."></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-modal-close="addCategoryModal">Hủy</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Lưu danh mục</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- ============================================================
-     MODAL: CHỈNH SỬA DANH MỤC DỊCH VỤ (UPDATE)
-     ============================================================ -->
-<div class="modal-overlay" id="editCategoryModal">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-header">
-      <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Danh mục</h2>
-      <button class="modal-close" data-modal-close="editCategoryModal">✕</button>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Ten danh muc *</label><input class="form-control" placeholder="VD: Ve sinh xe o to" required></div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Bieu tuong (emoji)</label><input class="form-control" placeholder="VD: &#128663;"></div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Mo ta</label><textarea class="form-control" rows="3" placeholder="Mo ta ngan gon ve dich vu..."></textarea></div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Trang thai</label>
+      <select class="form-control">
+        <option>Hoat dong</option>
+        <option>An tam</option>
+      </select>
     </div>
-    <form th:action="@{/hcns/danh-muc-dich-vu/sua}" method="post">
-      <input type="hidden" name="id" id="editCatId">
-      <div style="padding:1.5rem">
-        <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label">Tên danh mục *</label>
-          <input class="form-control" name="tenLoaiDichVu" id="editCatTen" required>
-        </div>
-        <div class="form-row" style="margin-bottom:1rem">
-          <div class="form-group">
-            <label class="form-label">Thứ tự hiển thị</label>
-            <input class="form-control" type="number" name="thuTuHienThi" id="editCatThuTu" min="1">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Trạng thái</label>
-            <select class="form-control" name="trangThai" id="editCatTrangThai">
-              <option value="HienThi">Hiển thị</option>
-              <option value="An">Ẩn tạm</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Mô tả chi tiết</label>
-          <textarea class="form-control" name="moTa" id="editCatMoTa" rows="3"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-modal-close="editCategoryModal">Hủy</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Cập nhật</button>
-      </div>
-    </form>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="addCategoryModal">Huy</button>
+      <button class="btn btn-primary" onclick="document.getElementById('addCategoryModal').classList.remove('active');Toast.show('Da them danh muc thanh cong!')">Them moi</button>
+    </div>
   </div>
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
-
-<script>
-  function openEditCategoryModal(btn) {
-    document.getElementById('editCatId').value = btn.dataset.id;
-    document.getElementById('editCatTen').value = btn.dataset.ten || '';
-    document.getElementById('editCatMoTa').value = btn.dataset.mota || '';
-    document.getElementById('editCatThuTu').value = btn.dataset.thutu || '1';
-    if (btn.dataset.trangthai) {
-      document.getElementById('editCatTrangThai').value = btn.dataset.trangthai;
-    }
-    ModalManager.open('editCategoryModal');
-  }
-</script>
 </body>
 </html>
