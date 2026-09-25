@@ -3,6 +3,9 @@ package com.example.Service;
 import com.example.Model.*;
 import com.example.Repository.*;
 import com.example.DTO.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -94,6 +97,7 @@ public class ThongKeService {
         return tong.divide(new BigDecimal("1000000"), 1, RoundingMode.HALF_UP);
     }
 
+    @Cacheable(value = "thongKe", key = "'diemDanhGiaTB'")
     public double getDiemDanhGiaTrungBinh() {
         List<DanhGia> danhGias = danhGiaRepository.findAll();
         if (danhGias.isEmpty()) return 4.8;
@@ -115,6 +119,7 @@ public class ThongKeService {
         return list.stream().limit(limit).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "thongKe", key = "'phanBoTrangThaiDon'")
     public Map<String, Long> getPhanBoTrangThaiDon() {
         Map<String, Long> map = new LinkedHashMap<>();
         map.put("Hoàn thành", 0L);
@@ -134,6 +139,7 @@ public class ThongKeService {
         return map;
     }
 
+    @Cacheable(value = "thongKe", key = "'topDichVu'")
     public Map<String, Long> getTopDichVu() {
         Map<String, Long> map = new LinkedHashMap<>();
         for (DonDatDichVu d : donDatDichVuRepository.findAll()) {
@@ -145,6 +151,7 @@ public class ThongKeService {
         return map;
     }
 
+    @Cacheable(value = "thongKe", key = "'phanPhoiDanhGia'")
     public Map<Integer, Long> getPhanPhoiDanhGia() {
         Map<Integer, Long> map = new LinkedHashMap<>();
         for (int i = 5; i >= 1; i--) map.put(i, 0L);
@@ -367,5 +374,23 @@ public double getTyLeKhachHangHaiLong() {
                 .tongLuotSuDungCoupon(tongLuotDung)
                 .doanhThuKhuyenMaiTrieuDong(getDoanhThuTrieuDong())
                 .build();
+    }
+
+    // ── Cache Eviction tự động ────────────────────────────────────────────
+    // Xóa toàn bộ cache thống kê mỗi 5 phút để dữ liệu luôn mới.
+    // fixedRate: 5 phút = 300,000ms
+    @CacheEvict(value = "thongKe", allEntries = true)
+    @Scheduled(fixedRateString = "300000") // mỗi 5 phút = 300,000ms
+    public void evictThongKeCache() {
+        // Spring tự động xóa cache "thongKe" khi method này chạy
+    }
+
+    /**
+     * Xóa cache dữ liệu master (dịch vụ, CTV) mỗi 30 phút
+     */
+    @CacheEvict(value = {"dichVu", "congTacVien"}, allEntries = true)
+    @Scheduled(fixedRateString = "1800000") // 30 phút
+    public void evictMasterDataCache() {
+        // Spring tự động xóa cache khi method này chạy
     }
 }

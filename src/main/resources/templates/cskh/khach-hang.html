@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Quản lý Khách hàng – CSKH')}"></head>
+<head th:replace="~{layout/cskh-layout :: cskhHead('Quản lý Khách hàng')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'khach-hang')}"></aside>
+  <aside th:replace="~{layout/cskh-layout :: cskhSidebar('khach-hang')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Quản lý Khách hàng')}"></header>
+    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Quản lý Khách hàng')}"></header>
 
     <main class="page-content">
 
@@ -197,7 +197,7 @@
   </div>
 </div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
 <script>
   function showCustomerDetail(name, phone, addr, orders, spent, notes) {
     document.getElementById('detailName').textContent = name;
