@@ -111,7 +111,7 @@
                     <div class="avatar avatar-sm" th:text="${#strings.substring(ctv.hoTen, 0, 1)}">C</div>
                     <div class="user-cell-info">
                       <div class="name" th:text="${ctv.hoTen}">Tên CTV</div>
-                      <div class="sub" th:text="'Mã: ' + ${ctv.maCongTacVien}">Mã CTV</div>
+                      <div class="sub" th:text="|Mã: ${ctv.maCongTacVien}|">Mã CTV</div>
                     </div>
                   </div>
                 </td>
@@ -119,7 +119,7 @@
                 <td style="font-size:0.875rem" th:text="${ctv.noiCuTru}">TP.HCM</td>
                 <td style="font-size:0.875rem" th:text="${ctv.ngayDangKy != null ? #temporals.format(ctv.ngayDangKy, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
                 <td>
-                  <span style="color:#FFC107;font-weight:700" th:text="'★ ' + ${ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0'}">★ 5.0</span>
+                  <span style="color:#FFC107;font-weight:700" th:text="|&#9733; ${ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0'}|">&#9733; 5.0</span>
                 </td>
                 <td>
                   <span class="badge badge-warning" th:if="${ctv.capDo == 'UuTu'}">Ưu tú</span>

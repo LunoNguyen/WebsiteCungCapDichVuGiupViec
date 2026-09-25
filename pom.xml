@@ -94,6 +94,12 @@
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
+		<!-- Jackson JSR310 – Java 8 Date/Time support (LocalDate, LocalDateTime...) -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>

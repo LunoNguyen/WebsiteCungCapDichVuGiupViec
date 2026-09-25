@@ -173,7 +173,7 @@
           </table>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)" th:text="'Tổng: ' + (donDatDichVus != null ? #lists.size(donDatDichVus) : 0) + ' đơn'">Tổng: 0 đơn</span>
+          <span style="font-size:0.8rem;color:var(--text-muted)" th:text="|Tổng: ${donDatDichVus != null ? donDatDichVus.size() : 0} đơn|">Tổng: 0 đơn</span>
           <div class="pagination"><button class="page-btn active">1</button></div>
         </div>
       </div>

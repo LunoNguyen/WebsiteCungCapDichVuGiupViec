@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout/cskh-layout :: cskhHead('Lịch Làm việc CTV')}"></head>
 <body>
@@ -100,7 +100,7 @@
                     <div class="ctv-list-info">
                       <div class="ctv-list-name" th:text="${ctv.hoTen}">Tên CTV</div>
                       <div class="ctv-list-sub"
-                           th:text="'★ ' + (ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0') + ' · ' + (ctv.noiCuTru != null ? ctv.noiCuTru : 'HCM')">★ 5.0</div>
+                           th:text="|★  ${ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0'} · ${ctv.noiCuTru != null ? ctv.noiCuTru : 'HCM'}|">★ 5.0</div>
                     </div>
                   </div>
                 </th:block>
@@ -193,7 +193,7 @@
                       <div class="user-cell-info">
                         <div class="name" th:text="${ctv.hoTen}">Tên CTV</div>
                         <div class="sub"
-                             th:text="'★ ' + (ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0') + ' · ' + (ctv.capDo == 'UuTu' ? 'Ưu tú' : 'Thường')">★ 5.0</div>
+                             th:text="|★  ${ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0'} · ${ctv.capDo == 'UuTu' ? 'Ưu tú' : 'Thường'}|">★ 5.0</div>
                       </div>
                     </div>
                   </td>

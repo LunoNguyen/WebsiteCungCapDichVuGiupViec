@@ -89,8 +89,8 @@
                   <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.moTa : ''}">Mô tả</div>
                 </td>
                 <td>
-                  <span class="badge badge-warning" th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam == 'PhanTram'}" th:text="'Giảm ' + ${cp.chuongTrinhKhuyenMai.giaTriGiam} + '%'">Giảm 20%</span>
-                  <span class="badge badge-primary" th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam != 'PhanTram'}" th:text="'Giảm ' + ${#numbers.formatDecimal(cp.chuongTrinhKhuyenMai.giaTriGiam, 0, 'COMMA', 0, 'POINT')} + 'đ'">Giảm 50.000đ</span>
+                  <span class="badge badge-warning" th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam == 'PhanTram'}" th:text="|Giảm ${cp.chuongTrinhKhuyenMai.giaTriGiam}%|">Giảm 20%</span>
+                  <span class="badge badge-primary" th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam != 'PhanTram'}" th:text="|Giảm ${#numbers.formatDecimal(cp.chuongTrinhKhuyenMai.giaTriGiam, 0, 'COMMA', 0, 'POINT')}đ|">Giảm 50.000đ</span>
                 </td>
                 <td th:text="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.dieuKienToiThieu != null ? #numbers.formatDecimal(cp.chuongTrinhKhuyenMai.dieuKienToiThieu, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">100.000đ</td>
                 <td style="font-size:0.85rem" th:text="${cp.chuongTrinhKhuyenMai != null ? #temporals.format(cp.chuongTrinhKhuyenMai.ngayBatDau, 'dd/MM/yyyy') + ' - ' + #temporals.format(cp.chuongTrinhKhuyenMai.ngayKetThuc, 'dd/MM/yyyy') : '--'}">01/01 - 31/12/2026</td>

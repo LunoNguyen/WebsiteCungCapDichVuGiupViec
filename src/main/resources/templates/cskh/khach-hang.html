@@ -89,7 +89,7 @@
                     <div class="avatar avatar-sm" th:text="${kh.hoTen != null and #strings.length(kh.hoTen) > 0 ? #strings.substring(kh.hoTen, 0, 1) : 'K'}">K</div>
                     <div class="user-cell-info">
                       <div class="name" th:text="${kh.hoTen}">Tên KH</div>
-                      <div class="sub" th:text="'Mã số: ' + ${kh.maKhachHang}">Mã số</div>
+                      <div class="sub" th:text="|Mã số: ${kh.maKhachHang}|">Mã số</div>
                     </div>
                   </div>
                 </td>

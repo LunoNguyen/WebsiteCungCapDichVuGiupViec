@@ -3,6 +3,7 @@ package com.example.Controller;
 import com.example.DTO.*;
 import com.example.Repository.*;
 import com.example.Service.ThongKeService;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -92,9 +93,10 @@ public class CSKHController {
 
     // ── UC-CSKH02 – Quản lý đơn đặt dịch vụ (CRUD) ─────────────────
     @GetMapping("/don-dat-dich-vu")
+    @Transactional
     public String donDatDichVu(Model model) {
         model.addAttribute("donHangStats",   thongKeService.getDonHangStats());
-        model.addAttribute("donDatDichVus",  donDatDichVuRepository.findAll());
+        model.addAttribute("donDatDichVus",  donDatDichVuRepository.findAllWithDetails());
         model.addAttribute("dichVus",        dichVuRepository.findAll());
         model.addAttribute("khachHangs",     khachHangRepository.findAll());
         return "cskh/don-dat-dich-vu";
