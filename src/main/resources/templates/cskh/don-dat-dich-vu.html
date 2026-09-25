@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Đơn đặt dịch vụ – CSKH')}"></head>
+<head th:replace="~{layout/cskh-layout :: cskhHead('Đơn đặt Dịch vụ')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'don-dat-dich-vu')}"></aside>
+  <aside th:replace="~{layout/cskh-layout :: cskhSidebar('don-dat-dich-vu')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Đơn đặt dịch vụ')}"></header>
-
+    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Đơn đặt Dịch vụ')}"></header>
 
     <main class="page-content">
+      <!-- Page Header -->
       <div class="page-header">
         <div class="page-title-group">
-          <h1 class="page-title">Quản lý Đơn đặt dịch vụ</h1>
-          <p class="page-subtitle">Theo dõi, phân công và quản lý toàn bộ đơn đặt dịch vụ thực tế</p>
+          <h1 class="page-title">Quản lý Đơn đặt Dịch vụ</h1>
+          <p class="page-subtitle">Theo dõi, thêm mới, sửa đổi và quản lý toàn bộ đơn đặt dịch vụ</p>
         </div>
         <div class="page-actions">
-          <button class="btn btn-primary btn-sm" data-modal-open="createOrderModal"><i class="ti ti-plus"></i> Tạo đơn mới</button>
+          <button class="btn btn-outline btn-sm" id="exportBtn" onclick="CSKH.toast('Đang xuất file Excel...','info')">
+            <i class="ti ti-download"></i> Xuất Excel
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openCreateModal()">
+            <i class="ti ti-plus"></i> Tạo đơn mới
+          </button>
         </div>
       </div>
 
@@ -31,7 +36,7 @@
           <div><div class="quick-stat-val" th:text="${donHangStats != null ? donHangStats.choDuyetCount : 0}">0</div><div class="quick-stat-lbl">Chờ duyệt</div></div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-loader" style="color:var(--primary)"></i></div>
+          <div class="quick-stat-icon" style="background:rgba(0,180,216,0.15)"><i class="ti ti-loader" style="color:var(--cskh-primary)"></i></div>
           <div><div class="quick-stat-val" th:text="${donHangStats != null ? donHangStats.dangThucHienCount : 0}">0</div><div class="quick-stat-lbl">Đang thực hiện</div></div>
         </div>
         <div class="quick-stat">
@@ -44,206 +49,497 @@
         </div>
       </div>
 
+      <!-- Bulk Toolbar -->
+      <div class="bulk-toolbar" id="bulkToolbar">
+        <span id="bulkCount" style="font-weight:600;color:var(--cskh-primary)">0 đơn được chọn</span>
+        <button class="btn btn-warning btn-sm" onclick="bulkChangeStatus('DangThucHien')"><i class="ti ti-refresh"></i> Chuyển sang Đang thực hiện</button>
+        <button class="btn btn-success btn-sm" onclick="bulkChangeStatus('HoanThanh')"><i class="ti ti-check"></i> Đánh dấu Hoàn thành</button>
+        <button class="btn btn-danger btn-sm" onclick="bulkDelete()"><i class="ti ti-trash"></i> Xóa đã chọn</button>
+        <button class="btn btn-outline btn-sm" onclick="clearBulk()">Bỏ chọn</button>
+      </div>
+
       <!-- Filter Bar -->
-      <div class="filter-bar">
+      <div class="filter-bar" style="margin-bottom:1rem">
         <div class="search-box" style="flex:1">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm theo mã đơn, tên khách hàng..." data-table-search="orderTable">
+          <input type="text" class="form-control" id="tableSearchInput" placeholder="Tìm theo mã đơn, tên khách hàng, dịch vụ...">
         </div>
-        <select class="filter-select">
-          <option>Tất cả trạng thái</option>
+        <select class="filter-select" id="statusFilter" onchange="filterTable()">
+          <option value="">Tất cả trạng thái</option>
           <option value="ChoDuyet">Chờ duyệt</option>
           <option value="DangThucHien">Đang thực hiện</option>
           <option value="HoanThanh">Hoàn thành</option>
           <option value="DaHuy">Đã hủy</option>
         </select>
-        <select class="filter-select">
-          <option>Tất cả dịch vụ</option>
-          <option>Dọn dẹp nhà</option><option>Giặt ủi</option><option>Nấu ăn</option><option>Trông trẻ</option><option>Chăm sóc người cao tuổi</option>
+        <select class="filter-select" id="serviceFilter" onchange="filterTable()">
+          <option value="">Tất cả dịch vụ</option>
+          <option>Dọn dẹp nhà</option>
+          <option>Giặt ủi</option>
+          <option>Nấu ăn</option>
+          <option>Trông trẻ</option>
+          <option>Chăm sóc người cao tuổi</option>
         </select>
+        <input type="date" class="filter-select" id="dateFilter" onchange="filterTable()" style="min-width:140px" title="Lọc theo ngày">
       </div>
 
       <!-- Orders Table -->
       <div class="card" style="padding:0">
         <div class="table-container" style="border:none">
-          <table class="table" id="orderTable">
-            <thead><tr>
-              <th><input type="checkbox" id="selectAll" style="width:16px;height:16px;accent-color:var(--primary)"></th>
-              <th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>Thời gian</th><th>Thành tiền</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th>
-            </tr></thead>
+          <table class="table table-hoverable" id="mainDataTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="masterCheckbox" style="width:16px;height:16px;accent-color:var(--cskh-primary)" onchange="updateBulkBar()"></th>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Dịch vụ</th>
+                <th>Ngày thực hiện</th>
+                <th>Thành tiền</th>
+                <th>Trạng thái</th>
+                <th style="text-align:right">Thao tác</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr th:each="order : ${donDatDichVus}">
-                <td><input type="checkbox" class="row-checkbox" style="width:16px;height:16px;accent-color:var(--primary)"></td>
-                <td style="font-weight:700;font-size:0.8rem;color:var(--primary-light)" th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
+              <tr th:each="order : ${donDatDichVus}"
+                  th:data-status="${order.trangThai}"
+                  th:data-service="${order.dichVu != null ? order.dichVu.tenDichVu : ''}"
+                  th:data-date="${order.ngayThucHien != null ? order.ngayThucHien : ''}">
+                <td><input type="checkbox" class="rowCheckbox row-checkbox" style="width:16px;height:16px;accent-color:var(--cskh-primary)" onchange="updateBulkBar()"></td>
+                <td style="font-weight:700;font-size:0.8rem;color:var(--cskh-primary)"
+                    th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
                 <td>
                   <div class="user-cell">
-                    <div class="avatar avatar-sm" th:text="${order.khachHang != null and order.khachHang.hoTen != null ? #strings.toUpperCase(#strings.substring(order.khachHang.hoTen, 0, 1)) : 'K'}">K</div>
+                    <div class="avatar avatar-sm"
+                         th:text="${order.khachHang != null and order.khachHang.hoTen != null ? #strings.toUpperCase(#strings.substring(order.khachHang.hoTen,0,1)) : 'K'}">K</div>
                     <div class="user-cell-info">
                       <div class="name" th:text="${order.khachHang != null ? order.khachHang.hoTen : 'Khách hàng'}">Khách hàng</div>
                       <div class="sub" th:text="${order.khachHang != null ? order.khachHang.soDienThoai : ''}">0900000000</div>
                     </div>
                   </div>
                 </td>
-                <td th:text="${order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
-                <td style="font-size:0.8rem" th:text="${order.ngayTao != null ? #temporals.format(order.ngayTao, 'dd/MM/yyyy HH:mm') : '---'}">20/09/2026</td>
-                <td style="font-weight:700;color:var(--accent)" th:text="${order.thanhTien != null ? (#numbers.formatDecimal(order.thanhTien, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
+                <td th:text="${order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp</td>
+                <td style="font-size:0.8rem">
+                  <div th:text="${order.ngayThucHien != null ? #temporals.format(order.ngayThucHien, 'dd/MM/yyyy') : '---'}">20/09/2026</div>
+                  <div style="color:var(--text-muted);font-size:0.72rem"
+                       th:text="${(order.gioBatDau != null ? #temporals.format(order.gioBatDau,'HH:mm') : '') + (order.gioKetThuc != null ? ' - ' + #temporals.format(order.gioKetThuc,'HH:mm') : '')}">09:00 - 11:00</div>
+                </td>
+                <td style="font-weight:700;color:var(--cskh-accent)"
+                    th:text="${order.thanhTien != null ? (#numbers.formatDecimal(order.thanhTien,0,'POINT',0,'COMMA') + 'đ') : '0đ'}">240.000đ</td>
                 <td>
                   <span th:if="${order.trangThai == 'HoanThanh'}" class="badge badge-success">Hoàn thành</span>
                   <span th:if="${order.trangThai == 'DangThucHien'}" class="badge badge-primary">Đang thực hiện</span>
                   <span th:if="${order.trangThai == 'ChoDuyet'}" class="badge badge-warning">Chờ duyệt</span>
                   <span th:if="${order.trangThai == 'DaHuy'}" class="badge badge-danger">Đã hủy</span>
-                  <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy'}" class="badge badge-info" th:text="${order.trangThai}">Khác</span>
+                  <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy'}"
+                        class="badge badge-secondary" th:text="${order.trangThai}">Khác</span>
                 </td>
                 <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" data-panel-open="orderDetail">Xem chi tiết</button>
+                  <div class="table-actions" style="justify-content:flex-end">
+                    <button class="btn btn-outline btn-sm" title="Xem chi tiết"
+                            th:onclick="'openDetailPanel(' + ${order.id} + ')'"
+                            onclick="openDetailPanel(0)">
+                      <i class="ti ti-eye"></i>
+                    </button>
+                    <button class="btn btn-outline btn-sm" title="Chỉnh sửa"
+                            th:data-id="${order.id}"
+                            th:data-ma="${order.maDonDat != null ? order.maDonDat : ''}"
+                            th:data-kh="${order.khachHang != null ? order.khachHang.hoTen : ''}"
+                            th:data-dv="${order.dichVu != null ? order.dichVu.tenDichVu : ''}"
+                            th:data-ngay="${order.ngayThucHien != null ? #temporals.format(order.ngayThucHien,'yyyy-MM-dd') : ''}"
+                            th:data-giobatdau="${order.gioBatDau != null ? #temporals.format(order.gioBatDau,'HH:mm') : ''}"
+                            th:data-gioketthuc="${order.gioKetThuc != null ? #temporals.format(order.gioKetThuc,'HH:mm') : ''}"
+                            th:data-tien="${order.thanhTien != null ? order.thanhTien.toPlainString() : '0'}"
+                            th:data-tt="${order.trangThai != null ? order.trangThai : ''}"
+                            th:data-ghichu="${order.ghiChu != null ? order.ghiChu : ''}"
+                            onclick="openEditModal(this)">
+                      <i class="ti ti-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline btn-sm" title="Xóa đơn"
+                            style="color:var(--danger);border-color:rgba(255,71,87,0.3)"
+                            th:data-ma="${order.maDonDat}"
+                            th:data-id="${order.id}"
+                            onclick="deleteOrder(this)">
+                      <i class="ti ti-trash"></i>
+                    </button>
                   </div>
                 </td>
               </tr>
               <tr th:if="${donDatDichVus == null or #lists.isEmpty(donDatDichVus)}">
-                <td colspan="8" style="text-align:center;color:var(--text-muted)">Không có đơn đặt dịch vụ nào</td>
+                <td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted)">
+                  <i class="ti ti-clipboard-off" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;opacity:0.3"></i>
+                  Không có đơn đặt dịch vụ nào
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)" th:text="${'Tổng cộng: ' + (donDatDichVus != null ? #lists.size(donDatDichVus) : 0) + ' đơn đặt dịch vụ'}">Tổng cộng: 0 đơn</span>
+          <span style="font-size:0.8rem;color:var(--text-muted)" th:text="'Tổng: ' + (donDatDichVus != null ? #lists.size(donDatDichVus) : 0) + ' đơn'">Tổng: 0 đơn</span>
+          <div class="pagination"><button class="page-btn active">1</button></div>
         </div>
       </div>
     </main>
   </div>
 </div>
 
-<!-- Order Detail Panel -->
-<div class="overlay" id="panelOverlay"></div>
-<div class="detail-panel" id="orderDetail">
+<!-- ── OVERLAY ── -->
+<div class="overlay" id="panelOverlay" onclick="closePanels()"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     CHI TIẾT ĐƠN – DETAIL PANEL (Slide-in from right)
+     ══════════════════════════════════════════════════════ -->
+<div class="detail-panel" id="orderDetailPanel">
   <div class="detail-panel-header">
-    <div><h2 style="font-size:1.1rem;font-weight:700">Chi tiết đơn dịch vụ</h2></div>
-    <button class="modal-close" data-panel-close="orderDetail">✕</button>
-  </div>
-  <div class="detail-panel-body">
-    <div class="info-row"><span class="info-label">Mã đơn</span><span class="info-value" style="color:var(--primary-light)">#DD-050</span></div>
-    <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value">Lê Thị Thu</span></div>
-    <div class="info-row"><span class="info-label">SĐT</span><span class="info-value">0905 123 456</span></div>
-    <div class="info-row"><span class="info-label">Dịch vụ</span><span class="info-value">Nấu ăn (2 tiếng)</span></div>
-    <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value">45 Phan Xích Long, Bình Thạnh</span></div>
-    <div class="info-row"><span class="info-label">Ngày giờ</span><span class="info-value">20/09/2026 · 17:00 - 19:00</span></div>
-    <div class="info-row"><span class="info-label">CTV phụ trách</span><span class="info-value" style="color:var(--accent)">Trần Thị Hoa (★ 4.96)</span></div>
-    <div class="info-row"><span class="info-label">Thành tiền</span><span class="info-value" style="color:var(--accent)">180.000đ</span></div>
-    <div class="info-row"><span class="info-label">Phương thức TT</span><span class="info-value">Tiền mặt khi hoàn thành</span></div>
-    <div class="info-row"><span class="info-label">Trạng thái TT</span><span class="info-value"><span class="badge badge-warning">Chưa thanh toán</span></span></div>
-    <div class="info-row"><span class="info-label">Trạng thái đơn</span><span class="info-value"><span class="badge badge-primary">Đã ghép CTV</span></span></div>
-    <div style="margin-top:1.25rem">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Ghi chú</div>
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;font-size:0.875rem;color:var(--text-secondary)">
-        Nấu 3 món: canh chua, cá chiên, rau xào. Gia đình 4 người, trẻ em không ăn cay.
-      </div>
+    <div>
+      <h2 style="font-size:1.1rem;font-weight:700">Chi tiết Đơn dịch vụ</h2>
+      <div id="panelOrderCode" style="font-size:0.8rem;color:var(--cskh-primary);margin-top:2px">#DD-001</div>
     </div>
+    <button class="modal-close" onclick="closePanels()">✕</button>
+  </div>
+  <div class="detail-panel-body" id="panelBody">
+    <div class="info-row"><span class="info-label">Mã đơn</span><span class="info-value" id="pd-ma" style="color:var(--cskh-primary);font-weight:700">---</span></div>
+    <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value" id="pd-kh">---</span></div>
+    <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="pd-sdt">---</span></div>
+    <div class="info-row"><span class="info-label">Dịch vụ</span><span class="info-value" id="pd-dv">---</span></div>
+    <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="pd-dc">---</span></div>
+    <div class="info-row"><span class="info-label">Ngày thực hiện</span><span class="info-value" id="pd-ngay">---</span></div>
+    <div class="info-row"><span class="info-label">Giờ</span><span class="info-value" id="pd-gio">---</span></div>
+    <div class="info-row"><span class="info-label">CTV phụ trách</span><span class="info-value" id="pd-ctv" style="color:var(--cskh-accent)">---</span></div>
+    <div class="info-row"><span class="info-label">Thành tiền</span><span class="info-value" id="pd-tien" style="color:var(--cskh-accent);font-weight:700">---</span></div>
+    <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value" id="pd-tt">---</span></div>
     <div style="margin-top:1.25rem">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Ghi chú nội bộ (CSKH)</div>
-      <textarea class="form-control" rows="3" placeholder="Thêm ghi chú xử lý..."></textarea>
+      <div class="form-section-label">Ghi chú khách hàng</div>
+      <div id="pd-ghichu" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;font-size:0.875rem;color:var(--text-secondary);min-height:60px">---</div>
+    </div>
+    <div style="margin-top:1rem">
+      <div class="form-section-label">Ghi chú nội bộ CSKH</div>
+      <textarea class="form-control" rows="3" placeholder="Thêm ghi chú xử lý nội bộ..."></textarea>
+    </div>
+    <div style="margin-top:1rem">
+      <div class="form-section-label">Đổi trạng thái nhanh</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-warning btn-sm" onclick="CSKH.toast('Đã chuyển sang Chờ duyệt','info')">Chờ duyệt</button>
+        <button class="btn btn-primary btn-sm" onclick="CSKH.toast('Đang thực hiện','info')">Đang thực hiện</button>
+        <button class="btn btn-success btn-sm" onclick="CSKH.toast('Đã hoàn thành!')">Hoàn thành</button>
+        <button class="btn btn-danger btn-sm" onclick="CSKH.toast('Đã hủy đơn','error')">Hủy đơn</button>
+      </div>
     </div>
   </div>
   <div class="detail-panel-footer">
-    <button class="btn btn-danger btn-sm" onclick="Toast.show('Đơn đã hủy.','error');PanelManager.close('orderDetail')">Hủy đơn</button>
-    <button class="btn btn-warning btn-sm" onclick="Toast.show('Đã chuyển sang CTV khác!')">Đổi CTV</button>
-    <button class="btn btn-success btn-sm" onclick="Toast.show('Đã đánh dấu hoàn thành!')">Hoàn thành</button>
-    <button class="btn btn-secondary" data-panel-close="orderDetail">Đóng</button>
+    <button class="btn btn-outline btn-sm" onclick="CSKH.toast('Đang mở form ghép CTV...')"><i class="ti ti-user-check"></i> Ghép CTV</button>
+    <button class="btn btn-secondary" onclick="closePanels()">Đóng</button>
   </div>
 </div>
 
-<!-- Create Order Modal -->
+<!-- ══════════════════════════════════════════════════════
+     TẠO ĐƠN MỚI – CREATE MODAL
+     ══════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="createOrderModal">
-  <div class="modal" style="max-width:640px">
+  <div class="modal" style="max-width:680px">
     <div class="modal-header">
-      <h2 class="modal-title">Tạo đơn dịch vụ mới</h2>
+      <h2 class="modal-title"><i class="ti ti-clipboard-plus" style="color:var(--cskh-primary)"></i> Tạo đơn dịch vụ mới</h2>
       <button class="modal-close" data-modal-close="createOrderModal">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
       <div class="form-group" style="grid-column:span 2">
-        <label class="form-label">Khách hàng</label>
-        <input type="text" class="form-control" placeholder="Tìm theo tên hoặc SĐT...">
+        <div class="form-section-label">Thông tin khách hàng</div>
+        <label class="form-label">Khách hàng <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-control" id="c-kh" placeholder="Tìm theo tên hoặc SĐT...">
       </div>
       <div class="form-group">
-        <label class="form-label">Loại dịch vụ</label>
-        <select class="form-control"><option>Dọn dẹp nhà</option><option>Giặt ủi</option><option>Nấu ăn</option><option>Trông trẻ</option><option>Chăm sóc NCT</option></select>
+        <label class="form-label">Loại dịch vụ <span style="color:var(--danger)">*</span></label>
+        <select class="form-control" id="c-dv">
+          <option value="">-- Chọn dịch vụ --</option>
+          <option>Dọn dẹp nhà</option>
+          <option>Giặt ủi</option>
+          <option>Nấu ăn gia đình</option>
+          <option>Trông trẻ</option>
+          <option>Chăm sóc người cao tuổi</option>
+        </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Thời lượng</label>
-        <select class="form-control"><option>2 tiếng</option><option>3 tiếng</option><option>4 tiếng</option><option>Cả ngày</option></select>
+        <label class="form-label">Loại hình đặt</label>
+        <select class="form-control" id="c-loaiform">
+          <option value="LeDat">Lẻ (1 lần)</option>
+          <option value="GoiDat">Theo gói</option>
+        </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Ngày thực hiện</label>
-        <input type="date" class="form-control" value="2026-09-21">
+        <label class="form-label">Ngày thực hiện <span style="color:var(--danger)">*</span></label>
+        <input type="date" class="form-control" id="c-ngay">
       </div>
       <div class="form-group">
         <label class="form-label">Giờ bắt đầu</label>
-        <input type="time" class="form-control" value="09:00">
+        <input type="time" class="form-control" id="c-giobatdau" value="09:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Giờ kết thúc</label>
+        <input type="time" class="form-control" id="c-gioketthuc" value="11:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Thành tiền (đ)</label>
+        <input type="number" class="form-control" id="c-tien" placeholder="VD: 200000">
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label class="form-label">Địa chỉ thực hiện</label>
-        <input type="text" class="form-control" placeholder="Số nhà, đường, quận/huyện, thành phố...">
+        <label class="form-label">Địa chỉ thực hiện <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-control" id="c-dc" placeholder="Số nhà, đường, quận/huyện, thành phố...">
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label class="form-label">Ghi chú</label>
-        <textarea class="form-control" rows="3" placeholder="Yêu cầu đặc biệt của khách hàng..."></textarea>
+        <label class="form-label">Ghi chú / Yêu cầu đặc biệt</label>
+        <textarea class="form-control" id="c-ghichu" rows="3" placeholder="Yêu cầu đặc biệt của khách hàng..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" data-modal-close="createOrderModal">Hủy</button>
-      <button class="btn btn-primary" onclick="document.getElementById('createOrderModal').classList.remove('active');Toast.show('Đã tạo đơn thành công! Đang tìm CTV phù hợp...')">Tạo đơn & Ghép CTV</button>
+      <button class="btn btn-outline btn-sm" onclick="saveCreateOrder(false)"><i class="ti ti-device-floppy"></i> Lưu nháp</button>
+      <button class="btn btn-primary" onclick="saveCreateOrder(true)"><i class="ti ti-plus"></i> Tạo & Ghép CTV</button>
     </div>
   </div>
 </div>
 
-<!-- Assign CTV Modal -->
-<div class="modal-overlay" id="assignCtvModal">
-  <div class="modal" style="max-width:560px">
+<!-- ══════════════════════════════════════════════════════
+     CHỈNH SỬA ĐƠN – EDIT MODAL
+     ══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="editOrderModal">
+  <div class="modal" style="max-width:680px">
     <div class="modal-header">
-      <h2 class="modal-title">Ghép Cộng tác viên</h2>
-      <button class="modal-close" data-modal-close="assignCtvModal">✕</button>
+      <h2 class="modal-title"><i class="ti ti-pencil" style="color:var(--cskh-primary)"></i> Chỉnh sửa Đơn dịch vụ</h2>
+      <button class="modal-close" data-modal-close="editOrderModal">✕</button>
     </div>
-    <div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Tìm CTV phù hợp</label>
-        <input type="text" class="form-control" placeholder="Tên, khu vực...">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+      <div class="form-group">
+        <label class="form-label">Mã đơn</label>
+        <input type="text" class="form-control" id="e-ma" readonly style="opacity:0.6">
       </div>
-      <div style="display:flex;flex-direction:column;gap:0.75rem">
-        <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:rgba(67,233,123,0.06);border:1px solid rgba(67,233,123,0.2);border-radius:var(--radius-md);cursor:pointer" onclick="selectCTV(this)">
-          <div class="avatar avatar-sm">N</div>
-          <div style="flex:1"><div style="font-weight:600;font-size:0.875rem">Nguyễn Thị Ngọc</div><div style="font-size:0.75rem;color:var(--text-muted)">Dọn dẹp · Q.1, Q.3 · ★ 4.98 · Rảnh hôm nay</div></div>
-          <span class="badge badge-warning">Ưu tú</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer" onclick="selectCTV(this)">
-          <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div>
-          <div style="flex:1"><div style="font-weight:600;font-size:0.875rem">Lê Thị Lan</div><div style="font-size:0.75rem;color:var(--text-muted)">Dọn dẹp, Giặt ủi · Q.1, Q.5 · ★ 4.82 · Rảnh 13:00</div></div>
-          <span class="badge badge-primary">Thường</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer" onclick="selectCTV(this)">
-          <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div>
-          <div style="flex:1"><div style="font-weight:600;font-size:0.875rem">Trần Thị Bông</div><div style="font-size:0.75rem;color:var(--text-muted)">Dọn dẹp · Q.1-Q.10 · ★ 4.75 · Rảnh cả ngày</div></div>
-          <span class="badge badge-primary">Thường</span>
-        </div>
+      <div class="form-group">
+        <label class="form-label">Khách hàng</label>
+        <input type="text" class="form-control" id="e-kh" readonly style="opacity:0.6">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dịch vụ</label>
+        <select class="form-control" id="e-dv">
+          <option>Dọn dẹp nhà</option>
+          <option>Giặt ủi</option>
+          <option>Nấu ăn gia đình</option>
+          <option>Trông trẻ</option>
+          <option>Chăm sóc người cao tuổi</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trạng thái</label>
+        <select class="form-control" id="e-tt">
+          <option value="ChoDuyet">Chờ duyệt</option>
+          <option value="DangThucHien">Đang thực hiện</option>
+          <option value="HoanThanh">Hoàn thành</option>
+          <option value="DaHuy">Đã hủy</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ngày thực hiện</label>
+        <input type="date" class="form-control" id="e-ngay">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Giờ bắt đầu</label>
+        <input type="time" class="form-control" id="e-giobatdau">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Giờ kết thúc</label>
+        <input type="time" class="form-control" id="e-gioketthuc">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Thành tiền (đ)</label>
+        <input type="number" class="form-control" id="e-tien">
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label class="form-label">Ghi chú</label>
+        <textarea class="form-control" id="e-ghichu" rows="3"></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close="assignCtvModal">Hủy</button>
-      <button class="btn btn-primary" onclick="document.getElementById('assignCtvModal').classList.remove('active');Toast.show('Đã ghép CTV thành công! Đã gửi thông báo cho CTV và KH.')">Xác nhận ghép</button>
+      <div class="danger-zone" style="flex:1;display:flex;align-items:center;gap:0.5rem">
+        <i class="ti ti-alert-circle" style="color:var(--danger)"></i>
+        <button class="btn btn-danger btn-sm" id="editDeleteBtn" onclick="deleteCurrentEditOrder()">
+          <i class="ti ti-trash"></i> Xóa đơn này
+        </button>
+      </div>
+      <button class="btn btn-secondary" data-modal-close="editOrderModal">Hủy</button>
+      <button class="btn btn-primary" id="editSaveBtn" onclick="saveEditOrder()"><i class="ti ti-device-floppy"></i> Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     XÁC NHẬN XÓA – DELETE CONFIRM MODAL
+     ══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="deleteConfirmModal">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <div class="modal-header" style="justify-content:center;border:none;padding-bottom:0">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,71,87,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto">
+        <i class="ti ti-trash" style="font-size:1.5rem;color:var(--danger)"></i>
+      </div>
+    </div>
+    <div style="padding:1rem 2rem 0.5rem">
+      <h3 style="font-weight:700;margin-bottom:0.5rem">Xác nhận xóa đơn?</h3>
+      <p style="color:var(--text-muted);font-size:0.875rem">Đơn <strong id="deleteTargetCode">---</strong> sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.</p>
+    </div>
+    <div class="modal-footer" style="justify-content:center;gap:0.75rem">
+      <button class="btn btn-secondary" data-modal-close="deleteConfirmModal">Hủy bỏ</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn" onclick="executeDelete()"><i class="ti ti-trash"></i> Xóa vĩnh viễn</button>
     </div>
   </div>
 </div>
 
 <div class="overlay" id="sidebarOverlay"></div>
+
+<div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
 <script>
-function selectCTV(el) {
-  document.querySelectorAll('#assignCtvModal .modal [onclick="selectCTV(this)"]').forEach(e => {
-    e.style.background = 'var(--bg-card)';
-    e.style.borderColor = 'var(--border)';
+  // ── State ──────────────────────────────────────────
+  let currentEditId = null;
+  let currentDeleteId = null;
+  let currentDeleteCode = '';
+
+  // ── Filter table ───────────────────────────────────
+  function filterTable() {
+    const statusVal = document.getElementById('statusFilter').value.toLowerCase();
+    const serviceVal = document.getElementById('serviceFilter').value.toLowerCase();
+    const dateVal = document.getElementById('dateFilter').value;
+    const searchVal = document.getElementById('tableSearchInput').value.toLowerCase();
+
+    document.querySelectorAll('#mainDataTable tbody tr[data-status]').forEach(row => {
+      const status = (row.dataset.status || '').toLowerCase();
+      const service = (row.dataset.service || '').toLowerCase();
+      const date = (row.dataset.date || '');
+      const text = row.textContent.toLowerCase();
+
+      const matchStatus = !statusVal || status.includes(statusVal);
+      const matchService = !serviceVal || service.includes(serviceVal);
+      const matchDate = !dateVal || date === dateVal;
+      const matchSearch = !searchVal || text.includes(searchVal);
+
+      row.style.display = (matchStatus && matchService && matchDate && matchSearch) ? '' : 'none';
+    });
+  }
+
+  document.getElementById('tableSearchInput').addEventListener('input', filterTable);
+
+  // ── Bulk select ────────────────────────────────────
+  function updateBulkBar() {
+    const checked = [...document.querySelectorAll('.row-checkbox:checked')].length;
+    const toolbar = document.getElementById('bulkToolbar');
+    const count = document.getElementById('bulkCount');
+    toolbar.classList.toggle('active', checked > 0);
+    if (count) count.textContent = checked + ' đơn được chọn';
+
+    const master = document.getElementById('masterCheckbox');
+    const all = document.querySelectorAll('.row-checkbox').length;
+    master.indeterminate = checked > 0 && checked < all;
+    master.checked = checked === all && all > 0;
+  }
+
+  document.getElementById('masterCheckbox').addEventListener('change', function() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
+    updateBulkBar();
   });
-  el.style.background = 'rgba(67,233,123,0.06)';
-  el.style.borderColor = 'rgba(67,233,123,0.3)';
-}
+
+  function clearBulk() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('masterCheckbox').checked = false;
+    updateBulkBar();
+  }
+
+  function bulkChangeStatus(status) {
+    const checked = [...document.querySelectorAll('.row-checkbox:checked')].length;
+    CSKH.toast(`Đã cập nhật trạng thái ${checked} đơn thành "${status}"`);
+    clearBulk();
+  }
+
+  function bulkDelete() {
+    const checked = [...document.querySelectorAll('.row-checkbox:checked')].length;
+    cskhConfirmDelete(`Bạn có chắc muốn xóa ${checked} đơn đã chọn không?`, () => {
+      CSKH.toast(`Đã xóa ${checked} đơn thành công`, 'success');
+      clearBulk();
+    });
+  }
+
+  // ── Detail Panel ───────────────────────────────────
+  function openDetailPanel(id) {
+    document.getElementById('panelOverlay').classList.add('active');
+    document.getElementById('orderDetailPanel').classList.add('active');
+    document.getElementById('panelOrderCode').textContent = '#DD-' + id;
+    document.getElementById('pd-ma').textContent = '#DD-' + id;
+    document.getElementById('pd-kh').textContent = 'Xem chi tiết đơn #' + id;
+  }
+
+  function closePanels() {
+    document.getElementById('panelOverlay').classList.remove('active');
+    document.getElementById('orderDetailPanel').classList.remove('active');
+  }
+
+  // ── Create Modal ───────────────────────────────────
+  function openCreateModal() {
+    document.getElementById('c-ngay').value = new Date().toISOString().split('T')[0];
+    ModalManager.open('createOrderModal');
+  }
+
+  function saveCreateOrder(withCTV) {
+    const kh = document.getElementById('c-kh').value.trim();
+    const dv = document.getElementById('c-dv').value;
+    const ngay = document.getElementById('c-ngay').value;
+    if (!kh || !dv || !ngay) {
+      CSKH.toast('Vui lòng điền đầy đủ thông tin bắt buộc!', 'error');
+      return;
+    }
+    ModalManager.close('createOrderModal');
+    if (withCTV) {
+      CSKH.toast('Tạo đơn thành công! Đang tìm CTV phù hợp...');
+    } else {
+      CSKH.toast('Đã lưu đơn nháp thành công!', 'info');
+    }
+  }
+
+  // ── Edit Modal ─────────────────────────────────────
+  function openEditModal(btn) {
+    currentEditId = btn.dataset.id;
+    document.getElementById('e-ma').value = btn.dataset.ma || '';
+    document.getElementById('e-kh').value = btn.dataset.kh || '';
+    document.getElementById('e-ngay').value = btn.dataset.ngay || '';
+    document.getElementById('e-giobatdau').value = btn.dataset.giobatdau ? btn.dataset.giobatdau.substring(0,5) : '';
+    document.getElementById('e-gioketthuc').value = btn.dataset.gioketthuc ? btn.dataset.gioketthuc.substring(0,5) : '';
+    document.getElementById('e-tien').value = btn.dataset.tien || '';
+    document.getElementById('e-ghichu').value = btn.dataset.ghichu || '';
+    const ttSel = document.getElementById('e-tt');
+    for (let opt of ttSel.options) { opt.selected = opt.value === btn.dataset.tt; }
+    const dvSel = document.getElementById('e-dv');
+    for (let opt of dvSel.options) { opt.selected = opt.text === btn.dataset.dv; }
+    ModalManager.open('editOrderModal');
+  }
+
+  function saveEditOrder() {
+    ModalManager.close('editOrderModal');
+    CSKH.toast('Cập nhật đơn #' + document.getElementById('e-ma').value + ' thành công!');
+  }
+
+  function deleteCurrentEditOrder() {
+    const ma = document.getElementById('e-ma').value;
+    ModalManager.close('editOrderModal');
+    currentDeleteCode = ma;
+    document.getElementById('deleteTargetCode').textContent = ma;
+    ModalManager.open('deleteConfirmModal');
+  }
+
+  // ── Delete ─────────────────────────────────────────
+  function deleteOrder(btn) {
+    currentDeleteId = btn.dataset.id;
+    currentDeleteCode = btn.dataset.ma;
+    document.getElementById('deleteTargetCode').textContent = currentDeleteCode;
+    ModalManager.open('deleteConfirmModal');
+  }
+
+  function executeDelete() {
+    ModalManager.close('deleteConfirmModal');
+    CSKH.toast('Đã xóa đơn ' + currentDeleteCode + ' thành công!', 'success');
+    currentDeleteId = null;
+    currentDeleteCode = '';
+  }
 </script>
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
 </html>

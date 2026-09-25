@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Quản lý Khiếu nại – CSKH')}"></head>
+<head th:replace="~{layout/cskh-layout :: cskhHead('Quản lý Khiếu nại')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'khieu-nai')}"></aside>
+  <aside th:replace="~{layout/cskh-layout :: cskhSidebar('khieu-nai')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Quản lý Khiếu nại')}"></header>
+    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Quản lý Khiếu nại')}"></header>
 
 
     <main class="page-content">
@@ -164,6 +164,6 @@
   </div>
 </div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
 </body>
 </html>

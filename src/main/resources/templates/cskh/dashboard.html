@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Dashboard – CSKH')}"></head>
+<head th:replace="~{layout/cskh-layout :: cskhHead('Dashboard')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'dashboard')}"></aside>
+  <aside th:replace="~{layout/cskh-layout :: cskhSidebar('dashboard')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Dashboard')}"></header>
+    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Dashboard')}"></header>
 
 
     <main class="page-content">
@@ -190,6 +190,6 @@
     });
   });
 </script>
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
 </body>
 </html>

@@ -1,36 +1,39 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Lịch Phân công CTV – CSKH')}"></head>
+<head th:replace="~{layout/cskh-layout :: cskhHead('Lịch Làm việc CTV')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'lich-phan-cong')}"></aside>
+  <aside th:replace="~{layout/cskh-layout :: cskhSidebar('lich-phan-cong')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Lịch Phân công CTV')}"></header>
-
+    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Lịch Làm việc CTV')}"></header>
 
     <main class="page-content">
+      <!-- Page Header -->
       <div class="page-header">
         <div class="page-title-group">
-          <h1 class="page-title">Lịch Phân công & Điều phối Cộng tác viên</h1>
-          <p class="page-subtitle">Theo dõi trạng thái làm việc theo ca, ghép đơn và điều phối Cộng tác viên theo khu vực</p>
+          <h1 class="page-title">Lịch Làm việc Cộng tác viên</h1>
+          <p class="page-subtitle">Chọn một cộng tác viên để xem lịch thực hiện dịch vụ của họ dưới dạng calendar</p>
         </div>
         <div class="page-actions">
           <div class="chart-period-tabs">
-            <button class="chart-period-btn active">Hôm nay</button>
-            <button class="chart-period-btn">Ngày mai</button>
-            <button class="chart-period-btn">Tuần này</button>
+            <button class="chart-period-btn active" id="viewTabCalendar" onclick="switchView('calendar')">
+              <i class="ti ti-calendar"></i> Lịch
+            </button>
+            <button class="chart-period-btn" id="viewTabTable" onclick="switchView('table')">
+              <i class="ti ti-table"></i> Bảng ca trực
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Stats Grid -->
-      <div class="stats-grid">
+      <!-- Stats -->
+      <div class="stats-grid" style="margin-bottom:1.5rem">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👩‍🔧</div>
+          <div class="stat-icon" style="background:rgba(0,180,216,0.15)">👩‍🔧</div>
           <div class="stat-value" th:text="${congTacVienStats != null ? congTacVienStats.hoatDongCount : 0}">0</div>
-          <div class="stat-label">Cộng tác viên hoạt động</div>
-          <div class="kpi-compare"><span class="arrow-up">Hệ thống thực tế</span></div>
+          <div class="stat-label">CTV hoạt động</div>
+          <div class="kpi-compare"><span class="arrow-up">Thực tế hệ thống</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">✅</div>
@@ -41,139 +44,495 @@
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
           <div class="stat-value" th:text="${donHangStats != null ? donHangStats.choDuyetCount : 0}">0</div>
-          <div class="stat-label">Đơn chờ duyệt ghép</div>
-          <div class="kpi-compare"><span style="color:var(--warning)">Cần phân công</span></div>
+          <div class="stat-label">Đơn cần phân công</div>
+          <div class="kpi-compare"><span style="color:var(--warning)">Cần xử lý</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🔄</div>
           <div class="stat-value" th:text="${donHangStats != null ? donHangStats.dangThucHienCount : 0}">0</div>
           <div class="stat-label">Đang thực hiện</div>
-          <div class="kpi-compare"><span class="period">Đang phục vụ khách</span></div>
+          <div class="kpi-compare"><span class="period">Đang phục vụ</span></div>
         </div>
       </div>
 
-      <!-- Filter Bar -->
-      <div class="filter-bar">
-        <select class="filter-select">
-          <option value="">Tất cả khu vực làm việc</option>
-          <option>Quận 1, Quận 3</option>
-          <option>Bình Thạnh, Phú Nhuận</option>
-          <option>Tân Bình, Gò Vấp</option>
-          <option>Quận 7, Nhà Bè</option>
-        </select>
-        <select class="filter-select">
-          <option value="">Tất cả kỹ năng dịch vụ</option>
-          <option>Dọn dẹp nhà</option>
-          <option>Nấu ăn gia đình</option>
-          <option>Trông trẻ</option>
-          <option>Chăm sóc người cao tuổi</option>
-        </select>
-        <select class="filter-select">
-          <option value="">Trạng thái ca trực</option>
-          <option>Đang rảnh (Sẵn sàng)</option>
-          <option>Đang làm việc</option>
-          <option>Đã kín lịch hôm nay</option>
-        </select>
-      </div>
-
-      <!-- Schedule Matrix Table -->
-      <div class="card" style="padding:0">
-        <div class="card-header" style="padding:1.25rem 1.5rem">
+      <!-- ══ CALENDAR VIEW ══ -->
+      <div id="calendarView">
+        <div class="split-view">
+          <!-- Left: CTV List -->
           <div>
-            <div class="card-title">Bảng ca trực Cộng tác viên</div>
-            <div class="card-subtitle">Ca 1: 07:30 - 11:30 | Ca 2: 13:00 - 17:00 | Ca 3: 17:30 - 20:30</div>
-          </div>
-          <button class="btn btn-outline btn-sm" onclick="Toast.show('Đang làm mới trạng thái GPS các CTV...')"><i class="ti ti-refresh"></i> Làm mới</button>
-        </div>
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Cộng tác viên</th>
-                <th>Khu vực & Kỹ năng</th>
-                <th>Ca Sáng (07:30 - 11:30)</th>
-                <th>Ca Chiều (13:00 - 17:00)</th>
-                <th>Ca Tối (17:30 - 20:30)</th>
-                <th style="text-align:right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="ctv : ${congTacViens}">
-                <td>
-                  <div class="user-cell">
-                    <div class="avatar avatar-sm" th:text="${ctv.hoTen != null and #strings.length(ctv.hoTen) > 0 ? #strings.substring(ctv.hoTen, 0, 1) : 'C'}">C</div>
-                    <div class="user-cell-info">
-                      <div class="name" th:text="${ctv.hoTen}">Tên Cộng tác viên</div>
-                      <div class="sub" th:text="'★ ' + (ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0') + ' · ' + (ctv.capDo == 'UuTu' ? 'Cộng tác viên Ưu tú' : (ctv.capDo == 'Moi' ? 'Cộng tác viên Mới' : 'Cộng tác viên Thường'))">★ 5.0 · Cộng tác viên</div>
+            <div class="card" style="padding:1rem">
+              <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem">
+                <i class="ti ti-users" style="color:var(--cskh-primary)"></i>
+                Danh sách Cộng tác viên
+              </div>
+              <div style="margin-bottom:0.75rem">
+                <div style="position:relative">
+                  <i class="ti ti-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.85rem"></i>
+                  <input type="text" class="form-control" id="ctvSearchInput"
+                         style="padding-left:2.25rem;font-size:0.85rem"
+                         placeholder="Tìm CTV..."
+                         oninput="filterCTVList(this.value)">
+                </div>
+              </div>
+              <div class="ctv-list-sidebar" id="ctvListSidebar">
+                <!-- "Tất cả" option -->
+                <div class="ctv-list-item active" id="ctv-item-all" onclick="selectCTV('all', 'Tất cả CTV', this)">
+                  <div class="ctv-list-avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">
+                    <i class="ti ti-users" style="font-size:1rem"></i>
+                  </div>
+                  <div class="ctv-list-info">
+                    <div class="ctv-list-name">Tất cả CTV</div>
+                    <div class="ctv-list-sub">Xem lịch tổng hợp</div>
+                  </div>
+                </div>
+                <!-- CTV from DB -->
+                <th:block th:each="ctv, iterStat : ${congTacViens}">
+                  <div class="ctv-list-item"
+                       th:id="'ctv-item-' + ${ctv.id}"
+                       th:data-name="${ctv.hoTen != null ? ctv.hoTen : ''}"
+                       th:data-id="${ctv.id}"
+                       th:data-rating="${ctv.diemDanhGia != null ? ctv.diemDanhGia : 5.0}"
+                       th:data-area="${ctv.noiCuTru != null ? ctv.noiCuTru : 'HCM'}"
+                       onclick="selectCTVFromCard(this)">
+                    <div class="ctv-list-avatar"
+                         th:style="'background:' + (${iterStat.index % 4 == 0} ? 'linear-gradient(135deg,#00B4D8,#0096B7)' : (${iterStat.index % 4 == 1} ? 'linear-gradient(135deg,#43E97B,#38D46A)' : (${iterStat.index % 4 == 2} ? 'linear-gradient(135deg,#FF6584,#FF8FA3)' : 'linear-gradient(135deg,#FFB347,#FF9422)')))"
+                         th:text="${ctv.hoTen != null and #strings.length(ctv.hoTen) > 0 ? #strings.substring(ctv.hoTen,0,1) : 'C'}">C</div>
+                    <div class="ctv-list-info">
+                      <div class="ctv-list-name" th:text="${ctv.hoTen}">Tên CTV</div>
+                      <div class="ctv-list-sub"
+                           th:text="'★ ' + (ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0') + ' · ' + (ctv.noiCuTru != null ? ctv.noiCuTru : 'HCM')">★ 5.0</div>
                     </div>
                   </div>
-                </td>
-                <td>
-                  <div th:text="${ctv.noiCuTru != null ? ctv.noiCuTru : 'Hồ Chí Minh'}">Khu vực</div>
-                  <div style="font-size:0.75rem;color:var(--text-muted)">Dịch vụ gia đình</div>
-                </td>
-                <td><span class="badge badge-success">Sẵn sàng ca sáng</span></td>
-                <td><span class="badge badge-primary">Sẵn sàng ca chiều</span></td>
-                <td><span class="badge badge-secondary">Sẵn sàng ca tối</span></td>
-                <td style="text-align:right">
-                  <div class="table-actions">
-                    <button class="btn btn-primary btn-sm" th:data-name="${ctv.hoTen}" onclick="openAssignToCTV(this.getAttribute('data-name'))">Giao đơn</button>
-                  </div>
-                </td>
-              </tr>
-              <tr th:if="${congTacViens == null or #lists.isEmpty(congTacViens)}">
-                <td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu cộng tác viên</td>
-              </tr>
-            </tbody>
-          </table>
+                </th:block>
+
+                <!-- Empty state if no CTV -->
+                <div th:if="${congTacViens == null or #lists.isEmpty(congTacViens)}"
+                     style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:0.85rem">
+                  <i class="ti ti-user-off" style="font-size:1.5rem;display:block;margin-bottom:0.25rem"></i>
+                  Chưa có CTV nào
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Calendar -->
+          <div>
+            <!-- Selected CTV Info Banner -->
+            <div id="selectedCTVBanner" style="display:none;background:var(--cskh-gradient);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;color:#fff;display:flex;align-items:center;gap:0.75rem">
+              <div id="bannerAvatar" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem">C</div>
+              <div style="flex:1">
+                <div id="bannerName" style="font-weight:700;font-size:0.95rem">Tất cả CTV</div>
+                <div id="bannerSub" style="font-size:0.78rem;opacity:0.85">Đang xem lịch tổng hợp</div>
+              </div>
+              <div id="bannerStats" style="text-align:right;font-size:0.8rem;opacity:0.9">
+                <div id="bannerOrderCount" style="font-weight:700;font-size:1.1rem">-</div>
+                <div>Lịch trong tháng</div>
+              </div>
+            </div>
+
+            <div class="calendar-container">
+              <div id="cskhCalendar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ TABLE VIEW ══ -->
+      <div id="tableView" style="display:none">
+        <!-- Filter -->
+        <div class="filter-bar" style="margin-bottom:1rem">
+          <select class="filter-select">
+            <option>Tất cả khu vực</option>
+            <option>Quận 1, Quận 3</option>
+            <option>Bình Thạnh, Phú Nhuận</option>
+            <option>Tân Bình, Gò Vấp</option>
+            <option>Quận 7, Nhà Bè</option>
+          </select>
+          <select class="filter-select">
+            <option>Tất cả kỹ năng</option>
+            <option>Dọn dẹp nhà</option>
+            <option>Nấu ăn gia đình</option>
+            <option>Trông trẻ</option>
+            <option>Chăm sóc người cao tuổi</option>
+          </select>
+          <select class="filter-select">
+            <option>Trạng thái ca trực</option>
+            <option>Đang rảnh (Sẵn sàng)</option>
+            <option>Đang làm việc</option>
+            <option>Đã kín lịch</option>
+          </select>
+        </div>
+        <div class="card" style="padding:0">
+          <div class="card-header" style="padding:1.25rem 1.5rem">
+            <div>
+              <div class="card-title">Bảng ca trực Cộng tác viên</div>
+              <div class="card-subtitle">Ca 1: 07:30–11:30 | Ca 2: 13:00–17:00 | Ca 3: 17:30–20:30</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="CSKH.toast('Đang làm mới...')">
+              <i class="ti ti-refresh"></i> Làm mới
+            </button>
+          </div>
+          <div class="table-container table-hoverable">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Cộng tác viên</th>
+                  <th>Khu vực & Kỹ năng</th>
+                  <th>Ca Sáng (07:30–11:30)</th>
+                  <th>Ca Chiều (13:00–17:00)</th>
+                  <th>Ca Tối (17:30–20:30)</th>
+                  <th style="text-align:right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="ctv : ${congTacViens}">
+                  <td>
+                    <div class="user-cell">
+                      <div class="avatar avatar-sm"
+                           th:text="${ctv.hoTen != null and #strings.length(ctv.hoTen)>0 ? #strings.substring(ctv.hoTen,0,1) : 'C'}">C</div>
+                      <div class="user-cell-info">
+                        <div class="name" th:text="${ctv.hoTen}">Tên CTV</div>
+                        <div class="sub"
+                             th:text="'★ ' + (ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0') + ' · ' + (ctv.capDo == 'UuTu' ? 'Ưu tú' : 'Thường')">★ 5.0</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div th:text="${ctv.noiCuTru != null ? ctv.noiCuTru : 'Hồ Chí Minh'}">HCM</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted)">Dịch vụ gia đình</div>
+                  </td>
+                  <td><span class="badge badge-success">Sẵn sàng ca sáng</span></td>
+                  <td><span class="badge badge-primary">Sẵn sàng ca chiều</span></td>
+                  <td><span class="badge badge-secondary">Sẵn sàng ca tối</span></td>
+                  <td style="text-align:right">
+                    <div class="table-actions" style="justify-content:flex-end">
+                      <button class="btn btn-outline btn-sm"
+                              th:data-id="${ctv.id}"
+                              th:data-name="${ctv.hoTen != null ? ctv.hoTen : ''}"
+                              onclick="switchToCalendarForCTV(this)">
+                        <i class="ti ti-calendar"></i> Xem lịch
+                      </button>
+                      <button class="btn btn-primary btn-sm"
+                              th:data-name="${ctv.hoTen}"
+                              onclick="openAssignModal(this.dataset.name)">
+                        <i class="ti ti-plus"></i> Giao đơn
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr th:if="${congTacViens == null or #lists.isEmpty(congTacViens)}">
+                  <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--text-muted)">
+                    <i class="ti ti-users-off" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.3"></i>
+                    Không có dữ liệu cộng tác viên
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
   </div>
 </div>
 
-<!-- Modal Assign Single Order -->
+<!-- ══ MODAL PHÂN CÔNG ══ -->
 <div class="modal-overlay" id="assignModal">
-  <div class="modal" style="max-width:550px">
+  <div class="modal" style="max-width:560px">
     <div class="modal-header">
-      <h2 class="modal-title">Phân công đơn dịch vụ cho CTV</h2>
+      <h2 class="modal-title"><i class="ti ti-user-check" style="color:var(--cskh-primary)"></i> Phân công Đơn dịch vụ</h2>
       <button class="modal-close" data-modal-close="assignModal">✕</button>
     </div>
     <div>
       <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">CTV phụ trách</label>
+        <input type="text" class="form-control" id="assignCTVName" readonly style="opacity:0.8">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
         <label class="form-label">Chọn đơn hàng cần ghép</label>
-        <select class="form-control">
-          <option>#DD-052 - Dọn dẹp nhà - Q.1 (14:00 hôm nay)</option>
-          <option>#DD-053 - Nấu ăn gia đình - Bình Thạnh (17:30 hôm nay)</option>
-          <option>#DD-054 - Trông trẻ - Tân Bình (18:00 hôm nay)</option>
+        <select class="form-control" id="assignOrderSelect">
+          <option>-- Chọn đơn chờ duyệt --</option>
+          <th:block th:each="order : ${donDatDichVus}">
+            <option th:if="${order.trangThai == 'ChoDuyet'}"
+                    th:value="${order.id}"
+                    th:text="${(order.maDonDat != null ? order.maDonDat : '#DD-'+order.id) + ' · ' + (order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ') + ' · ' + (order.ngayThucHien != null ? #temporals.format(order.ngayThucHien,'dd/MM') : '')}">Đơn</option>
+          </th:block>
         </select>
       </div>
       <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Chỉ định CTV phụ trách</label>
-        <select class="form-control" id="targetCTVSelect">
-          <option>Trần Thị Hoa (Rảnh ca tối · Q.1)</option>
-          <option>Nguyễn Thị Mai (Rảnh ca chiều · Bình Thạnh)</option>
-          <option>Hoàng Thị Ngọc (Rảnh ca tối · Tân Bình)</option>
-        </select>
+        <label class="form-label">Ngày thực hiện</label>
+        <input type="date" class="form-control" id="assignDate">
+      </div>
+      <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+        <div>
+          <label class="form-label">Giờ bắt đầu</label>
+          <input type="time" class="form-control" id="assignStart" value="09:00">
+        </div>
+        <div>
+          <label class="form-label">Giờ kết thúc</label>
+          <input type="time" class="form-control" id="assignEnd" value="11:00">
+        </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Ghi chú điều phối (gửi notification đến App CTV)</label>
-        <textarea class="form-control" rows="3" placeholder="Lưu ý khách cần đến trước 10 phút, mang theo dụng cụ..."></textarea>
+        <label class="form-label">Ghi chú điều phối</label>
+        <textarea class="form-control" rows="3" placeholder="Lưu ý gửi kèm thông báo tới App CTV..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" data-modal-close="assignModal">Hủy</button>
-      <button class="btn btn-primary" onclick="ModalManager.close('assignModal');Toast.show('Đã phân công CTV thành công! Thông báo đã gửi tới CTV.')">Xác nhận phân công</button>
+      <button class="btn btn-primary" onclick="saveAssignment()">
+        <i class="ti ti-check"></i> Xác nhận phân công
+      </button>
     </div>
   </div>
 </div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<!-- ══ EVENT DETAIL MODAL ══ -->
+<div class="modal-overlay" id="eventDetailModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h2 class="modal-title"><i class="ti ti-calendar-event" style="color:var(--cskh-primary)"></i> Chi tiết lịch làm việc</h2>
+      <button class="modal-close" data-modal-close="eventDetailModal">✕</button>
+    </div>
+    <div>
+      <div class="info-row"><span class="info-label">CTV</span><span class="info-value" id="ev-ctv" style="font-weight:700">---</span></div>
+      <div class="info-row"><span class="info-label">Dịch vụ</span><span class="info-value" id="ev-dv">---</span></div>
+      <div class="info-row"><span class="info-label">Ngày</span><span class="info-value" id="ev-date">---</span></div>
+      <div class="info-row"><span class="info-label">Giờ</span><span class="info-value" id="ev-time">---</span></div>
+      <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value" id="ev-kh">---</span></div>
+      <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="ev-addr">---</span></div>
+      <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value" id="ev-status">---</span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="eventDetailModal">Đóng</button>
+      <button class="btn btn-warning btn-sm" onclick="ModalManager.close('eventDetailModal');CSKH.toast('Đang mở form đổi CTV...')">
+        <i class="ti ti-replace"></i> Đổi CTV
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
+
+<!-- Thymeleaf → JS data bridge -->
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  const ALL_CTV = /*[[${congTacViens}]]*/ [];
+  const ALL_ORDERS = /*[[${donDatDichVus}]]*/ [];
+  /*]]>*/
+</script>
+
 <script>
-  function openAssignToCTV(ctvName) {
-    document.getElementById('targetCTVSelect').value = ctvName;
+  // ── View switch ────────────────────────────────────────────────
+  function switchView(view) {
+    document.getElementById('calendarView').style.display = view === 'calendar' ? '' : 'none';
+    document.getElementById('tableView').style.display = view === 'table' ? '' : 'none';
+    document.getElementById('viewTabCalendar').classList.toggle('active', view === 'calendar');
+    document.getElementById('viewTabTable').classList.toggle('active', view === 'table');
+    if (view === 'calendar' && !window._calInit) initCalendar();
+  }
+
+  // ── CTV Selection ──────────────────────────────────────────────
+  let currentCTVId = 'all';
+  let calendarInstance = null;
+
+  function selectCTV(id, name, el) {
+    currentCTVId = id;
+    document.querySelectorAll('.ctv-list-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    // Update banner
+    const banner = document.getElementById('selectedCTVBanner');
+    banner.style.display = 'flex';
+    const initial = name ? name.charAt(0).toUpperCase() : '★';
+    document.getElementById('bannerAvatar').textContent = initial;
+    document.getElementById('bannerName').textContent = name || 'Tất cả CTV';
+    document.getElementById('bannerSub').textContent = id === 'all' ? 'Đang xem lịch tổng hợp tất cả CTV' : 'Đang xem lịch cá nhân';
+
+    // Rebuild calendar events
+    loadCalendarEvents(id);
+  }
+
+  // Helper: called from ctv-list-item onclick (avoids th:onclick parse issues)
+  function selectCTVFromCard(el) {
+    const id = el.dataset.id || 'all';
+    const name = el.dataset.name || 'CTV';
+    selectCTV(id, name, el);
+  }
+
+  // ── CTV List Filter ────────────────────────────────────────────
+  function filterCTVList(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#ctvListSidebar .ctv-list-item').forEach(item => {
+      const name = (item.dataset.name || '').toLowerCase();
+      item.style.display = (!q || name.includes(q) || item.id === 'ctv-item-all') ? '' : 'none';
+    });
+  }
+
+  // ── Calendar ───────────────────────────────────────────────────
+  const COLOR_PALETTE = ['#00B4D8','#43E97B','#FF6584','#FFB347','#6C63FF','#FF5722','#4CAF50','#E91E63'];
+
+  function generateEvents(ctvIdFilter) {
+    const events = [];
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    // Build from ALL_ORDERS if available
+    if (ALL_ORDERS && ALL_ORDERS.length > 0) {
+      ALL_ORDERS.forEach((order, idx) => {
+        if (!order.ngayThucHien) return;
+        // Filter by CTV if selected (via phanCong – not directly on order; show all as demo)
+        const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+        const label = (order.dichVu ? order.dichVu.tenDichVu : 'Dịch vụ');
+        const kh = order.khachHang ? order.khachHang.hoTen : 'KH';
+        events.push({
+          id: 'order-' + (order.id || idx),
+          title: label + ' · ' + kh,
+          start: order.ngayThucHien + (order.gioBatDau ? 'T' + order.gioBatDau : ''),
+          end: order.ngayThucHien + (order.gioKetThuc ? 'T' + order.gioKetThuc : ''),
+          backgroundColor: color,
+          borderColor: color,
+          textColor: '#fff',
+          extendedProps: {
+            kh: kh,
+            dv: label,
+            status: order.trangThai || '---',
+            addr: order.diaChi ? (order.diaChi.soNha || '') : '---',
+            ctv: 'CTV phụ trách'
+          }
+        });
+      });
+    } else {
+      // Demo events when no real data
+      const demoColors = ['#00B4D8','#43E97B','#FF6584','#FFB347','#6C63FF'];
+      const demoServices = ['Dọn dẹp nhà','Nấu ăn','Trông trẻ','Giặt ủi','Chăm sóc NCT'];
+      const demoKH = ['Nguyễn Thị Lan','Trần Văn Nam','Lê Thu Hương','Phạm Minh Đức','Hoàng Thị Mai'];
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(year, month, Math.floor(Math.random() * 28) + 1);
+        const h = 7 + Math.floor(Math.random() * 10);
+        const startStr = d.toISOString().split('T')[0] + 'T' + String(h).padStart(2,'0') + ':00:00';
+        const endStr = d.toISOString().split('T')[0] + 'T' + String(h+2).padStart(2,'0') + ':00:00';
+        const ci = i % 5;
+        events.push({
+          id: 'demo-' + i,
+          title: demoServices[ci] + ' · ' + demoKH[ci],
+          start: startStr,
+          end: endStr,
+          backgroundColor: demoColors[ci],
+          borderColor: demoColors[ci],
+          textColor: '#fff',
+          extendedProps: {
+            kh: demoKH[ci],
+            dv: demoServices[ci],
+            status: 'DangThucHien',
+            addr: 'Quận ' + (i+1) + ', TP.HCM',
+            ctv: 'CTV phụ trách'
+          }
+        });
+      }
+    }
+    return events;
+  }
+
+  function loadCalendarEvents(ctvId) {
+    if (!calendarInstance) return;
+    const allEvents = generateEvents(ctvId);
+    calendarInstance.removeAllEvents();
+    allEvents.forEach(ev => calendarInstance.addEvent(ev));
+    document.getElementById('bannerOrderCount').textContent = allEvents.length;
+  }
+
+  let _calInit = false;
+  window._calInit = false;
+
+  function initCalendar() {
+    if (window._calInit) return;
+    window._calInit = true;
+    const el = document.getElementById('cskhCalendar');
+    calendarInstance = new FullCalendar.Calendar(el, {
+      locale: 'vi',
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+      },
+      buttonText: {
+        today: 'Hôm nay',
+        month: 'Tháng',
+        week: 'Tuần',
+        day: 'Ngày',
+        list: 'Danh sách'
+      },
+      height: 'auto',
+      eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+      eventClick: function(info) {
+        const ep = info.event.extendedProps;
+        document.getElementById('ev-ctv').textContent = ep.ctv || '---';
+        document.getElementById('ev-dv').textContent = ep.dv || '---';
+        document.getElementById('ev-date').textContent = info.event.startStr ? info.event.startStr.split('T')[0] : '---';
+        document.getElementById('ev-time').textContent =
+          (info.event.start ? info.event.start.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}) : '') +
+          (info.event.end ? ' – ' + info.event.end.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}) : '');
+        document.getElementById('ev-kh').textContent = ep.kh || '---';
+        document.getElementById('ev-addr').textContent = ep.addr || '---';
+        document.getElementById('ev-status').innerHTML = badgeHtml(ep.status);
+        ModalManager.open('eventDetailModal');
+      },
+      eventDidMount: function(info) {
+        info.el.title = info.event.title;
+      }
+    });
+    calendarInstance.render();
+    loadCalendarEvents('all');
+    // Show banner for "Tất cả"
+    document.getElementById('selectedCTVBanner').style.display = 'flex';
+  }
+
+  function badgeHtml(status) {
+    const map = {
+      'HoanThanh': 'badge-success',
+      'DangThucHien': 'badge-primary',
+      'ChoDuyet': 'badge-warning',
+      'DaHuy': 'badge-danger',
+      'SapToi': 'badge-cskh'
+    };
+    const cls = map[status] || 'badge-secondary';
+    const labels = {
+      'HoanThanh':'Hoàn thành','DangThucHien':'Đang thực hiện',
+      'ChoDuyet':'Chờ duyệt','DaHuy':'Đã hủy','SapToi':'Sắp tới'
+    };
+    return `<span class="badge ${cls}">${labels[status] || status}</span>`;
+  }
+
+  // ── Assign Modal ───────────────────────────────────────────────
+  function openAssignModal(ctvName) {
+    document.getElementById('assignCTVName').value = ctvName || '';
+    document.getElementById('assignDate').value = new Date().toISOString().split('T')[0];
     ModalManager.open('assignModal');
   }
+
+  // Helper: chuyển về calendar view và chọn CTV (dùng từ table view)
+  function switchToCalendarForCTV(btn) {
+    const id   = btn.dataset.id   || 'all';
+    const name = btn.dataset.name || 'CTV';
+    switchView('calendar');
+    const el = document.getElementById('ctv-item-' + id) || document.getElementById('ctv-item-all');
+    selectCTV(id, name, el);
+  }
+
+  function saveAssignment() {
+    ModalManager.close('assignModal');
+    CSKH.toast('Phân công thành công! Thông báo đã gửi tới CTV.');
+    loadCalendarEvents(currentCTVId);
+  }
+
+  // ── Init ───────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    initCalendar();
+    selectCTV('all', 'Tất cả CTV', document.getElementById('ctv-item-all'));
+  });
 </script>
 </body>
 </html>
