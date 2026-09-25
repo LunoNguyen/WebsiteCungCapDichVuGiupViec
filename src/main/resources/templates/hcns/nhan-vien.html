@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{layout/admin-layout :: adminHead('Quản lý Nhân viên – HCNS')}"></head>
+
 <body>
-<div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('hcns', 'nhan-vien')}"></aside>
+  <div class="app-shell">
+    <aside th:replace="~{layout/admin-layout :: adminSidebar('hcns', 'nhan-vien')}"></aside>
 
-  <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Quản lý Nhân viên')}"></header>
-
+    <div class="main-area">
+      <header
+        th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Quản lý Nhân viên')}">
+      </header>
 
       <main class="page-content">
         <div class="page-header">
@@ -16,35 +19,49 @@
             <p class="page-subtitle">Danh sách &amp; thông tin nhân viên nội bộ</p>
           </div>
           <div class="page-actions">
-            <button class="btn btn-secondary btn-sm"><i class="ti ti-file-export"></i> Xuất dữ liệu</button>
-            <button class="btn btn-primary btn-sm" data-modal-open="addStaffModal"><i class="ti ti-plus"></i> Thêm nhân viên</button>
+            <button class="btn btn-primary btn-sm" data-modal-open="addStaffModal"><i class="ti ti-plus"></i> Thêm nhân
+              viên</button>
           </div>
         </div>
 
+        <!-- Thông báo hệ thống -->
+        <div th:if="${errorMessage}"
+          style="padding:1rem;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600"
+          th:text="${errorMessage}"></div>
+        <div th:if="${successMessage}"
+          style="padding:1rem;background:rgba(67,233,123,0.12);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600"
+          th:text="${successMessage}"></div>
+
+        <!-- Quick Stats -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
           <div class="quick-stat">
-            <div class="quick-stat-icon" style="background:rgba(13,155,163,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div>
+            <div class="quick-stat-icon" style="background:rgba(13,155,163,0.15)"><i class="ti ti-users"
+                style="color:var(--primary)"></i></div>
             <div>
               <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</div>
               <div class="quick-stat-lbl">Tổng nhân viên</div>
             </div>
           </div>
           <div class="quick-stat">
-            <div class="quick-stat-icon" style="background:rgba(56,212,138,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
+            <div class="quick-stat-icon" style="background:rgba(56,212,138,0.15)"><i class="ti ti-user-check"
+                style="color:var(--accent)"></i></div>
             <div>
-              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.dangLamViecCount : 0}">0</div>
+              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.dangLamViecCount : 0}">0
+              </div>
               <div class="quick-stat-lbl">Đang làm việc</div>
             </div>
           </div>
           <div class="quick-stat">
-            <div class="quick-stat-icon" style="background:rgba(245,158,11,0.15)"><i class="ti ti-clock-pause" style="color:var(--warning)"></i></div>
+            <div class="quick-stat-icon" style="background:rgba(245,158,11,0.15)"><i class="ti ti-clock-pause"
+                style="color:var(--warning)"></i></div>
             <div>
               <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tamNghiCount : 0}">0</div>
               <div class="quick-stat-lbl">Tạm nghỉ</div>
             </div>
           </div>
           <div class="quick-stat">
-            <div class="quick-stat-icon" style="background:rgba(239,68,68,0.15)"><i class="ti ti-user-x" style="color:var(--danger)"></i></div>
+            <div class="quick-stat-icon" style="background:rgba(239,68,68,0.15)"><i class="ti ti-user-x"
+                style="color:var(--danger)"></i></div>
             <div>
               <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.nghiViecCount : 0}">0</div>
               <div class="quick-stat-lbl">Nghỉ việc</div>
@@ -52,46 +69,52 @@
           </div>
         </div>
 
+        <!-- Bộ lọc và tìm kiếm -->
         <div class="filter-bar">
           <div class="search-box" style="flex:1">
             <i class="ti ti-search search-icon"></i>
-            <input type="text" class="form-control" placeholder="Tìm tên, email, số điện thoại..." data-table-search="staffTable">
+            <input type="text" class="form-control" id="searchStaffInput" placeholder="Tìm tên, email, số điện thoại..."
+              oninput="filterStaffTable()">
           </div>
-          <select class="filter-select">
-            <option>Tất cả phòng ban</option>
-            <option>Ban Giám đốc</option>
-            <option>Hành chính Nhân sự</option>
-            <option>Chăm sóc Khách hàng</option>
-            <option>Marketing</option>
+          <select class="filter-select" id="filterDeptSelect" onchange="filterStaffTable()">
+            <option value="">Tất cả phòng ban</option>
+            <option th:each="pb : ${phongBans}" th:value="${pb.tenPhongBan}" th:text="${pb.tenPhongBan}">Phòng ban
+            </option>
           </select>
-          <select class="filter-select">
-            <option>Tất cả trạng thái</option>
-            <option>Đang làm việc</option>
-            <option>Tạm nghỉ</option>
-            <option>Nghỉ việc</option>
+          <select class="filter-select" id="filterStatusSelect" onchange="filterStaffTable()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="DangLamViec">Đang làm việc</option>
+            <option value="TamNghi">Tạm nghỉ</option>
+            <option value="DaNghi">Nghỉ việc</option>
           </select>
         </div>
 
         <div class="card" style="padding:0">
-          <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+          <div class="card-header"
+            style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
             <div class="card-title">Danh sách nhân viên</div>
-            <span style="font-size:0.8rem;color:var(--text-muted)">Tổng số <span th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</span> nhân viên</span>
+            <span style="font-size:0.8rem;color:var(--text-muted)">Tổng số <span
+                th:text="${totalItems != null ? totalItems : 0}">0</span> nhân viên</span>
           </div>
           <div class="table-container" style="border:none;border-radius:0">
             <table class="table" id="staffTable">
-              <thead><tr>
-                <th><input type="checkbox" id="selectAll"></th>
-                <th>Nhân viên</th>
-                <th>Phòng ban</th>
-                <th>Chức vụ</th>
-                <th>Số điện thoại</th>
-                <th>Ngày vào làm</th>
-                <th>Trạng thái</th>
-                <th style="text-align:right">Thao tác</th>
-              </tr></thead>
+              <thead>
+                <tr>
+                  <th>Mã NV</th>
+                  <th>Nhân viên</th>
+                  <th>Phòng ban</th>
+                  <th>Chức vụ</th>
+                  <th>Số điện thoại</th>
+                  <th>Ngày vào làm</th>
+                  <th>Trạng thái</th>
+                  <th style="text-align:right">Thao tác</th>
+                </tr>
+              </thead>
               <tbody>
-                <tr th:each="nv : ${nhanViens}">
-                  <td><input type="checkbox" class="row-checkbox"></td>
+                <tr th:each="nv : ${nhanViens}"
+                  th:data-dept="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : ''}"
+                  th:data-status="${nv.trangThai}">
+                  <td style="font-weight:700;color:var(--primary-light)" th:text="${nv.maNhanVien}">NV01</td>
                   <td>
                     <div class="user-cell">
                       <div class="avatar avatar-sm" th:text="${#strings.substring(nv.hoTen, 0, 1)}">N</div>
@@ -101,105 +124,483 @@
                       </div>
                     </div>
                   </td>
-                  <td th:text="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : '--'}">Phòng ban</td>
+                  <td
+                    th:text="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : '--'}">
+                    Phòng ban</td>
                   <td th:text="${nv.chucVu != null ? nv.chucVu.tenChucVu : '--'}">Chức vụ</td>
                   <td th:text="${nv.soDienThoai}">0900000000</td>
-                  <td th:text="${nv.ngayVaoLam != null ? #temporals.format(nv.ngayVaoLam, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
+                  <td th:text="${nv.ngayVaoLam != null ? #temporals.format(nv.ngayVaoLam, 'dd/MM/yyyy') : '--'}">
+                    01/01/2026</td>
                   <td>
-                    <span class="badge badge-success" th:if="${nv.trangThai == 'DangLamViec'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span>
+                    <span class="badge badge-success" th:if="${nv.trangThai == 'DangLamViec'}"><span
+                        class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span>
                     <span class="badge badge-warning" th:if="${nv.trangThai == 'TamNghi'}">Tạm nghỉ</span>
-                    <span class="badge badge-danger" th:if="${nv.trangThai == 'DaNghi' or nv.trangThai == 'NghiViec'}">Nghỉ việc</span>
+                    <span class="badge badge-danger"
+                      th:if="${nv.trangThai == 'DaNghi' or nv.trangThai == 'NghiViec'}">Nghỉ việc</span>
                   </td>
-                  <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="staffDetailPanel">Chi tiết</button></div></td>
+                  <td style="text-align:right">
+                    <div class="table-actions" style="justify-content:flex-end">
+                      <button class="btn btn-outline btn-sm" th:data-id="${nv.id}" th:data-hoten="${nv.hoTen}"
+                        th:data-email="${nv.email}" th:data-sdt="${nv.soDienThoai}" th:data-diachi="${nv.diaChi}"
+                        th:data-chucvuid="${nv.chucVu != null ? nv.chucVu.id : ''}" th:data-trangthai="${nv.trangThai}"
+                        th:data-ngaysinh="${nv.ngaySinh != null ? #temporals.format(nv.ngaySinh, 'dd/MM/yyyy') : ''}"
+                        th:data-gioitinh="${nv.gioiTinh}" onclick="openEditStaffModal(this)">
+                        <i class="ti ti-edit"></i> Sửa
+                      </button>
+                      <form th:if="${nv.trangThai != 'DaNghi'}" th:action="@{/hcns/nhan-vien/doi-trang-thai}"
+                        method="post" style="display:inline"
+                        onsubmit="return confirm('Bạn có chắc muốn chuyển nhân viên này sang trạng thái Nghỉ việc?');">
+                        <input type="hidden" name="id" th:value="${nv.id}">
+                        <input type="hidden" name="trangThai" value="DaNghi">
+                        <button type="submit" class="btn btn-danger btn-sm" title="Cho thôi việc / Nghỉ việc"><i
+                            class="ti ti-user-x"></i></button>
+                      </form>
+                      <form th:if="${nv.trangThai == 'DaNghi'}" th:action="@{/hcns/nhan-vien/doi-trang-thai}"
+                        method="post" style="display:inline">
+                        <input type="hidden" name="id" th:value="${nv.id}">
+                        <input type="hidden" name="trangThai" value="DangLamViec">
+                        <button type="submit" class="btn btn-success btn-sm" title="Kích hoạt lại đi làm"><i
+                            class="ti ti-rotate-clockwise"></i></button>
+                      </form>
+                      <form th:action="@{/hcns/nhan-vien/xoa}" method="post" style="display:inline"
+                        onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn nhân viên này khỏi hệ thống?');">
+                        <input type="hidden" name="id" th:value="${nv.id}">
+                        <button type="submit" class="btn btn-outline btn-sm"
+                          style="color:var(--danger,#ef4444);border-color:rgba(239,68,68,0.3)" title="Xóa nhân viên"><i
+                            class="ti ti-trash"></i></button>
+                      </form>
+                    </div>
+                  </td>
                 </tr>
                 <tr th:if="${nhanViens == null or #lists.isEmpty(nhanViens)}">
-                  <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu nhân viên</td>
+                  <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu nhân
+                    viên</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-            <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${nhanViens != null ? #lists.size(nhanViens) : 0}">0</span> / <span th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</span> nhân viên</span>
-            <div class="pagination">
-              <button class="page-btn active">1</button>
+          <!-- ============================================================
+               PHÂN TRANG 10 DÒNG (BẤM NÚT -> ĐỂ XEM TIẾP THEO YÊU CẦU)
+               ============================================================ -->
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-top:1px solid var(--border-light);background:var(--bg-card)">
+            <div style="font-size:0.875rem;color:var(--text-muted)">
+              Hiển thị trang <strong th:text="${currentPage + 1}">1</strong> / <strong
+                th:text="${totalPages > 0 ? totalPages : 1}">1</strong>
+              (Tổng cộng <span th:text="${totalItems}">0</span> nhân viên · 10 người/trang)
+            </div>
+
+            <div class="pagination" style="display:flex;gap:0.35rem;align-items:center">
+              <!-- Nút LÙI (<-) -->
+              <a th:href="@{/hcns/nhan-vien(page=${currentPage - 1})}" class="btn btn-outline btn-sm"
+                th:style="${currentPage == 0} ? 'pointer-events:none;opacity:0.4' : ''" title="Trang trước">
+                <i class="ti ti-arrow-left"></i> Trước
+              </a>
+
+              <!-- Các nút số trang lân cận -->
+              <th:block th:if="${totalPages > 1}">
+                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                  <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}" th:href="@{/hcns/nhan-vien(page=${i})}"
+                    class="page-btn" th:classappend="${i == currentPage} ? 'active' : ''" th:text="${i + 1}"
+                    style="min-width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);text-decoration:none;font-size:0.85rem;font-weight:600">
+                    1
+                  </a>
+                </th:block>
+              </th:block>
+
+              <!-- Nút TIẾP (->) ĐẶC TẢ: BẤM -> ĐỂ XEM TIẾP -->
+              <a th:href="@{/hcns/nhan-vien(page=${currentPage + 1})}" class="btn btn-primary btn-sm"
+                th:style="${currentPage >= totalPages - 1} ? 'pointer-events:none;opacity:0.4' : ''"
+                title="Xem tiếp các người tiếp theo">
+                Tiếp <i class="ti ti-arrow-right"></i>
+              </a>
             </div>
           </div>
         </div>
       </main>
+    </div>
   </div>
-</div>
 
-<div class="overlay" id="panelOverlay"></div>
-<div class="detail-panel" id="staffDetailPanel">
-  <div class="detail-panel-header">
-    <div><h2 style="font-size:1.1rem;font-weight:700">Ho so Nhan vien</h2></div>
-    <button class="modal-close" data-panel-close="staffDetailPanel">x</button>
-  </div>
-  <div class="detail-panel-body">
-    <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
-      <div class="avatar avatar-lg" style="margin:0 auto 0.875rem;background:var(--gradient-primary)">A</div>
-      <div style="font-size:1.125rem;font-weight:700">Nguyen Van An</div>
-      <div style="font-size:0.875rem;color:var(--text-muted)">Giam doc · Ban Giam doc</div>
-      <div style="display:flex;justify-content:center;gap:0.5rem;margin-top:0.75rem">
-        <span class="badge badge-primary">Ban Giam doc</span>
-        <span class="badge badge-success">Dang lam</span>
+  <!-- ============================================================
+     MODAL: THÊM NHÂN VIÊN MỚI (CREATE)
+     ============================================================ -->
+  <div class="modal-overlay" id="addStaffModal">
+    <div class="modal" style="max-width:680px">
+      <div class="modal-header">
+        <h2 class="modal-title"><i class="ti ti-user-plus"></i> Thêm Nhân viên mới</h2>
+        <button class="modal-close" data-modal-close="addStaffModal">✕</button>
       </div>
-    </div>
-    <div class="info-row"><span class="info-label">Email</span><span class="info-value">anngv@neatify.vn</span></div>
-    <div class="info-row"><span class="info-label">Dien thoai</span><span class="info-value">0901 234 567</span></div>
-    <div class="info-row"><span class="info-label">Ngay sinh</span><span class="info-value">15/03/1985</span></div>
-    <div class="info-row"><span class="info-label">Ngay vao lam</span><span class="info-value">01/01/2020</span></div>
-    <div class="info-row"><span class="info-label">Luong co ban</span><span class="info-value" style="color:var(--accent)">45.000.000d</span></div>
-    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Ghi chu HR</div>
-      <textarea class="form-control" rows="3" placeholder="Them ghi chu..."></textarea>
+      <form th:action="@{/hcns/nhan-vien/them}" method="post" id="addStaffForm"
+        onsubmit="return validateStaffSubmit(event, 'addStaffNgaySinh', 'addStaffNgaySinhError', true)">
+        <div style="padding:1.5rem">
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Họ và tên *</label>
+              <input class="form-control" name="hoTen" placeholder="VD: Nguyễn Văn Nam" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email công ty *</label>
+              <input class="form-control" type="email" name="email" placeholder="namnv@giupviec.vn" required>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Số điện thoại *</label>
+              <input class="form-control" name="soDienThoai" placeholder="VD: 0901234567" required pattern="\d{9,11}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Giới tính*</label>
+              <select class="form-control" name="gioiTinh">
+                <option value="Nam">Nam</option>
+                <option value="Nu">Nữ</option>
+                <option value="Khac">Khác</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Ngày sinh*</label>
+              <div style="display:flex;align-items:stretch">
+                <input class="form-control" type="text" name="ngaySinh" id="addStaffNgaySinh" required
+                  autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
+                  onchange="validateStaffDob('addStaffNgaySinh', 'addStaffNgaySinhError', true)"
+                  onblur="validateStaffDob('addStaffNgaySinh', 'addStaffNgaySinhError', true)">
+                <input type="date" id="addStaffNgaySinhPicker" tabindex="-1" aria-hidden="true"
+                  style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
+                  onchange="syncDatePickerToText('addStaffNgaySinhPicker', 'addStaffNgaySinh', 'addStaffNgaySinhError', true)">
+                <button type="button" class="btn btn-outline"
+                  style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding:0 0.85rem;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"
+                  onclick="openCalendarPicker('addStaffNgaySinhPicker', 'addStaffNgaySinh')" title="Chọn ngày từ lịch">
+                  <i class="ti ti-calendar" style="font-size:1.15rem"></i>
+                </button>
+              </div>
+              <div id="addStaffNgaySinhError"
+                style="display:none;color:#ef4444;font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ngày vào làm*</label>
+              <div style="display:flex;align-items:stretch">
+                <input class="form-control" type="text" name="ngayVaoLam" id="addStaffNgayVaoLam"
+                  th:value="${#temporals.format(T(java.time.LocalDate).now(), 'dd/MM/yyyy')}" required
+                  autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1">
+                <input type="date" id="addStaffNgayVaoLamPicker" tabindex="-1" aria-hidden="true"
+                  style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
+                  onchange="syncDatePickerToText('addStaffNgayVaoLamPicker', 'addStaffNgayVaoLam')">
+                <button type="button" class="btn btn-outline"
+                  style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding:0 0.85rem;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"
+                  onclick="openCalendarPicker('addStaffNgayVaoLamPicker', 'addStaffNgayVaoLam')"
+                  title="Chọn ngày từ lịch">
+                  <i class="ti ti-calendar" style="font-size:1.15rem"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Chức vụ &amp; Phòng ban *</label>
+              <select class="form-control" name="chucVuId" required>
+                <option value="">-- Chọn chức vụ --</option>
+                <option th:each="cv : ${chucVus}" th:value="${cv.id}"
+                  th:text="${cv.tenChucVu + ' (' + (cv.phongBan != null ? cv.phongBan.tenPhongBan : 'Chung') + ')'}">
+                  Chức vụ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Địa chỉ</label>
+              <input class="form-control" name="diaChi" placeholder="VD: Quận 1, TP. Hồ Chí Minh">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal-close="addStaffModal">Hủy</button>
+          <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Lưu nhân viên</button>
+        </div>
+      </form>
     </div>
   </div>
-  <div class="detail-panel-footer">
-    <button class="btn btn-danger" onclick="Toast.show('Da dinh chi tai khoan.','error');PanelManager.close('staffDetailPanel')">Dinh chi</button>
-    <button class="btn btn-secondary" data-panel-close="staffDetailPanel">Dong</button>
-    <button class="btn btn-primary" onclick="Toast.show('Da cap nhat thong tin!')">Luu</button>
-  </div>
-</div>
 
-<div class="modal-overlay" id="addStaffModal">
-  <div class="modal" style="max-width:680px">
-    <div class="modal-header">
-      <h2 class="modal-title">Them Nhan vien moi</h2>
-      <button class="modal-close" data-modal-close="addStaffModal">x</button>
-    </div>
-    <div class="form-row" style="margin-bottom:1rem">
-      <div class="form-group"><label class="form-label">Ho va ten *</label><input class="form-control" placeholder="Nguyen Van A" required></div>
-      <div class="form-group"><label class="form-label">Email cong ty *</label><input class="form-control" type="email" placeholder="email@neatify.vn" required></div>
-    </div>
-    <div class="form-row" style="margin-bottom:1rem">
-      <div class="form-group"><label class="form-label">So dien thoai</label><input class="form-control" placeholder="0901 234 567"></div>
-      <div class="form-group"><label class="form-label">Ngay sinh</label><input class="form-control" type="date"></div>
-    </div>
-    <div class="form-row" style="margin-bottom:1rem">
-      <div class="form-group">
-        <label class="form-label">Phong ban *</label>
-        <select class="form-control" required>
-          <option value="">Chon phong ban</option>
-          <option>Ban Giam doc</option>
-          <option>HCNS - Ke toan</option>
-          <option>Cham soc Khach hang</option>
-          <option>Marketing</option>
-        </select>
+  <!-- ============================================================
+     MODAL: CHỈNH SỬA NHÂN VIÊN (UPDATE)
+     ============================================================ -->
+  <div class="modal-overlay" id="editStaffModal">
+    <div class="modal" style="max-width:680px">
+      <div class="modal-header">
+        <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Hồ sơ Nhân viên</h2>
+        <button class="modal-close" data-modal-close="editStaffModal">✕</button>
       </div>
-      <div class="form-group"><label class="form-label">Chuc vu *</label><input class="form-control" placeholder="VD: Nhan vien CSKH" required></div>
-    </div>
-    <div class="form-row" style="margin-bottom:1rem">
-      <div class="form-group"><label class="form-label">Luong co ban (dong)</label><input class="form-control" type="number" placeholder="15000000"></div>
-      <div class="form-group"><label class="form-label">Ngay vao lam</label><input class="form-control" type="date"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close="addStaffModal">Huy</button>
-      <button class="btn btn-primary" onclick="document.getElementById('addStaffModal').classList.remove('active');Toast.show('Da them nhan vien thanh cong! Email thong tin da duoc gui.')">Tao tai khoan</button>
+      <form th:action="@{/hcns/nhan-vien/sua}" method="post" id="editStaffForm"
+        onsubmit="return validateStaffSubmit(event, 'editStaffNgaySinh', 'editStaffNgaySinhError', false)">
+        <input type="hidden" name="id" id="editStaffId">
+        <div style="padding:1.5rem">
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Họ và tên *</label>
+              <input class="form-control" name="hoTen" id="editStaffHoTen" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email công ty *</label>
+              <input class="form-control" type="email" name="email" id="editStaffEmail" required>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Giới tính</label>
+              <select class="form-control" name="gioiTinh" id="editStaffGioiTinh">
+                <option value="Nam">Nam</option>
+                <option value="Nu">Nữ</option>
+                <option value="Khac">Khác</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ngày sinh</label>
+              <div style="display:flex;align-items:stretch">
+                <input class="form-control" type="text" name="ngaySinh" id="editStaffNgaySinh" autocomplete="off"
+                  style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
+                  onchange="validateStaffDob('editStaffNgaySinh', 'editStaffNgaySinhError', false)"
+                  onblur="validateStaffDob('editStaffNgaySinh', 'editStaffNgaySinhError', false)">
+                <input type="date" id="editStaffNgaySinhPicker" tabindex="-1" aria-hidden="true"
+                  style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
+                  onchange="syncDatePickerToText('editStaffNgaySinhPicker', 'editStaffNgaySinh', 'editStaffNgaySinhError', false)">
+                <button type="button" class="btn btn-outline"
+                  style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding:0 0.85rem;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"
+                  onclick="openCalendarPicker('editStaffNgaySinhPicker', 'editStaffNgaySinh')"
+                  title="Chọn ngày từ lịch">
+                  <i class="ti ti-calendar" style="font-size:1.15rem"></i>
+                </button>
+              </div>
+              <div id="editStaffNgaySinhError"
+                style="display:none;color:#ef4444;font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Số điện thoại *</label>
+              <input class="form-control" name="soDienThoai" id="editStaffSdt" required pattern="\d{9,11}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Địa chỉ</label>
+              <input class="form-control" name="diaChi" id="editStaffDiaChi">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Chức vụ &amp; Phòng ban *</label>
+              <select class="form-control" name="chucVuId" id="editStaffChucVuId" required>
+                <option th:each="cv : ${chucVus}" th:value="${cv.id}"
+                  th:text="${cv.tenChucVu + ' (' + (cv.phongBan != null ? cv.phongBan.tenPhongBan : 'Chung') + ')'}">
+                  Chức vụ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Trạng thái công tác</label>
+              <select class="form-control" name="trangThai" id="editStaffTrangThai">
+                <option value="DangLamViec">Đang làm việc</option>
+                <option value="TamNghi">Tạm nghỉ</option>
+                <option value="DaNghi">Nghỉ việc</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal-close="editStaffModal">Hủy</button>
+          <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Cập nhật thay đổi</button>
+        </div>
+      </form>
     </div>
   </div>
-</div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+  <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+  <script>
+    function checkAgeValid(val, isRequired) {
+      if (!val || !val.trim()) {
+        if (isRequired) return { valid: false, msg: 'Vui lòng nhập ngày sinh.' };
+        return { valid: true };
+      }
+      const s = val.trim();
+      let d = null;
+      const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+      if (dmy) {
+        const day = parseInt(dmy[1], 10);
+        const month = parseInt(dmy[2], 10) - 1;
+        const year = parseInt(dmy[3], 10);
+        const testDate = new Date(year, month, day);
+        if (testDate.getFullYear() === year && testDate.getMonth() === month && testDate.getDate() === day) {
+          d = testDate;
+        }
+      } else if (ymd) {
+        const year = parseInt(ymd[1], 10);
+        const month = parseInt(ymd[2], 10) - 1;
+        const day = parseInt(ymd[3], 10);
+        const testDate = new Date(year, month, day);
+        if (testDate.getFullYear() === year && testDate.getMonth() === month && testDate.getDate() === day) {
+          d = testDate;
+        }
+      }
+      if (!d) {
+        return { valid: false, msg: 'Ngày sinh không hợp lệ. Vui lòng nhập định dạng dd/mm/yyyy (VD: 15/05/2000).' };
+      }
+      const today = new Date();
+      let age = today.getFullYear() - d.getFullYear();
+      const m = today.getMonth() - d.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < d.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        return { valid: false, msg: 'Người này mới ' + (age >= 0 ? age : 0) + ' tuổi, chưa đủ 18 tuổi. Vui lòng kiểm tra lại.' };
+      }
+      if (age > 100) {
+        return { valid: false, msg: 'Năm sinh không hợp lệ (tuổi vượt quá 100).' };
+      }
+      return { valid: true };
+    }
+
+    function validateStaffDob(inputId, errorId, isRequired) {
+      const input = document.getElementById(inputId);
+      const err = document.getElementById(errorId);
+      if (!input || !err) return true;
+      const res = checkAgeValid(input.value, isRequired);
+      if (!res.valid) {
+        err.textContent = res.msg;
+        err.style.display = 'block';
+        input.style.borderColor = '#ef4444';
+        return false;
+      } else {
+        err.style.display = 'none';
+        err.textContent = '';
+        input.style.borderColor = '';
+        return true;
+      }
+    }
+
+    function validateStaffSubmit(e, inputId, errorId, isRequired) {
+      const isValid = validateStaffDob(inputId, errorId, isRequired);
+      if (!isValid) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        const input = document.getElementById(inputId);
+        if (input) input.focus();
+        return false;
+      }
+      return true;
+    }
+
+    function openCalendarPicker(pickerId, textId) {
+      const picker = document.getElementById(pickerId);
+      const text = document.getElementById(textId);
+      if (!picker) return;
+      if (text && text.value) {
+        const s = text.value.trim();
+        const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+        if (dmy) {
+          picker.value = `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+        } else if (ymd) {
+          picker.value = `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
+        }
+      }
+      try {
+        if (typeof picker.showPicker === 'function') {
+          picker.showPicker();
+        } else {
+          picker.focus();
+          picker.click();
+        }
+      } catch (e) {
+        picker.focus();
+      }
+    }
+
+    function syncDatePickerToText(pickerId, textId, errorId, isRequired) {
+      const picker = document.getElementById(pickerId);
+      const text = document.getElementById(textId);
+      if (picker && text && picker.value) {
+        const parts = picker.value.split('-');
+        if (parts.length === 3) {
+          text.value = parts[2] + '/' + parts[1] + '/' + parts[0];
+        } else {
+          text.value = picker.value;
+        }
+        if (errorId) {
+          validateStaffDob(textId, errorId, isRequired);
+        }
+      }
+    }
+
+    function syncTextToDatePicker(textId, pickerId) {
+      const text = document.getElementById(textId);
+      const picker = document.getElementById(pickerId);
+      if (!text || !picker) return;
+      const val = (text.value || '').trim();
+      const dmy = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      const ymd = val.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+      if (dmy) {
+        const d = dmy[1].padStart(2, '0');
+        const m = dmy[2].padStart(2, '0');
+        const y = dmy[3];
+        picker.value = `${y}-${m}-${d}`;
+      } else if (ymd) {
+        const y = ymd[1];
+        const m = ymd[2].padStart(2, '0');
+        const d = ymd[3].padStart(2, '0');
+        picker.value = `${y}-${m}-${d}`;
+      }
+    }
+
+    function openEditStaffModal(btn) {
+      document.getElementById('editStaffId').value = btn.dataset.id;
+      document.getElementById('editStaffHoTen').value = btn.dataset.hoten || '';
+      document.getElementById('editStaffEmail').value = btn.dataset.email || '';
+      document.getElementById('editStaffSdt').value = btn.dataset.sdt || '';
+      document.getElementById('editStaffDiaChi').value = btn.dataset.diachi || '';
+      if (btn.dataset.chucvuid) {
+        document.getElementById('editStaffChucVuId').value = btn.dataset.chucvuid;
+      }
+      if (btn.dataset.trangthai) {
+        document.getElementById('editStaffTrangThai').value = btn.dataset.trangthai;
+      }
+      if (btn.dataset.ngaysinh) {
+        document.getElementById('editStaffNgaySinh').value = btn.dataset.ngaysinh;
+      } else {
+        document.getElementById('editStaffNgaySinh').value = '';
+      }
+      if (btn.dataset.gioitinh) {
+        document.getElementById('editStaffGioiTinh').value = btn.dataset.gioitinh;
+      }
+      const editErr = document.getElementById('editStaffNgaySinhError');
+      if (editErr) {
+        editErr.style.display = 'none';
+        editErr.textContent = '';
+      }
+      const editInput = document.getElementById('editStaffNgaySinh');
+      if (editInput) editInput.style.borderColor = '';
+
+      syncTextToDatePicker('editStaffNgaySinh', 'editStaffNgaySinhPicker');
+      ModalManager.open('editStaffModal');
+    }
+
+    function filterStaffTable() {
+      const q = (document.getElementById('searchStaffInput').value || '').toLowerCase().trim();
+      const dept = (document.getElementById('filterDeptSelect').value || '').toLowerCase().trim();
+      const status = (document.getElementById('filterStatusSelect').value || '').trim();
+
+      const rows = document.querySelectorAll('#staffTable tbody tr');
+      rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        const rDept = (r.getAttribute('data-dept') || '').toLowerCase();
+        const rStatus = r.getAttribute('data-status') || '';
+
+        const matchQ = !q || text.includes(q);
+        const matchDept = !dept || rDept.includes(dept);
+        const matchStatus = !status || rStatus === status;
+
+        r.style.display = (matchQ && matchDept && matchStatus) ? '' : 'none';
+      });
+    }
+  </script>
 </body>
+
 </html>
