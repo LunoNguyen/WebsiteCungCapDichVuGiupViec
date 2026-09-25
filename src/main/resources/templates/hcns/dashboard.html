@@ -88,17 +88,25 @@
           </div>
 
           <!-- Service Quick Overview -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">Dịch vụ hệ thống</div>
-              <a href="/hcns/dich-vu-bang-gia" class="btn btn-outline btn-sm">Quản lý</a>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:0.5rem">
-              <div th:each="dv : ${dichVus}" style="display:flex;justify-content:space-between;align-items:center;font-size:0.875rem">
-                <span th:text="${'✨ ' + dv.tenDichVu}">Dịch vụ</span>
-                <span class="badge" th:classappend="${dv.trangThai == 'HoatDong' ? 'badge-success' : 'badge-secondary'}" th:text="${dv.trangThai == 'HoatDong' ? 'Hoạt động' : 'Tạm ẩn'}">Hoạt động</span>
+          <div class="card" style="display:flex;flex-direction:column">
+            <div class="card-header" style="padding-bottom:0.75rem;border-bottom:1px solid var(--border-light)">
+              <div style="display:flex;align-items:center;gap:0.5rem">
+                <div class="card-title" style="margin:0">Dịch vụ hệ thống</div>
+                <span class="badge badge-info" style="font-size:0.75rem;padding:0.15rem 0.5rem" th:text="${dichVus != null ? #lists.size(dichVus) + ' dịch vụ' : '0 dịch vụ'}">0 dịch vụ</span>
               </div>
-              <div th:if="${dichVus == null || dichVus.isEmpty()}" style="text-align:center;padding:1rem;color:var(--text-muted)">
+              <a href="/hcns/dich-vu-bang-gia" class="btn btn-outline btn-sm" style="font-size:0.8rem;padding:0.25rem 0.6rem">Quản lý</a>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.45rem;max-height:220px;overflow-y:auto;padding-right:0.35rem;margin-top:0.75rem">
+              <div th:each="dv : ${dichVus}" style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.6rem;background:var(--bg-main);border-radius:var(--radius-sm);font-size:0.825rem">
+                <div style="display:flex;align-items:center;gap:0.4rem;overflow:hidden">
+                  <span style="color:var(--primary);font-size:0.9rem">🔹</span>
+                  <span th:text="${dv.tenDichVu}" style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px" th:title="${dv.tenDichVu}">Dịch vụ</span>
+                </div>
+                <span class="badge" style="font-size:0.7rem;padding:0.15rem 0.45rem;white-space:nowrap"
+                      th:classappend="${dv.trangThai == 'HoatDong' ? 'badge-success' : 'badge-secondary'}"
+                      th:text="${dv.trangThai == 'HoatDong' ? 'Hoạt động' : 'Tạm ẩn'}">Hoạt động</span>
+              </div>
+              <div th:if="${dichVus == null || dichVus.isEmpty()}" style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:0.85rem">
                 Chưa có dịch vụ nào
               </div>
             </div>

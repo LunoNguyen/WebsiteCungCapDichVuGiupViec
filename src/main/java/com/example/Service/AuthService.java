@@ -5,9 +5,12 @@ import com.example.Repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 /**
  * Xac thuc tai khoan va phan quyen tu CSDL.
  */
@@ -19,6 +22,7 @@ public class AuthService {
     private final NhanVienRepository nhanVienRepository;
     private final KhachHangRepository khachHangRepository;
     private final CongTacVienRepository congTacVienRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(
             TaiKhoanRepository taiKhoanRepository,
@@ -29,6 +33,7 @@ public class AuthService {
         this.nhanVienRepository = nhanVienRepository;
         this.khachHangRepository = khachHangRepository;
         this.congTacVienRepository = congTacVienRepository;
+        this.passwordEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();   
     }
 
     public AuthenticationResult authenticate(String tenDangNhap, String matKhau) {
@@ -126,8 +131,22 @@ public class AuthService {
     }
 
     private boolean passwordMatches(String input, String storedPassword) {
-        return storedPassword != null && MessageDigest.isEqual(
-                input.getBytes(StandardCharsets.UTF_8), storedPassword.getBytes(StandardCharsets.UTF_8));
+        if (storedPassword == null || input == null) {
+            return false;
+        }
+        // 1. Nếu mật khẩu trong CSDL đã được mã hóa bằng BCrypt (bắt đầu bằng $2a$, $2b$, $2y$)
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+            try {
+                if (passwordEncoder.matches(input, storedPassword)) {
+                    return true;
+                }
+            } catch (Exception ignored) {}
+        }
+        // 2. Tương thích ngược: Mật khẩu cũ lưu dạng thường (plaintext)
+        return MessageDigest.isEqual(
+                input.getBytes(StandardCharsets.UTF_8),
+                storedPassword.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private boolean isBlank(String value) { return value == null || value.isBlank(); }
