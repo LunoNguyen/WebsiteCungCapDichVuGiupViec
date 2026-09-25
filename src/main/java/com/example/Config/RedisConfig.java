@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -60,23 +59,24 @@ public class RedisConfig {
 
     // ── Redis Serializer ──────────────────────────────────────────────────
     @Bean(name = "redisSerializer")
-    public GenericJackson2JsonRedisSerializer redisSerializer() {
-        return new GenericJackson2JsonRedisSerializer(redisObjectMapper());
+    public GenericJackson2JsonRedisSerializer redisSerializer(ObjectMapper redisObjectMapper) {
+        return new GenericJackson2JsonRedisSerializer(redisObjectMapper);
     }
 
     // ── RedisTemplate ─────────────────────────────────────────────────────
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(
+            RedisConnectionFactory connectionFactory,
+            GenericJackson2JsonRedisSerializer redisSerializer) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
         StringRedisSerializer keySerializer = new StringRedisSerializer();
-        GenericJackson2JsonRedisSerializer valueSerializer = redisSerializer();
 
         template.setKeySerializer(keySerializer);
-        template.setValueSerializer(valueSerializer);
+        template.setValueSerializer(redisSerializer);
         template.setHashKeySerializer(keySerializer);
-        template.setHashValueSerializer(valueSerializer);
+        template.setHashValueSerializer(redisSerializer);
         template.afterPropertiesSet();
 
         log.info("Redis: RedisTemplate đã cấu hình - {}:{}", redisHost, redisPort);
@@ -85,7 +85,9 @@ public class RedisConfig {
 
     // ── CacheManager với TTL theo từng cache ─────────────────────────────
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    public CacheManager cacheManager(
+            RedisConnectionFactory connectionFactory,
+            GenericJackson2JsonRedisSerializer redisSerializer) {
 
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))          // TTL mặc định: 10 phút
@@ -95,7 +97,7 @@ public class RedisConfig {
                                 .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair
-                                .fromSerializer(redisSerializer()));
+                                .fromSerializer(redisSerializer));
 
         // TTL tuỳ chỉnh theo từng cache name
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();

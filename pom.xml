@@ -88,13 +88,19 @@
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
 
+		<!-- Commons Pool2 – required for Lettuce connection pool -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+		</dependency>
+
 		<!-- Jackson – Redis serialization -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
-		<!-- Jackson JSR310 – Java 8 Date/Time support (LocalDate, LocalDateTime...) -->
+		<!-- Jackson Java 8 Time – required for JavaTimeModule in RedisConfig -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
