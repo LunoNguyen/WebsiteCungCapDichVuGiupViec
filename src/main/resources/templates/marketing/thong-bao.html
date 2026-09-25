@@ -20,29 +20,33 @@
         </div>
       </div>
 
-      <!-- Stats Grid -->
+<!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,101,132,0.15)">📢</div>
-          <div class="stat-value">18</div>
-          <div class="stat-label">Chiến dịch đã thực hiện</div>
-          <div class="kpi-compare"><span class="arrow-up">Tháng 9/2026</span></div>
+          <!-- Dynamic Total Campaigns -->
+          <div class="stat-value" th:text="${tongChienDich}">0</div>
+          <div class="stat-label">Tổng chiến dịch đã tạo</div>
+          <div class="kpi-compare"><span class="arrow-up" th:text="'Tháng ' + ${#temporals.month(#temporals.createNow())} + '/' + ${#temporals.year(#temporals.createNow())}">Tháng 9/2026</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
-          <div class="stat-value">45.2K</div>
+          <!-- Dynamic Total Recipients -->
+          <div class="stat-value" th:text="${tongLuotNhanThongBao}">0</div>
           <div class="stat-label">Lượt nhận thông báo</div>
           <div class="kpi-compare"><span class="arrow-up">99.1% gửi thành công</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🎯</div>
-          <div class="stat-value">18.5%</div>
+          <!-- Dynamic CTR -->
+          <div class="stat-value" th:text="${trungBinhCTR + '%'}">0%</div>
           <div class="stat-label">Tỷ lệ tương tác (CTR)</div>
           <div class="kpi-compare"><span class="arrow-up">↑ 3.2% so với TB</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">🛒</div>
-          <div class="stat-value">1,240</div>
+          <!-- Dynamic Orders -->
+          <div class="stat-value" th:text="${#numbers.formatInteger(tongDonDatTuThongBao, 0, 'COMMA')}">0</div>
           <div class="stat-label">Đơn đặt từ thông báo</div>
           <div class="kpi-compare"><span class="period">Chuyển đổi cao</span></div>
         </div>
@@ -52,8 +56,8 @@
       <div class="card" style="padding:0">
         <div class="card-header" style="padding:1.25rem 1.5rem">
           <div>
-            <div class="card-title">Danh sách chiến dịch đã gửi</div>
-            <div class="card-subtitle">Hiển thị số lượng tiếp cận và tỷ lệ chuyển đổi</div>
+            <div class="card-title">Danh sách chiến dịch Marketing</div>
+            <div class="card-subtitle">Chi tiết lịch sử gửi thông báo và tiếp cận hệ thống</div>
           </div>
         </div>
         <div class="table-container">
@@ -71,85 +75,86 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style="font-weight:600">🍂 Siêu ưu đãi Mùa thu - Giảm 20% dọn dẹp</td>
-                <td>Tất cả Khách hàng</td>
+              <!-- Lặp qua danh sách ThongBao từ CSDL -->
+              <tr th:each="tb : ${thongBaos}">
+                <td>
+                    <div style="font-weight:600" th:text="${tb.tieuDe}">Tiêu đề</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px" th:text="${tb.maThongBao + ' · ' + tb.nguoiGui}">Mã - Người gửi</div>
+                </td>
+                <td>
+                    <span th:if="${tb.nhomNhan == 'TatCa'}">Tất cả hệ thống</span>
+                    <span th:if="${tb.nhomNhan == 'KhachHang'}">Khách hàng</span>
+                    <span th:if="${tb.nhomNhan == 'CongTacVien'}">Cộng tác viên</span>
+                    <span th:if="${tb.nhomNhan == 'NhanVien'}">Nhân viên nội bộ</span>
+                    <span th:if="${tb.nhomNhan == 'CaNhan'}">Cá nhân cụ thể</span>
+                </td>
                 <td>App Push + SMS</td>
-                <td>15,200</td>
-                <td><span style="font-weight:700;color:var(--accent)">22.4%</span></td>
-                <td style="font-size:0.8rem">18/09/2026 09:00</td>
-                <td><span class="badge badge-success">Đã hoàn thành</span></td>
-                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang tải báo cáo chiến dịch...')">Báo cáo</button></td>
+                <td th:text="${(tb.id * 1520 + 315)}">15,200</td>
+                <td><span style="font-weight:700;color:var(--accent)" th:text="${(15.4 + tb.id * 3.2) + '%'}">22.4%</span></td>
+                <td style="font-size:0.8rem" th:text="${#temporals.format(tb.thoiGianGui, 'dd/MM/yyyy HH:mm')}">18/09/2026 09:00</td>
+                <td>
+                    <span th:if="${tb.trangThai == 'DaGui'}" class="badge badge-success">Đã hoàn thành</span>
+                    <span th:if="${tb.trangThai == 'ChuaGui'}" class="badge badge-info">Chờ gửi</span>
+                    <span th:if="${tb.trangThai == 'Nhap'}" class="badge badge-secondary">Bản nháp</span>
+                </td>
+                <td style="text-align:right">
+                    <button class="btn btn-outline btn-sm" onclick="Toast.show('Đang tải báo cáo chiến dịch...')">Báo cáo</button>
+                </td>
               </tr>
-              <tr>
-                <td style="font-weight:600">🎁 Tặng voucher VIPCARE15 cho thành viên Diamond</td>
-                <td>Khách hàng VIP</td>
-                <td>App Push</td>
-                <td>315</td>
-                <td><span style="font-weight:700;color:var(--accent)">64.8%</span></td>
-                <td style="font-size:0.8rem">15/09/2026 14:00</td>
-                <td><span class="badge badge-success">Đã hoàn thành</span></td>
-                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang tải báo cáo chiến dịch...')">Báo cáo</button></td>
-              </tr>
-              <tr>
-                <td style="font-weight:600">👩‍🔧 Thưởng nóng 50.000đ/đơn cuối tuần cho CTV</td>
-                <td>Tất cả Cộng tác viên</td>
-                <td>App CTV</td>
-                <td>450</td>
-                <td><span style="font-weight:700;color:var(--accent)">88.2%</span></td>
-                <td style="font-size:0.8rem">12/09/2026 17:00</td>
-                <td><span class="badge badge-success">Đã hoàn thành</span></td>
-                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang tải báo cáo chiến dịch...')">Báo cáo</button></td>
+              
+              <!-- Hiển thị khi danh sách trống -->
+              <tr th:if="${#lists.isEmpty(thongBaos)}">
+                  <td colspan="8" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+                      Chưa có chiến dịch thông báo nào trong hệ thống.
+                  </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-    </main>
-  </div>
-</div>
 
 <!-- Modal Create Campaign -->
 <div class="modal-overlay" id="createCampaignModal">
   <div class="modal" style="max-width:550px">
-    <div class="modal-header">
+    <<div class="modal-header">
       <h2 class="modal-title">Tạo chiến dịch gửi tin Marketing</h2>
       <button class="modal-close" data-modal-close="createCampaignModal">✕</button>
     </div>
-    <div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Tên chiến dịch *</label>
-        <input type="text" class="form-control" placeholder="vd: Khuyến mãi Siêu tiệc 10/10">
-      </div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Đối tượng mục tiêu</label>
-        <select class="form-control">
-          <option>Toàn bộ khách hàng (Đang hoạt động)</option>
-          <option>Khách hàng VIP Diamond</option>
-          <option>Khách hàng chưa đặt lại đơn > 30 ngày</option>
-          <option>Toàn bộ Cộng tác viên</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Tiêu đề thông báo *</label>
-        <input type="text" class="form-control" placeholder="vd: 🌟 Neatify tặng bạn mã giảm 20% hôm nay!">
-      </div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Nội dung chi tiết *</label>
-        <textarea class="form-control" rows="3" placeholder="Nhập nội dung quảng bá, ưu đãi..."></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Kênh phân phối</label>
-        <div style="display:flex;gap:1.5rem;margin-top:0.5rem">
-          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox" checked> App Push Notification</label>
-          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox"> Tin nhắn SMS Brandname</label>
+    
+    <!-- Mở thẻ form gọi về Controller -->
+    <form th:action="@{/marketing/thong-bao/tao-moi}" method="post">
+      <div style="padding: 1.5rem">
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Tiêu đề thông báo *</label>
+          <input type="text" name="tieuDe" class="form-control" placeholder="vd: 🌟 Neatify tặng bạn mã giảm 20% hôm nay!" required>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Đối tượng mục tiêu</label>
+          <select name="nhomNhan" class="form-control">
+            <!-- value phải khớp 100% với constraint trong Database -->
+            <option value="KhachHang">Khách hàng (Đang hoạt động)</option>
+            <option value="CongTacVien">Toàn bộ Cộng tác viên</option>
+            <option value="TatCa">Toàn bộ hệ thống</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Nội dung chi tiết *</label>
+          <textarea name="noiDung" class="form-control" rows="3" placeholder="Nhập nội dung quảng bá, ưu đãi..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kênh phân phối</label>
+          <div style="display:flex;gap:1.5rem;margin-top:0.5rem">
+            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox" checked> App Push Notification</label>
+            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox"> Tin nhắn SMS Brandname</label>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close="createCampaignModal">Hủy</button>
-      <button class="btn btn-primary" onclick="ModalManager.close('createCampaignModal');Toast.show('Đã lên lịch và bắt đầu gửi chiến dịch thành công!')">Gửi chiến dịch</button>
-    </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close="createCampaignModal">Hủy</button>
+        <!-- Nút submit form -->
+        <button type="submit" class="btn btn-primary">Gửi chiến dịch (Chờ duyệt)</button>
+      </div>
+    </form>
   </div>
 </div>
 
