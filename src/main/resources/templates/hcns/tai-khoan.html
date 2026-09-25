@@ -1,25 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout/admin-layout :: adminHead('Quản lý Tài khoản – HCNS')}"></head>
-<style>
-  .acc-type-btn {
-    transition: all 0.2s ease;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-  }
-  .acc-type-btn.active {
-    background: var(--primary) !important;
-    color: #fff !important;
-    border-color: var(--primary) !important;
-    box-shadow: 0 4px 10px rgba(13, 155, 163, 0.25);
-  }
-  .person-item:hover {
-    background: rgba(13, 155, 163, 0.07) !important;
-  }
-</style>
 <body>
 <div class="app-shell">
   <aside th:replace="~{layout/admin-layout :: adminSidebar('hcns', 'tai-khoan')}"></aside>
@@ -29,21 +10,13 @@
 
     <main class="page-content">
 
-      <!-- Thông báo flash -->
-      <div th:if="${successMessage}" class="alert alert-success" style="margin-bottom:1rem;padding:0.75rem 1.25rem;border-radius:8px;background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;gap:0.5rem;font-weight:500">
-        <i class="ti ti-circle-check" style="font-size:1.2rem"></i> <span th:text="${successMessage}"></span>
-      </div>
-      <div th:if="${errorMessage}" class="alert alert-danger" style="margin-bottom:1rem;padding:0.75rem 1.25rem;border-radius:8px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;gap:0.5rem;font-weight:500">
-        <i class="ti ti-alert-circle" style="font-size:1.2rem"></i> <span th:text="${errorMessage}"></span>
-      </div>
-
       <div class="page-header">
         <div class="page-title-group">
           <h1 class="page-title">Quản lý Tài khoản Hệ thống</h1>
-          <p class="page-subtitle">Cấp phát tài khoản cho Nhân viên, CTV, Khách hàng với bảo mật mã hóa mật khẩu BCrypt</p>
+          <p class="page-subtitle">Cấp phát, phân quyền, đặt lại mật khẩu và kiểm soát truy cập nhân viên & CTV</p>
         </div>
         <div class="page-actions">
-          <button class="btn btn-primary btn-sm" onclick="openCreateModal()"><i class="ti ti-plus"></i> Cấp tài khoản mới</button>
+          <button class="btn btn-primary btn-sm" data-modal-open="createAccountModal"><i class="ti ti-plus"></i> Cấp tài khoản mới</button>
         </div>
       </div>
 
@@ -51,27 +24,27 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
-          <div class="stat-value" th:text="${tongTaiKhoan != null ? tongTaiKhoan : 0}">0</div>
+          <div class="stat-value" th:attr="data-count=${taiKhoans != null ? #lists.size(taiKhoans) : 0}" th:text="${taiKhoans != null ? #lists.size(taiKhoans) : 0}">0</div>
           <div class="stat-label">Tổng tài khoản</div>
           <div class="kpi-compare"><span class="arrow-up">Toàn hệ thống</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🏢</div>
-          <div class="stat-value" th:text="${countNoiBo != null ? countNoiBo : 0}">0</div>
-          <div class="stat-label">Tài khoản Nhân viên</div>
-          <div class="kpi-compare"><span class="period">Nội bộ công ty</span></div>
+          <div class="stat-value" data-count="4">4</div>
+          <div class="stat-label">Tài khoản Nội bộ</div>
+          <div class="kpi-compare"><span class="period">Giám đốc, Hành chính Nhân sự, Chăm sóc Khách hàng, Marketing</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🌟</div>
-          <div class="stat-value" th:text="${countCTV != null ? countCTV : 0}">0</div>
+          <div class="stat-value" data-count="10">10</div>
           <div class="stat-label">Tài khoản Cộng tác viên</div>
-          <div class="kpi-compare"><span class="arrow-up">Đội ngũ giúp việc</span></div>
+          <div class="kpi-compare"><span class="arrow-up">Đang hoạt động</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,71,87,0.15)">🔒</div>
-          <div class="stat-value" th:text="${countBiKhoa != null ? countBiKhoa : 0}">0</div>
+          <div class="stat-value" data-count="0">0</div>
           <div class="stat-label">Tài khoản tạm khóa</div>
-          <div class="kpi-compare"><span style="color:var(--warning)">Bị vô hiệu hóa</span></div>
+          <div class="kpi-compare"><span style="color:var(--success)">Bình thường</span></div>
         </div>
       </div>
 
@@ -79,18 +52,18 @@
       <div class="filter-bar">
         <div class="search-box">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" id="accountSearchInput" class="form-control" placeholder="Tìm theo tên đăng nhập, họ tên, email, SĐT...">
+          <input type="text" class="form-control" placeholder="Tìm theo tên đăng nhập, email, số điện thoại...">
         </div>
         <select class="filter-select" id="roleFilter">
           <option value="">Tất cả loại tài khoản</option>
-          <option value="NhanVien">Nhân viên nội bộ</option>
-          <option value="CongTacVien">Cộng tác viên</option>
-          <option value="KhachHang">Khách hàng</option>
+          <option value="NV">Nhân viên nội bộ</option>
+          <option value="CTV">Cộng tác viên</option>
+          <option value="KH">Khách hàng</option>
         </select>
         <select class="filter-select" id="statusFilter">
           <option value="">Tất cả trạng thái</option>
-          <option value="HoatDong">Đang hoạt động</option>
-          <option value="BiKhoa">Đang bị khóa</option>
+          <option value="ACTIVE">Đang hoạt động</option>
+          <option value="LOCKED">Đang bị khóa</option>
         </select>
       </div>
 
@@ -99,108 +72,63 @@
         <div class="card-header" style="padding:1.25rem 1.5rem">
           <div>
             <div class="card-title">Danh sách tài khoản</div>
-            <div class="card-subtitle">Hiển thị thông tin phân quyền, thông tin người sở hữu và bảo mật mật khẩu BCrypt</div>
+            <div class="card-subtitle">Hiển thị thông tin phân quyền và tình trạng đăng nhập</div>
           </div>
-          <div style="font-size:0.85rem;color:var(--text-muted)">
-            <i class="ti ti-shield-check" style="color:var(--primary)"></i> Mật khẩu được mã hóa chuẩn BCrypt một chiều
-          </div>
+          <button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xuất danh sách tài khoản...')"><i class="ti ti-download"></i> Xuất Excel</button>
         </div>
         <div class="table-container">
           <table class="table" id="accountTable">
             <thead>
               <tr>
-                <th>STT</th>
                 <th>Tên đăng nhập</th>
-                <th>Họ và tên sở hữu</th>
+                <th>Họ và tên</th>
                 <th>Phân quyền / Loại</th>
                 <th>Email / SĐT</th>
-                <th>Bảo mật Mật khẩu</th>
                 <th>Ngày tạo</th>
+                <th>Đăng nhập cuối</th>
                 <th>Trạng thái</th>
                 <th style="text-align:right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              <tr th:each="tk, iter : ${taiKhoans}" class="account-row"
-                  th:attr="data-username=${tk.tenDangNhap},data-role=${tk.loaiTaiKhoan},data-status=${tk.trangThai},data-owner=${ownerNames != null and ownerNames.containsKey(tk.id) ? ownerNames.get(tk.id) : ''},data-email=${tk.email},data-phone=${tk.soDienThoai}">
-                <td style="font-weight:600;color:var(--text-muted)" th:text="${iter.count}">1</td>
-                <td style="font-weight:700;color:var(--primary-dark)">
-                  <div style="display:flex;align-items:center;gap:0.4rem">
-                    <i class="ti ti-user-check" style="color:var(--primary)"></i>
-                    <span th:text="${tk.tenDangNhap}">admin</span>
-                  </div>
-                </td>
+              <tr th:each="tk : ${taiKhoans}">
+                <td style="font-weight:700;color:var(--primary-light)" th:text="${tk.tenDangNhap}">admin</td>
                 <td>
                   <div class="user-cell">
-                    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#0d9ba3,#08747a);color:#fff;font-weight:700" 
-                         th:text="${ownerNames != null and ownerNames.containsKey(tk.id) ? #strings.substring(ownerNames.get(tk.id), 0, 1) : (#strings.toUpperCase(#strings.substring(tk.tenDangNhap, 0, 1)))}">U</div>
+                    <div class="avatar avatar-sm" th:text="${tk.tenDangNhap != null and !tk.tenDangNhap.isEmpty() ? #strings.toUpperCase(#strings.substring(tk.tenDangNhap, 0, 1)) : 'U'}">U</div>
                     <div class="user-cell-info">
-                      <div class="name" style="font-weight:600" th:text="${ownerNames != null and ownerNames.containsKey(tk.id) ? ownerNames.get(tk.id) : '(Chưa liên kết hồ sơ)'}">Nguyễn Văn A</div>
-                      <div class="sub">
-                        <span th:if="${ownerCodes != null and ownerCodes.containsKey(tk.id)}" class="badge badge-outline" style="font-size:0.7rem;padding:2px 6px" th:text="${ownerCodes.get(tk.id)}">NV001</span>
-                        <span style="font-size:0.75rem;color:var(--text-muted)" th:text="${tk.maTaiKhoan}">TK-xxx</span>
-                      </div>
+                      <div class="name" th:text="${tk.tenDangNhap}">admin</div>
+                      <div class="sub" th:text="${tk.maTaiKhoan != null ? tk.maTaiKhoan : ''}">Mã TK</div>
                     </div>
                   </div>
                 </td>
                 <td>
-                  <span th:if="${tk.loaiTaiKhoan == 'NhanVien'}" class="badge badge-primary"><i class="ti ti-id-badge-2"></i> Nhân viên</span>
-                  <span th:if="${tk.loaiTaiKhoan == 'CongTacVien'}" class="badge badge-success"><i class="ti ti-users"></i> Cộng tác viên</span>
-                  <span th:if="${tk.loaiTaiKhoan == 'KhachHang'}" class="badge badge-secondary"><i class="ti ti-user-star"></i> Khách hàng</span>
+                  <span th:if="${tk.loaiTaiKhoan == 'NhanVien'}" class="badge badge-primary">Nhân viên</span>
+                  <span th:if="${tk.loaiTaiKhoan == 'CongTacVien'}" class="badge badge-success">Cộng tác viên</span>
+                  <span th:if="${tk.loaiTaiKhoan == 'KhachHang'}" class="badge badge-secondary">Khách hàng</span>
                   <span th:if="${tk.loaiTaiKhoan != 'NhanVien' and tk.loaiTaiKhoan != 'CongTacVien' and tk.loaiTaiKhoan != 'KhachHang'}" class="badge badge-info" th:text="${tk.loaiTaiKhoan}">Khác</span>
                 </td>
                 <td>
-                  <div style="font-weight:500;font-size:0.875rem" th:text="${tk.email != null ? tk.email : '---'}">user@neatify.vn</div>
+                  <div th:text="${tk.email != null ? tk.email : '---'}">user@neatify.vn</div>
                   <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${tk.soDienThoai != null ? tk.soDienThoai : ''}">0900000000</div>
                 </td>
+                <td style="font-size:0.8rem" th:text="${tk.ngayTao != null ? #temporals.format(tk.ngayTao, 'dd/MM/yyyy') : '---'}">01/01/2026</td>
+                <td style="font-size:0.8rem">Gần đây</td>
                 <td>
-                  <span class="badge" style="background:rgba(13,155,163,0.12);color:var(--primary-dark);font-family:monospace;font-size:0.75rem;padding:4px 8px;border-radius:4px;border:1px solid rgba(13,155,163,0.25)">
-                    <i class="ti ti-lock"></i> BCrypt Encrypted
-                  </span>
-                </td>
-                <td style="font-size:0.8rem;color:var(--text-muted)" th:text="${tk.ngayTao != null ? #temporals.format(tk.ngayTao, 'dd/MM/yyyy HH:mm') : '---'}">01/01/2026</td>
-                <td>
-                  <span th:if="${tk.trangThai == 'HoatDong'}" class="badge badge-success"><i class="ti ti-check"></i> Hoạt động</span>
-                  <span th:if="${tk.trangThai == 'BiKhoa'}" class="badge badge-danger"><i class="ti ti-lock"></i> Đã khóa</span>
-                  <span th:if="${tk.trangThai != 'HoatDong' and tk.trangThai != 'BiKhoa'}" class="badge badge-warning" th:text="${tk.trangThai}">Khác</span>
+                  <span th:if="${tk.trangThai == 'HoatDong'}" class="badge badge-success">Hoạt động</span>
+                  <span th:if="${tk.trangThai == 'BiKhoa'}" class="badge badge-danger">Đã khóa</span>
+                  <span th:if="${tk.trangThai != 'HoatDong' and tk.trangThai != 'BiKhoa'}" class="badge badge-warning" th:text="${tk.trangThai}">Chờ duyệt</span>
                 </td>
                 <td>
-                  <div class="table-actions" style="justify-content:flex-end">
-                    <!-- Sửa tài khoản -->
-                    <button class="btn btn-outline btn-sm" title="Chỉnh sửa thông tin & Đổi mật khẩu"
-                            th:attr="data-id=${tk.id},data-username=${tk.tenDangNhap},data-email=${tk.email},data-phone=${tk.soDienThoai},data-role=${tk.loaiTaiKhoan},data-owner=${ownerNames != null and ownerNames.containsKey(tk.id) ? ownerNames.get(tk.id) : tk.tenDangNhap}"
-                            onclick="openEditAccountModal(this)">
-                      <i class="ti ti-edit"></i>
-                    </button>
-
-                    <!-- Khóa / Mở khóa -->
-                    <form th:if="${tk.trangThai == 'HoatDong'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn KHÓA tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
-                      <input type="hidden" name="id" th:value="${tk.id}">
-                      <input type="hidden" name="trangThai" value="BiKhoa">
-                      <button type="submit" class="btn btn-outline btn-sm" title="Khóa tài khoản" style="color:var(--warning);border-color:var(--warning)">
-                        <i class="ti ti-lock"></i>
-                      </button>
-                    </form>
-                    <form th:if="${tk.trangThai == 'BiKhoa'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn MỞ KHÓA tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
-                      <input type="hidden" name="id" th:value="${tk.id}">
-                      <input type="hidden" name="trangThai" value="HoatDong">
-                      <button type="submit" class="btn btn-success btn-sm" title="Mở khóa tài khoản">
-                        <i class="ti ti-lock-open"></i>
-                      </button>
-                    </form>
-
-                    <!-- Xóa tài khoản -->
-                    <form th:action="@{/hcns/tai-khoan/xoa}" method="post" style="display:inline" onsubmit="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn XÓA vĩnh viễn tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '? Thao tác này sẽ gỡ liên kết khỏi hồ sơ nhân sự!');">
-                      <input type="hidden" name="id" th:value="${tk.id}">
-                      <button type="submit" class="btn btn-danger btn-sm" title="Xóa tài khoản">
-                        <i class="ti ti-trash"></i>
-                      </button>
-                    </form>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" title="Đổi mật khẩu" onclick="Toast.show('Đã gửi liên kết đổi mật khẩu!', 'success')"><i class="ti ti-key"></i></button>
+                    <button th:if="${tk.trangThai == 'HoatDong'}" class="btn btn-outline btn-sm" title="Khóa tài khoản" onclick="Toast.show('Đã khóa tài khoản!', 'warning')"><i class="ti ti-lock"></i></button>
+                    <button th:if="${tk.trangThai == 'BiKhoa'}" class="btn btn-success btn-sm" title="Mở khóa tài khoản" onclick="Toast.show('Đã mở khóa tài khoản!', 'success')"><i class="ti ti-lock-open"></i></button>
                   </div>
                 </td>
               </tr>
               <tr th:if="${taiKhoans == null or #lists.isEmpty(taiKhoans)}">
-                <td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem">Chưa có tài khoản nào trong hệ thống</td>
+                <td colspan="8" style="text-align:center;color:var(--text-muted)">Không có tài khoản nào trong hệ thống</td>
               </tr>
             </tbody>
           </table>
@@ -210,496 +138,79 @@
   </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- Modal Cấp tài khoản mới (Chọn người có sẵn -> Tự điền thông tin -> Đặt User/Pass) -->
-<!-- ========================================================================= -->
+<!-- Modal Create Account -->
 <div class="modal-overlay" id="createAccountModal">
-  <div class="modal" style="max-width:620px">
+  <div class="modal" style="max-width:550px">
     <div class="modal-header">
-      <h2 class="modal-title"><i class="ti ti-user-plus" style="color:var(--primary)"></i> Cấp tài khoản mới</h2>
+      <h2 class="modal-title">Cấp tài khoản mới</h2>
       <button class="modal-close" data-modal-close="createAccountModal">✕</button>
     </div>
-    <form th:action="@{/hcns/tai-khoan/them}" method="post" id="createAccountForm" onsubmit="return validateCreateForm()">
-      <!-- Hidden ID người được chọn -->
-      <input type="hidden" name="targetPersonId" id="targetPersonId" value="">
-
-      <div style="padding:1.25rem 1.5rem">
-        <!-- Bước 1: Chọn đối tượng -->
-        <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label" style="font-weight:700">1. Chọn đối tượng cấp tài khoản</label>
-          <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:0.5rem">
-            <button type="button" class="btn btn-outline acc-type-btn active" id="btnTypeNV" onclick="switchAccType('NhanVien')">
-              <i class="ti ti-id-badge-2"></i> Nhân viên
-            </button>
-            <button type="button" class="btn btn-outline acc-type-btn" id="btnTypeCTV" onclick="switchAccType('CongTacVien')">
-              <i class="ti ti-users"></i> Cộng tác viên
-            </button>
-            <button type="button" class="btn btn-outline acc-type-btn" id="btnTypeKH" onclick="switchAccType('KhachHang')">
-              <i class="ti ti-user-star"></i> Khách hàng
-            </button>
-          </div>
-          <input type="hidden" name="loaiTaiKhoan" id="inputLoaiTaiKhoan" value="NhanVien">
+    <div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Loại tài khoản</label>
+        <select class="form-control" id="newAccType">
+          <option value="NV">Nhân viên nội bộ</option>
+          <option value="CTV">Cộng tác viên (CTV)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tên đăng nhập *</label>
+          <input type="text" class="form-control" placeholder="vd: huonglt">
         </div>
-
-        <!-- Bước 2: Tìm & Tích chọn người có sẵn -->
-        <div class="form-group" style="margin-bottom:1.25rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
-            <label class="form-label" style="font-weight:700;margin:0">2. Tìm & Tích chọn người có sẵn trong hệ thống</label>
-            <span style="font-size:0.75rem;color:var(--primary);font-weight:500">Tích chọn để tự điền thông tin</span>
-          </div>
-          <div style="position:relative;margin-bottom:0.5rem">
-            <i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
-            <input type="text" id="personSearchInput" class="form-control" style="padding-left:2.2rem;font-size:0.875rem" placeholder="Nhập tên, mã hoặc SĐT để tìm nhanh...">
-          </div>
-
-          <!-- Danh sách người cuộn -->
-          <div id="personListContainer" style="max-height:190px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px;padding:0.35rem;background:var(--bg-light)">
-            <!-- Nhân viên -->
-            <div th:each="nv : ${nhanViens}" class="person-item person-type-NhanVien"
-                 th:attr="data-id=${nv.id},data-type='NhanVien',data-name=${nv.hoTen},data-code=${nv.maNhanVien},data-email=${nv.email != null ? nv.email : ''},data-phone=${nv.soDienThoai != null ? nv.soDienThoai : ''},data-has-acc=${nv.taiKhoan != null ? 'true' : 'false'},data-username=${nv.taiKhoan != null ? nv.taiKhoan.tenDangNhap : ''}"
-                 onclick="selectPersonItem(this)"
-                 style="padding:0.6rem 0.75rem;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,0.05);transition:all 0.15s">
-              <div style="display:flex;align-items:center;gap:0.7rem">
-                <input type="radio" name="personRadio" class="person-radio-input" style="cursor:pointer;pointer-events:none">
-                <div>
-                  <div style="font-weight:600;font-size:0.875rem;color:var(--text-main)">
-                    <span th:text="${nv.hoTen}">Nguyễn Văn A</span>
-                    <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400" th:text="'(' + ${nv.maNhanVien} + ')'"></span>
-                  </div>
-                  <div style="font-size:0.75rem;color:var(--text-muted)">
-                    <i class="ti ti-phone"></i> <span th:text="${nv.soDienThoai}">0900000000</span> • <i class="ti ti-mail"></i> <span th:text="${nv.email}">nv@neatify.vn</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <span th:if="${nv.taiKhoan == null}" class="badge badge-success" style="font-size:0.7rem">Chưa có TK</span>
-                <span th:if="${nv.taiKhoan != null}" class="badge badge-secondary" style="font-size:0.7rem" th:text="'Đã có: ' + ${nv.taiKhoan.tenDangNhap}"></span>
-              </div>
-            </div>
-
-            <!-- Cộng tác viên -->
-            <div th:each="ctv : ${congTacViens}" class="person-item person-type-CongTacVien"
-                 th:attr="data-id=${ctv.id},data-type='CongTacVien',data-name=${ctv.hoTen},data-code=${ctv.maCongTacVien},data-email='',data-phone=${ctv.soDienThoai != null ? ctv.soDienThoai : ''},data-has-acc=${ctv.taiKhoan != null ? 'true' : 'false'},data-username=${ctv.taiKhoan != null ? ctv.taiKhoan.tenDangNhap : ''}"
-                 onclick="selectPersonItem(this)"
-                 style="display:none;padding:0.6rem 0.75rem;border-radius:6px;cursor:pointer;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,0.05);transition:all 0.15s">
-              <div style="display:flex;align-items:center;gap:0.7rem">
-                <input type="radio" name="personRadio" class="person-radio-input" style="cursor:pointer;pointer-events:none">
-                <div>
-                  <div style="font-weight:600;font-size:0.875rem;color:var(--text-main)">
-                    <span th:text="${ctv.hoTen}">Trần Thị B</span>
-                    <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400" th:text="'(' + ${ctv.maCongTacVien} + ')'"></span>
-                  </div>
-                  <div style="font-size:0.75rem;color:var(--text-muted)">
-                    <i class="ti ti-phone"></i> <span th:text="${ctv.soDienThoai}">0900000000</span> • <span th:text="${ctv.noiCuTru}">Địa chỉ</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <span th:if="${ctv.taiKhoan == null}" class="badge badge-success" style="font-size:0.7rem">Chưa có TK</span>
-                <span th:if="${ctv.taiKhoan != null}" class="badge badge-secondary" style="font-size:0.7rem" th:text="'Đã có: ' + ${ctv.taiKhoan.tenDangNhap}"></span>
-              </div>
-            </div>
-
-            <!-- Khách hàng -->
-            <div th:each="kh : ${khachHangs}" class="person-item person-type-KhachHang"
-                 th:attr="data-id=${kh.id},data-type='KhachHang',data-name=${kh.hoTen},data-code=${kh.maKhachHang},data-email=${kh.email != null ? kh.email : ''},data-phone=${kh.soDienThoai != null ? kh.soDienThoai : ''},data-has-acc=${kh.taiKhoan != null ? 'true' : 'false'},data-username=${kh.taiKhoan != null ? kh.taiKhoan.tenDangNhap : ''}"
-                 onclick="selectPersonItem(this)"
-                 style="display:none;padding:0.6rem 0.75rem;border-radius:6px;cursor:pointer;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,0.05);transition:all 0.15s">
-              <div style="display:flex;align-items:center;gap:0.7rem">
-                <input type="radio" name="personRadio" class="person-radio-input" style="cursor:pointer;pointer-events:none">
-                <div>
-                  <div style="font-weight:600;font-size:0.875rem;color:var(--text-main)">
-                    <span th:text="${kh.hoTen}">Lê Văn C</span>
-                    <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400" th:text="'(' + ${kh.maKhachHang} + ')'"></span>
-                  </div>
-                  <div style="font-size:0.75rem;color:var(--text-muted)">
-                    <i class="ti ti-phone"></i> <span th:text="${kh.soDienThoai}">0900000000</span> • <i class="ti ti-mail"></i> <span th:text="${kh.email != null ? kh.email : 'Chưa có email'}">kh@gmail.com</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <span th:if="${kh.taiKhoan == null}" class="badge badge-success" style="font-size:0.7rem">Chưa có TK</span>
-                <span th:if="${kh.taiKhoan != null}" class="badge badge-secondary" style="font-size:0.7rem" th:text="'Đã có: ' + ${kh.taiKhoan.tenDangNhap}"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Thông tin tự động điền từ người được chọn -->
-        <div style="background:rgba(13,155,163,0.06);border:1px dashed var(--primary);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem">
-          <div style="font-size:0.8rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem">
-            <i class="ti ti-id"></i> Thông tin tự động lấy từ hồ sơ (được tích chọn):
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="margin-bottom:0.5rem">
-              <label class="form-label" style="font-size:0.8rem">Họ và tên</label>
-              <input type="text" class="form-control" id="selectedPersonName" placeholder="Tự điền khi tích chọn ở trên..." readonly style="background:#fff;font-weight:600">
-            </div>
-            <div class="form-group" style="margin-bottom:0.5rem">
-              <label class="form-label" style="font-size:0.8rem">Số điện thoại *</label>
-              <input type="tel" name="soDienThoai" id="createPhone" class="form-control" placeholder="Tự điền SĐT..." required style="background:#fff">
-            </div>
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label" style="font-size:0.8rem">Email *</label>
-            <input type="email" name="email" id="createEmail" class="form-control" placeholder="Tự điền hoặc nhập email..." required style="background:#fff">
-          </div>
-        </div>
-
-        <!-- Bước 3: Điền tên đăng nhập & mật khẩu (Được mã hóa BCrypt) -->
-        <div style="border-top:1px solid var(--border-color);padding-top:1rem">
-          <div style="font-size:0.85rem;font-weight:700;color:var(--text-main);margin-bottom:0.75rem">
-            3. Thiết lập thông tin Đăng nhập & Mật khẩu
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Tên đăng nhập *</label>
-              <div style="position:relative">
-                <i class="ti ti-user" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
-                <input type="text" name="tenDangNhap" id="createUsername" class="form-control" style="padding-left:2.2rem;font-weight:600" placeholder="vd: nguyenhoa" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Mật khẩu khởi tạo *</label>
-              <div style="position:relative">
-                <i class="ti ti-key" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
-                <input type="password" name="matKhau" id="createPassword" class="form-control" style="padding-left:2.2rem;padding-right:2.5rem" placeholder="Tối thiểu 6 ký tự" required value="Neatify@2026">
-                <button type="button" onclick="togglePassVisibility('createPassword', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
-                  <i class="ti ti-eye"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Ghi chú bảo mật BCrypt -->
-          <div style="background:rgba(16,185,129,0.08);border-left:3px solid #10b981;padding:0.5rem 0.75rem;border-radius:4px;font-size:0.78rem;color:#065f46;display:flex;align-items:center;gap:0.4rem;margin-top:0.25rem">
-            <i class="ti ti-shield-lock" style="font-size:1.1rem;color:#10b981"></i>
-            <span><strong>Bảo mật:</strong> Mật khẩu sẽ được mã hóa bằng thuật toán <strong>BCrypt</strong> trước khi lưu vào CSDL, không lưu text trần.</span>
-          </div>
+        <div class="form-group">
+          <label class="form-label">Họ và tên *</label>
+          <input type="text" class="form-control" placeholder="vd: Lê Thị Hương">
         </div>
       </div>
-
-      <div class="modal-footer" style="padding:1rem 1.5rem;background:var(--bg-light);border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:0.5rem">
-        <button type="button" class="btn btn-secondary" data-modal-close="createAccountModal">Hủy bỏ</button>
-        <button type="submit" class="btn btn-primary" id="btnSubmitCreate"><i class="ti ti-check"></i> Cấp tài khoản ngay</button>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" class="form-control" placeholder="huonglt@neatify.vn">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số điện thoại *</label>
+          <input type="tel" class="form-control" placeholder="09xx xxx xxx">
+        </div>
       </div>
-    </form>
-  </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- Modal Chỉnh sửa tài khoản & Đổi mật khẩu (BCrypt) -->
-<!-- ========================================================================= -->
-<div class="modal-overlay" id="editAccountModal">
-  <div class="modal" style="max-width:520px">
-    <div class="modal-header">
-      <h2 class="modal-title"><i class="ti ti-edit" style="color:var(--primary)"></i> Chỉnh sửa Tài khoản</h2>
-      <button class="modal-close" data-modal-close="editAccountModal">✕</button>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Mật khẩu khởi tạo</label>
+        <input type="password" class="form-control" value="Neatify@2026" placeholder="Mật khẩu mặc định">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phân quyền chức vụ</label>
+        <select class="form-control">
+          <option>Nhân viên CSKH</option>
+          <option>Nhân viên HCNS - Kế toán</option>
+          <option>Nhân viên Marketing</option>
+          <option>Cộng tác viên Giúp việc</option>
+        </select>
+      </div>
     </div>
-    <form th:action="@{/hcns/tai-khoan/sua}" method="post" id="editAccountForm" onsubmit="return validateEditForm()">
-      <input type="hidden" name="id" id="editAccountId">
-
-      <div style="padding:1.25rem 1.5rem">
-        <div class="form-group" style="margin-bottom:0.75rem">
-          <label class="form-label" style="font-size:0.8rem">Chủ tài khoản (Người sở hữu)</label>
-          <input type="text" id="editOwnerName" class="form-control" readonly style="background:var(--bg-light);font-weight:600">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Tên đăng nhập *</label>
-            <input type="text" name="tenDangNhap" id="editUsername" class="form-control" required style="font-weight:600">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Loại tài khoản *</label>
-            <select name="loaiTaiKhoan" id="editRole" class="form-control" required>
-              <option value="NhanVien">Nhân viên nội bộ</option>
-              <option value="CongTacVien">Cộng tác viên</option>
-              <option value="KhachHang">Khách hàng</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Email *</label>
-            <input type="email" name="email" id="editEmail" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Số điện thoại *</label>
-            <input type="tel" name="soDienThoai" id="editPhone" class="form-control" required>
-          </div>
-        </div>
-
-        <div class="form-group" style="margin-bottom:0.5rem;border-top:1px solid var(--border-color);padding-top:0.75rem">
-          <label class="form-label" style="display:flex;justify-content:space-between">
-            <span>Mật khẩu mới (Nếu muốn đổi)</span>
-            <small style="color:var(--text-muted);font-weight:400">Để trống nếu không đổi</small>
-          </label>
-          <div style="position:relative">
-            <i class="ti ti-key" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
-            <input type="password" name="matKhauMoi" id="editPasswordNew" class="form-control" style="padding-left:2.2rem;padding-right:2.5rem" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)...">
-            <button type="button" onclick="togglePassVisibility('editPasswordNew', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
-              <i class="ti ti-eye"></i>
-            </button>
-          </div>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">
-            🔒 Mật khẩu mới sẽ được mã hóa bằng <strong>BCrypt</strong> trước khi lưu trữ vào CSDL.
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer" style="padding:1rem 1.5rem;background:var(--bg-light);border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:0.5rem">
-        <button type="button" class="btn btn-secondary" data-modal-close="editAccountModal">Hủy bỏ</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Lưu thay đổi</button>
-      </div>
-    </form>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="createAccountModal">Hủy</button>
+      <button class="btn btn-primary" onclick="createAccountSuccess()">Tạo tài khoản</button>
+    </div>
   </div>
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 <script>
-  let currentSelectedType = 'NhanVien';
-
-  function openCreateModal() {
-    // Reset form
-    document.getElementById('createAccountForm').reset();
-    document.getElementById('targetPersonId').value = '';
-    document.getElementById('selectedPersonName').value = '';
-    document.getElementById('createPassword').value = 'Neatify@2026';
-    document.querySelectorAll('.person-item').forEach(el => {
-      el.style.backgroundColor = '';
-      const r = el.querySelector('.person-radio-input');
-      if (r) r.checked = false;
-    });
-    switchAccType('NhanVien');
-    ModalManager.open('createAccountModal');
-  }
-
-  function switchAccType(type) {
-    currentSelectedType = type;
-    document.getElementById('inputLoaiTaiKhoan').value = type;
-
-    // Cập nhật button active
-    document.querySelectorAll('.acc-type-btn').forEach(btn => btn.classList.remove('active'));
-    if (type === 'NhanVien') document.getElementById('btnTypeNV').classList.add('active');
-    else if (type === 'CongTacVien') document.getElementById('btnTypeCTV').classList.add('active');
-    else if (type === 'KhachHang') document.getElementById('btnTypeKH').classList.add('active');
-
-    // Lọc danh sách người hiển thị theo loại
-    document.querySelectorAll('.person-item').forEach(item => {
-      const itemType = item.getAttribute('data-type');
-      if (itemType === type) {
-        item.style.display = 'flex';
-      } else {
-        item.style.display = 'none';
-      }
-    });
-
-    // Reset tìm kiếm người
-    document.getElementById('personSearchInput').value = '';
-  }
-
-  // Lọc danh sách người trong modal khi gõ tìm kiếm
-  document.getElementById('personSearchInput').addEventListener('input', function() {
-    const q = this.value.trim().toLowerCase();
-    document.querySelectorAll('.person-item').forEach(item => {
-      const itemType = item.getAttribute('data-type');
-      if (itemType === currentSelectedType) {
-        const text = item.innerText.toLowerCase();
-        if (text.includes(q)) {
-          item.style.display = 'flex';
-        } else {
-          item.style.display = 'none';
-        }
-      } else {
-        item.style.display = 'none';
-      }
-    });
-  });
-
-  // Tích chọn người có sẵn
-  function selectPersonItem(el) {
-    const hasAcc = el.getAttribute('data-has-acc') === 'true';
-    const username = el.getAttribute('data-username');
-    const personName = el.getAttribute('data-name');
-    const personPhone = el.getAttribute('data-phone');
-    const personEmail = el.getAttribute('data-email');
-    const personId = el.getAttribute('data-id');
-
-    if (hasAcc) {
-      Toast.show('Người này đã có tài khoản (' + username + ')! Vui lòng chọn người chưa có tài khoản.', 'warning');
-      return;
-    }
-
-    // Đánh dấu dòng được chọn
-    document.querySelectorAll('.person-item').forEach(item => {
-      item.style.backgroundColor = '';
-      const r = item.querySelector('.person-radio-input');
-      if (r) r.checked = false;
-    });
-
-    el.style.backgroundColor = 'rgba(13,155,163,0.12)';
-    const radio = el.querySelector('.person-radio-input');
-    if (radio) radio.checked = true;
-
-    // Tự động điền thông tin lên form tạo tài khoản
-    document.getElementById('targetPersonId').value = personId;
-    document.getElementById('selectedPersonName').value = personName;
-    document.getElementById('createPhone').value = personPhone || '';
-
-    // Nếu email rỗng (như CTV), tự sinh gợi ý email
-    if (personEmail && personEmail.trim() !== '') {
-      document.getElementById('createEmail').value = personEmail.trim();
-    } else {
-      const cleanName = removeVietnameseTones(personName).toLowerCase().replace(/\s+/g, '');
-      const prefix = currentSelectedType === 'CongTacVien' ? 'ctv.' : (currentSelectedType === 'KhachHang' ? 'kh.' : '');
-      document.getElementById('createEmail').value = prefix + cleanName + '@neatify.vn';
-    }
-
-    // Tự động gợi ý tên đăng nhập
-    const cleanUsername = removeVietnameseTones(personName).toLowerCase().replace(/\s+/g, '');
-    const userPrefix = currentSelectedType === 'CongTacVien' ? 'ctv_' : (currentSelectedType === 'KhachHang' ? 'kh_' : '');
-    document.getElementById('createUsername').value = userPrefix + cleanUsername;
-
-    // Focus vào ô tên đăng nhập
-    document.getElementById('createUsername').focus();
-
-    Toast.show('Đã nạp thông tin của ' + personName + '! Bạn chỉ việc kiểm tra tên đăng nhập và mật khẩu.', 'success');
-  }
-
-  function removeVietnameseTones(str) {
-    if (!str) return '';
-    str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
-    str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
-    str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
-    str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
-    str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
-    str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
-    str = str.replace(/đ/g, "d");
-    str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
-    str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
-    str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
-    str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
-    str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
-    str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
-    str = str.replace(/Đ/g, "D");
-    return str;
-  }
-
-  function togglePassVisibility(inputId, btn) {
-    const input = document.getElementById(inputId);
-    const icon = btn.querySelector('i');
-    if (input.type === 'password') {
-      input.type = 'text';
-      icon.className = 'ti ti-eye-off';
-    } else {
-      input.type = 'password';
-      icon.className = 'ti ti-eye';
+  function resetPassword(user) {
+    if (confirm('Bạn có chắc muốn đặt lại mật khẩu cho tài khoản ' + user + '?')) {
+      Toast.show('Đã gửi mật khẩu mới về email của ' + user + ' thành công!');
     }
   }
-
-  function validateCreateForm() {
-    const u = document.getElementById('createUsername').value.trim();
-    const p = document.getElementById('createPassword').value.trim();
-    const e = document.getElementById('createEmail').value.trim();
-    const ph = document.getElementById('createPhone').value.trim();
-
-    if (!u || !p || !e || !ph) {
-      alert('Vui lòng điền đầy đủ Tên đăng nhập, Mật khẩu, Email và Số điện thoại!');
-      return false;
+  function toggleLock(user, lock) {
+    const action = lock ? 'khóa' : 'mở khóa';
+    if (confirm('Bạn có chắc muốn ' + action + ' tài khoản ' + user + '?')) {
+      Toast.show('Đã ' + action + ' tài khoản ' + user + ' thành công!');
     }
-    if (u.includes(' ') || p.includes(' ') || e.includes(' ') || ph.includes(' ')) {
-      alert('Tên đăng nhập, mật khẩu, email và số điện thoại không được chứa khoảng trắng!');
-      return false;
-    }
-    if (p.length < 6) {
-      alert('Mật khẩu khởi tạo phải có ít nhất 6 ký tự!');
-      return false;
-    }
-    return true;
   }
-
-  // Mở modal sửa tài khoản
-  function openEditAccountModal(btn) {
-    const id = btn.getAttribute('data-id');
-    const username = btn.getAttribute('data-username');
-    const email = btn.getAttribute('data-email');
-    const phone = btn.getAttribute('data-phone');
-    const role = btn.getAttribute('data-role');
-    const owner = btn.getAttribute('data-owner');
-
-    document.getElementById('editAccountId').value = id;
-    document.getElementById('editUsername').value = username || '';
-    document.getElementById('editEmail').value = email || '';
-    document.getElementById('editPhone').value = phone || '';
-    document.getElementById('editRole').value = role || 'NhanVien';
-    document.getElementById('editOwnerName').value = owner || username;
-    document.getElementById('editPasswordNew').value = '';
-
-    ModalManager.open('editAccountModal');
+  function createAccountSuccess() {
+    ModalManager.close('createAccountModal');
+    Toast.show('Đã cấp tài khoản mới thành công! Thông tin đăng nhập đã gửi tới email.');
   }
-
-  function validateEditForm() {
-    const u = document.getElementById('editUsername').value.trim();
-    const e = document.getElementById('editEmail').value.trim();
-    const ph = document.getElementById('editPhone').value.trim();
-    const pNew = document.getElementById('editPasswordNew').value.trim();
-
-    if (!u || !e || !ph) {
-      alert('Vui lòng điền đầy đủ Tên đăng nhập, Email và Số điện thoại!');
-      return false;
-    }
-    if (u.includes(' ') || e.includes(' ') || ph.includes(' ')) {
-      alert('Tên đăng nhập, email và số điện thoại không được chứa khoảng trắng!');
-      return false;
-    }
-    if (pNew && pNew.length > 0) {
-      if (pNew.includes(' ')) {
-        alert('Mật khẩu mới không được chứa khoảng trắng!');
-        return false;
-      }
-      if (pNew.length < 6) {
-        alert('Mật khẩu mới phải có tối thiểu 6 ký tự!');
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // Lọc bảng tài khoản
-  const searchInput = document.getElementById('accountSearchInput');
-  const roleFilter = document.getElementById('roleFilter');
-  const statusFilter = document.getElementById('statusFilter');
-
-  function filterAccountTable() {
-    const q = (searchInput.value || '').toLowerCase().trim();
-    const r = roleFilter.value;
-    const s = statusFilter.value;
-
-    document.querySelectorAll('.account-row').forEach(row => {
-      const username = (row.getAttribute('data-username') || '').toLowerCase();
-      const owner = (row.getAttribute('data-owner') || '').toLowerCase();
-      const email = (row.getAttribute('data-email') || '').toLowerCase();
-      const phone = (row.getAttribute('data-phone') || '').toLowerCase();
-      const role = row.getAttribute('data-role') || '';
-      const status = row.getAttribute('data-status') || '';
-
-      const matchSearch = !q || username.includes(q) || owner.includes(q) || email.includes(q) || phone.includes(q);
-      const matchRole = !r || role === r;
-      const matchStatus = !s || status === s;
-
-      if (matchSearch && matchRole && matchStatus) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
-      }
-    });
-  }
-
-  searchInput.addEventListener('input', filterAccountTable);
-  roleFilter.addEventListener('change', filterAccountTable);
-  statusFilter.addEventListener('change', filterAccountTable);
 </script>
 </body>
 </html>

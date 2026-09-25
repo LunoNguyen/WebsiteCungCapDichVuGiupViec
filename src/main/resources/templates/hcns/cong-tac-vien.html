@@ -8,20 +8,14 @@
   <div class="main-area">
     <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Quản lý Cộng tác viên')}"></header>
 
+
     <main class="page-content">
       <div class="page-header">
         <div class="page-title-group">
           <h1 class="page-title">Quản lý Cộng tác viên</h1>
           <p class="page-subtitle">Xét duyệt hồ sơ, quản lý thông tin cộng tác viên</p>
         </div>
-        <div class="page-actions">
-          <button class="btn btn-primary btn-sm" data-modal-open="addCtvModal"><i class="ti ti-plus"></i> Thêm Cộng tác viên</button>
-        </div>
       </div>
-
-      <!-- Thông báo hệ thống -->
-      <div th:if="${errorMessage}" style="padding:1rem;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
-      <div th:if="${successMessage}" style="padding:1rem;background:rgba(67,233,123,0.12);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
 
       <!-- Stats Row -->
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
@@ -64,9 +58,7 @@
 
       <!-- Pending Section if any -->
       <div th:if="${congTacVienStats != null and congTacVienStats.choDuyetCount > 0}" style="margin-bottom:1.5rem">
-        <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem">
-          <span class="badge badge-warning" th:text="${congTacVienStats.choDuyetCount}">0</span> Hồ sơ CTV chờ phê duyệt
-        </h3>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem">Hồ sơ chờ phê duyệt</h3>
         <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:1.25rem">
           <div th:each="ctv : ${congTacViens}" th:if="${ctv.trangThai == 'ChoDuyet'}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
             <div style="padding:1.25rem">
@@ -75,7 +67,7 @@
                 <div>
                   <div style="font-weight:700" th:text="${ctv.hoTen}">Họ tên</div>
                   <div style="font-size:0.8rem;color:var(--text-muted)" th:text="${ctv.soDienThoai} + ' · ' + ${ctv.noiCuTru}">SĐT · Nơi cư trú</div>
-                  <span class="badge badge-warning" style="margin-top:0.25rem">Chờ duyệt hồ sơ</span>
+                  <span class="badge badge-warning" style="margin-top:0.25rem">Chờ duyệt</span>
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.8rem;margin-bottom:1rem">
@@ -84,14 +76,9 @@
               </div>
             </div>
             <div style="padding:0.875rem 1.25rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
-              <form th:action="@{/hcns/cong-tac-vien/duyet}" method="post" style="flex:1">
-                <input type="hidden" name="id" th:value="${ctv.id}">
-                <button type="submit" class="btn btn-success btn-sm" style="width:100%"><i class="ti ti-check"></i> Phê duyệt</button>
-              </form>
-              <form th:action="@{/hcns/cong-tac-vien/tu-choi}" method="post" style="flex:1" onsubmit="return confirm('Bạn có chắc muốn từ chối hồ sơ này?');">
-                <input type="hidden" name="id" th:value="${ctv.id}">
-                <button type="submit" class="btn btn-danger btn-sm" style="width:100%"><i class="ti ti-x"></i> Từ chối</button>
-              </form>
+              <button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Xem hồ sơ</button>
+              <button class="btn btn-success btn-sm" onclick="Toast.show('Đã phê duyệt cộng tác viên thành công!')">Phê duyệt</button>
+              <button class="btn btn-danger btn-sm" onclick="Toast.show('Đã từ chối hồ sơ.','error')">Từ chối</button>
             </div>
           </div>
         </div>
@@ -108,39 +95,17 @@
         <div class="filter-bar" style="padding:0 1.25rem 1rem">
           <div class="search-box" style="flex:1">
             <i class="ti ti-search search-icon"></i>
-            <input type="text" class="form-control" id="searchCtvInput" placeholder="Tìm theo tên, số điện thoại, nơi cư trú..." oninput="filterCtvTable()">
+            <input type="text" class="form-control" placeholder="Tìm theo tên, số điện thoại..." data-table-search="ctvTable">
           </div>
-          <select class="filter-select" id="filterLevelSelect" onchange="filterCtvTable()">
-            <option value="">Tất cả cấp độ</option>
-            <option value="Moi">Mới</option>
-            <option value="Thuong">Thường</option>
-            <option value="UuTu">Ưu tú</option>
-          </select>
-          <select class="filter-select" id="filterCtvStatusSelect" onchange="filterCtvTable()">
-            <option value="">Tất cả trạng thái</option>
-            <option value="HoatDong">Hoạt động</option>
-            <option value="ChoDuyet">Chờ duyệt</option>
-            <option value="DinhChi">Đình chỉ</option>
-          </select>
+          <select class="filter-select"><option>Tất cả cấp độ</option><option>Mới</option><option>Thường</option><option>Ưu tú</option></select>
         </div>
         <div class="table-container" style="border:none">
           <table class="table" id="ctvTable">
-            <thead>
-              <tr>
-                <th>Cộng tác viên</th>
-                <th>Số điện thoại</th>
-                <th>Nơi cư trú</th>
-                <th>Ngày đăng ký</th>
-                <th>Đánh giá</th>
-                <th>Cấp độ</th>
-                <th>Trạng thái</th>
-                <th style="text-align:right">Thao tác</th>
-              </tr>
-            </thead>
+            <thead><tr>
+              <th>Cộng tác viên</th><th>Số điện thoại</th><th>Nơi cư trú</th><th>Ngày đăng ký</th><th>Đánh giá</th><th>Cấp độ</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th>
+            </tr></thead>
             <tbody>
-              <tr th:each="ctv : ${congTacViens}"
-                  th:data-level="${ctv.capDo}"
-                  th:data-status="${ctv.trangThai}">
+              <tr th:each="ctv : ${congTacViens}">
                 <td>
                   <div class="user-cell">
                     <div class="avatar avatar-sm" th:text="${#strings.substring(ctv.hoTen, 0, 1)}">C</div>
@@ -165,36 +130,11 @@
                   <span class="badge badge-success" th:if="${ctv.trangThai == 'HoatDong'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span>
                   <span class="badge badge-warning" th:if="${ctv.trangThai == 'ChoDuyet'}">Chờ duyệt</span>
                   <span class="badge badge-danger" th:if="${ctv.trangThai == 'BiKhoa' or ctv.trangThai == 'DinhChi'}">Đình chỉ</span>
-                  <span class="badge badge-secondary" th:if="${ctv.trangThai == 'TuChoi'}">Từ chối</span>
                 </td>
-                <td style="text-align:right">
-                  <div class="table-actions" style="justify-content:flex-end">
-                    <button class="btn btn-outline btn-sm"
-                            th:data-id="${ctv.id}"
-                            th:data-hoten="${ctv.hoTen}"
-                            th:data-sdt="${ctv.soDienThoai}"
-                            th:data-noicutru="${ctv.noiCuTru}"
-                            th:data-capdo="${ctv.capDo}"
-                            th:data-trangthai="${ctv.trangThai}"
-                            th:data-ngaysinh="${ctv.ngaySinh != null ? #temporals.format(ctv.ngaySinh, 'dd/MM/yyyy') : ''}"
-                            th:data-gioitinh="${ctv.gioiTinh}"
-                            onclick="openEditCtvModal(this)">
-                      <i class="ti ti-edit"></i> Sửa
-                    </button>
-                    <form th:if="${ctv.trangThai == 'HoatDong'}" th:action="@{/hcns/cong-tac-vien/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn đình chỉ hoạt động của CTV này?');">
-                      <input type="hidden" name="id" th:value="${ctv.id}">
-                      <input type="hidden" name="trangThai" value="DinhChi">
-                      <button type="submit" class="btn btn-danger btn-sm" title="Đình chỉ CTV"><i class="ti ti-ban"></i></button>
-                    </form>
-                    <form th:if="${ctv.trangThai == 'DinhChi' or ctv.trangThai == 'ChoDuyet' or ctv.trangThai == 'TuChoi'}" th:action="@{/hcns/cong-tac-vien/doi-trang-thai}" method="post" style="display:inline">
-                      <input type="hidden" name="id" th:value="${ctv.id}">
-                      <input type="hidden" name="trangThai" value="HoatDong">
-                      <button type="submit" class="btn btn-success btn-sm" title="Kích hoạt hoạt động"><i class="ti ti-check"></i></button>
-                    </form>
-                    <form th:action="@{/hcns/cong-tac-vien/xoa}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn cộng tác viên này khỏi hệ thống?');">
-                      <input type="hidden" name="id" th:value="${ctv.id}">
-                      <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger,#ef4444);border-color:rgba(239,68,68,0.3)" title="Xóa cộng tác viên"><i class="ti ti-trash"></i></button>
-                    </form>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn btn-outline btn-sm" data-panel-open="ctvDetailPanel">Chi tiết</button>
+                    <button class="btn btn-danger btn-sm" onclick="Toast.show('Đã cập nhật trạng thái cộng tác viên.','warning')">Đình chỉ</button>
                   </div>
                 </td>
               </tr>
@@ -205,364 +145,60 @@
           </table>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${congTacViens != null ? #lists.size(congTacViens) : 0}">0</span> cộng tác viên</span>
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${congTacViens != null ? #lists.size(congTacViens) : 0}">0</span> / <span th:text="${congTacVienStats != null ? congTacVienStats.tongCongTacVien : 0}">0</span> cộng tác viên</span>
+          <div class="pagination"><button class="page-btn active">1</button></div>
         </div>
       </div>
     </main>
   </div>
 </div>
 
-<!-- ============================================================
-     MODAL: THÊM CỘNG TÁC VIÊN MỚI (CREATE)
-     ============================================================ -->
-<div class="modal-overlay" id="addCtvModal">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-header">
-      <h2 class="modal-title"><i class="ti ti-user-plus"></i> Thêm Cộng tác viên mới</h2>
-      <button class="modal-close" data-modal-close="addCtvModal">✕</button>
-    </div>
-    <form th:action="@{/hcns/cong-tac-vien/them}" method="post" id="addCtvForm"
-          onsubmit="return validateCtvSubmit(event, 'addCtvNgaySinh', 'addCtvNgaySinhError', true)">
-      <div style="padding:1.5rem">
-        <div class="form-row" style="margin-bottom:1rem">
-          <div class="form-group">
-            <label class="form-label">Họ và tên *</label>
-            <input class="form-control" name="hoTen" placeholder="VD: Trần Thị Mai" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Số điện thoại *</label>
-            <input class="form-control" name="soDienThoai" placeholder="VD: 0987654321" required pattern="\d{9,11}">
-          </div>
-        </div>
-        <div class="form-row" style="margin-bottom:1rem">
-          <div class="form-group">
-            <label class="form-label">Nơi cư trú *</label>
-            <input class="form-control" name="noiCuTru" placeholder="VD: Quận Bình Thạnh, TP.HCM" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Giới tính</label>
-            <select class="form-control" name="gioiTinh">
-              <option value="Nu">Nữ</option>
-              <option value="Nam">Nam</option>
-              <option value="Khac">Khác</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row" style="margin-bottom:1rem">
-          <div class="form-group">
-            <label class="form-label">Ngày sinh*</label>
-            <div style="display:flex;align-items:stretch">
-              <input class="form-control" type="text" name="ngaySinh" id="addCtvNgaySinh"
-                required autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
-                onchange="validateCtvDob('addCtvNgaySinh', 'addCtvNgaySinhError', true)"
-                onblur="validateCtvDob('addCtvNgaySinh', 'addCtvNgaySinhError', true)">
-              <input type="date" id="addCtvNgaySinhPicker" tabindex="-1" aria-hidden="true"
-                style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
-                onchange="syncDatePickerToText('addCtvNgaySinhPicker', 'addCtvNgaySinh', 'addCtvNgaySinhError', true)">
-              <button type="button" class="btn btn-outline" style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding:0 0.85rem;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"
-                onclick="openCalendarPicker('addCtvNgaySinhPicker', 'addCtvNgaySinh')" title="Chọn ngày từ lịch">
-                <i class="ti ti-calendar" style="font-size:1.15rem"></i>
-              </button>
-            </div>
-            <div id="addCtvNgaySinhError" style="display:none;color:#ef4444;font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Cấp độ ban đầu</label>
-            <select class="form-control" name="capDo">
-              <option value="Moi">Mới</option>
-              <option value="Thuong">Thường</option>
-              <option value="UuTu">Ưu tú</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Trạng thái hồ sơ</label>
-          <select class="form-control" name="trangThai">
-            <option value="HoatDong">Hoạt động ngay</option>
-            <option value="ChoDuyet">Chờ duyệt</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-modal-close="addCtvModal">Hủy</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Lưu hồ sơ CTV</button>
-      </div>
-    </form>
+<!-- CTV Detail Panel -->
+<div class="overlay" id="panelOverlay"></div>
+<div class="detail-panel" id="ctvDetailPanel">
+  <div class="detail-panel-header">
+    <div><h2 style="font-size:1.1rem;font-weight:700">Hồ sơ Cộng tác viên</h2></div>
+    <button class="modal-close" data-panel-close="ctvDetailPanel">✕</button>
   </div>
-</div>
-
-<!-- ============================================================
-     MODAL: CHỈNH SỬA CỘNG TÁC VIÊN (UPDATE)
-     ============================================================ -->
-<div class="modal-overlay" id="editCtvModal">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-header">
-      <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Hồ sơ Cộng tác viên</h2>
-      <button class="modal-close" data-modal-close="editCtvModal">✕</button>
+  <div class="detail-panel-body">
+    <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">
+      <div class="avatar avatar-lg" style="margin:0 auto 0.875rem">N</div>
+      <div style="font-size:1.125rem;font-weight:700">Nguyễn Thị Ngọc</div>
+      <div style="font-size:0.875rem;color:var(--text-muted)">CTV Ưu tú · Dọn dẹp nhà</div>
+      <div style="display:flex;justify-content:center;gap:0.5rem;margin-top:0.75rem">
+        <span class="badge badge-warning">Ưu tú</span>
+        <span class="badge badge-success">Hoạt động</span>
+      </div>
+      <div style="font-size:1.5rem;color:#FFC107;margin-top:0.75rem">★★★★★</div>
+      <div style="font-size:1.25rem;font-weight:700">4.98 / 5.0</div>
     </div>
-    <form th:action="@{/hcns/cong-tac-vien/sua}" method="post" id="editCtvForm"
-          onsubmit="return validateCtvSubmit(event, 'editCtvNgaySinh', 'editCtvNgaySinhError', false)">
-      <input type="hidden" name="id" id="editCtvId">
-      <div style="padding:1.5rem">
-        <div class="form-row" style="margin-bottom:1rem">
-          <div class="form-group">
-            <label class="form-label">Họ và tên *</label>
-            <input class="form-control" name="hoTen" id="editCtvHoTen" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Số điện thoại *</label>
-            <input class="form-control" name="soDienThoai" id="editCtvSdt" required pattern="\d{9,11}">
-          </div>
-        </div>
-        <div class="form-row" style="margin-bottom:1rem">
-          <div class="form-group">
-            <label class="form-label">Giới tính</label>
-            <select class="form-control" name="gioiTinh" id="editCtvGioiTinh">
-              <option value="Nu">Nữ</option>
-              <option value="Nam">Nam</option>
-              <option value="Khac">Khác</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Ngày sinh</label>
-            <div style="display:flex;align-items:stretch">
-              <input class="form-control" type="text" name="ngaySinh" id="editCtvNgaySinh"
-                autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
-                onchange="validateCtvDob('editCtvNgaySinh', 'editCtvNgaySinhError', false)"
-                onblur="validateCtvDob('editCtvNgaySinh', 'editCtvNgaySinhError', false)">
-              <input type="date" id="editCtvNgaySinhPicker" tabindex="-1" aria-hidden="true"
-                style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
-                onchange="syncDatePickerToText('editCtvNgaySinhPicker', 'editCtvNgaySinh', 'editCtvNgaySinhError', false)">
-              <button type="button" class="btn btn-outline" style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding:0 0.85rem;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"
-                onclick="openCalendarPicker('editCtvNgaySinhPicker', 'editCtvNgaySinh')" title="Chọn ngày từ lịch">
-                <i class="ti ti-calendar" style="font-size:1.15rem"></i>
-              </button>
-            </div>
-            <div id="editCtvNgaySinhError" style="display:none;color:#ef4444;font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label">Nơi cư trú *</label>
-          <input class="form-control" name="noiCuTru" id="editCtvNoiCuTru" required>
-        </div>
-        <div class="form-row" style="margin-bottom:0">
-          <div class="form-group">
-            <label class="form-label">Cấp độ</label>
-            <select class="form-control" name="capDo" id="editCtvCapDo">
-              <option value="Moi">Mới</option>
-              <option value="Thuong">Thường</option>
-              <option value="UuTu">Ưu tú</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Trạng thái</label>
-            <select class="form-control" name="trangThai" id="editCtvTrangThai">
-              <option value="HoatDong">Hoạt động</option>
-              <option value="ChoDuyet">Chờ duyệt</option>
-              <option value="DinhChi">Đình chỉ</option>
-              <option value="TuChoi">Từ chối</option>
-            </select>
-          </div>
-        </div>
+    <div class="info-row"><span class="info-label">Điện thoại</span><span class="info-value">0901 234 567</span></div>
+    <div class="info-row"><span class="info-label">Khu vực phục vụ</span><span class="info-value">Q.1, Q.3, Q.5</span></div>
+    <div class="info-row"><span class="info-label">Ngày đăng ký</span><span class="info-value">15/01/2024</span></div>
+    <div class="info-row"><span class="info-label">Tổng đơn hoàn thành</span><span class="info-value" style="color:var(--accent)">856 đơn</span></div>
+    <div class="info-row"><span class="info-label">Tỷ lệ hoàn thành</span><span class="info-value" style="color:var(--accent)">99.2%</span></div>
+    <div class="info-row"><span class="info-label">Thu nhập tháng này</span><span class="info-value" style="color:var(--accent)">14.700.000đ</span></div>
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Chứng chỉ & Tài liệu</div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.875rem">
+        <div style="display:flex;justify-content:space-between"><span>Chứng nhận vệ sinh ATTP</span><span style="color:var(--accent)">✓ Đã nộp</span></div>
+        <div style="display:flex;justify-content:space-between"><span>CCCD mặt trước</span><span style="color:var(--accent)">✓ Đã nộp</span></div>
+        <div style="display:flex;justify-content:space-between"><span>CCCD mặt sau</span><span style="color:var(--accent)">✓ Đã nộp</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Ảnh chân dung</span><span style="color:var(--accent)">✓ Đã nộp</span></div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-modal-close="editCtvModal">Hủy</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Cập nhật thay đổi</button>
-      </div>
-    </form>
+    </div>
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-light)">
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.625rem">Ghi chú nội bộ</div>
+      <textarea class="form-control" rows="3" placeholder="Thêm ghi chú về CTV này...">CTV rất chuyên nghiệp, khách hàng phản hồi tích cực liên tục. Đề xuất nâng cấp lên CTV Ưu tú.</textarea>
+    </div>
+  </div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-danger" onclick="Toast.show('Đã đình chỉ tài khoản CTV.','error');PanelManager.close('ctvDetailPanel')">Đình chỉ</button>
+    <button class="btn btn-warning" onclick="Toast.show('Đã gán nhãn CTV Ưu tú!')">Gán nhãn Ưu tú</button>
+    <button class="btn btn-secondary" data-panel-close="ctvDetailPanel">Đóng</button>
   </div>
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
-
-<script>
-  function checkAgeValid(val, isRequired) {
-    if (!val || !val.trim()) {
-      if (isRequired) return { valid: false, msg: 'Vui lòng nhập ngày sinh.' };
-      return { valid: true };
-    }
-    const s = val.trim();
-    let d = null;
-    const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-    const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-    if (dmy) {
-      const day = parseInt(dmy[1], 10);
-      const month = parseInt(dmy[2], 10) - 1;
-      const year = parseInt(dmy[3], 10);
-      const testDate = new Date(year, month, day);
-      if (testDate.getFullYear() === year && testDate.getMonth() === month && testDate.getDate() === day) {
-        d = testDate;
-      }
-    } else if (ymd) {
-      const year = parseInt(ymd[1], 10);
-      const month = parseInt(ymd[2], 10) - 1;
-      const day = parseInt(ymd[3], 10);
-      const testDate = new Date(year, month, day);
-      if (testDate.getFullYear() === year && testDate.getMonth() === month && testDate.getDate() === day) {
-        d = testDate;
-      }
-    }
-    if (!d) {
-      return { valid: false, msg: 'Ngày sinh không hợp lệ. Vui lòng nhập định dạng dd/mm/yyyy (VD: 15/05/2000).' };
-    }
-    const today = new Date();
-    let age = today.getFullYear() - d.getFullYear();
-    const m = today.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) {
-      age--;
-    }
-    if (age < 18) {
-      return { valid: false, msg: 'Người này mới ' + (age >= 0 ? age : 0) + ' tuổi, chưa đủ 18 tuổi. Vui lòng kiểm tra lại.' };
-    }
-    if (age > 100) {
-      return { valid: false, msg: 'Năm sinh không hợp lệ (tuổi vượt quá 100).' };
-    }
-    return { valid: true };
-  }
-
-  function validateCtvDob(inputId, errorId, isRequired) {
-    const input = document.getElementById(inputId);
-    const err = document.getElementById(errorId);
-    if (!input || !err) return true;
-    const res = checkAgeValid(input.value, isRequired);
-    if (!res.valid) {
-      err.textContent = res.msg;
-      err.style.display = 'block';
-      input.style.borderColor = '#ef4444';
-      return false;
-    } else {
-      err.style.display = 'none';
-      err.textContent = '';
-      input.style.borderColor = '';
-      return true;
-    }
-  }
-
-  function validateCtvSubmit(e, inputId, errorId, isRequired) {
-    const isValid = validateCtvDob(inputId, errorId, isRequired);
-    if (!isValid) {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      const input = document.getElementById(inputId);
-      if (input) input.focus();
-      return false;
-    }
-    return true;
-  }
-
-  function openCalendarPicker(pickerId, textId) {
-    const picker = document.getElementById(pickerId);
-    const text = document.getElementById(textId);
-    if (!picker) return;
-    if (text && text.value) {
-      const s = text.value.trim();
-      const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-      const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-      if (dmy) {
-        picker.value = `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
-      } else if (ymd) {
-        picker.value = `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
-      }
-    }
-    try {
-      if (typeof picker.showPicker === 'function') {
-        picker.showPicker();
-      } else {
-        picker.focus();
-        picker.click();
-      }
-    } catch (e) {
-      picker.focus();
-    }
-  }
-
-  function syncDatePickerToText(pickerId, textId, errorId, isRequired) {
-    const picker = document.getElementById(pickerId);
-    const text = document.getElementById(textId);
-    if (picker && text && picker.value) {
-      const parts = picker.value.split('-');
-      if (parts.length === 3) {
-        text.value = parts[2] + '/' + parts[1] + '/' + parts[0];
-      } else {
-        text.value = picker.value;
-      }
-      if (errorId) {
-        validateCtvDob(textId, errorId, isRequired);
-      }
-    }
-  }
-
-  function syncTextToDatePicker(textId, pickerId) {
-    const text = document.getElementById(textId);
-    const picker = document.getElementById(pickerId);
-    if (!text || !picker) return;
-    const val = (text.value || '').trim();
-    const dmy = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-    const ymd = val.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-    if (dmy) {
-      const d = dmy[1].padStart(2, '0');
-      const m = dmy[2].padStart(2, '0');
-      const y = dmy[3];
-      picker.value = `${y}-${m}-${d}`;
-    } else if (ymd) {
-      const y = ymd[1];
-      const m = ymd[2].padStart(2, '0');
-      const d = ymd[3].padStart(2, '0');
-      picker.value = `${y}-${m}-${d}`;
-    }
-  }
-
-  function openEditCtvModal(btn) {
-    document.getElementById('editCtvId').value = btn.dataset.id;
-    document.getElementById('editCtvHoTen').value = btn.dataset.hoten || '';
-    document.getElementById('editCtvSdt').value = btn.dataset.sdt || '';
-    document.getElementById('editCtvNoiCuTru').value = btn.dataset.noicutru || '';
-    if (btn.dataset.capdo) {
-      document.getElementById('editCtvCapDo').value = btn.dataset.capdo;
-    }
-    if (btn.dataset.trangthai) {
-      document.getElementById('editCtvTrangThai').value = btn.dataset.trangthai;
-    }
-    if (btn.dataset.ngaysinh) {
-      document.getElementById('editCtvNgaySinh').value = btn.dataset.ngaysinh;
-    } else {
-      document.getElementById('editCtvNgaySinh').value = '';
-    }
-    if (btn.dataset.gioitinh) {
-      document.getElementById('editCtvGioiTinh').value = btn.dataset.gioitinh;
-    }
-    const editErr = document.getElementById('editCtvNgaySinhError');
-    if (editErr) {
-      editErr.style.display = 'none';
-      editErr.textContent = '';
-    }
-    const editInput = document.getElementById('editCtvNgaySinh');
-    if (editInput) editInput.style.borderColor = '';
-
-    syncTextToDatePicker('editCtvNgaySinh', 'editCtvNgaySinhPicker');
-    ModalManager.open('editCtvModal');
-  }
-
-  function filterCtvTable() {
-    const q = (document.getElementById('searchCtvInput').value || '').toLowerCase().trim();
-    const level = (document.getElementById('filterLevelSelect').value || '').trim();
-    const status = (document.getElementById('filterCtvStatusSelect').value || '').trim();
-
-    const rows = document.querySelectorAll('#ctvTable tbody tr');
-    rows.forEach(r => {
-      const text = r.textContent.toLowerCase();
-      const rLevel = r.getAttribute('data-level') || '';
-      const rStatus = r.getAttribute('data-status') || '';
-
-      const matchQ = !q || text.includes(q);
-      const matchLevel = !level || rLevel === level;
-      const matchStatus = !status || rStatus === status;
-
-      r.style.display = (matchQ && matchLevel && matchStatus) ? '' : 'none';
-    });
-  }
-</script>
 </body>
 </html>
