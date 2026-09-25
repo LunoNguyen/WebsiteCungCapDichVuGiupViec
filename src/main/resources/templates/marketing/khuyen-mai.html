@@ -1,185 +1,393 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{layout/marketing-layout :: marketingHead('Khuyến mãi & Coupon – Marketing')}"></head>
+
 <body>
-<div class="app-shell">
-  <aside th:replace="~{layout/marketing-layout :: marketingSidebar('khuyen-mai')}"></aside>
+  <div class="app-shell">
+    <aside th:replace="~{layout/marketing-layout :: marketingSidebar('khuyen-mai')}"></aside>
 
-  <div class="main-area">
-    <header th:replace="~{layout/marketing-layout :: marketingTopbar('Khuyến mãi & Coupon')}"></header>
+    <div class="main-area">
+      <header th:replace="~{layout/marketing-layout :: marketingTopbar('Khuyến mãi & Coupon')}"></header>
 
-    <main class="page-content">
-      <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Chương trình Khuyến mãi & Coupon</h1>
-          <p class="page-subtitle">Quản lý chiến dịch ưu đãi, mã giảm giá, giới hạn lượt dùng và theo dõi ROI</p>
+      <main class="page-content">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1 class="page-title">Chương trình Khuyến mãi & Coupon</h1>
+            <p class="page-subtitle">Quản lý chiến dịch ưu đãi, mã giảm giá, giới hạn lượt dùng và theo dõi ROI</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary btn-sm" data-modal-open="createPromoModal"><i class="ti ti-plus"></i> Tạo
+              khuyến mãi mới</button>
+          </div>
         </div>
-        <div class="page-actions">
-          <button class="btn btn-primary btn-sm" data-modal-open="createPromoModal"><i class="ti ti-plus"></i> Tạo khuyến mãi mới</button>
-        </div>
-      </div>
 
-      <!-- Stats Grid -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🏷️</div>
-          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.khuyenMaiDangChayCount : 0}">0</div>
-          <div class="stat-label">Chiến dịch đang chạy</div>
-          <div class="kpi-compare"><span class="arrow-up">Đang áp dụng</span></div>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🏷️</div>
+            <div class="stat-value" th:text="${marketingStats != null ? marketingStats.khuyenMaiDangChayCount : 0}">0
+            </div>
+            <div class="stat-label">Chiến dịch đang chạy</div>
+            <div class="kpi-compare"><span class="arrow-up">Đang áp dụng</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(13,155,163,0.15)">🎟️</div>
+            <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongCoupons : 0}">0</div>
+            <div class="stat-label">Tổng mã ưu đãi</div>
+            <div class="kpi-compare"><span class="arrow-up">Trong hệ thống</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📈</div>
+            <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongLuotSuDungCoupon : 0}">0
+            </div>
+            <div class="stat-label">Lượt đã sử dụng mã</div>
+            <div class="kpi-compare"><span class="arrow-up">Đã quy đổi</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(255,193,7,0.15)">🎁</div>
+            <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongKhuyenMai : 0}">0</div>
+            <div class="stat-label">Tổng chương trình khuyến mãi</div>
+            <div class="kpi-compare"><span class="period">Tất cả thời gian</span></div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">🎟️</div>
-          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongCoupons : 0}">0</div>
-          <div class="stat-label">Tổng mã ưu đãi</div>
-          <div class="kpi-compare"><span class="arrow-up">Trong hệ thống</span></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📈</div>
-          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongLuotSuDungCoupon : 0}">0</div>
-          <div class="stat-label">Lượt đã sử dụng mã</div>
-          <div class="kpi-compare"><span class="arrow-up">Đã quy đổi</span></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">🎁</div>
-          <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongKhuyenMai : 0}">0</div>
-          <div class="stat-label">Tổng chương trình khuyến mãi</div>
-          <div class="kpi-compare"><span class="period">Tất cả thời gian</span></div>
-        </div>
-      </div>
 
-      <!-- Filter Bar -->
-      <div class="filter-bar">
-        <div class="search-box">
-          <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm theo mã ưu đãi, tên chương trình...">
-        </div>
-        <select class="filter-select">
-          <option value="">Tất cả trạng thái</option>
-          <option>Hoạt động</option>
-          <option>Hết lượt</option>
-          <option>Hết hạn</option>
-        </select>
-      </div>
-
-      <!-- Promo Table -->
-      <div class="card" style="padding:0">
-        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
-          <div class="card-title">Danh sách Mã ưu đãi & Khuyến mãi</div>
-          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${coupons != null ? #lists.size(coupons) : 0}">0</strong> mã ưu đãi</span>
-        </div>
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Mã ưu đãi</th>
-                <th>Chương trình khuyến mãi</th>
-                <th>Mức giảm</th>
-                <th>Đơn tối thiểu</th>
-                <th>Thời gian áp dụng</th>
-                <th>Lượt sử dụng</th>
-                <th>Trạng thái</th>
-                <th style="text-align:right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="cp : ${coupons}">
-                <td style="font-weight:800;color:var(--primary-light);font-size:0.95rem" th:text="${cp.codeCoupon}">NEATIFY20</td>
-                <td>
-                  <div style="font-weight:600" th:text="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.tenChuongTrinh : '--'}">Tên chương trình</div>
-                  <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.moTa : ''}">Mô tả</div>
-                </td>
-                <td>
-                  <span class="badge badge-warning" th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam == 'PhanTram'}" th:text="|Giảm ${cp.chuongTrinhKhuyenMai.giaTriGiam}%|">Giảm 20%</span>
-                  <span class="badge badge-primary" th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam != 'PhanTram'}" th:text="|Giảm ${#numbers.formatDecimal(cp.chuongTrinhKhuyenMai.giaTriGiam, 0, 'COMMA', 0, 'POINT')}đ|">Giảm 50.000đ</span>
-                </td>
-                <td th:text="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.dieuKienToiThieu != null ? #numbers.formatDecimal(cp.chuongTrinhKhuyenMai.dieuKienToiThieu, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">100.000đ</td>
-                <td style="font-size:0.85rem" th:text="${cp.chuongTrinhKhuyenMai != null ? #temporals.format(cp.chuongTrinhKhuyenMai.ngayBatDau, 'dd/MM/yyyy') + ' - ' + #temporals.format(cp.chuongTrinhKhuyenMai.ngayKetThuc, 'dd/MM/yyyy') : '--'}">01/01 - 31/12/2026</td>
-                <td style="font-weight:600" th:text="${cp.soLuotDaDung} + ' / ' + ${cp.soLuotToiDa} + ' lượt'">0 / 100 lượt</td>
-                <td>
-                  <span class="badge badge-success" th:if="${cp.trangThai == 'HoatDong'}">Hoạt động</span>
-                  <span class="badge badge-warning" th:if="${cp.trangThai == 'HetLuot'}">Hết lượt</span>
-                  <span class="badge badge-secondary" th:if="${cp.trangThai == 'HetHan'}">Hết hạn</span>
-                </td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" title="Sao chép mã" th:data-code="${cp.codeCoupon}" onclick="Toast.show('Đã sao chép mã ' + this.getAttribute('data-code'))"><i class="ti ti-copy"></i></button>
-                  </div>
-                </td>
-              </tr>
-              <tr th:if="${coupons == null or #lists.isEmpty(coupons)}">
-                <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu mã ưu đãi</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${coupons != null ? #lists.size(coupons) : 0}">0</span> mã ưu đãi</span>
-          <div class="pagination"><button class="page-btn active">1</button></div>
-        </div>
-      </div>
-    </main>
-  </div>
-</div>
-
-<!-- Modal Create Promo -->
-<div class="modal-overlay" id="createPromoModal">
-  <div class="modal" style="max-width:550px">
-    <div class="modal-header">
-      <h2 class="modal-title">Tạo mã khuyến mãi / Coupon mới</h2>
-      <button class="modal-close" data-modal-close="createPromoModal">✕</button>
-    </div>
-    <div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Mã Coupon *</label>
-          <input type="text" class="form-control" placeholder="vd: SALE1010" style="text-transform:uppercase;font-weight:700">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tên chương trình *</label>
-          <input type="text" class="form-control" placeholder="vd: Siêu Sale 10/10">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Loại giảm giá</label>
-          <select class="form-control">
-            <option>Giảm theo phần trăm (%)</option>
-            <option>Giảm theo số tiền cố định (VNĐ)</option>
+        <!-- Filter Bar -->
+        <form th:action="@{/marketing/khuyen-mai}" method="get" class="filter-bar">
+          <div class="search-box">
+            <i class="ti ti-search search-icon"></i>
+            <input type="text" name="keyword" th:value="${keyword}" class="form-control"
+              placeholder="Tìm theo mã ưu đãi, tên chương trình...">
+          </div>
+          <select name="trangThai" class="filter-select" onchange="this.form.submit()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="HoatDong" th:selected="${trangThai == 'HoatDong'}">Hoạt động</option>
+            <option value="SapDienRa" th:selected="${trangThai == 'SapDienRa'}">Sắp diễn ra</option>
+            <option value="HetLuot" th:selected="${trangThai == 'HetLuot'}">Hết lượt</option>
+            <option value="HetHan" th:selected="${trangThai == 'HetHan'}">Hết hạn</option>
           </select>
+          <button type="submit" style="display: none;"></button>
+        </form>
+
+        <!-- Promo Table -->
+        <div class="card" style="padding:0">
+          <div class="card-header"
+            style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+            <div class="card-title">Danh sách Mã ưu đãi & Khuyến mãi</div>
+            <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong
+                th:text="${coupons != null ? #lists.size(coupons) : 0}">0</strong> mã ưu đãi</span>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Mã ưu đãi</th>
+                  <th>Chương trình khuyến mãi</th>
+                  <th>Mức giảm</th>
+                  <th>Đơn tối thiểu</th>
+                  <th>Thời gian áp dụng</th>
+                  <th>Lượt sử dụng</th>
+                  <th>Trạng thái</th>
+                  <th style="text-align:right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="cp : ${coupons}">
+                  <td style="font-weight:800;color:var(--primary-light);font-size:0.95rem"
+                    th:text="${cp.codeKhuyenMai}">NEATIFY20</td>
+                  <td>
+                    <div style="font-weight:600"
+                      th:text="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.tenChuongTrinh : '--'}">Tên
+                      chương trình</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted)"
+                      th:text="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.moTa : ''}">Mô tả</div>
+                  </td>
+                  <td>
+                    <span class="badge badge-warning"
+                      th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam == 'PhanTram'}"
+                      th:text="|Giảm ${cp.chuongTrinhKhuyenMai.giaTriGiam}%|">Giảm 20%</span>
+                    <span class="badge badge-primary"
+                      th:if="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.loaiGiam != 'PhanTram'}"
+                      th:text="|Giảm ${#numbers.formatDecimal(cp.chuongTrinhKhuyenMai.giaTriGiam, 0, 'COMMA', 0, 'POINT')}đ|">Giảm
+                      50.000đ</span>
+                  </td>
+                  <td
+                    th:text="${cp.chuongTrinhKhuyenMai != null and cp.chuongTrinhKhuyenMai.dieuKienToiThieu != null ? #numbers.formatDecimal(cp.chuongTrinhKhuyenMai.dieuKienToiThieu, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">
+                    100.000đ</td>
+                  <td style="font-size:0.85rem"
+                    th:text="${cp.chuongTrinhKhuyenMai != null ? #temporals.format(cp.chuongTrinhKhuyenMai.ngayBatDau, 'dd/MM/yyyy') + ' - ' + #temporals.format(cp.chuongTrinhKhuyenMai.ngayKetThuc, 'dd/MM/yyyy') : '--'}">
+                    01/01 - 31/12/2026</td>
+                  <td style="font-weight:600" th:text="${cp.soLuotDaDung} + ' / ' + ${cp.soLuotToiDa} + ' lượt'">0 / 100
+                    lượt</td>
+                  <td>
+                    <span class="badge badge-success" th:if="${cp.trangThai == 'HoatDong'}">Hoạt động</span>
+                    <span class="badge badge-info" th:if="${cp.trangThai == 'SapDienRa'}">Sắp diễn ra</span>
+                    <span class="badge badge-warning" th:if="${cp.trangThai == 'HetLuot'}">Hết lượt</span>
+                    <span class="badge badge-secondary" th:if="${cp.trangThai == 'HetHan'}">Hết hạn</span>
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <!-- Nút Copy -->
+                      <button type="button" class="btn btn-outline btn-sm" title="Sao chép mã"
+                        th:data-code="${cp.codeKhuyenMai}"
+                        onclick="Toast.show('Đã sao chép mã ' + this.getAttribute('data-code'))"><i
+                          class="ti ti-copy"></i></button>
+
+                      <!-- Nút Sửa (Chỉ mồi giao diện, chức năng update tương tự form Thêm mới) -->
+                      <button type="button" class="btn btn-outline btn-sm" title="Chỉnh sửa" th:data-id="${cp.id}"
+                        th:data-code="${cp.codeKhuyenMai}"
+                        th:data-ten="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.tenChuongTrinh : ''}"
+                        th:data-loai="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.loaiGiam : 'PhanTram'}"
+                        th:data-muc="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.giaTriGiam : 0}"
+                        th:data-dk="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.dieuKienToiThieu : 0}"
+                        th:data-gioihan="${cp.soLuotToiDa}"
+                        th:data-batdau="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.ngayBatDau : ''}"
+                        th:data-ketthuc="${cp.chuongTrinhKhuyenMai != null ? cp.chuongTrinhKhuyenMai.ngayKetThuc : ''}"
+                        th:data-trangthai="${cp.trangThai}" onclick="openEditModal(this)">
+                        <i class="ti ti-edit"></i>
+                      </button>
+                      <!-- Form XÓA -->
+                      <form th:action="@{/marketing/khuyen-mai/xoa}" method="post" style="display:inline;"
+                        onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn mã khuyến mãi này không? Việc này không thể hoàn tác!');">
+                        <input type="hidden" name="id" th:value="${cp.id}">
+                        <button type="submit" class="btn btn-outline btn-sm" style="color: red;" title="Xóa mã"><i
+                            class="ti ti-trash"></i></button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                <tr th:if="${coupons == null or #lists.isEmpty(coupons)}">
+                  <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu mã ưu
+                    đãi</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
+            <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span
+                th:text="${coupons != null ? #lists.size(coupons) : 0}">0</span> mã ưu đãi</span>
+            <div class="pagination"><button class="page-btn active">1</button></div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Mức giảm *</label>
-          <input type="number" class="form-control" placeholder="vd: 20 (% hoặc VNĐ)">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Đơn hàng tối thiểu</label>
-          <input type="text" class="form-control" placeholder="vd: 150.000đ">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Giới hạn số lượt dùng</label>
-          <input type="number" class="form-control" placeholder="vd: 500">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Ngày bắt đầu</label>
-          <input type="date" class="form-control" value="2026-09-21">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Ngày kết thúc</label>
-          <input type="date" class="form-control" value="2026-10-21">
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close="createPromoModal">Hủy</button>
-      <button class="btn btn-primary" onclick="ModalManager.close('createPromoModal');Toast.show('Đã phát hành mã khuyến mãi thành công!')">Phát hành mã</button>
+      </main>
     </div>
   </div>
-</div>
 
-<div th:replace="~{layout/marketing-layout :: marketingScripts}"></div>
+  <!-- Modal Create Promo -->
+  <div class="modal-overlay" id="createPromoModal">
+    <div class="modal" style="max-width:550px">
+      <div class="modal-header">
+        <h2 class="modal-title">Tạo mã khuyến mãi / Coupon mới</h2>
+        <button class="modal-close" data-modal-close="createPromoModal">✕</button>
+      </div>
+      <!-- BỌC FORM VÀO ĐÂY ĐỂ POST DỮ LIỆU -->
+      <form th:action="@{/marketing/khuyen-mai/tao-moi}" method="post">
+        <div style="padding: 1.5rem;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mã Coupon *</label>
+              <input type="text" name="maCoupon" class="form-control" placeholder="vd: SALE1010"
+                style="text-transform:uppercase;font-weight:700" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tên chương trình *</label>
+              <input type="text" name="tenChuongTrinh" class="form-control" placeholder="vd: Siêu Sale 10/10" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Loại giảm giá</label>
+              <select name="loaiGiamGia" class="form-control">
+                <option value="PhanTram">Giảm theo phần trăm (%)</option>
+                <option value="SoTien">Giảm theo số tiền cố định (VNĐ)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mức giảm *</label>
+              <input type="number" name="mucGiam" class="form-control" placeholder="vd: 20" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Đơn hàng tối thiểu (VNĐ)</label>
+              <input type="number" name="dieuKienToiThieu" class="form-control" placeholder="vd: 150000" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Giới hạn số lượt dùng</label>
+              <input type="number" name="gioiHanLuot" class="form-control" placeholder="vd: 500" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ngày bắt đầu</label>
+              <input type="date" name="ngayBatDau" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ngày kết thúc</label>
+              <input type="date" name="ngayKetThuc" class="form-control" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal-close="createPromoModal">Hủy</button>
+          <!-- Đổi thành type="submit" -->
+          <button type="submit" class="btn btn-primary"
+            onclick="Toast.show('Đã phát hành mã khuyến mãi thành công!')">Phát hành mã</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Modal Edit Promo -->
+  <div class="modal-overlay" id="editPromoModal">
+    <div class="modal" style="max-width:550px">
+      <div class="modal-header">
+        <h2 class="modal-title">Cập nhật mã khuyến mãi</h2>
+        <button class="modal-close" data-modal-close="editPromoModal">✕</button>
+      </div>
+      <form th:action="@{/marketing/khuyen-mai/cap-nhat}" method="post">
+        <div style="padding: 1.5rem;">
+          <!-- ID Ẩn để Backend biết đang sửa mã nào -->
+          <input type="hidden" name="id" id="edit-id">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mã Coupon *</label>
+              <input type="text" name="maCoupon" id="edit-code" class="form-control"
+                style="text-transform:uppercase;font-weight:700" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tên chương trình *</label>
+              <input type="text" name="tenChuongTrinh" id="edit-ten" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Loại giảm giá</label>
+              <select name="loaiGiamGia" id="edit-loai" class="form-control">
+                <option value="PhanTram">Giảm theo phần trăm (%)</option>
+                <option value="SoTien">Giảm theo số tiền cố định (VNĐ)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mức giảm *</label>
+              <input type="number" name="mucGiam" id="edit-muc" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Đơn tối thiểu (VNĐ)</label>
+              <input type="number" name="dieuKienToiThieu" id="edit-dk" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Giới hạn số lượt dùng</label>
+              <input type="number" name="gioiHanLuot" id="edit-gioihan" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ngày bắt đầu</label>
+              <input type="date" name="ngayBatDau" id="edit-batdau" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ngày kết thúc</label>
+              <input type="date" name="ngayKetThuc" id="edit-ketthuc" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Trạng thái mã </label>
+            <select name="trangThai" id="edit-trangthai" class="form-control"
+              style="background-color: #f1f3f5; cursor: not-allowed;" disabled>
+              <option value="HoatDong">Hoạt động (Đang chạy)</option>
+              <option value="SapDienRa">Sắp diễn ra</option>
+              <option value="HetHan">Hết hạn (Dừng chiến dịch)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-modal-close="editPromoModal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    // Lắng nghe sự kiện khi người dùng thay đổi Ngày bắt đầu hoặc Ngày kết thúc ở modal Sửa
+    document.getElementById('edit-batdau').addEventListener('change', autoCalculateStatus);
+    document.getElementById('edit-ketthuc').addEventListener('change', autoCalculateStatus);
+
+    function autoCalculateStatus() {
+      const startDateStr = document.getElementById('edit-batdau').value;
+      const endDateStr = document.getElementById('edit-ketthuc').value;
+      const statusSelect = document.getElementById('edit-trangthai');
+
+      if (!startDateStr || !endDateStr) return;
+
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+
+      // Lấy ngày hiện tại (chỉ tính năm-tháng-ngày để so sánh chuẩn xác)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+
+      // Thuật toán so sánh ngày
+      if (endDate < today) {
+        statusSelect.value = 'HetHan'; // Quá khứ -> Hết hạn
+      } else if (startDate > today) {
+        statusSelect.value = 'SapDienRa'; // Tương lai -> Sắp diễn ra
+      } else {
+        statusSelect.value = 'HoatDong'; // Hiện tại -> Hoạt động
+      }
+    }
+
+    // Đồng thời, gọi hàm này luôn bên trong hàm openEditModal để khi vừa bấm nút Sửa, nó tự nhận diện trạng thái cũ luôn
+    function openEditModal(button) {
+      document.getElementById('edit-id').value = button.getAttribute('data-id');
+      document.getElementById('edit-code').value = button.getAttribute('data-code');
+      document.getElementById('edit-ten').value = button.getAttribute('data-ten');
+      document.getElementById('edit-loai').value = button.getAttribute('data-loai');
+      document.getElementById('edit-muc').value = button.getAttribute('data-muc');
+      document.getElementById('edit-dk').value = button.getAttribute('data-dk');
+      document.getElementById('edit-gioihan').value = button.getAttribute('data-gioihan');
+      document.getElementById('edit-batdau').value = button.getAttribute('data-batdau');
+      document.getElementById('edit-ketthuc').value = button.getAttribute('data-ketthuc');
+
+      // Tự động tính trạng thái theo ngày khi vừa bật modal lên
+      autoCalculateStatus();
+
+      ModalManager.open('editPromoModal');
+    }
+    function openEditModal(button) {
+      document.getElementById('edit-id').value = button.getAttribute('data-id');
+      document.getElementById('edit-code').value = button.getAttribute('data-code');
+      document.getElementById('edit-ten').value = button.getAttribute('data-ten');
+      document.getElementById('edit-loai').value = button.getAttribute('data-loai');
+      document.getElementById('edit-muc').value = button.getAttribute('data-muc');
+      document.getElementById('edit-dk').value = button.getAttribute('data-dk');
+      document.getElementById('edit-gioihan').value = button.getAttribute('data-gioihan');
+      document.getElementById('edit-batdau').value = button.getAttribute('data-batdau');
+      document.getElementById('edit-ketthuc').value = button.getAttribute('data-ketthuc');
+      document.getElementById('edit-trangthai').value = button.getAttribute('data-trangthai');
+
+      ModalManager.open('editPromoModal');
+    }
+
+    // Bắt thông báo từ Backend (Tạo/Sửa/Xóa)
+    document.addEventListener('DOMContentLoaded', () => {
+      var successMsg = /*[[${success}]]*/ null;
+      if (successMsg) Toast.show(successMsg);
+
+      var errorMsg = /*[[${error}]]*/ null;
+      if (errorMsg) alert(errorMsg);
+    }
+
+    );
+  </script>
+  <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 </body>
+
 </html>

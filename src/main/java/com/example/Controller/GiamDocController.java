@@ -84,6 +84,12 @@ public class GiamDocController {
         model.addAttribute("tyLeHopLe", thongKeService.getTyLeKhieuNaiHopLe());
         model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
         model.addAttribute("tyLeHaiLong", thongKeService.getTyLeKhachHangHaiLong());
+        List<ThongBao> dsChoDuyet = thongBaoRepository.findAll().stream()
+                .filter(tb -> "ChuaGui".equals(tb.getTrangThai()))
+                .toList();
+        model.addAttribute("dsChoDuyet", dsChoDuyet);
+
+   
         return "giam-doc/dashboard";
     }
 
@@ -135,15 +141,15 @@ public class GiamDocController {
 
     @GetMapping("/thong-bao")
     public String thongBao(Model model) {
-        List<ThongBao> allThongBao = thongBaoRepository.findAll();
+            List<ThongBao> allThongBao = thongBaoRepository.findAll();
         
-        List<ThongBao> dsChoDuyet = allThongBao.stream()
-                .filter(tb -> "Chờ duyệt".equalsIgnoreCase(tb.getTrangThai()) || "Nhap".equalsIgnoreCase(tb.getTrangThai()))
-                .collect(Collectors.toList());
+            List<ThongBao> dsChoDuyet = allThongBao.stream()
+                    .filter(tb -> "ChuaGui".equalsIgnoreCase(tb.getTrangThai()) || "Nhap".equalsIgnoreCase(tb.getTrangThai()))
+                    .collect(Collectors.toList());
 
-        List<ThongBao> dsDaGui = allThongBao.stream()
-                .filter(tb -> !"Chờ duyệt".equalsIgnoreCase(tb.getTrangThai()) && !"Nhap".equalsIgnoreCase(tb.getTrangThai()))
-                .collect(Collectors.toList());
+            List<ThongBao> dsDaGui = allThongBao.stream()
+                    .filter(tb -> "DaGui".equalsIgnoreCase(tb.getTrangThai()))
+                    .collect(Collectors.toList());
 
         model.addAttribute("dsChoDuyet", dsChoDuyet);
         model.addAttribute("dsDaGui", dsDaGui);
