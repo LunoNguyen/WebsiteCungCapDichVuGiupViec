@@ -14,15 +14,36 @@
         <div class="page-header">
           <div class="page-title-group">
             <h1 class="page-title">Báo cáo Hiệu quả Marketing & Chuyển đổi</h1>
-            <p class="page-subtitle">Theo dõi ROI chiến dịch, chi phí chuyển đổi (CAC), giá trị vòng đời (LTV) và tăng
-              trưởng</p>
+            <p class="page-subtitle"
+               th:text="'Theo dõi ROI chiến dịch, chi phí chuyển đổi (CAC), giá trị vòng đời (LTV) và tăng trưởng · ' + (${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}">
+              Theo dõi ROI chiến dịch, chi phí chuyển đổi (CAC), giá trị vòng đời (LTV) và tăng trưởng
+            </p>
           </div>
-          <div class="page-actions">
-            <div class="chart-period-tabs">
-              <button class="chart-period-btn active">Tháng này</button>
-              <button class="chart-period-btn">Quý 3/2026</button>
-              <button class="chart-period-btn">Năm 2026</button>
-            </div>
+
+          <div class="page-actions" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+
+            <select class="filter-select" onchange="window.location.href=this.value">
+              <option th:value="@{/marketing/phan-tich(nam=${namDangChon})}"
+                      th:selected="${thangDangChon == null}">
+                Cả năm
+              </option>
+              <option th:each="t : ${#numbers.sequence(1, 12)}"
+                      th:value="@{/marketing/phan-tich(thang=${t}, nam=${namDangChon})}"
+                      th:selected="${t == thangDangChon}"
+                      th:text="'Tháng ' + ${t}">
+                Tháng 1
+              </option>
+            </select>
+
+            <select class="filter-select" onchange="window.location.href=this.value">
+              <option th:each="n : ${danhSachNam}"
+                      th:value="@{/marketing/phan-tich(thang=${thangDangChon}, nam=${n})}"
+                      th:selected="${n == namDangChon}"
+                      th:text="'Năm ' + ${n}">
+                Năm 2026
+              </option>
+            </select>
+
           </div>
         </div>
 
@@ -31,8 +52,8 @@
           <div class="stat-card">
             <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
             <div class="stat-value" th:text="${tongKhachHang != null ? tongKhachHang : 0}">0</div>
-            <div class="stat-label">Tổng khách hàng mục tiêu</div>
-            <div class="kpi-compare"><span class="arrow-up">Hệ thống thực tế</span></div>
+            <div class="stat-label">Khách hàng mới trong kỳ</div>
+            <div class="kpi-compare"><span class="arrow-up">Dữ liệu thực tế</span></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🎟️</div>
@@ -56,37 +77,18 @@
             <div class="kpi-compare"><span class="arrow-up">Thực nhận</span></div>
           </div>
         </div>
-        <!-- BỔ SUNG: Layout 2 Biểu đồ (Bị thiếu trong code cũ) -->
-        <div class="dashboard-grid" style="margin-top:1.5rem">
-          <div class="chart-card">
-            <div class="chart-header">
-              <div>
-                <div class="chart-title">Nguồn khách hàng mới (Acquisition)</div>
-                <div class="chart-subtitle">Theo kênh truyền thông</div>
-              </div>
-            </div>
-            <div style="height:260px"><canvas id="channelBarChart"></canvas></div>
-          </div>
 
-          <div class="chart-card">
-            <div class="chart-header">
-              <div>
-                <div class="chart-title">Top Mã Khuyến Mãi Theo Doanh Thu</div>
-                <div class="chart-subtitle">Đơn vị: Triệu VNĐ</div>
-              </div>
-            </div>
-            <div style="height:260px"><canvas id="couponBarChart"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Charts Section: ƯU TIÊN BIỂU ĐỒ CỘT -->
+        <!-- Charts Section -->
         <div class="dashboard-grid" style="margin-top:1.5rem;margin-bottom:1.5rem">
           <!-- Channel Performance Column Bar Chart -->
           <div class="chart-card">
             <div class="chart-header">
               <div>
-                <div class="chart-title">Khách hàng mới theo kênh Marketing</div>
-                <div class="chart-subtitle">Biểu đồ cột so sánh số lượng chuyển đổi các kênh</div>
+                <div class="chart-title">Nguồn khách hàng mới (Acquisition)</div>
+                <div class="chart-subtitle"
+                     th:text="'Tổng thật theo kỳ · Tỷ lệ từng kênh là ước tính · ' + (${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}">
+                  Theo kênh truyền thông
+                </div>
               </div>
             </div>
             <div style="height:260px"><canvas id="channelBarChart"></canvas></div>
@@ -96,8 +98,11 @@
           <div class="chart-card">
             <div class="chart-header">
               <div>
-                <div class="chart-title">Doanh thu theo mã Coupon</div>
-                <div class="chart-subtitle">Triệu đồng doanh thu thực tế</div>
+                <div class="chart-title">Top Mã Khuyến Mãi Theo Doanh Thu</div>
+                <div class="chart-subtitle"
+                     th:text="'Đơn vị: Triệu VNĐ · ' + (${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}">
+                  Đơn vị: Triệu VNĐ
+                </div>
               </div>
             </div>
             <div style="height:260px"><canvas id="couponBarChart"></canvas></div>
@@ -112,8 +117,10 @@
               <div class="card-title">Chi tiết các chiến dịch khuyến mãi đang triển khai</div>
               <div class="card-subtitle">Dữ liệu từ hệ thống</div>
             </div>
-            <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong
-                th:text="${khuyenMais != null ? #lists.size(khuyenMais) : 0}">0</strong> chiến dịch</span>
+            <span style="font-size:0.85rem;color:var(--text-muted)">
+              Tổng số: <strong th:text="${khuyenMais != null ? #lists.size(khuyenMais) : 0}">0</strong> chiến dịch
+              · <span th:text="(${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}"></span>
+            </span>
           </div>
           <div class="table-container">
             <table class="table">
@@ -160,7 +167,7 @@
                 </tr>
                 <tr th:if="${khuyenMais == null or #lists.isEmpty(khuyenMais)}">
                   <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Chưa có dữ liệu chiến
-                    dịch trong hệ thống</td>
+                    dịch trong kỳ này</td>
                 </tr>
               </tbody>
             </table>
@@ -177,7 +184,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       if (typeof Chart === 'undefined') return;
 
-      // Lấy dữ liệu từ Spring Boot
       const rawDataChannel = /*[[${nguonKhachHang}]]*/ {};
       const rawDataCoupon = /*[[${topCoupons}]]*/ {};
 

@@ -438,32 +438,7 @@ function initSparkline(canvasId, data, color = '#6C63FF') {
     }
   });
 }
-// Hàm chuyển đổi dữ liệu biểu đồ doanh thu theo kỳ bấm nút
-function changeRevenuePeriod(btn, period) {
-    // Đổi class active của nút
-    const parent = btn.parentElement;
-    parent.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
 
-    // Lấy instance biểu đồ revenueChart hiện tại để cập nhật data mới
-    const canvas = document.getElementById('revenueChart');
-    if (canvas && window.Chart) {
-        let chartInstance = Chart.getChart(canvas);
-        if (chartInstance) {
-            if (period === '6month') {
-                chartInstance.data.labels = ['Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9'];
-                chartInstance.data.datasets[0].data = [520, 680, 910, 1240, 1620, typeof doanhThuDb !== 'undefined' ? doanhThuDb : 1850];
-            } else if (period === '1year') {
-                chartInstance.data.labels = ['Q1', 'Q2', 'Q3', 'Q4'];
-                chartInstance.data.datasets[0].data = [1400, 2100, 2900, typeof doanhThuDb !== 'undefined' ? doanhThuDb * 2 : 3500];
-            } else if (period === '3year') {
-                chartInstance.data.labels = ['Năm 2024', 'Năm 2025', 'Năm 2026'];
-                chartInstance.data.datasets[0].data = [4200, 6800, typeof doanhThuDb !== 'undefined' ? doanhThuDb * 4 : 8500];
-            }
-            chartInstance.update();
-        }
-    }
-}
 // ============================================================
 // INIT ALL CHARTS ON PAGE
 // ============================================================

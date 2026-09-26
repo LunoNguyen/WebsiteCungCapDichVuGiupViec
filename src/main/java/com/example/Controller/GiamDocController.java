@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,75 +55,109 @@ public class GiamDocController {
         this.nhatKyTaiKhoanRepository = nhatKyTaiKhoanRepository;
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-        var donStats = thongKeService.getDonHangStats();
-        var khStats = thongKeService.getKhachHangStats();
-        var knStats = thongKeService.getKhieuNaiStats();
-        var ctvStats = thongKeService.getCongTacVienStats();
-        var nvStats = thongKeService.getNhanVienStats();
+   @GetMapping("/dashboard")
+public String dashboard(
+        @RequestParam(required = false) Integer thang,
+        @RequestParam(required = false) Integer nam,
+        Model model) {
 
-        model.addAttribute("donHangStats", donStats);
-        model.addAttribute("khachHangStats", khStats);
-        model.addAttribute("khieuNaiStats", knStats);
-        model.addAttribute("congTacVienStats", ctvStats);
-        model.addAttribute("nhanVienStats", nvStats);
+    int namChon = (nam != null) ? nam : java.time.LocalDate.now().getYear();
 
-        model.addAttribute("tongDonHang", donStats.getTongDonHang());
-        model.addAttribute("tongKhachHang", khStats.getTongKhachHang());
-        model.addAttribute("tongKhieuNai", knStats.getTongKhieuNai());
-        model.addAttribute("khieuNaiLeoThangCount", knStats.getLeoThangCount());
-        model.addAttribute("diemDanhGiaTB", thongKeService.getDiemDanhGiaTrungBinh());
-        model.addAttribute("doanhThuTrieuDong", donStats.getDoanhThuTrieuDong());
-        model.addAttribute("recentOrders", thongKeService.getDonHangGanDay(8));
-        model.addAttribute("pendingComplaints", thongKeService.getKhieuNaiGanDay(5));
-        model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDon());
-        model.addAttribute("doanhThuTheoThang", thongKeService.getDoanhThu12Thang());
-        model.addAttribute("trangThaiKhieuNai", thongKeService.getTrangThaiKhieuNai());
-        model.addAttribute("tyLeDungHan", thongKeService.getTyLeGiaiQuyetDungHan());
-        model.addAttribute("tyLeHopLe", thongKeService.getTyLeKhieuNaiHopLe());
-        model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
-        model.addAttribute("tyLeHaiLong", thongKeService.getTyLeKhachHangHaiLong());
-        List<ThongBao> dsChoDuyet = thongBaoRepository.findAll().stream()
-                .filter(tb -> "ChuaGui".equals(tb.getTrangThai()))
-                .toList();
-        model.addAttribute("dsChoDuyet", dsChoDuyet);
+    var donHangLoc = thongKeService.getDonHangTheoThangNam(thang, namChon);
+    var khStats = thongKeService.getKhachHangStats();
+    var knStats = thongKeService.getKhieuNaiStats();
+    var ctvStats = thongKeService.getCongTacVienStats();
+    var nvStats = thongKeService.getNhanVienStats();
 
-   
-        return "giam-doc/dashboard";
-    }
+    model.addAttribute("thangDangChon", thang);
+    model.addAttribute("namDangChon", namChon);
+    model.addAttribute("danhSachNam", thongKeService.getDanhSachNamCoDuLieu());
+
+    model.addAttribute("khachHangStats", khStats);
+    model.addAttribute("khieuNaiStats", knStats);
+    model.addAttribute("congTacVienStats", ctvStats);
+    model.addAttribute("nhanVienStats", nvStats);
+
+    model.addAttribute("tongDonHang", donHangLoc.size());
+    model.addAttribute("tongKhachHang", khStats.getTongKhachHang());
+    model.addAttribute("tongKhieuNai", knStats.getTongKhieuNai());
+    model.addAttribute("khieuNaiLeoThangCount", knStats.getLeoThangCount());
+    model.addAttribute("diemDanhGiaTB", thongKeService.getDiemDanhGiaTrungBinh());
+    model.addAttribute("doanhThuTrieuDong", thongKeService.getDoanhThuTrieuTheoThangNam(thang, namChon));
+
+    model.addAttribute("recentOrders", donHangLoc.stream()
+            .sorted((a, b) -> Integer.compare(
+                    b.getId() != null ? b.getId() : 0,
+                    a.getId() != null ? a.getId() : 0))
+            .limit(8)
+            .toList());
+
+    model.addAttribute("pendingComplaints", thongKeService.getKhieuNaiGanDay(5));
+    model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDonTheoThangNam(thang, namChon));
+    model.addAttribute("topDichVu", thongKeService.getTopDichVuTheoThangNam(thang, namChon));
+    model.addAttribute("doanhThuTheoThang", thongKeService.getDoanhThu12Thang(namChon));
+    model.addAttribute("trangThaiKhieuNai", thongKeService.getTrangThaiKhieuNai());
+    model.addAttribute("tyLeDungHan", thongKeService.getTyLeGiaiQuyetDungHan());
+    model.addAttribute("tyLeHopLe", thongKeService.getTyLeKhieuNaiHopLe());
+    model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
+    model.addAttribute("tyLeHaiLong", thongKeService.getTyLeKhachHangHaiLong());
+
+    List<ThongBao> dsChoDuyet = thongBaoRepository.findAll().stream()
+            .filter(tb -> "ChuaGui".equals(tb.getTrangThai()))
+            .toList();
+    model.addAttribute("dsChoDuyet", dsChoDuyet);
+
+    return "giam-doc/dashboard";
+}
 
 @GetMapping("/bao-cao")
-    public String baoCao(@RequestParam(value = "period", defaultValue = "month") String period, Model model) {
-        var donStats = thongKeService.getDonHangStats();
-        var ctvStats = thongKeService.getCongTacVienStats();
-        var khStats = thongKeService.getKhachHangStats();
-        var knStats = thongKeService.getKhieuNaiStats();
+public String baoCao(
+        @RequestParam(required = false) Integer thang,
+        @RequestParam(required = false) Integer nam,
+        Model model) {
 
-        model.addAttribute("donHangStats", donStats);
-        model.addAttribute("congTacVienStats", ctvStats);
-        model.addAttribute("khachHangStats", khStats);
-        model.addAttribute("khieuNaiStats", knStats);
+    int namChon = (nam != null) ? nam : java.time.LocalDate.now().getYear();
+    // thang = null nghĩa là "Cả năm"
 
-        model.addAttribute("tongDonHang", donStats.getTongDonHang());
-        model.addAttribute("tongKhachHang", khStats.getTongKhachHang());
-        model.addAttribute("tongKhieuNai", knStats.getTongKhieuNai());
-        model.addAttribute("tongCongTacVien", ctvStats.getTongCongTacVien());
-        model.addAttribute("doanhThuTrieuDong", donStats.getDoanhThuTrieuDong());
-        model.addAttribute("recentOrders", thongKeService.getDonHangGanDay(15));
-        model.addAttribute("dichVus", dichVuRepository.findAll());
-        model.addAttribute("topDichVu", thongKeService.getTopDichVu());
-        model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDon());
-        model.addAttribute("doanhThuHienTai", donStats.getDoanhThuTrieuDong() != null ? donStats.getDoanhThuTrieuDong() : 0);
-        model.addAttribute("doanhThuTheoThang", thongKeService.getDoanhThu12Thang());
-        model.addAttribute("trangThaiKhieuNai", thongKeService.getTrangThaiKhieuNai());
-        model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
-        model.addAttribute("tyLeDungHan", thongKeService.getTyLeGiaiQuyetDungHan());
-        model.addAttribute("tyLeHopLe", thongKeService.getTyLeKhieuNaiHopLe());
-        model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
-        model.addAttribute("tyLeHaiLong", thongKeService.getTyLeKhachHangHaiLong());
-        return "giam-doc/bao-cao";
-    }
+    var donHangLoc = thongKeService.getDonHangTheoThangNam(thang, namChon);
+    var ctvStats = thongKeService.getCongTacVienStats();
+    var khStats = thongKeService.getKhachHangStats();
+    var knStats = thongKeService.getKhieuNaiStats();
+
+    model.addAttribute("thangDangChon", thang);
+    model.addAttribute("namDangChon", namChon);
+    model.addAttribute("danhSachNam", thongKeService.getDanhSachNamCoDuLieu());
+
+    model.addAttribute("congTacVienStats", ctvStats);
+    model.addAttribute("khachHangStats", khStats);
+    model.addAttribute("khieuNaiStats", knStats);
+
+    model.addAttribute("tongDonHang", donHangLoc.size());
+    model.addAttribute("tongKhachHang", khStats.getTongKhachHang());
+    model.addAttribute("tongKhieuNai", knStats.getTongKhieuNai());
+    model.addAttribute("tongCongTacVien", ctvStats.getTongCongTacVien());
+    model.addAttribute("doanhThuTrieuDong", thongKeService.getDoanhThuTrieuTheoThangNam(thang, namChon));
+
+    model.addAttribute("recentOrders", donHangLoc.stream()
+            .sorted((a, b) -> Integer.compare(
+                    b.getId() != null ? b.getId() : 0,
+                    a.getId() != null ? a.getId() : 0))
+            .limit(15)
+            .toList());
+
+    model.addAttribute("dichVus", dichVuRepository.findAll());
+    model.addAttribute("topDichVu", thongKeService.getTopDichVuTheoThangNam(thang, namChon));
+    model.addAttribute("doanhThuTheoThang", thongKeService.getDoanhThu12Thang(namChon));
+
+    model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDonTheoThangNam(thang, namChon));
+    model.addAttribute("trangThaiKhieuNai", thongKeService.getTrangThaiKhieuNai());
+    model.addAttribute("tyLeDungHan", thongKeService.getTyLeGiaiQuyetDungHan());
+    model.addAttribute("tyLeHopLe", thongKeService.getTyLeKhieuNaiHopLe());
+    model.addAttribute("tyLeLeoThang", thongKeService.getTyLeLeoThang());
+    model.addAttribute("tyLeHaiLong", thongKeService.getTyLeKhachHangHaiLong());
+
+    return "giam-doc/bao-cao";
+}
 
     @GetMapping("/khieu-nai")
     public String khieuNai(Model model) {

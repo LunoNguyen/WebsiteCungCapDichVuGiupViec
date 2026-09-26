@@ -16,16 +16,68 @@
       <div class="page-header">
         <div class="page-title-group">
           <h1 class="page-title">Dashboard Giám đốc</h1>
-          <p class="page-subtitle">Tổng quan hoạt động kinh doanh · Năm 2026</p>
+          <p class="page-subtitle" th:text="'Tổng quan hoạt động kinh doanh · ' + (${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}">Tổng quan hoạt động kinh doanh · Năm 2026</p>
         </div>
-        <div class="page-actions">
-          <button class="btn btn-secondary btn-sm" onclick="window.location.href='/giam-doc/bao-cao'">
-            <i class="ti ti-download"></i> Xuất báo cáo
-          </button>
-          <button class="btn btn-primary btn-sm" onclick="window.location.reload()">
-            <i class="ti ti-refresh"></i> Làm mới
-          </button>
-        </div>
+
+       <div class="page-actions" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+
+  <!-- Dropdown chọn Tháng (UI mới, logic link cũ) -->
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="thangMenu"
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="${thangDangChon != null ? ('Tháng ' + thangDangChon) : 'Cả năm'}">Cả năm</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
+
+    <div class="dropdown-menu" id="thangMenu" style="right:0;left:auto;min-width:140px">
+      <!-- Link Cả năm -->
+      <a th:href="@{/giam-doc/dashboard(nam=${namDangChon})}"
+         class="dropdown-item"
+         th:classappend="${thangDangChon == null} ? 'active' : ''">
+        Cả năm
+      </a>
+      <!-- Link Tháng 1 đến 12 -->
+      <a th:each="t : ${#numbers.sequence(1, 12)}"
+         th:href="@{/giam-doc/dashboard(thang=${t}, nam=${namDangChon})}"
+         class="dropdown-item"
+         th:classappend="${t == thangDangChon} ? 'active' : ''"
+         th:text="'Tháng ' + ${t}">
+        Tháng 1
+      </a>
+    </div>
+  </div>
+
+  <!-- Dropdown chọn Năm (UI mới, logic link cũ) -->
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="namMenu"
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
+
+    <div class="dropdown-menu" id="namMenu" style="right:0;left:auto;min-width:140px">
+      <a th:each="n : ${danhSachNam}"
+         th:href="@{/giam-doc/dashboard(thang=${thangDangChon}, nam=${n})}"
+         class="dropdown-item"
+         th:classappend="${n == namDangChon} ? 'active' : ''"
+         th:text="'Năm ' + ${n}">
+        Năm 2026
+      </a>
+    </div>
+  </div>
+
+  <!-- Các nút gốc giữ nguyên không đụng chạm -->
+  <button class="btn btn-secondary btn-sm" onclick="window.location.href='/giam-doc/bao-cao'">
+    <i class="ti ti-download"></i> Xuất báo cáo
+  </button>
+  
+  <button class="btn btn-primary btn-sm" onclick="window.location.reload()">
+    <i class="ti ti-refresh"></i> Làm mới
+  </button>
+
+</div>
       </div>
 
       <!-- KPI Stats -->
@@ -94,13 +146,8 @@
           <div class="chart-header">
             <div>
               <div class="chart-title">Doanh thu theo tháng</div>
-              <div class="chart-subtitle">Đơn vị: Triệu đồng · Năm 2026</div>
+              <div class="chart-subtitle" th:text="'Đơn vị: Triệu đồng · ' + (${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : '') + ${namDangChon}">Đơn vị: Triệu đồng · Năm 2026</div>
             </div>
-          <div class="chart-period-tabs">
-            <button class="chart-period-btn active" onclick="changeRevenuePeriod(this, '6month')">6 tháng</button>
-            <button class="chart-period-btn" onclick="changeRevenuePeriod(this, '1year')">1 năm</button>
-            <button class="chart-period-btn" onclick="changeRevenuePeriod(this, '3year')">3 năm</button>
-          </div>
           </div>
           <div class="chart-wrapper">
             <canvas id="revenueChart"></canvas>
@@ -112,7 +159,7 @@
           <div class="chart-header">
             <div>
               <div class="chart-title">Trạng thái đơn đặt dịch vụ</div>
-              <div class="chart-subtitle">Tháng 9/2026</div>
+              <div class="chart-subtitle" th:text="(${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}">Tháng 9/2026</div>
             </div>
           </div>
           <div class="chart-wrapper">
@@ -285,8 +332,9 @@
         doanhThuTrieu: /*[[${tongDoanhThuTrieu != null ? tongDoanhThuTrieu : 0}]]*/ 0,
         topDichVu: /*[[${topDichVu}]]*/ {},
         phanPhoiDanhGia: /*[[${phanPhoiDanhGia}]]*/ {},
-        doanhThuTheoThang: /*[[${doanhThuTheoThang}]]*/ {}, // Dòng quan trọng nhất để vẽ 12 tháng!
-        trangThaiKhieuNai: /*[[${trangThaiKhieuNai}]]*/ {}
+        doanhThuTheoThang: /*[[${doanhThuTheoThang}]]*/ {},
+        trangThaiKhieuNai: /*[[${trangThaiKhieuNai}]]*/ {},
+        orderDistribution: /*[[${orderDistribution}]]*/ {}
     };
 </script>
 

@@ -41,22 +41,32 @@ public class MarketingController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-        var mktStats = thongKeService.getMarketingStats();
-        model.addAttribute("marketingStats", mktStats);
-        model.addAttribute("tongKhuyenMai", mktStats.getTongKhuyenMai());
-        model.addAttribute("tongCoupons", mktStats.getTongCoupons());
-        model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
-        model.addAttribute("diemDanhGiaTB", thongKeService.getDiemDanhGiaTrungBinh());
-        model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
-        model.addAttribute("phanPhoiDanhGia", thongKeService.getPhanPhoiDanhGia());
-        model.addAttribute("topDichVu", thongKeService.getTopDichVu());
-        model.addAttribute("doanhThu12Thang", thongKeService.getDoanhThu12Thang());
-        model.addAttribute("recentReviews", danhGiaRepository.findAll());
-        model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
-        model.addAttribute("coupons", maKhuyenMaiRepository.findAll());
-        return "marketing/dashboard";
-    }
+public String dashboard(
+        @RequestParam(required = false) Integer nam,
+        Model model) {
+
+    int namChon = (nam != null) ? nam : java.time.LocalDate.now().getYear();
+
+    var mktStats = thongKeService.getMarketingStats();
+    model.addAttribute("marketingStats", mktStats);
+    model.addAttribute("tongKhuyenMai", mktStats.getTongKhuyenMai());
+    model.addAttribute("tongCoupons", mktStats.getTongCoupons());
+    model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
+    model.addAttribute("diemDanhGiaTB", thongKeService.getDiemDanhGiaTrungBinh());
+    model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
+    model.addAttribute("phanPhoiDanhGia", thongKeService.getPhanPhoiDanhGia());
+    model.addAttribute("topDichVu", thongKeService.getTopDichVu());
+    model.addAttribute("recentReviews", danhGiaRepository.findAll());
+    model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
+    model.addAttribute("coupons", maKhuyenMaiRepository.findAll());
+
+    // Bộ lọc năm — chỉ gọi 1 lần với namChon, KHÔNG cần dòng gọi getDoanhThu12Thang() không tham số nữa
+    model.addAttribute("doanhThu12Thang", thongKeService.getDoanhThu12Thang(namChon));
+    model.addAttribute("danhSachNam", thongKeService.getDanhSachNamCoDuLieu());
+    model.addAttribute("namDangChon", namChon);
+
+    return "marketing/dashboard";
+}
 
     // UC-MKT01 – Quản lý khuyến mãi
     @GetMapping("/khuyen-mai")
@@ -140,23 +150,41 @@ public class MarketingController {
         return "marketing/thong-bao";
     }
 
-    // UC-MKT03 – Phân tích & báo cáo marketing
-   // UC-MKT03 – Phân tích & báo cáo marketing
+        // UC-MKT03 – Phân tích & báo cáo marketing
     @GetMapping("/phan-tich")
-    public String phanTich(Model model) {
+    public String phanTich(
+            @RequestParam(required = false) Integer thang,
+            @RequestParam(required = false) Integer nam,
+            Model model) {
+
+        int namChon = (nam != null) ? nam : java.time.LocalDate.now().getYear();
+
         var mktStats = thongKeService.getMarketingStats();
         model.addAttribute("marketingStats", mktStats);
         model.addAttribute("tongKhuyenMai", mktStats.getTongKhuyenMai());
         model.addAttribute("tongCoupons", mktStats.getTongCoupons());
-        model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
-        
-        // Danh sách chiến dịch
-        model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
+
+        model.addAttribute("thangDangChon", thang);
+        model.addAttribute("namDangChon", namChon);
+        model.addAttribute("danhSachNam", thongKeService.getDanhSachNamCoDuLieu());
+
+        // Tổng khách hàng MỚI trong kỳ (dữ liệu thật theo NgayDangKy)
+        model.addAttribute("tongKhachHang", thongKeService.getTongKhachHangMoiTheoThangNam(thang, namChon));
+
+        // Bảng chiến dịch: lọc theo ngày bắt đầu thật
+        var khuyenMaiLoc = chuongTrinhKhuyenMaiRepository.findAll().stream()
+                .filter(km -> km.getNgayBatDau() != null && km.getNgayBatDau().getYear() == namChon)
+                .filter(km -> thang == null || km.getNgayBatDau().getMonthValue() == thang)
+                .toList();
+        model.addAttribute("khuyenMais", khuyenMaiLoc);
+
         model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
 
-        // Truyền Data Biểu đồ
-        model.addAttribute("nguonKhachHang", thongKeService.getNguonKhachHangData());
-        model.addAttribute("topCoupons", thongKeService.getTopMaKhuyenMaiDoanhThu());
+        // Nguồn khách hàng: tổng thật theo kỳ, tỷ lệ từng kênh là ước lượng
+        model.addAttribute("nguonKhachHang", thongKeService.getNguonKhachHangTheoThangNam(thang, namChon));
+
+        // Top mã khuyến mãi theo doanh thu THẬT trong kỳ
+        model.addAttribute("topCoupons", thongKeService.getTopMaKhuyenMaiTheoThangNam(thang, namChon));
 
         return "marketing/phan-tich";
     }

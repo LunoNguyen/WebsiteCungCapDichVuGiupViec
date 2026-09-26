@@ -14,21 +14,62 @@
           <h1 class="page-title">Thống kê & Báo cáo</h1>
           <p class="page-subtitle">Phân tích hoạt động kinh doanh · UC-GD02</p>
         </div>
-        <div class="page-actions">
-          <!-- Period Filter -->
-<select class="filter-select" id="periodFilter" onchange="location.href='/giam-doc/bao-cao?period=' + this.value">
-            <option value="month" th:selected="${param.period == 'month' or param.period == null}">Tháng này</option>
-            <option value="quarter" th:selected="${param.period == 'quarter'}">Quý này</option>
-            <option value="year" th:selected="${param.period == 'year'}">Năm nay</option>
-            <option value="all" th:selected="${param.period == 'all'}">Toàn thời gian</option>
-          </select>
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">
-  <i class="ti ti-file-type-pdf"></i> PDF
-</button>
-<a th:href="@{/giam-doc/bao-cao/export-excel}" class="btn btn-success btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
-  <i class="ti ti-file-spreadsheet"></i> Excel
-</a>
-        </div>
+        <div class="page-actions" style="display:flex;gap:0.5rem;align-items:center">
+
+  <!-- Dropdown chọn Tháng -->
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="thangMenu"
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="${thangDangChon != null ? ('Tháng ' + thangDangChon) : 'Cả năm'}">Cả năm</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
+
+    <div class="dropdown-menu" id="thangMenu" style="right:0;left:auto;min-width:140px">
+      <a th:href="@{/giam-doc/bao-cao(nam=${namDangChon})}"
+         class="dropdown-item"
+         th:classappend="${thangDangChon == null} ? 'active' : ''">
+        Cả năm
+      </a>
+      <a th:each="t : ${#numbers.sequence(1, 12)}"
+         th:href="@{/giam-doc/bao-cao(thang=${t}, nam=${namDangChon})}"
+         class="dropdown-item"
+         th:classappend="${t == thangDangChon} ? 'active' : ''"
+         th:text="'Tháng ' + ${t}">
+        Tháng 1
+      </a>
+    </div>
+  </div>
+
+  <!-- Dropdown chọn Năm -->
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="namMenu"
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
+
+    <div class="dropdown-menu" id="namMenu" style="right:0;left:auto;min-width:140px">
+      <a th:each="n : ${danhSachNam}"
+         th:href="@{/giam-doc/bao-cao(thang=${thangDangChon}, nam=${n})}"
+         class="dropdown-item"
+         th:classappend="${n == namDangChon} ? 'active' : ''"
+         th:text="'Năm ' + ${n}">
+        Năm 2026
+      </a>
+    </div>
+  </div>
+
+    <button class="btn btn-secondary btn-sm" type="button" onclick="window.print()" title="Xuất PDF">
+      <i class="ti ti-file-type-pdf"></i>
+    </button>
+    <a th:href="@{/giam-doc/bao-cao/export-excel}" class="btn btn-success btn-sm" title="Xuất Excel"
+       style="text-decoration:none;display:inline-flex;align-items:center">
+      <i class="ti ti-file-spreadsheet"></i>
+    </a>
+  </form>
+</div>
       </div>
 
       <!-- Summary KPI -->
@@ -273,6 +314,29 @@
             });
         });
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-dropdown]').forEach(function (btn) {
+    var menu = document.getElementById(btn.getAttribute('data-dropdown'));
+    if (!menu) return;
+
+    // Khi menu được hiển thị (class 'show' hoặc tương tự do JS gốc thêm vào),
+    // ta chuyển nó sang position:fixed và đặt đúng vị trí dưới nút bấm.
+    var observer = new MutationObserver(function () {
+      var isVisible = getComputedStyle(menu).display !== 'none';
+      if (isVisible) {
+        var rect = btn.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.top = (rect.bottom + 4) + 'px';
+        menu.style.left = 'auto';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.style.zIndex = '9999';
+      }
+    });
+    observer.observe(menu, { attributes: true, attributeFilter: ['class', 'style'] });
+  });
+});
 </script>
 </body>
 </html>
