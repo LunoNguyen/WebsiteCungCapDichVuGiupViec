@@ -216,6 +216,7 @@ public class MarketingController {
            @RequestParam String tenChuongTrinh, @RequestParam String maCoupon,
             @RequestParam String loaiGiamGia, @RequestParam java.math.BigDecimal mucGiam,
             @RequestParam java.math.BigDecimal dieuKienToiThieu, @RequestParam Integer gioiHanLuot,
+            @RequestParam(required = false) java.math.BigDecimal soTienGiamToiDa,
             @RequestParam String ngayBatDau, @RequestParam String ngayKetThuc,
             RedirectAttributes redirectAttributes) {
             
@@ -226,6 +227,17 @@ public class MarketingController {
             redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon '" + maCoupon + "' đã tồn tại!");
             return "redirect:/marketing/khuyen-mai";
         } 
+                // Kiểm tra Giảm tối đa: không âm và không vượt quá đơn hàng tối thiểu
+        if (soTienGiamToiDa != null) {
+            if (soTienGiamToiDa.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm tối đa không được là số âm!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+            if (dieuKienToiThieu != null && soTienGiamToiDa.compareTo(dieuKienToiThieu) > 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm tối đa không được vượt quá đơn hàng tối thiểu!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+        }
 
         // 2. Kiểm tra ràng buộc Mức giảm (Bao quát cả % và tiền mặt)
         if ("PhanTram".equals(loaiGiamGia)) {
@@ -274,6 +286,7 @@ public class MarketingController {
         ct.setLoaiGiam(loaiGiamGia);
         ct.setGiaTriGiam(mucGiam);
         ct.setDieuKienToiThieu(dieuKienToiThieu);
+        ct.setSoTienGiamToiDa(soTienGiamToiDa);
         
         try {
             java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -352,6 +365,7 @@ public class MarketingController {
             @RequestParam Integer id, 
             @RequestParam String tenChuongTrinh, @RequestParam String maCoupon,
             @RequestParam String loaiGiamGia, @RequestParam java.math.BigDecimal mucGiam,
+            @RequestParam(required = false) java.math.BigDecimal soTienGiamToiDa,
             @RequestParam java.math.BigDecimal dieuKienToiThieu, @RequestParam Integer gioiHanLuot,
             @RequestParam String ngayBatDau, @RequestParam String ngayKetThuc,
             RedirectAttributes redirectAttributes) {
@@ -363,7 +377,17 @@ public class MarketingController {
             redirectAttributes.addFlashAttribute("error", "Lỗi: Tên chương trình không được để trống!");
             return "redirect:/marketing/khuyen-mai";
         }
-
+        // Kiểm tra Giảm tối đa: không âm và không vượt quá đơn hàng tối thiểu
+        if (soTienGiamToiDa != null) {
+            if (soTienGiamToiDa.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm tối đa không được là số âm!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+            if (dieuKienToiThieu != null && soTienGiamToiDa.compareTo(dieuKienToiThieu) > 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm tối đa không được vượt quá đơn hàng tối thiểu!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+        }
         // 2. Kiểm tra Mã Coupon (Bắt buộc chỉ chứa chữ và số, KHÔNG dấu cách, KHÔNG ký tự đặc biệt)
         String maKhuyenMaiClean = maCoupon.trim();
         if (maKhuyenMaiClean.isEmpty()) {
@@ -417,6 +441,7 @@ public class MarketingController {
                 ct.setLoaiGiam(loaiGiamGia);
                 ct.setGiaTriGiam(mucGiam);
                 ct.setDieuKienToiThieu(dieuKienToiThieu);
+                ct.setSoTienGiamToiDa(soTienGiamToiDa);
 
                 java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 java.time.LocalDate start = java.time.LocalDate.parse(ngayBatDau, formatter);

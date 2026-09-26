@@ -11,7 +11,7 @@ public class ChuongTrinhKhuyenMaiDTO {
     private String moTa;
     private String loaiGiam;
     private BigDecimal giaTriGiam;
-    private BigDecimal giaTriGiamToiDa;
+    private BigDecimal soTienGiamToiDa;
     private BigDecimal dieuKienToiThieu;
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;

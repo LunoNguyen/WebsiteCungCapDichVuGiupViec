@@ -28,8 +28,8 @@ public class ChuongTrinhKhuyenMai {
     @Column(name = "GiaTriGiam", nullable = false, precision = 12, scale = 2)
     private BigDecimal giaTriGiam;
 
-    @Column(name = "GiaTriGiamToiDa", precision = 12, scale = 0)
-    private BigDecimal giaTriGiamToiDa;
+    @Column(name = "SoTienGiamToiDa", precision = 12, scale = 0)
+    private BigDecimal soTienGiamToiDa; 
 
     @Column(name = "DieuKienToiThieu", nullable = false, precision = 12, scale = 0)
     private BigDecimal dieuKienToiThieu;

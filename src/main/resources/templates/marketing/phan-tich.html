@@ -136,9 +136,14 @@
                     <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${km.moTa}">Mô tả</div>
                   </td>
                   <td th:text="${km.loaiGiam == 'PhanTram' ? 'Phần trăm' : 'Số tiền cố định'}">Phần trăm</td>
-                  <td style="font-weight:700;color:var(--accent)"
-                    th:text="${km.loaiGiam == 'PhanTram' ? km.giaTriGiam + '%' : #numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT') + 'đ'}">
-                    20%</td>
+                  <td style="font-weight:700;color:var(--accent)">
+  <span th:text="${km.loaiGiam == 'PhanTram' ? km.giaTriGiam + '%' : #numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT') + 'đ'}">20%</span>
+        <div style="font-size:0.72rem;color:var(--text-muted);font-weight:400;margin-top:2px"
+          th:if="${km.soTienGiamToiDa != null}"
+          th:text="|(tối đa ${#numbers.formatDecimal(km.soTienGiamToiDa, 0, 'COMMA', 0, 'POINT')}đ)|">
+          (tối đa 100.000đ)
+        </div>
+</td>
                   <td
                     th:text="${km.dieuKienToiThieu != null ? #numbers.formatDecimal(km.dieuKienToiThieu, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">
                     100.000đ</td>
