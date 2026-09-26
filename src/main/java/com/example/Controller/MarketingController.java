@@ -51,6 +51,7 @@ public class MarketingController {
         model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
         model.addAttribute("phanPhoiDanhGia", thongKeService.getPhanPhoiDanhGia());
         model.addAttribute("topDichVu", thongKeService.getTopDichVu());
+        model.addAttribute("doanhThu12Thang", thongKeService.getDoanhThu12Thang());
         model.addAttribute("recentReviews", danhGiaRepository.findAll());
         model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
         model.addAttribute("coupons", maKhuyenMaiRepository.findAll());

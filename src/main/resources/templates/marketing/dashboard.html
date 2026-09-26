@@ -56,7 +56,7 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">Tăng trưởng doanh thu 6 tháng gần nhất</div>
+              <div class="card-title">Doanh thu 12 tháng</div>
               <div class="card-subtitle">Số liệu thực tế đơn hàng đã hoàn thành</div>
             </div>
           </div>
@@ -125,20 +125,22 @@
 <script th:inline="javascript">
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;
-
+    const doanhThuTheoThang = /*[[${doanhThu12Thang}]]*/ {};
+    const revenueLabels = Object.keys(doanhThuTheoThang);
+    const revenueData = Object.values(doanhThuTheoThang);
     // Revenue chart
     const ctx = document.getElementById('revenueChart').getContext('2d');
     new Chart(ctx, {
       type:'bar',
       data:{
-        labels:['Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9'],
-        datasets:[{
-          label:'Doanh thu (triệu đồng)',data:[520, 680, 910, 1240, 1620, 1850],
-          backgroundColor:'rgba(255,101,132,0.85)',
-          borderRadius: 6,
-          maxBarThickness: 40
-        }]
-      },
+      labels: revenueLabels,
+      datasets:[{
+        label:'Doanh thu (triệu đồng)', data: revenueData,
+        backgroundColor:'rgba(255,101,132,0.85)',
+        borderRadius: 6,
+        maxBarThickness: 40
+      }]
+    },
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false}},
         scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+' triệu'}}}}
