@@ -615,8 +615,8 @@ public class CustomerApiService {
                     if (chiPhiGoc.compareTo(ctkm.getDieuKienToiThieu()) >= 0) {
                         if ("PhanTram".equalsIgnoreCase(ctkm.getLoaiGiam())) {
                             BigDecimal giam = chiPhiGoc.multiply(ctkm.getGiaTriGiam()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
-                            if (ctkm.getGiaTriGiamToiDa() != null && giam.compareTo(ctkm.getGiaTriGiamToiDa()) > 0) {
-                                giam = ctkm.getGiaTriGiamToiDa();
+                            if (ctkm.getSoTienGiamToiDa() != null && giam.compareTo(ctkm.getSoTienGiamToiDa()) > 0) {
+                                giam = ctkm.getSoTienGiamToiDa();
                             }
                             soTienGiam = giam;
                         } else {
@@ -665,8 +665,8 @@ public class CustomerApiService {
         BigDecimal soTienGiam = BigDecimal.ZERO;
         if ("PhanTram".equalsIgnoreCase(ct.getLoaiGiam())) {
             soTienGiam = req.getTongTienDonHang().multiply(ct.getGiaTriGiam()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
-            if (ct.getGiaTriGiamToiDa() != null && soTienGiam.compareTo(ct.getGiaTriGiamToiDa()) > 0) {
-                soTienGiam = ct.getGiaTriGiamToiDa();
+            if (ct.getSoTienGiamToiDa() != null && soTienGiam.compareTo(ct.getSoTienGiamToiDa()) > 0) {
+                soTienGiam = ct.getSoTienGiamToiDa();
             }
         } else {
             soTienGiam = ct.getGiaTriGiam();
