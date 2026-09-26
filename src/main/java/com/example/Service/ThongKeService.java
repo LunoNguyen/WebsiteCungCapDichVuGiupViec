@@ -610,7 +610,7 @@ public List<Integer> getDanhSachNamCoDuLieu() {
             if (count >= 5)
                 break;
             long luotDung = cp.getSoLuotDaDung() != null ? cp.getSoLuotDaDung() : 0;
-            // Giả định trung bình 1 đơn hàng dùng mã trị giá 400.000đ -> Đổi ra Triệu VNĐ
+        
             long doanhThuTrieu = (luotDung * 400000) / 1000000;
             if (luotDung > 0) {
                 map.put(cp.getCodeKhuyenMai(), doanhThuTrieu);
@@ -744,30 +744,32 @@ public Map<String, Long> getNguonKhachHangTheoThangNam(Integer thang, int nam) {
 }
 
 // Top 5 mã khuyến mãi theo DOANH THU THẬT trong kỳ (dựa trên LichSuSuDungKhuyenMai.NgaySuDung)
-public Map<String, Long> getTopMaKhuyenMaiTheoThangNam(Integer thang, int nam) {
-    Map<String, Long> tongTienTheoMa = new LinkedHashMap<>();
+public Map<String, Double> getTopMaKhuyenMaiTheoThangNam(Integer thang, int nam) {
+        Map<String, Long> tongTienTheoMa = new LinkedHashMap<>();
 
-    for (LichSuSuDungKhuyenMai ls : lichSuSuDungKhuyenMaiRepository.findAll()) {
-        if (ls.getNgaySuDung() == null || ls.getKhuyenMai() == null) continue;
-        int year = ls.getNgaySuDung().getYear();
-        int month = ls.getNgaySuDung().getMonthValue();
-        if (year != nam) continue;
-        if (thang != null && month != thang) continue;
+        for (LichSuSuDungKhuyenMai ls : lichSuSuDungKhuyenMaiRepository.findAll()) {
+            if (ls.getNgaySuDung() == null || ls.getKhuyenMai() == null) continue;
+            int year = ls.getNgaySuDung().getYear();
+            int month = ls.getNgaySuDung().getMonthValue();
+            if (year != nam) continue;
+            if (thang != null && month != thang) continue;
 
-        String code = ls.getKhuyenMai().getCodeKhuyenMai();
-        long soTien = ls.getSoTienDuocGiam() != null ? ls.getSoTienDuocGiam().longValue() : 0L;
-        tongTienTheoMa.merge(code, soTien, Long::sum);
+            String code = ls.getKhuyenMai().getCodeKhuyenMai();
+            long soTien = ls.getSoTienDuocGiam() != null ? ls.getSoTienDuocGiam().longValue() : 0L;
+            tongTienTheoMa.merge(code, soTien, Long::sum);
+        }
+
+        // ĐỔI SANG MAP DOUBLE
+        Map<String, Double> map = new LinkedHashMap<>();
+        tongTienTheoMa.entrySet().stream()
+                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+                .limit(5)
+                // QUAN TRỌNG: Chia cho 1000000.0 (có .0) để ra số thập phân
+                .forEach(e -> map.put(e.getKey(), e.getValue() / 1000000.0)); 
+
+        if (map.isEmpty()) {
+            map.put("CHUA_CO_DATA", 0.0); // Cập nhật số 0.0
+        }
+        return map;
     }
-
-    Map<String, Long> map = new LinkedHashMap<>();
-    tongTienTheoMa.entrySet().stream()
-            .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
-            .limit(5)
-            .forEach(e -> map.put(e.getKey(), e.getValue() / 1_000_000)); // đổi ra triệu đồng
-
-    if (map.isEmpty()) {
-        map.put("CHUA_CO_DATA", 0L);
-    }
-    return map;
-}
 }

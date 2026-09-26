@@ -22,29 +22,54 @@
 
           <div class="page-actions" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
 
-            <select class="filter-select" onchange="window.location.href=this.value">
-              <option th:value="@{/marketing/phan-tich(nam=${namDangChon})}"
-                      th:selected="${thangDangChon == null}">
-                Cả năm
-              </option>
-              <option th:each="t : ${#numbers.sequence(1, 12)}"
-                      th:value="@{/marketing/phan-tich(thang=${t}, nam=${namDangChon})}"
-                      th:selected="${t == thangDangChon}"
-                      th:text="'Tháng ' + ${t}">
-                Tháng 1
-              </option>
-            </select>
+  <!-- Dropdown chọn Tháng (UI mới, logic link cũ của trang phân tích) -->
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="thangMenu"
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="${thangDangChon != null ? ('Tháng ' + thangDangChon) : 'Cả năm'}">Cả năm</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
 
-            <select class="filter-select" onchange="window.location.href=this.value">
-              <option th:each="n : ${danhSachNam}"
-                      th:value="@{/marketing/phan-tich(thang=${thangDangChon}, nam=${n})}"
-                      th:selected="${n == namDangChon}"
-                      th:text="'Năm ' + ${n}">
-                Năm 2026
-              </option>
-            </select>
+    <div class="dropdown-menu" id="thangMenu" style="right:0;left:auto;min-width:140px">
+      <!-- Link Cả năm -->
+      <a th:href="@{/marketing/phan-tich(nam=${namDangChon})}"
+         class="dropdown-item"
+         th:classappend="${thangDangChon == null} ? 'active' : ''">
+        Cả năm
+      </a>
+      <!-- Link Tháng 1 đến 12 -->
+      <a th:each="t : ${#numbers.sequence(1, 12)}"
+         th:href="@{/marketing/phan-tich(thang=${t}, nam=${namDangChon})}"
+         class="dropdown-item"
+         th:classappend="${t == thangDangChon} ? 'active' : ''"
+         th:text="'Tháng ' + ${t}">
+        Tháng 1
+      </a>
+    </div>
+  </div>
 
-          </div>
+  <!-- Dropdown chọn Năm (UI mới, logic link cũ của trang phân tích) -->
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="namMenu"
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
+
+    <div class="dropdown-menu" id="namMenu" style="right:0;left:auto;min-width:140px">
+      <a th:each="n : ${danhSachNam}"
+         th:href="@{/marketing/phan-tich(thang=${thangDangChon}, nam=${n})}"
+         class="dropdown-item"
+         th:classappend="${n == namDangChon} ? 'active' : ''"
+         th:text="'Năm ' + ${n}">
+        Năm 2026
+      </a>
+    </div>
+  </div>
+
+</div>
         </div>
 
         <!-- Stats Grid -->
