@@ -351,24 +351,27 @@ function initComparisonChart(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return null;
 
-  // Khởi tạo mảng dữ liệu mặc định là 0 (vì DB đang trống)
-  let dataNamNay = [0, 0, 0];
-  let dataNamTruoc = [0, 0, 0]; // Giả sử năm trước chưa có dữ liệu trong hệ thống
+  let labels = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+  let dataNamNay = Array(12).fill(0);
+  let dataNamTruoc = Array(12).fill(0);
 
-  // Lấy dữ liệu Tháng 7, Tháng 8, Tháng 9 từ biến cầu nối DB
   if (window.chartData && window.chartData.doanhThuTheoThang) {
       let dbData = window.chartData.doanhThuTheoThang;
-      dataNamNay = [
-          dbData['Tháng 7'] || 0,
-          dbData['Tháng 8'] || 0,
-          dbData['Tháng 9'] || 0
-      ];
+      let keys = Object.keys(dbData);
+      if (keys.length > 0) {
+          labels = keys;
+          dataNamNay = Object.values(dbData);
+      }
+  }
+
+  if (window.chartData && window.chartData.doanhThuTheoThangNamTruoc) {
+      dataNamTruoc = Object.values(window.chartData.doanhThuTheoThangNamTruoc);
   }
 
   return new Chart(canvas, {
     type: 'bar',
     data: {
-      labels: ['T7', 'T8', 'T9'],
+      labels: labels,
       datasets: [
         {
           label: 'Năm nay',

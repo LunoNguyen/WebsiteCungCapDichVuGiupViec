@@ -95,7 +95,24 @@ public String dashboard(
     model.addAttribute("pendingComplaints", thongKeService.getKhieuNaiGanDay(5));
     model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDonTheoThangNam(thang, namChon));
     model.addAttribute("topDichVu", thongKeService.getTopDichVuTheoThangNam(thang, namChon));
-    model.addAttribute("doanhThuTheoThang", thongKeService.getDoanhThu12Thang(namChon));
+        // Nếu có chọn tháng cụ thể -> chỉ lấy đúng tháng đó; nếu "Cả năm" -> lấy đủ 12 tháng
+    java.util.Map<String, java.math.BigDecimal> doanhThuTheoThangMap;
+    java.util.Map<String, java.math.BigDecimal> doanhThuNamTruocMap;
+
+    if (thang != null) {
+        doanhThuTheoThangMap = new java.util.LinkedHashMap<>();
+        doanhThuTheoThangMap.put("Tháng " + thang, thongKeService.getDoanhThuTrieuTheoThangNam(thang, namChon));
+
+        doanhThuNamTruocMap = new java.util.LinkedHashMap<>();
+        doanhThuNamTruocMap.put("Tháng " + thang, thongKeService.getDoanhThuTrieuTheoThangNam(thang, namChon - 1));
+    } else {
+        doanhThuTheoThangMap = thongKeService.getDoanhThu12Thang(namChon);
+        doanhThuNamTruocMap = thongKeService.getDoanhThu12Thang(namChon - 1);
+    }
+
+    model.addAttribute("doanhThuTheoThang", doanhThuTheoThangMap);
+    model.addAttribute("doanhThuTheoThangNamTruoc", doanhThuNamTruocMap);
+    model.addAttribute("doanhThuTheoThangNamTruoc", thongKeService.getDoanhThu12Thang(namChon - 1)); 
     model.addAttribute("trangThaiKhieuNai", thongKeService.getTrangThaiKhieuNai());
     model.addAttribute("tyLeDungHan", thongKeService.getTyLeGiaiQuyetDungHan());
     model.addAttribute("tyLeHopLe", thongKeService.getTyLeKhieuNaiHopLe());
@@ -147,7 +164,23 @@ public String baoCao(
 
     model.addAttribute("dichVus", dichVuRepository.findAll());
     model.addAttribute("topDichVu", thongKeService.getTopDichVuTheoThangNam(thang, namChon));
-    model.addAttribute("doanhThuTheoThang", thongKeService.getDoanhThu12Thang(namChon));
+    // Nếu có chọn tháng cụ thể -> chỉ lấy đúng tháng đó; nếu "Cả năm" -> lấy đủ 12 tháng
+    java.util.Map<String, java.math.BigDecimal> doanhThuTheoThangMap;
+    java.util.Map<String, java.math.BigDecimal> doanhThuNamTruocMap;
+
+    if (thang != null) {
+        doanhThuTheoThangMap = new java.util.LinkedHashMap<>();
+        doanhThuTheoThangMap.put("Tháng " + thang, thongKeService.getDoanhThuTrieuTheoThangNam(thang, namChon));
+
+        doanhThuNamTruocMap = new java.util.LinkedHashMap<>();
+        doanhThuNamTruocMap.put("Tháng " + thang, thongKeService.getDoanhThuTrieuTheoThangNam(thang, namChon - 1));
+    } else {
+        doanhThuTheoThangMap = thongKeService.getDoanhThu12Thang(namChon);
+        doanhThuNamTruocMap = thongKeService.getDoanhThu12Thang(namChon - 1);
+    }
+
+    model.addAttribute("doanhThuTheoThang", doanhThuTheoThangMap);
+    model.addAttribute("doanhThuTheoThangNamTruoc", doanhThuNamTruocMap);
 
     model.addAttribute("orderDistribution", thongKeService.getPhanBoTrangThaiDonTheoThangNam(thang, namChon));
     model.addAttribute("trangThaiKhieuNai", thongKeService.getTrangThaiKhieuNai());
