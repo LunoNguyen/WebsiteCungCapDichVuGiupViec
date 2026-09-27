@@ -8,8 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 /**
  * Xac thuc tai khoan va phan quyen tu CSDL.
@@ -134,19 +132,11 @@ public class AuthService {
         if (storedPassword == null || input == null) {
             return false;
         }
-        // 1. Nếu mật khẩu trong CSDL đã được mã hóa bằng BCrypt (bắt đầu bằng $2a$, $2b$, $2y$)
-        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
-            try {
-                if (passwordEncoder.matches(input, storedPassword)) {
-                    return true;
-                }
-            } catch (Exception ignored) {}
+        try {
+            return passwordEncoder.matches(input, storedPassword);
+        } catch (Exception e) {
+            return false;
         }
-        // 2. Tương thích ngược: Mật khẩu cũ lưu dạng thường (plaintext)
-        return MessageDigest.isEqual(
-                input.getBytes(StandardCharsets.UTF_8),
-                storedPassword.getBytes(StandardCharsets.UTF_8)
-        );
     }
 
     private boolean isBlank(String value) { return value == null || value.isBlank(); }
