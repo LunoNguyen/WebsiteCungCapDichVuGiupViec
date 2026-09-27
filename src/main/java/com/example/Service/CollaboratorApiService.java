@@ -108,7 +108,7 @@ public class CollaboratorApiService {
         PhanCongCTV pc = phanCongCTVRepository.findById(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
-        pc.setTrangThai("DaNhan");
+        pc.setTrangThai("DaXacNhan"); 
         pc.setThoiGianXacNhan(LocalDateTime.now());
         phanCongCTVRepository.save(pc);
 
@@ -318,6 +318,34 @@ public class CollaboratorApiService {
             result.put("khachHangTen", d.getKhachHang().getHoTen());
             result.put("khachHangPhone", d.getKhachHang().getSoDienThoai());
         }
+        return result;
+    }
+    // ==========================================
+    // UC-CTV04: QUẢN LÝ HỒ SƠ & TRẠNG THÁI (MỚI THÊM)
+    // ==========================================
+
+    /**
+     * Lấy thông tin hồ sơ của Cộng tác viên
+     */
+    public CongTacVien getCollaboratorProfile(Integer congTacVienId) {
+        return congTacVienRepository.findById(congTacVienId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên ID: " + congTacVienId));
+    }
+
+    /**
+     * Cập nhật trạng thái (Sẵn sàng / Tạm dừng) của CTV
+     */
+    public Map<String, Object> updateCollaboratorStatus(Integer congTacVienId, String trangThaiMoi) {
+        CongTacVien ctv = congTacVienRepository.findById(congTacVienId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên ID: " + congTacVienId));
+        
+        ctv.setTrangThai(trangThaiMoi);
+        congTacVienRepository.save(ctv);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("congTacVienId", ctv.getId());
+        result.put("trangThaiMoi", ctv.getTrangThai());
+        result.put("message", "Đã cập nhật trạng thái hoạt động thành công");
         return result;
     }
 }
