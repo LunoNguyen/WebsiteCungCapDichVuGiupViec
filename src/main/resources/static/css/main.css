@@ -1009,6 +1009,10 @@ select.form-control option {
   border-left: 3px solid var(--warning);
 }
 
+.toast.info {
+  border-left: 3px solid var(--primary);
+}
+
 /* ==========================================================
    ANIMATIONS
    ========================================================== */

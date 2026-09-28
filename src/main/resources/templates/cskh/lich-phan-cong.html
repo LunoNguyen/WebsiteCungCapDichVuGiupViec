@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout/cskh-layout :: cskhHead('Lịch Làm việc CTV')}"></head>
 <body>
@@ -201,9 +201,18 @@
                     <div th:text="${ctv.noiCuTru != null ? ctv.noiCuTru : 'Hồ Chí Minh'}">HCM</div>
                     <div style="font-size:0.75rem;color:var(--text-muted)">Dịch vụ gia đình</div>
                   </td>
-                  <td><span class="badge badge-success">Sẵn sàng ca sáng</span></td>
-                  <td><span class="badge badge-primary">Sẵn sàng ca chiều</span></td>
-                  <td><span class="badge badge-secondary">Sẵn sàng ca tối</span></td>
+                  <td th:with="shift=${ctvShiftsMap != null ? ctvShiftsMap.get(ctv.id) : null}">
+                    <span th:class="|badge ${shift != null ? shift.get('sangClass') : 'badge-success'}|"
+                          th:text="${shift != null ? shift.get('sang') : 'Sẵn sàng ca sáng'}">Sẵn sàng ca sáng</span>
+                  </td>
+                  <td th:with="shift=${ctvShiftsMap != null ? ctvShiftsMap.get(ctv.id) : null}">
+                    <span th:class="|badge ${shift != null ? shift.get('chieuClass') : 'badge-primary'}|"
+                          th:text="${shift != null ? shift.get('chieu') : 'Sẵn sàng ca chiều'}">Sẵn sàng ca chiều</span>
+                  </td>
+                  <td th:with="shift=${ctvShiftsMap != null ? ctvShiftsMap.get(ctv.id) : null}">
+                    <span th:class="|badge ${shift != null ? shift.get('toiClass') : 'badge-secondary'}|"
+                          th:text="${shift != null ? shift.get('toi') : 'Sẵn sàng ca tối'}">Sẵn sàng ca tối</span>
+                  </td>
                   <td style="text-align:right">
                     <div class="table-actions" style="justify-content:flex-end">
                       <button class="btn btn-outline btn-sm"
@@ -213,8 +222,9 @@
                         <i class="ti ti-calendar"></i> Xem lịch
                       </button>
                       <button class="btn btn-primary btn-sm"
+                              th:data-id="${ctv.id}"
                               th:data-name="${ctv.hoTen}"
-                              onclick="openAssignModal(this.dataset.name)">
+                              onclick="openAssignModal(this.dataset.id, this.dataset.name)">
                         <i class="ti ti-plus"></i> Giao đơn
                       </button>
                     </div>
@@ -243,43 +253,47 @@
       <button class="modal-close" data-modal-close="assignModal">✕</button>
     </div>
     <div>
+      <input type="hidden" id="assignCTVId">
       <div class="form-group" style="margin-bottom:1rem">
         <label class="form-label">CTV phụ trách</label>
-        <input type="text" class="form-control" id="assignCTVName" readonly style="opacity:0.8">
+        <input type="text" class="form-control" id="assignCTVName" readonly style="opacity:0.85;background:rgba(0,0,0,0.03)">
       </div>
       <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Chọn đơn hàng cần ghép</label>
-        <select class="form-control" id="assignOrderSelect">
-          <option>-- Chọn đơn chờ duyệt --</option>
+        <label class="form-label">Chọn đơn hàng cần ghép <span style="color:var(--danger)">*</span></label>
+        <select class="form-control" id="assignOrderSelect" onchange="onOrderSelectChange(this)">
+          <option value="">-- Chọn đơn chờ duyệt --</option>
           <th:block th:each="order : ${donDatDichVus}">
             <option th:if="${order.trangThai == 'ChoDuyet'}"
                     th:value="${order.id}"
-                    th:text="${(order.maDonDat != null ? order.maDonDat : '#DD-'+order.id) + ' · ' + (order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ') + ' · ' + (order.ngayThucHien != null ? #temporals.format(order.ngayThucHien,'dd/MM') : '')}">Đơn</option>
+                    th:data-date="${order.ngayThucHien}"
+                    th:data-start="${order.gioBatDau}"
+                    th:data-end="${order.gioKetThuc}"
+                    th:text="${(order.maDonDat != null ? order.maDonDat : '#DD-'+order.id) + ' · ' + (order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ') + ' · ' + (order.ngayThucHien != null ? #temporals.format(order.ngayThucHien,'dd/MM/yyyy') : '')}">Đơn</option>
           </th:block>
         </select>
       </div>
       <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Ngày thực hiện</label>
+        <label class="form-label">Ngày thực hiện <span style="color:var(--danger)">*</span></label>
         <input type="date" class="form-control" id="assignDate">
       </div>
       <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
         <div>
-          <label class="form-label">Giờ bắt đầu</label>
+          <label class="form-label">Giờ bắt đầu <span style="color:var(--danger)">*</span></label>
           <input type="time" class="form-control" id="assignStart" value="09:00">
         </div>
         <div>
-          <label class="form-label">Giờ kết thúc</label>
+          <label class="form-label">Giờ kết thúc <span style="color:var(--danger)">*</span></label>
           <input type="time" class="form-control" id="assignEnd" value="11:00">
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">Ghi chú điều phối</label>
-        <textarea class="form-control" rows="3" placeholder="Lưu ý gửi kèm thông báo tới App CTV..."></textarea>
+        <textarea class="form-control" id="assignNote" rows="3" placeholder="Lưu ý gửi kèm thông báo tới App CTV..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" data-modal-close="assignModal">Hủy</button>
-      <button class="btn btn-primary" onclick="saveAssignment()">
+      <button class="btn btn-primary" id="btnConfirmAssign" onclick="saveAssignment()">
         <i class="ti ti-check"></i> Xác nhận phân công
       </button>
     </div>
@@ -294,6 +308,7 @@
       <button class="modal-close" data-modal-close="eventDetailModal">✕</button>
     </div>
     <div>
+      <div class="info-row"><span class="info-label">Mã đơn</span><span class="info-value" id="ev-order" style="font-weight:700;color:var(--brand-600)">---</span></div>
       <div class="info-row"><span class="info-label">CTV</span><span class="info-value" id="ev-ctv" style="font-weight:700">---</span></div>
       <div class="info-row"><span class="info-label">Dịch vụ</span><span class="info-value" id="ev-dv">---</span></div>
       <div class="info-row"><span class="info-label">Ngày</span><span class="info-value" id="ev-date">---</span></div>
@@ -301,11 +316,12 @@
       <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value" id="ev-kh">---</span></div>
       <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="ev-addr">---</span></div>
       <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value" id="ev-status">---</span></div>
+      <div class="info-row"><span class="info-label">Ghi chú/KQ</span><span class="info-value" id="ev-note">---</span></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" data-modal-close="eventDetailModal">Đóng</button>
-      <button class="btn btn-warning btn-sm" onclick="ModalManager.close('eventDetailModal');CSKH.toast('Đang mở form đổi CTV...')">
-        <i class="ti ti-replace"></i> Đổi CTV
+      <button class="btn btn-primary btn-sm" onclick="ModalManager.close('eventDetailModal')">
+        <i class="ti ti-check"></i> Đã hiểu
       </button>
     </div>
   </div>
@@ -317,8 +333,7 @@
 <!-- Thymeleaf → JS data bridge -->
 <script th:inline="javascript">
   /*<![CDATA[*/
-  const ALL_CTV = /*[[${congTacViens}]]*/ [];
-  const ALL_ORDERS = /*[[${donDatDichVus}]]*/ [];
+  const LICH_LAM_VIEC = JSON.parse(/*[[${lichLamViecsJson}]]*/ '[]');
   /*]]>*/
 </script>
 
@@ -344,16 +359,16 @@
     // Update banner
     const banner = document.getElementById('selectedCTVBanner');
     banner.style.display = 'flex';
-    const initial = name ? name.charAt(0).toUpperCase() : '★';
+    const initial = name ? name.trim().charAt(0).toUpperCase() : '★';
     document.getElementById('bannerAvatar').textContent = initial;
     document.getElementById('bannerName').textContent = name || 'Tất cả CTV';
-    document.getElementById('bannerSub').textContent = id === 'all' ? 'Đang xem lịch tổng hợp tất cả CTV' : 'Đang xem lịch cá nhân';
+    document.getElementById('bannerSub').textContent = id === 'all' ? 'Đang xem lịch tổng hợp tất cả CTV từ CSDL' : 'Đang xem lịch cá nhân từ CSDL';
 
     // Rebuild calendar events
     loadCalendarEvents(id);
   }
 
-  // Helper: called from ctv-list-item onclick (avoids th:onclick parse issues)
+  // Helper: called from ctv-list-item onclick
   function selectCTVFromCard(el) {
     const id = el.dataset.id || 'all';
     const name = el.dataset.name || 'CTV';
@@ -369,69 +384,47 @@
     });
   }
 
-  // ── Calendar ───────────────────────────────────────────────────
-  const COLOR_PALETTE = ['#00B4D8','#43E97B','#FF6584','#FFB347','#6C63FF','#FF5722','#4CAF50','#E91E63'];
+  // ── Calendar Events from Database ──────────────────────────────
+  const COLOR_PALETTE = ['#08778C', '#1197B0', '#22BED0', '#43E97B', '#FFB347', '#FF6584', '#6C63FF', '#00B4D8'];
 
   function generateEvents(ctvIdFilter) {
     const events = [];
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-
-    // Build from ALL_ORDERS if available
-    if (ALL_ORDERS && ALL_ORDERS.length > 0) {
-      ALL_ORDERS.forEach((order, idx) => {
-        if (!order.ngayThucHien) return;
-        // Filter by CTV if selected (via phanCong – not directly on order; show all as demo)
-        const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];
-        const label = (order.dichVu ? order.dichVu.tenDichVu : 'Dịch vụ');
-        const kh = order.khachHang ? order.khachHang.hoTen : 'KH';
-        events.push({
-          id: 'order-' + (order.id || idx),
-          title: label + ' · ' + kh,
-          start: order.ngayThucHien + (order.gioBatDau ? 'T' + order.gioBatDau : ''),
-          end: order.ngayThucHien + (order.gioKetThuc ? 'T' + order.gioKetThuc : ''),
-          backgroundColor: color,
-          borderColor: color,
-          textColor: '#fff',
-          extendedProps: {
-            kh: kh,
-            dv: label,
-            status: order.trangThai || '---',
-            addr: order.diaChi ? (order.diaChi.soNha || '') : '---',
-            ctv: 'CTV phụ trách'
-          }
-        });
-      });
-    } else {
-      // Demo events when no real data
-      const demoColors = ['#00B4D8','#43E97B','#FF6584','#FFB347','#6C63FF'];
-      const demoServices = ['Dọn dẹp nhà','Nấu ăn','Trông trẻ','Giặt ủi','Chăm sóc NCT'];
-      const demoKH = ['Nguyễn Thị Lan','Trần Văn Nam','Lê Thu Hương','Phạm Minh Đức','Hoàng Thị Mai'];
-      for (let i = 0; i < 12; i++) {
-        const d = new Date(year, month, Math.floor(Math.random() * 28) + 1);
-        const h = 7 + Math.floor(Math.random() * 10);
-        const startStr = d.toISOString().split('T')[0] + 'T' + String(h).padStart(2,'0') + ':00:00';
-        const endStr = d.toISOString().split('T')[0] + 'T' + String(h+2).padStart(2,'0') + ':00:00';
-        const ci = i % 5;
-        events.push({
-          id: 'demo-' + i,
-          title: demoServices[ci] + ' · ' + demoKH[ci],
-          start: startStr,
-          end: endStr,
-          backgroundColor: demoColors[ci],
-          borderColor: demoColors[ci],
-          textColor: '#fff',
-          extendedProps: {
-            kh: demoKH[ci],
-            dv: demoServices[ci],
-            status: 'DangThucHien',
-            addr: 'Quận ' + (i+1) + ', TP.HCM',
-            ctv: 'CTV phụ trách'
-          }
-        });
-      }
+    if (!LICH_LAM_VIEC || LICH_LAM_VIEC.length === 0) {
+      return events;
     }
+
+    const filtered = (ctvIdFilter === 'all')
+      ? LICH_LAM_VIEC
+      : LICH_LAM_VIEC.filter(item => String(item.congTacVienId) === String(ctvIdFilter));
+
+    filtered.forEach((item, idx) => {
+      if (!item.ngayLam) return;
+      const color = COLOR_PALETTE[(item.congTacVienId || idx) % COLOR_PALETTE.length];
+      const ctvName = item.ctvTen || 'CTV';
+      const serviceName = item.dichVuTen || 'Dịch vụ';
+      const customerName = item.khachHangTen || 'Khách hàng';
+      const customerPhone = item.khachHangSdt ? ` (${item.khachHangSdt})` : '';
+
+      events.push({
+        id: 'llv-' + (item.id || idx),
+        title: (ctvIdFilter === 'all' ? (ctvName + ': ') : '') + serviceName + ' · ' + customerName,
+        start: item.ngayLam + (item.gioBatDau ? 'T' + item.gioBatDau : ''),
+        end: item.ngayLam + (item.gioKetThuc ? 'T' + item.gioKetThuc : ''),
+        backgroundColor: color,
+        borderColor: color,
+        textColor: '#fff',
+        extendedProps: {
+          ctv: ctvName,
+          dv: serviceName,
+          kh: customerName + customerPhone,
+          status: item.trangThai || '---',
+          addr: item.diaChiChiTiet || '---',
+          maDon: item.maDonDat || '---',
+          note: item.ketQuaThucHien || 'Không có ghi chú'
+        }
+      });
+    });
+
     return events;
   }
 
@@ -469,6 +462,7 @@
       eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
       eventClick: function(info) {
         const ep = info.event.extendedProps;
+        document.getElementById('ev-order').textContent = ep.maDon || '---';
         document.getElementById('ev-ctv').textContent = ep.ctv || '---';
         document.getElementById('ev-dv').textContent = ep.dv || '---';
         document.getElementById('ev-date').textContent = info.event.startStr ? info.event.startStr.split('T')[0] : '---';
@@ -478,6 +472,7 @@
         document.getElementById('ev-kh').textContent = ep.kh || '---';
         document.getElementById('ev-addr').textContent = ep.addr || '---';
         document.getElementById('ev-status').innerHTML = badgeHtml(ep.status);
+        document.getElementById('ev-note').textContent = ep.note || '---';
         ModalManager.open('eventDetailModal');
       },
       eventDidMount: function(info) {
@@ -501,15 +496,30 @@
     const cls = map[status] || 'badge-secondary';
     const labels = {
       'HoanThanh':'Hoàn thành','DangThucHien':'Đang thực hiện',
-      'ChoDuyet':'Chờ duyệt','DaHuy':'Đã hủy','SapToi':'Sắp tới'
+      'ChoDuyet':'Chờ duyệt','DaHuy':'Đã hủy','SapToi':'Sắp tới','Huy':'Đã hủy'
     };
     return `<span class="badge ${cls}">${labels[status] || status}</span>`;
   }
 
+  // ── Auto-fill date/time when an order is selected ──────────────
+  function onOrderSelectChange(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.dataset.date) {
+      document.getElementById('assignDate').value = opt.dataset.date;
+      if (opt.dataset.start) document.getElementById('assignStart').value = opt.dataset.start.substring(0, 5);
+      if (opt.dataset.end) document.getElementById('assignEnd').value = opt.dataset.end.substring(0, 5);
+    }
+  }
+
   // ── Assign Modal ───────────────────────────────────────────────
-  function openAssignModal(ctvName) {
+  function openAssignModal(ctvId, ctvName) {
+    document.getElementById('assignCTVId').value = ctvId || '';
     document.getElementById('assignCTVName').value = ctvName || '';
+    document.getElementById('assignOrderSelect').selectedIndex = 0;
     document.getElementById('assignDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('assignStart').value = '08:30';
+    document.getElementById('assignEnd').value = '11:30';
+    document.getElementById('assignNote').value = '';
     ModalManager.open('assignModal');
   }
 
@@ -523,9 +533,64 @@
   }
 
   function saveAssignment() {
-    ModalManager.close('assignModal');
-    CSKH.toast('Phân công thành công! Thông báo đã gửi tới CTV.');
-    loadCalendarEvents(currentCTVId);
+    const ctvId = document.getElementById('assignCTVId').value;
+    const orderId = document.getElementById('assignOrderSelect').value;
+    const ngayLam = document.getElementById('assignDate').value;
+    const gioBatDau = document.getElementById('assignStart').value;
+    const gioKetThuc = document.getElementById('assignEnd').value;
+    const ghiChu = document.getElementById('assignNote').value;
+
+    if (!ctvId) {
+      alert('Vui lòng chọn CTV!');
+      return;
+    }
+    if (!orderId) {
+      alert('Vui lòng chọn đơn hàng cần ghép!');
+      return;
+    }
+    if (!ngayLam || !gioBatDau || !gioKetThuc) {
+      alert('Vui lòng nhập đầy đủ ngày và giờ làm việc!');
+      return;
+    }
+
+    const btn = document.getElementById('btnConfirmAssign');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader animate-spin"></i> Đang lưu...';
+
+    const formData = new URLSearchParams();
+    formData.append('ctvId', ctvId);
+    formData.append('orderId', orderId);
+    formData.append('ngayLam', ngayLam);
+    formData.append('gioBatDau', gioBatDau.length === 5 ? gioBatDau + ':00' : gioBatDau);
+    formData.append('gioKetThuc', gioKetThuc.length === 5 ? gioKetThuc + ':00' : gioKetThuc);
+    formData.append('ghiChu', ghiChu);
+
+    fetch('/cskh/phan-cong/luu', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-check"></i> Xác nhận phân công';
+      if (data.success) {
+        ModalManager.close('assignModal');
+        if (typeof Toast !== 'undefined' && Toast.show) {
+          Toast.show(data.message || 'Phân công thành công!', 'success', 3500);
+        } else if (typeof CSKH !== 'undefined' && CSKH.toast) {
+          CSKH.toast(data.message || 'Phân công thành công!');
+        }
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        alert(data.message || 'Có lỗi xảy ra khi lưu phân công!');
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-check"></i> Xác nhận phân công';
+      alert('Lỗi kết nối máy chủ: ' + err.message);
+    });
   }
 
   // ── Init ───────────────────────────────────────────────────────

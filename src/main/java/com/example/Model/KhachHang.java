@@ -40,6 +40,10 @@ public class KhachHang {
     @Column(name = "TrangThai", nullable = false, length = 20)
     private String trangThai; // HoatDong | BiKhoa
 
+    @OneToMany(mappedBy = "khachHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private java.util.List<DiaChiKhachHang> danhSachDiaChi = new java.util.ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         if (trangThai == null) trangThai = "HoatDong";
