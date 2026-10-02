@@ -1,14 +1,25 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Quản lý Khách hàng – CSKH')}"></head>
+<head th:replace="~{layout/cskh-layout :: cskhHead('Quản lý Khách hàng')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'khach-hang')}"></aside>
+  <aside th:replace="~{layout/cskh-layout :: cskhSidebar('khach-hang')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Quản lý Khách hàng')}"></header>
+    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Quản lý Khách hàng')}"></header>
 
     <main class="page-content">
+
+      <!-- Notifications -->
+      <div th:if="${successMessage}" class="alert alert-success" style="margin-bottom:1.25rem;padding:0.875rem 1.25rem;border-radius:var(--radius-md);background:rgba(67,233,123,0.15);color:#0f8a42;border:1px solid rgba(67,233,123,0.35);display:flex;align-items:center;gap:0.75rem;font-weight:600">
+        <i class="ti ti-circle-check" style="font-size:1.3rem"></i>
+        <span th:text="${successMessage}">Thao tác thành công!</span>
+      </div>
+
+      <div th:if="${errorMessage}" class="alert alert-danger" style="margin-bottom:1.25rem;padding:0.875rem 1.25rem;border-radius:var(--radius-md);background:rgba(255,107,107,0.15);color:#c92a2a;border:1px solid rgba(255,107,107,0.35);display:flex;align-items:center;gap:0.75rem;font-weight:600">
+        <i class="ti ti-alert-triangle" style="font-size:1.3rem"></i>
+        <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+      </div>
 
       <div class="page-header">
         <div class="page-title-group">
@@ -16,7 +27,7 @@
           <p class="page-subtitle">Theo dõi lịch sử đơn hàng, địa chỉ, hạng thành viên và ghi chú chăm sóc</p>
         </div>
         <div class="page-actions">
-          <button class="btn btn-primary btn-sm" data-modal-open="createCustomerModal"><i class="ti ti-user-plus"></i> Thêm khách hàng</button>
+          <button class="btn btn-primary btn-sm" data-modal-open="createCustomerModal" onclick="openCreateCustomerModal()"><i class="ti ti-user-plus"></i> Thêm khách hàng</button>
         </div>
       </div>
 
@@ -52,9 +63,9 @@
       <div class="filter-bar">
         <div class="search-box">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm theo tên, số điện thoại, email...">
+          <input type="text" id="customerSearchInput" class="form-control" placeholder="Tìm theo mã, tên, số điện thoại, email, địa chỉ...">
         </div>
-        <select class="filter-select">
+        <select id="customerStatusFilter" class="filter-select">
           <option value="">Tất cả trạng thái</option>
           <option value="HoatDong">Hoạt động</option>
           <option value="BiKhoa">Bị khóa</option>
@@ -65,15 +76,16 @@
       <div class="card" style="padding:0">
         <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
           <div class="card-title">Danh sách Khách hàng</div>
-          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${khachHangStats != null ? khachHangStats.tongKhachHang : 0}">0</strong> khách hàng</span>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong id="customerCountDisplay" th:text="${khachHangs != null ? #lists.size(khachHangs) : 0}">0</strong> khách hàng</span>
         </div>
         <div class="table-container">
-          <table class="table">
+          <table class="table" id="customerTable">
             <thead>
               <tr>
-                <th>Mã khách hàng</th>
+                <th>Mã KH</th>
                 <th>Khách hàng</th>
                 <th>Số điện thoại</th>
+                <th>Địa chỉ chính & Khu vực</th>
                 <th>Email</th>
                 <th>Giới tính</th>
                 <th>Ngày đăng ký</th>
@@ -82,18 +94,30 @@
               </tr>
             </thead>
             <tbody>
-              <tr th:each="kh : ${khachHangs}">
+              <tr th:each="kh : ${khachHangs}"
+                  th:attr="data-status=${kh.trangThai}, data-search=|${kh.maKhachHang} ${kh.hoTen} ${kh.soDienThoai} ${kh.email != null ? kh.email : ''} ${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id) ? defaultAddressMap.get(kh.id).diaChiChiTiet : ''}|">
                 <td style="font-weight:700;color:var(--primary-light)" th:text="${kh.maKhachHang}">KH001</td>
                 <td>
                   <div class="user-cell">
                     <div class="avatar avatar-sm" th:text="${kh.hoTen != null and #strings.length(kh.hoTen) > 0 ? #strings.substring(kh.hoTen, 0, 1) : 'K'}">K</div>
                     <div class="user-cell-info">
                       <div class="name" th:text="${kh.hoTen}">Tên KH</div>
-                      <div class="sub" th:text="'Mã số: ' + ${kh.maKhachHang}">Mã số</div>
+                      <div class="sub" th:text="|Mã số: ${kh.maKhachHang}|">Mã số</div>
                     </div>
                   </div>
                 </td>
-                <td th:text="${kh.soDienThoai}">0900000000</td>
+                <td style="font-weight:600" th:text="${kh.soDienThoai}">0900000000</td>
+                <td>
+                  <div th:if="${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id)}">
+                    <div style="font-weight:500;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                         th:title="${defaultAddressMap.get(kh.id).diaChiChiTiet}"
+                         th:text="${defaultAddressMap.get(kh.id).diaChiChiTiet}">Địa chỉ</div>
+                    <small style="color:var(--cskh-primary);font-size:0.75rem"
+                           th:if="${defaultAddressMap.get(kh.id).khuVuc != null}"
+                           th:text="${defaultAddressMap.get(kh.id).khuVuc.tenKhuVuc}">Khu vực</small>
+                  </div>
+                  <span th:unless="${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id)}" style="color:var(--text-muted);font-style:italic">Chưa có địa chỉ</span>
+                </td>
                 <td th:text="${kh.email != null ? kh.email : '--'}">email@domain.com</td>
                 <td th:text="${kh.gioiTinh != null ? kh.gioiTinh : '--'}">--</td>
                 <td th:text="${kh.ngayDangKy != null ? #temporals.format(kh.ngayDangKy, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
@@ -102,23 +126,36 @@
                   <span class="badge badge-danger" th:if="${kh.trangThai != 'HoatDong'}">Bị khóa</span>
                 </td>
                 <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" th:data-name="${kh.hoTen}" th:data-phone="${kh.soDienThoai}" onclick="showCustomerDetail(this.getAttribute('data-name'), this.getAttribute('data-phone'), 'TP.HCM', 'Khách hàng Neatify', '--', 'Khách hàng trong hệ thống')"><i class="ti ti-eye"></i> Chi tiết</button>
-                    <button class="btn btn-primary btn-sm" th:data-name="${kh.hoTen}" onclick="Toast.show('Tạo đơn cho ' + this.getAttribute('data-name'))"><i class="ti ti-plus"></i> Đặt đơn</button>
+                  <div class="table-actions" style="justify-content:flex-end">
+                    <button class="btn btn-outline btn-sm"
+                            th:attr="data-id=${kh.id}, data-code=${kh.maKhachHang}, data-name=${kh.hoTen}, data-phone=${kh.soDienThoai}, data-email=${kh.email != null ? kh.email : '--'}, data-gender=${kh.gioiTinh != null ? kh.gioiTinh : '--'}, data-addr=${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id) ? defaultAddressMap.get(kh.id).diaChiChiTiet : 'Chưa cập nhật'}, data-area=${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id) && defaultAddressMap.get(kh.id).khuVuc != null ? defaultAddressMap.get(kh.id).khuVuc.tenKhuVuc : '--'}, data-orders=${orderCountMap != null && orderCountMap.containsKey(kh.id) ? orderCountMap.get(kh.id) : 0}, data-spent=${totalSpentMap != null && totalSpentMap.containsKey(kh.id) ? totalSpentMap.get(kh.id) : 0}, data-notes=${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id) && defaultAddressMap.get(kh.id).luuYDacBiet != null ? defaultAddressMap.get(kh.id).luuYDacBiet : 'Không có ghi chú đặc biệt'}"
+                            onclick="openCustomerDetailFromBtn(this)" title="Xem chi tiết hồ sơ">
+                      <i class="ti ti-eye"></i> Chi tiết
+                    </button>
+
+                    <!-- Toggle Status -->
+                    <form th:action="@{/cskh/khach-hang/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn đổi trạng thái khách hàng này?');">
+                      <input type="hidden" name="id" th:value="${kh.id}">
+                      <input type="hidden" name="trangThai" th:value="${kh.trangThai == 'HoatDong' ? 'BiKhoa' : 'HoatDong'}">
+                      <button type="submit" class="btn btn-sm" th:classappend="${kh.trangThai == 'HoatDong' ? 'btn-secondary' : 'btn-success'}"
+                              th:title="${kh.trangThai == 'HoatDong' ? 'Khóa tài khoản' : 'Mở khóa'}">
+                        <i th:class="${kh.trangThai == 'HoatDong' ? 'ti ti-lock' : 'ti ti-lock-open'}"></i>
+                      </button>
+                    </form>
                   </div>
                 </td>
               </tr>
-              <tr th:if="${khachHangs == null or #lists.isEmpty(khachHangs)}">
-                <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu khách hàng</td>
+              <tr id="emptyTableRow" th:if="${khachHangs == null or #lists.isEmpty(khachHangs)}">
+                <td colspan="9" style="text-align:center;padding:2.5rem;color:var(--text-muted)">
+                  <i class="ti ti-users-minus" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.5"></i>
+                  Chưa có dữ liệu khách hàng. Bấm "Thêm khách hàng" để tạo hồ sơ mới.
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${khachHangs != null ? #lists.size(khachHangs) : 0}">0</span> / <span th:text="${khachHangStats != null ? khachHangStats.tongKhachHang : 0}">0</span> khách hàng</span>
-          <div class="pagination">
-            <button class="page-btn active">1</button>
-          </div>
+          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span id="filteredCountDisplay" th:text="${khachHangs != null ? #lists.size(khachHangs) : 0}">0</span> khách hàng</span>
         </div>
       </div>
     </main>
@@ -129,85 +166,424 @@
 <div class="overlay" id="panelOverlay"></div>
 <div class="detail-panel" id="customerDetailPanel">
   <div class="detail-panel-header">
-    <div><h2 style="font-size:1.1rem;font-weight:700" id="detailName">Chi tiết Khách hàng</h2></div>
+    <div>
+      <h2 style="font-size:1.1rem;font-weight:700" id="detailName">Chi tiết Khách hàng</h2>
+      <span style="font-size:0.8rem;color:var(--cskh-primary);font-weight:600" id="detailCode">--</span>
+    </div>
     <button class="modal-close" data-panel-close="customerDetailPanel">✕</button>
   </div>
   <div class="detail-panel-body">
-    <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value" id="detailPhone">--</span></div>
-    <div class="info-row"><span class="info-label">Địa chỉ chính</span><span class="info-value" id="detailAddress">--</span></div>
-    <div class="info-row"><span class="info-label">Đơn hoàn thành</span><span class="info-value" id="detailOrders">--</span></div>
-    <div class="info-row"><span class="info-label">Tổng chi tiêu</span><span class="info-value" style="color:var(--accent);font-weight:700" id="detailSpent">--</span></div>
+    <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value" id="detailPhone" style="font-weight:600">--</span></div>
+    <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="detailEmail">--</span></div>
+    <div class="info-row"><span class="info-label">Giới tính</span><span class="info-value" id="detailGender">--</span></div>
+    <div class="info-row"><span class="info-label">Khu vực phục vụ</span><span class="info-value" id="detailArea" style="color:var(--cskh-primary);font-weight:600">--</span></div>
+    <div class="info-row"><span class="info-label">Địa chỉ chính</span><span class="info-value" id="detailAddress" style="max-width:240px;text-align:right">--</span></div>
+    <div class="info-row"><span class="info-label">Đơn hoàn thành</span><span class="info-value" id="detailOrders">0</span></div>
+    <div class="info-row"><span class="info-label">Tổng chi tiêu</span><span class="info-value" style="color:var(--accent);font-weight:700" id="detailSpent">0đ</span></div>
     <div style="margin-top:1.25rem">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.5rem">Ghi chú chăm sóc khách hàng</div>
-      <div id="detailNotes" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;font-size:0.85rem;color:var(--text-secondary)">--</div>
-    </div>
-    <div style="margin-top:1.5rem">
-      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.75rem">Lịch sử đặt đơn gần đây</div>
-      <div style="display:flex;flex-direction:column;gap:0.5rem">
-        <div style="padding:0.6rem 0.75rem;background:rgba(13,155,163,0.06);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;font-size:0.8rem">
-          <span>🧹 Dọn dẹp nhà (3h)</span><span class="badge badge-success">240.000đ</span>
-        </div>
-        <div style="padding:0.6rem 0.75rem;background:rgba(13,155,163,0.06);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;font-size:0.8rem">
-          <span>🍳 Nấu ăn gia đình</span><span class="badge badge-success">180.000đ</span>
-        </div>
-      </div>
+      <div style="font-weight:700;font-size:0.875rem;margin-bottom:0.5rem">Ghi chú & Lưu ý chăm sóc</div>
+      <div id="detailNotes" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;font-size:0.85rem;color:var(--text-secondary);white-space:pre-wrap">--</div>
     </div>
   </div>
   <div class="detail-panel-footer">
-    <button class="btn btn-primary btn-sm" onclick="Toast.show('Đang mở form gọi điện CSKH...');PanelManager.close('customerDetailPanel')"><i class="ti ti-phone"></i> Gọi điện</button>
+    <button class="btn btn-primary btn-sm" onclick="Toast.show('Đang mở cổng liên lạc CSKH...');PanelManager.close('customerDetailPanel')"><i class="ti ti-phone"></i> Gọi điện</button>
     <button class="btn btn-secondary btn-sm" data-panel-close="customerDetailPanel">Đóng</button>
   </div>
 </div>
 
-<!-- Create Customer Modal -->
+<!-- Create Customer Modal (Xác nhận địa chỉ API v2 https://provinces.open-api.vn/api/v2) -->
 <div class="modal-overlay" id="createCustomerModal">
-  <div class="modal" style="max-width:550px">
+  <div class="modal" style="max-width:620px;max-height:90vh;overflow-y:auto">
     <div class="modal-header">
-      <h2 class="modal-title">Thêm khách hàng mới</h2>
+      <h2 class="modal-title"><i class="ti ti-user-plus" style="color:var(--cskh-primary)"></i> Thêm khách hàng mới</h2>
       <button class="modal-close" data-modal-close="createCustomerModal">✕</button>
     </div>
-    <div>
-      <div class="form-group">
-        <label class="form-label">Họ và tên *</label>
-        <input type="text" class="form-control" placeholder="Nguyễn Văn A">
-      </div>
-      <div class="form-row">
+
+    <form id="createCustomerForm" method="POST" th:action="@{/cskh/khach-hang/them}" onsubmit="handleCustomerSubmit(event)">
+      <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem">
+
+        <!-- Phần 1: Thông tin cá nhân -->
+        <div class="form-section-label"><i class="ti ti-id"></i> 1. Thông tin khách hàng</div>
         <div class="form-group">
-          <label class="form-label">Số điện thoại *</label>
-          <input type="tel" class="form-control" placeholder="0909 xxx xxx">
+          <label class="form-label">Họ và tên *</label>
+          <input type="text" name="hoTen" id="modalHoTen" class="form-control" placeholder="Ví dụ: Nguyễn Thị Mai" required>
         </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Số điện thoại *</label>
+            <input type="tel" name="soDienThoai" id="modalSoDienThoai" class="form-control" placeholder="0901234567" required pattern="[0-9]{9,11}">
+            <small style="color:var(--text-muted);font-size:0.75rem">Nhập 9-11 chữ số, không khoảng trắng</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" id="modalEmail" class="form-control" placeholder="khachhang@example.com">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Giới tính</label>
+            <select name="gioiTinh" id="modalGioiTinh" class="form-control">
+              <option value="Nu">Nữ</option>
+              <option value="Nam">Nam</option>
+              <option value="Khac" selected>Khác</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ngày sinh</label>
+            <input type="date" name="ngaySinh" id="modalNgaySinh" class="form-control">
+          </div>
+        </div>
+
+        <!-- Phần 2: Địa chỉ & Khu vực -->
+        <div class="form-section-label" style="margin-top:0.5rem">
+          <i class="ti ti-map-pin"></i> 2. Địa chỉ &amp; Khu vực
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tỉnh / Thành phố *</label>
+            <select id="modalTinhThanhSelect" class="form-control" onchange="onProvinceChange()" required>
+              <option value="">-- Đang nạp danh sách Tỉnh/Thành... --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phường / Xã / Đơn vị hành chính *</label>
+            <select id="modalPhuongXaSelect" class="form-control" onchange="onWardChange()" required disabled>
+              <option value="">-- Vui lòng chọn Tỉnh/Thành trước --</option>
+            </select>
+          </div>
+        </div>
+
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control" placeholder="email@domain.com">
+          <label class="form-label">Số nhà, tên đường / Tòa nhà *</label>
+          <input type="text" id="modalSoNha" name="soNhaTenDuong" class="form-control" placeholder="Ví dụ: Số 45 Lê Duẩn, Tòa nhà Diamond Plaza" oninput="updateAddressPreview()" required>
         </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Diện tích nhà ước tính (m²)</label>
+            <input type="number" name="dienTichNha" id="modalDienTich" class="form-control" placeholder="Ví dụ: 80" min="10" max="10000" step="0.5">
+          </div>
+        </div>
+
+        <!-- Hidden input gửi sang Controller -->
+        <input type="hidden" name="tinhThanh" id="hiddenTinhThanh">
+        <input type="hidden" name="quanHuyen" id="hiddenQuanHuyen">
+        <input type="hidden" name="phuongXa" id="hiddenPhuongXa">
+        <input type="hidden" name="maKhuVuc" id="hiddenMaKhuVuc">
+        <input type="hidden" name="diaChiChiTiet" id="hiddenDiaChiChiTiet">
+
+        <!-- Live Preview Box -->
+        <div id="addressPreviewBox" style="display:none;padding:0.875rem 1rem;background:rgba(67,233,123,0.08);border:1px dashed var(--success);border-radius:var(--radius-md)">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:0.35rem">
+            <i class="ti ti-circle-check"></i> Địa chỉ xác nhận:
+          </div>
+          <div id="addressPreviewText" style="font-weight:600;font-size:0.9rem;margin-top:0.25rem;color:var(--text-primary)"></div>
+          <div id="areaPreviewText" style="font-size:0.78rem;color:var(--cskh-primary);margin-top:0.25rem;font-weight:500"></div>
+        </div>
+
+        <!-- Phần 3: Ghi chú chăm sóc -->
+        <div class="form-section-label" style="margin-top:0.5rem"><i class="ti ti-notes"></i> 3. Ghi chú &amp; Yêu cầu phục vụ</div>
+        <div class="form-group">
+          <textarea name="ghiChu" id="modalGhiChu" class="form-control" rows="2" placeholder="Ghi chú về thói quen, nuôi thú cưng, thời gian thuận tiện dọn dẹp, yêu cầu nhân viên..."></textarea>
+        </div>
+
       </div>
-      <div class="form-group">
-        <label class="form-label">Địa chỉ *</label>
-        <input type="text" class="form-control" placeholder="Số nhà, tên đường, phường, quận">
+
+      <div class="modal-footer" style="padding:1rem 1.25rem;background:var(--bg-card);border-top:1px solid var(--border-light)">
+        <button type="button" class="btn btn-secondary" data-modal-close="createCustomerModal">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="btnSubmitCustomer"><i class="ti ti-device-floppy"></i> Lưu hồ sơ</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Ghi chú yêu cầu phục vụ</label>
-        <textarea class="form-control" rows="2" placeholder="Ghi chú về thói quen, thú cưng, thời gian thuận tiện..."></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close="createCustomerModal">Hủy</button>
-      <button class="btn btn-primary" onclick="ModalManager.close('createCustomerModal');Toast.show('Đã lưu hồ sơ khách hàng mới thành công!')">Lưu hồ sơ</button>
-    </div>
+    </form>
   </div>
 </div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
 <script>
-  function showCustomerDetail(name, phone, addr, orders, spent, notes) {
+  let provincesList = [];
+
+  // Tải danh sách Tỉnh/Thành phố từ Open API v2
+  async function loadProvincesData() {
+    const tinhSelect = document.getElementById('modalTinhThanhSelect');
+    if (!tinhSelect) return;
+
+    tinhSelect.innerHTML = '<option value="">-- Đang tải danh sách Tỉnh/Thành phố... --</option>';
+
+    try {
+      // Ưu tiên gọi trực tiếp API v2 (có CORS header)
+      let res = await fetch('https://provinces.open-api.vn/api/v2/p/');
+      if (!res.ok) {
+        // Fallback sang proxy backend nếu mạng ngoài bị chặn
+        res = await fetch('/cskh/api/provinces');
+      }
+      provincesList = await res.json();
+
+      tinhSelect.innerHTML = '<option value="">-- Chọn Tỉnh / Thành phố --</option>' +
+        provincesList.map(p => `<option value="${p.code}" data-name="${p.name}">${p.name}</option>`).join('');
+
+    } catch (err) {
+      console.warn('Không thể tải API ngoài, đang thử proxy backend...', err);
+      try {
+        const fallbackRes = await fetch('/cskh/api/provinces');
+        provincesList = await fallbackRes.json();
+        tinhSelect.innerHTML = '<option value="">-- Chọn Tỉnh / Thành phố --</option>' +
+          provincesList.map(p => `<option value="${p.code}" data-name="${p.name}">${p.name}</option>`).join('');
+      } catch (e2) {
+        console.error('Lỗi nạp danh sách tỉnh thành:', e2);
+        tinhSelect.innerHTML = '<option value="">-- Lỗi tải danh sách. Vui lòng tải lại trang --</option>';
+      }
+    }
+  }
+
+  // Khi chọn Tỉnh/Thành phố -> Nạp Phường/Xã tương ứng
+  async function onProvinceChange() {
+    const tinhSelect = document.getElementById('modalTinhThanhSelect');
+    const phuongSelect = document.getElementById('modalPhuongXaSelect');
+    const selectedCode = tinhSelect.value;
+    const selectedOpt = tinhSelect.options[tinhSelect.selectedIndex];
+    const tinhName = selectedOpt && selectedOpt.value ? selectedOpt.getAttribute('data-name') : '';
+
+    document.getElementById('hiddenTinhThanh').value = tinhName;
+
+    phuongSelect.innerHTML = '<option value="">-- Đang tải danh sách Phường / Xã... --</option>';
+    phuongSelect.disabled = true;
+
+    // Reset ward info
+    document.getElementById('hiddenPhuongXa').value = '';
+    document.getElementById('hiddenQuanHuyen').value = '';
+    document.getElementById('hiddenMaKhuVuc').value = '';
+
+    if (!selectedCode) {
+      phuongSelect.innerHTML = '<option value="">-- Vui lòng chọn Tỉnh/Thành trước --</option>';
+      updateAddressPreview();
+      return;
+    }
+
+    try {
+      let res = await fetch(`https://provinces.open-api.vn/api/v2/w/?province=${selectedCode}`);
+      if (!res.ok) {
+        res = await fetch(`/cskh/api/wards?province=${selectedCode}`);
+      }
+      const wards = await res.json();
+
+      phuongSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>' +
+        wards.map(w => `<option value="${w.code}" data-name="${w.name}">${w.name}</option>`).join('');
+      phuongSelect.disabled = false;
+
+    } catch (err) {
+      console.warn('Lỗi fetch phường xã ngoài, thử proxy...', err);
+      try {
+        const fb = await fetch(`/cskh/api/wards?province=${selectedCode}`);
+        const wards = await fb.json();
+        phuongSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>' +
+          wards.map(w => `<option value="${w.code}" data-name="${w.name}">${w.name}</option>`).join('');
+        phuongSelect.disabled = false;
+      } catch (e2) {
+        console.error('Không thể tải Phường/Xã:', e2);
+        phuongSelect.innerHTML = '<option value="">-- Không thể tải Phường/Xã --</option>';
+        phuongSelect.disabled = false;
+      }
+    }
+
+    updateAddressPreview();
+  }
+
+  // Khi chọn Phường/Xã
+  function onWardChange() {
+    const phuongSelect = document.getElementById('modalPhuongXaSelect');
+    const selectedOpt = phuongSelect.options[phuongSelect.selectedIndex];
+    const wardName = selectedOpt && selectedOpt.value ? selectedOpt.getAttribute('data-name') : '';
+    const wardCode = phuongSelect.value;
+
+    document.getElementById('hiddenPhuongXa').value = wardName;
+    document.getElementById('hiddenQuanHuyen').value = wardName;
+    document.getElementById('hiddenMaKhuVuc').value = wardCode ? ('KV-' + wardCode) : '';
+
+    updateAddressPreview();
+  }
+
+  // Cập nhật xem trước địa chỉ
+  function updateAddressPreview() {
+    const soNha = document.getElementById('modalSoNha').value.trim();
+    const tinhName = document.getElementById('hiddenTinhThanh').value;
+    const phuongName = document.getElementById('hiddenPhuongXa').value;
+    const maKhuVuc = document.getElementById('hiddenMaKhuVuc').value;
+
+    const parts = [];
+    if (soNha) parts.push(soNha);
+    if (phuongName) parts.push(phuongName);
+    if (tinhName) parts.push(tinhName);
+
+    const full = parts.join(', ');
+    document.getElementById('hiddenDiaChiChiTiet').value = full;
+
+    const box = document.getElementById('addressPreviewBox');
+    const text = document.getElementById('addressPreviewText');
+    const area = document.getElementById('areaPreviewText');
+
+    if (parts.length > 0) {
+      box.style.display = 'block';
+      text.textContent = full;
+      if (phuongName && tinhName) {
+        area.textContent = `📍 Khu vực: ${phuongName}, ${tinhName}`;
+      } else {
+        area.textContent = '';
+      }
+    } else {
+      box.style.display = 'none';
+    }
+  }
+
+  function openCreateCustomerModal() {
+    if (provincesList.length === 0) {
+      loadProvincesData();
+    }
+    ModalManager.open('createCustomerModal');
+  }
+
+  // Xử lý gửi Form thêm khách hàng
+  async function handleCustomerSubmit(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('createCustomerForm');
+    const hoTen = document.getElementById('modalHoTen').value.trim();
+    const soDienThoai = document.getElementById('modalSoDienThoai').value.trim();
+    const tinhThanh = document.getElementById('hiddenTinhThanh').value;
+    const phuongXa = document.getElementById('hiddenPhuongXa').value;
+    const soNha = document.getElementById('modalSoNha').value.trim();
+
+    if (!hoTen) {
+      Toast.show('Vui lòng nhập họ và tên khách hàng!', 'error');
+      document.getElementById('modalHoTen').focus();
+      return;
+    }
+
+    if (!soDienThoai || !/^\d{9,11}$/.test(soDienThoai)) {
+      Toast.show('Số điện thoại không hợp lệ (cần 9-11 chữ số, ví dụ 0901234567)!', 'error');
+      document.getElementById('modalSoDienThoai').focus();
+      return;
+    }
+
+    if (!tinhThanh || !phuongXa) {
+      Toast.show('Vui lòng chọn Tỉnh/Thành phố và Phường/Xã từ danh mục xác thực!', 'error');
+      return;
+    }
+
+    if (!soNha) {
+      Toast.show('Vui lòng nhập số nhà, tên đường!', 'error');
+      document.getElementById('modalSoNha').focus();
+      return;
+    }
+
+    // Đảm bảo hiddenDiaChiChiTiet được cập nhật
+    updateAddressPreview();
+
+    const btn = document.getElementById('btnSubmitCustomer');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Đang lưu...';
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        Toast.show(result.message || 'Thêm khách hàng thành công!', 'success');
+        ModalManager.close('createCustomerModal');
+        // Reset form
+        form.reset();
+        document.getElementById('addressPreviewBox').style.display = 'none';
+        // Tự động tải lại trang để hiển thị bảng và dữ liệu thống kê mới
+        setTimeout(() => {
+          window.location.reload();
+        }, 600);
+      } else {
+        Toast.show(result.message || 'Có lỗi xảy ra khi lưu khách hàng!', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    } catch (err) {
+      console.warn('Lỗi AJAX, chuyển hướng submit thông thường...', err);
+      // Fallback: submit truyền thống nếu AJAX gặp sự cố
+      form.submit();
+    }
+  }
+
+  // Xem chi tiết khách hàng
+  function openCustomerDetailFromBtn(btn) {
+    const name = btn.getAttribute('data-name');
+    const code = btn.getAttribute('data-code');
+    const phone = btn.getAttribute('data-phone');
+    const email = btn.getAttribute('data-email');
+    const gender = btn.getAttribute('data-gender');
+    const addr = btn.getAttribute('data-addr');
+    const area = btn.getAttribute('data-area');
+    const orders = btn.getAttribute('data-orders');
+    const spent = Number(btn.getAttribute('data-spent') || 0).toLocaleString('vi-VN') + 'đ';
+    const notes = btn.getAttribute('data-notes');
+
     document.getElementById('detailName').textContent = name;
+    document.getElementById('detailCode').textContent = 'Mã KH: ' + code;
     document.getElementById('detailPhone').textContent = phone;
+    document.getElementById('detailEmail').textContent = email;
+    document.getElementById('detailGender').textContent = gender;
+    document.getElementById('detailArea').textContent = area;
     document.getElementById('detailAddress').textContent = addr;
-    document.getElementById('detailOrders').textContent = orders;
+    document.getElementById('detailOrders').textContent = orders + ' đơn';
     document.getElementById('detailSpent').textContent = spent;
     document.getElementById('detailNotes').textContent = notes;
+
     PanelManager.open('customerDetailPanel');
   }
+
+  // Tìm kiếm và lọc bảng khách hàng
+  document.addEventListener('DOMContentLoaded', () => {
+    // Tải trước danh sách tỉnh thành ngay khi tải trang
+    loadProvincesData();
+
+    const searchInput = document.getElementById('customerSearchInput');
+    const statusFilter = document.getElementById('customerStatusFilter');
+    const rows = document.querySelectorAll('#customerTable tbody tr[data-search]');
+    const countDisplay = document.getElementById('filteredCountDisplay');
+
+    function applyFilter() {
+      const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      const status = statusFilter ? statusFilter.value : '';
+
+      let visibleCount = 0;
+      rows.forEach(r => {
+        const text = (r.getAttribute('data-search') || '').toLowerCase();
+        const rStatus = r.getAttribute('data-status') || '';
+
+        const matchText = !q || text.includes(q);
+        const matchStatus = !status || rStatus === status;
+
+        if (matchText && matchStatus) {
+          r.style.display = '';
+          visibleCount++;
+        } else {
+          r.style.display = 'none';
+        }
+      });
+
+      if (countDisplay) countDisplay.textContent = visibleCount;
+    }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilter);
+    if (statusFilter) statusFilter.addEventListener('change', applyFilter);
+  });
 </script>
 </body>
 </html>

@@ -6,11 +6,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /** Bang 19: ChuongTrinhKhuyenMai */
-@Entity @Table(name = "ChuongTrinhKhuyenMai")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Entity
+@Table(name = "ChuongTrinhKhuyenMai")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ChuongTrinhKhuyenMai {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "MaChuongTrinh", nullable = false, unique = true, length = 20)
@@ -28,8 +34,8 @@ public class ChuongTrinhKhuyenMai {
     @Column(name = "GiaTriGiam", nullable = false, precision = 12, scale = 2)
     private BigDecimal giaTriGiam;
 
-    @Column(name = "GiaTriGiamToiDa", precision = 12, scale = 0)
-    private BigDecimal giaTriGiamToiDa;
+    @Column(name = "SoTienGiamToiDa", precision = 12, scale = 0)
+    private BigDecimal soTienGiamToiDa;
 
     @Column(name = "DieuKienToiThieu", nullable = false, precision = 12, scale = 0)
     private BigDecimal dieuKienToiThieu;
@@ -45,7 +51,17 @@ public class ChuongTrinhKhuyenMai {
 
     @PrePersist
     protected void onCreate() {
-        if (trangThai == null) trangThai = "SapDienRa";
-        if (dieuKienToiThieu == null) dieuKienToiThieu = BigDecimal.ZERO;
+        if (trangThai == null)
+            trangThai = "SapDienRa";
+        if (dieuKienToiThieu == null)
+            dieuKienToiThieu = BigDecimal.ZERO;
+    }
+
+    public BigDecimal getGiaTriGiamToiDa() {
+        return this.soTienGiamToiDa;
+    }
+
+    public void setGiaTriGiamToiDa(BigDecimal giaTriGiamToiDa) {
+        this.soTienGiamToiDa = giaTriGiamToiDa;
     }
 }

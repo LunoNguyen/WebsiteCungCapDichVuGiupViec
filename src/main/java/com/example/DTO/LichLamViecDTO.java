@@ -14,4 +14,16 @@ public class LichLamViecDTO {
     private LocalTime gioKetThuc;
     private String trangThai;
     private String ketQuaThucHien;
+
+    // Display fields for UI / Calendar
+    private String ctvTen;
+    private BigDecimal ctvDiemDanhGia;
+    private String ctvNoiCuTru;
+    private String ctvCapDo;
+    private String khachHangTen;
+    private String khachHangSdt;
+    private String dichVuTen;
+    private String diaChiChiTiet;
+    private String maDonDat;
+    private Integer donDatId;
 }

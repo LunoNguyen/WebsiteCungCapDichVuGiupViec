@@ -11,5 +11,5 @@ import java.util.Optional;
 public interface DanhGiaRepository extends JpaRepository<DanhGia, Integer> {
     Optional<DanhGia> findByDonDat_Id(Integer donDatId);
     List<DanhGia> findByCongTacVien_Id(Integer congTacVienId);
-    List<DanhGia> findByDonDat_DichVu_Id(Integer dichVuId);
+
 }

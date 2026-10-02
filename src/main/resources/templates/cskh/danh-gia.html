@@ -1,28 +1,36 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Đánh giá Dịch vụ – CSKH')}"></head>
+<head th:replace="~{layout/cskh-layout :: cskhHead('Quản lý Đánh giá')}"></head>
 <body>
 <div class="app-shell">
-  <aside th:replace="~{layout/admin-layout :: adminSidebar('cskh', 'danh-gia')}"></aside>
+  <aside th:replace="~{layout/cskh-layout :: cskhSidebar('danh-gia')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('CSKH', '/cskh/dashboard', 'Đánh giá Dịch vụ')}"></header>
-
+    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Quản lý Đánh giá')}"></header>
 
     <main class="page-content">
+      <!-- Page Header -->
       <div class="page-header">
         <div class="page-title-group">
-          <h1 class="page-title">Quản lý Đánh giá & Phản hồi Khách hàng</h1>
-          <p class="page-subtitle">Giám sát chất lượng dịch vụ, xử lý đánh giá tiêu cực và phản hồi khách hàng</p>
+          <h1 class="page-title">Quản lý Đánh giá & Phản hồi</h1>
+          <p class="page-subtitle">Giám sát chất lượng dịch vụ, trả lời và quản lý toàn bộ đánh giá khách hàng</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-outline btn-sm" id="toggleViewBtn" onclick="toggleReviewView()">
+            <i class="ti ti-layout-grid"></i> Chế độ thẻ
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openAddReviewModal()">
+            <i class="ti ti-plus"></i> Thêm đánh giá
+          </button>
         </div>
       </div>
 
       <!-- Stats Grid -->
-      <div class="stats-grid">
+      <div class="stats-grid" style="margin-bottom:1.5rem">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
           <div class="stat-value" th:text="${diemDanhGiaTB != null ? diemDanhGiaTB : '5.0'}">5.0</div>
-          <div class="stat-label">Điểm đánh giá trung bình</div>
+          <div class="stat-label">Điểm trung bình</div>
           <div class="kpi-compare"><span class="arrow-up">Thực tế hệ thống</span></div>
         </div>
         <div class="stat-card">
@@ -32,126 +40,555 @@
           <div class="kpi-compare"><span class="period">Từ khách hàng</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">💬</div>
-          <div class="stat-value">100%</div>
-          <div class="stat-label">Tỷ lệ hoàn thành dịch vụ</div>
-          <div class="kpi-compare"><span class="arrow-up">Được ghi nhận</span></div>
+          <div class="stat-icon" style="background:rgba(0,180,216,0.15)">💬</div>
+          <div class="stat-value" id="repliedCount">0</div>
+          <div class="stat-label">Đã phản hồi</div>
+          <div class="kpi-compare"><span style="color:var(--cskh-primary)">CSKH xử lý</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🌟</div>
-          <div class="stat-value">Tích cực</div>
-          <div class="stat-label">Xu hướng phản hồi</div>
-          <div class="kpi-compare"><span style="color:var(--accent)">Dịch vụ ổn định</span></div>
+          <div class="stat-icon" style="background:rgba(255,107,107,0.15)">⚠️</div>
+          <div class="stat-value" id="lowRatingCount">0</div>
+          <div class="stat-label">Đánh giá dưới 3 sao</div>
+          <div class="kpi-compare"><span style="color:var(--danger)">Cần chú ý</span></div>
         </div>
+      </div>
+
+      <!-- Bulk Toolbar -->
+      <div class="bulk-toolbar" id="bulkToolbar">
+        <span id="bulkCount" style="font-weight:600;color:var(--cskh-primary)">0 đánh giá được chọn</span>
+        <button class="btn btn-success btn-sm" onclick="bulkApprove()"><i class="ti ti-check"></i> Duyệt tất cả</button>
+        <button class="btn btn-warning btn-sm" onclick="bulkHide()"><i class="ti ti-eye-off"></i> Ẩn đã chọn</button>
+        <button class="btn btn-danger btn-sm" onclick="bulkDeleteReviews()"><i class="ti ti-trash"></i> Xóa đã chọn</button>
+        <button class="btn btn-outline btn-sm" onclick="clearBulk()">Bỏ chọn</button>
       </div>
 
       <!-- Filter Bar -->
-      <div class="filter-bar">
-        <div class="search-box">
+      <div class="filter-bar" style="margin-bottom:1rem">
+        <div class="search-box" style="flex:1">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm kiếm nội dung đánh giá...">
+          <input type="text" class="form-control" id="tableSearchInput"
+                 placeholder="Tìm theo tên KH, CTV, nội dung nhận xét...">
         </div>
-        <select class="filter-select">
+        <select class="filter-select" id="starFilter" onchange="filterReviews()">
           <option value="">Tất cả xếp hạng</option>
-          <option value="5">5 sao</option>
-          <option value="4">4 sao</option>
-          <option value="3">3 sao</option>
-          <option value="2">Dưới 3 sao</option>
+          <option value="5">5 sao ⭐⭐⭐⭐⭐</option>
+          <option value="4">4 sao ⭐⭐⭐⭐</option>
+          <option value="3">3 sao ⭐⭐⭐</option>
+          <option value="low">Dưới 3 sao</option>
+        </select>
+        <select class="filter-select" id="statusFilter" onchange="filterReviews()">
+          <option value="">Tất cả trạng thái</option>
+          <option value="ChoDuyet">Chờ duyệt</option>
+          <option value="DaDuyet">Đã duyệt</option>
+          <option value="DaAn">Đã ẩn</option>
+        </select>
+        <select class="filter-select" id="replyFilter" onchange="filterReviews()">
+          <option value="">Tất cả</option>
+          <option value="replied">Đã phản hồi</option>
+          <option value="unreplied">Chưa phản hồi</option>
         </select>
       </div>
 
-      <!-- Feedback List Table -->
-      <div class="card" style="padding:0">
-        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
-          <div class="card-title">Danh sách Đánh giá & Phản hồi</div>
-          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng cộng: <strong th:text="${danhGias != null ? #lists.size(danhGias) : 0}">0</strong> đánh giá</span>
-        </div>
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Khách hàng</th>
-                <th>Cộng tác viên</th>
-                <th>Chất lượng</th>
-                <th>Thái độ</th>
-                <th>Nội dung nhận xét</th>
-                <th>Ngày gửi</th>
-                <th>Trạng thái</th>
-                <th style="text-align:right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="dg : ${danhGias}">
-                <td style="font-weight:700;color:var(--primary-light)" th:text="${dg.donDat != null ? dg.donDat.maDonDat : dg.maDanhGia}">#DD-001</td>
-                <td>
-                  <div class="name" th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}">Tên KH</div>
-                  <div class="sub" style="font-size:0.75rem;color:var(--text-muted)" th:text="${dg.khachHang != null ? dg.khachHang.soDienThoai : ''}">SĐT</div>
-                </td>
-                <td th:text="${dg.congTacVien != null ? dg.congTacVien.hoTen : '--'}">Tên CTV</td>
-                <td><span style="color:#FFC107;font-weight:700" th:text="${dg.diemChatLuong + ' ★'}">5 ★</span></td>
-                <td><span style="color:#FFC107;font-weight:700" th:text="${dg.diemThaiDo + ' ★'}">5 ★</span></td>
-                <td style="max-width:300px;line-height:1.4" th:text="${dg.nhanXet != null and !dg.nhanXet.isEmpty() ? dg.nhanXet : 'Hài lòng với dịch vụ'}">Nhận xét</td>
-                <td style="font-size:0.85rem" th:text="${dg.ngayDanhGia != null ? #temporals.format(dg.ngayDanhGia, 'dd/MM/yyyy') : '--'}">20/09/2026</td>
-                <td><span class="badge badge-success" th:text="${dg.trangThai}">Đã duyệt</span></td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn btn-outline btn-sm" th:data-name="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}" onclick="openReplyModal(this.getAttribute('data-name'), '5 sao')"><i class="ti ti-message-dots"></i> Phản hồi</button>
-                  </div>
-                </td>
-              </tr>
-              <tr th:if="${danhGias == null or #lists.isEmpty(danhGias)}">
-                <td colspan="9" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu đánh giá</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
-          <span style="font-size:0.8rem;color:var(--text-muted)">Hiển thị <span th:text="${danhGias != null ? #lists.size(danhGias) : 0}">0</span> đánh giá</span>
-          <div class="pagination"><button class="page-btn active">1</button></div>
+      <!-- ══ TABLE VIEW ══ -->
+      <div id="tableViewContainer">
+        <div class="card" style="padding:0">
+          <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
+            <div class="card-title">Danh sách Đánh giá & Phản hồi</div>
+            <span style="font-size:0.85rem;color:var(--text-muted)">
+              Tổng: <strong th:text="${danhGias != null ? #lists.size(danhGias) : 0}">0</strong> đánh giá
+            </span>
+          </div>
+          <div class="table-container">
+            <table class="table table-hoverable" id="mainDataTable">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="masterCheckbox" style="width:16px;height:16px;accent-color:var(--cskh-primary)" onchange="updateBulkBar()"></th>
+                  <th>Mã đơn</th>
+                  <th>Khách hàng</th>
+                  <th>CTV</th>
+                  <th>Chất lượng</th>
+                  <th>Thái độ</th>
+                  <th>Nhận xét</th>
+                  <th>Phản hồi</th>
+                  <th>Ngày gửi</th>
+                  <th>Trạng thái</th>
+                  <th style="text-align:right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="dg : ${danhGias}"
+                    th:data-rating="${(dg.diemChatLuong + dg.diemThaiDo) / 2}"
+                    th:data-status="${dg.trangThai}">
+                  <td><input type="checkbox" class="rowCheckbox row-checkbox" style="width:16px;height:16px;accent-color:var(--cskh-primary)" onchange="updateBulkBar()"></td>
+                  <td style="font-weight:700;font-size:0.8rem;color:var(--cskh-primary)"
+                      th:text="${dg.donDat != null ? dg.donDat.maDonDat : dg.maDanhGia}">#DG-001</td>
+                  <td>
+                    <div class="name" th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}">KH</div>
+                    <div class="sub" style="font-size:0.75rem;color:var(--text-muted)"
+                         th:text="${dg.khachHang != null ? dg.khachHang.soDienThoai : ''}"></div>
+                  </td>
+                  <td th:text="${dg.congTacVien != null ? dg.congTacVien.hoTen : '--'}">CTV</td>
+                  <td>
+                    <span style="color:#FFC107;font-weight:700" th:text="${dg.diemChatLuong + ' ★'}">5 ★</span>
+                  </td>
+                  <td>
+                    <span style="color:#FFC107;font-weight:700" th:text="${dg.diemThaiDo + ' ★'}">5 ★</span>
+                  </td>
+                  <td style="max-width:220px">
+                    <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                         th:text="${dg.nhanXet != null and !dg.nhanXet.isEmpty() ? dg.nhanXet : 'Hài lòng với dịch vụ'}">Nhận xét</div>
+                  </td>
+                  <td>
+                    <span class="badge badge-cskh" style="font-size:0.7rem">Đã phản hồi</span>
+                  </td>
+                  <td style="font-size:0.8rem"
+                      th:text="${dg.ngayDanhGia != null ? #temporals.format(dg.ngayDanhGia,'dd/MM/yyyy') : '--'}">20/09</td>
+                  <td>
+                    <span class="badge badge-success" th:if="${dg.trangThai == 'DaDuyet'}">Đã duyệt</span>
+                    <span class="badge badge-warning" th:if="${dg.trangThai == 'ChoDuyet'}">Chờ duyệt</span>
+                    <span class="badge badge-secondary" th:if="${dg.trangThai != 'DaDuyet' and dg.trangThai != 'ChoDuyet'}"
+                          th:text="${dg.trangThai}">---</span>
+                  </td>
+                  <td>
+                    <div class="table-actions" style="justify-content:flex-end">
+                      <button class="btn btn-outline btn-sm" title="Trả lời"
+                              th:data-id="${dg.id}"
+                              th:data-kh="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}"
+                              th:data-rating="${dg.diemChatLuong}"
+                              th:data-nhanxet="${dg.nhanXet}"
+                              onclick="openReplyModal(this)">
+                        <i class="ti ti-message-dots"></i>
+                      </button>
+                      <button class="btn btn-outline btn-sm" title="Chỉnh sửa"
+                              th:data-id="${dg.id}"
+                              th:data-kh="${dg.khachHang != null ? dg.khachHang.hoTen : ''}"
+                              th:data-ctv="${dg.congTacVien != null ? dg.congTacVien.hoTen : ''}"
+                              th:data-cl="${dg.diemChatLuong}"
+                              th:data-td="${dg.diemThaiDo}"
+                              th:data-nx="${dg.nhanXet}"
+                              th:data-tt="${dg.trangThai}"
+                              onclick="openEditReviewModal(this)">
+                        <i class="ti ti-pencil"></i>
+                      </button>
+                      <button class="btn btn-outline btn-sm" title="Ẩn đánh giá"
+                              onclick="CSKH.toast('Đã ẩn đánh giá này','info')">
+                        <i class="ti ti-eye-off"></i>
+                      </button>
+                      <button class="btn btn-outline btn-sm" title="Xóa"
+                              style="color:var(--danger);border-color:rgba(255,71,87,0.3)"
+                              th:data-id="${dg.id}"
+                              th:data-ma="${dg.maDanhGia}"
+                              onclick="deleteReview(this)">
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr th:if="${danhGias == null or #lists.isEmpty(danhGias)}">
+                  <td colspan="11" style="text-align:center;padding:3rem;color:var(--text-muted)">
+                    <i class="ti ti-star-off" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;opacity:0.3"></i>
+                    Không có dữ liệu đánh giá
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--border-light)">
+            <span style="font-size:0.8rem;color:var(--text-muted)">
+              Hiển thị <span th:text="${danhGias != null ? #lists.size(danhGias) : 0}">0</span> đánh giá
+            </span>
+            <div class="pagination"><button class="page-btn active">1</button></div>
+          </div>
         </div>
       </div>
+
+      <!-- ══ CARD VIEW ══ -->
+      <div id="cardViewContainer" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem" id="reviewCardGrid">
+          <!-- Cards populated via JS for demo; Thymeleaf version below -->
+          <th:block th:each="dg : ${danhGias}">
+            <div class="review-card"
+                 th:data-rating="${(dg.diemChatLuong + dg.diemThaiDo) / 2}"
+                 th:data-status="${dg.trangThai}">
+              <div class="review-header">
+                <div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem">
+                    <div class="avatar avatar-sm"
+                         th:text="${dg.khachHang != null and dg.khachHang.hoTen != null ? #strings.substring(dg.khachHang.hoTen,0,1) : 'K'}">K</div>
+                    <div>
+                      <div style="font-weight:700;font-size:0.875rem" th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}">Tên KH</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)" th:text="${dg.ngayDanhGia != null ? #temporals.format(dg.ngayDanhGia,'dd/MM/yyyy') : '--'}">Ngày</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div class="review-stars" th:text="${'★'.repeat(dg.diemChatLuong)} + ${'☆'.repeat(5 - dg.diemChatLuong)}">★★★★★</div>
+                  <span class="badge badge-success" th:if="${dg.trangThai == 'DaDuyet'}" style="font-size:0.7rem">Đã duyệt</span>
+                  <span class="badge badge-warning" th:if="${dg.trangThai == 'ChoDuyet'}" style="font-size:0.7rem">Chờ duyệt</span>
+                </div>
+              </div>
+              <div class="review-text" th:text="${dg.nhanXet != null and !dg.nhanXet.isEmpty() ? dg.nhanXet : 'Hài lòng với dịch vụ'}">Nội dung nhận xét</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.5rem">
+                CTV: <strong th:text="${dg.congTacVien != null ? dg.congTacVien.hoTen : '--'}">Tên CTV</strong>
+                · CL: <strong th:text="${dg.diemChatLuong + '★'}">5★</strong>
+                · Thái độ: <strong th:text="${dg.diemThaiDo + '★'}">5★</strong>
+              </div>
+              <!-- Reply (if any) -->
+              <div class="review-reply">
+                <div class="reply-label"><i class="ti ti-message-dots"></i> Phản hồi CSKH</div>
+                <div>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ Neatify!</div>
+              </div>
+              <div class="review-actions">
+                <button class="btn btn-outline btn-sm"
+                        th:data-kh="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}"
+                        th:data-rating="${dg.diemChatLuong}"
+                        onclick="openReplyModal(this)"><i class="ti ti-message-dots"></i> Trả lời</button>
+                <button class="btn btn-outline btn-sm"
+                        th:data-id="${dg.id}"
+                        onclick="openEditReviewModal(this)"><i class="ti ti-pencil"></i> Sửa</button>
+                <button class="btn btn-outline btn-sm" style="color:var(--danger)"
+                        th:data-id="${dg.id}"
+                        onclick="deleteReview(this)"><i class="ti ti-trash"></i> Xóa</button>
+              </div>
+            </div>
+          </th:block>
+
+          <!-- Empty state -->
+          <div th:if="${danhGias == null or #lists.isEmpty(danhGias)}"
+               style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">
+            <i class="ti ti-star-off" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;opacity:0.3"></i>
+            Không có dữ liệu đánh giá
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </div>
 
-<!-- Modal CSKH Reply -->
+<!-- ══════════════════════════════════
+     MODAL TRẢ LỜI ĐÁNH GIÁ
+     ══════════════════════════════════ -->
 <div class="modal-overlay" id="replyModal">
-  <div class="modal" style="max-width:550px">
+  <div class="modal" style="max-width:580px">
     <div class="modal-header">
-      <h2 class="modal-title">Phản hồi khách hàng</h2>
+      <h2 class="modal-title"><i class="ti ti-message-dots" style="color:var(--cskh-primary)"></i> Phản hồi Đánh giá</h2>
       <button class="modal-close" data-modal-close="replyModal">✕</button>
     </div>
     <div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Khách hàng: <strong id="replyCustomerName">--</strong></label>
+      <div style="background:rgba(0,180,216,0.06);border-radius:var(--radius-md);padding:1rem;margin-bottom:1rem">
+        <div style="display:flex;gap:0.75rem;align-items:flex-start">
+          <div class="avatar avatar-sm" id="replyKHAvatar">K</div>
+          <div>
+            <div style="font-weight:700;font-size:0.9rem" id="replyCustomerName">---</div>
+            <div class="review-stars" id="replyRatingStars">★★★★★</div>
+            <div style="font-size:0.875rem;color:var(--text-secondary);margin-top:0.375rem" id="replyOriginalText">---</div>
+          </div>
+        </div>
       </div>
       <div class="form-group" style="margin-bottom:1rem">
         <label class="form-label">Hành động CSKH</label>
         <select class="form-control" id="replyAction">
           <option>Gửi tin nhắn cảm ơn & tặng mã ưu đãi 10%</option>
           <option>Gọi điện xin lỗi & tặng voucher bồi thường 50.000đ</option>
-          <option>Chuyển thông tin nhắc nhở kiểm điểm CTV</option>
+          <option>Chuyển thông tin nhắc nhở CTV</option>
           <option>Chuyển thành khiếu nại mức 1</option>
+          <option>Chỉ phản hồi công khai</option>
         </select>
       </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Nội dung phản hồi công khai <span style="color:var(--danger)">*</span></label>
+        <textarea class="form-control" id="replyPublicText" rows="4"
+                  placeholder="Lời phản hồi hiển thị công khai tới khách hàng...">Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của Neatify! Chúng tôi rất vui khi nhận được đánh giá từ bạn.</textarea>
+      </div>
       <div class="form-group">
-        <label class="form-label">Nội dung phản hồi gửi tới Khách hàng</label>
-        <textarea class="form-control" rows="4" placeholder="Nhập lời nhắn gửi qua App/SMS tới khách hàng..."></textarea>
+        <label class="form-label">Ghi chú nội bộ CSKH (không hiển thị cho khách)</label>
+        <textarea class="form-control" id="replyInternalNote" rows="2"
+                  placeholder="Ghi chú xử lý nội bộ..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" data-modal-close="replyModal">Hủy</button>
-      <button class="btn btn-primary" onclick="ModalManager.close('replyModal');Toast.show('Đã gửi phản hồi tới khách hàng thành công!')">Gửi phản hồi</button>
+      <button class="btn btn-outline btn-sm" onclick="saveDraftReply()"><i class="ti ti-device-floppy"></i> Lưu nháp</button>
+      <button class="btn btn-primary" onclick="sendReply()"><i class="ti ti-send"></i> Gửi phản hồi</button>
     </div>
   </div>
 </div>
 
-<div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<!-- ══════════════════════════════════
+     MODAL CHỈNH SỬA ĐÁNH GIÁ
+     ══════════════════════════════════ -->
+<div class="modal-overlay" id="editReviewModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2 class="modal-title"><i class="ti ti-pencil" style="color:var(--cskh-primary)"></i> Chỉnh sửa Đánh giá</h2>
+      <button class="modal-close" data-modal-close="editReviewModal">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+      <div class="form-group">
+        <label class="form-label">Khách hàng</label>
+        <input type="text" class="form-control" id="edit-kh" readonly style="opacity:0.6">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CTV</label>
+        <input type="text" class="form-control" id="edit-ctv" readonly style="opacity:0.6">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Điểm Chất lượng (1-5)</label>
+        <input type="number" class="form-control" id="edit-cl" min="1" max="5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Điểm Thái độ (1-5)</label>
+        <input type="number" class="form-control" id="edit-td" min="1" max="5">
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label class="form-label">Nội dung nhận xét</label>
+        <textarea class="form-control" id="edit-nx" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trạng thái</label>
+        <select class="form-control" id="edit-tt">
+          <option value="ChoDuyet">Chờ duyệt</option>
+          <option value="DaDuyet">Đã duyệt</option>
+          <option value="DaAn">Đã ẩn</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="danger-zone" style="flex:1;display:flex;align-items:center;gap:0.5rem">
+        <button class="btn btn-danger btn-sm" onclick="deleteCurrentEditReview()">
+          <i class="ti ti-trash"></i> Xóa đánh giá
+        </button>
+      </div>
+      <button class="btn btn-secondary" data-modal-close="editReviewModal">Hủy</button>
+      <button class="btn btn-primary" onclick="saveEditReview()"><i class="ti ti-device-floppy"></i> Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL THÊM ĐÁNH GIÁ MỚI
+     ══════════════════════════════════ -->
+<div class="modal-overlay" id="addReviewModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <h2 class="modal-title"><i class="ti ti-star-plus" style="color:var(--cskh-primary)"></i> Thêm Đánh giá mới</h2>
+      <button class="modal-close" data-modal-close="addReviewModal">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+      <div class="form-group" style="grid-column:span 2">
+        <label class="form-label">Khách hàng <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-control" id="add-kh" placeholder="Tìm theo tên hoặc SĐT...">
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label class="form-label">CTV phụ trách <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-control" id="add-ctv" placeholder="Tìm theo tên CTV...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Điểm Chất lượng (1-5)</label>
+        <input type="number" class="form-control" id="add-cl" min="1" max="5" value="5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Điểm Thái độ (1-5)</label>
+        <input type="number" class="form-control" id="add-td" min="1" max="5" value="5">
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label class="form-label">Nội dung nhận xét</label>
+        <textarea class="form-control" id="add-nx" rows="3" placeholder="Nội dung đánh giá của khách hàng..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trạng thái</label>
+        <select class="form-control" id="add-tt">
+          <option value="DaDuyet">Đã duyệt</option>
+          <option value="ChoDuyet">Chờ duyệt</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="addReviewModal">Hủy</button>
+      <button class="btn btn-primary" onclick="saveAddReview()"><i class="ti ti-plus"></i> Thêm đánh giá</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL XÁC NHẬN XÓA
+     ══════════════════════════════════ -->
+<div class="modal-overlay" id="deleteReviewModal">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div class="modal-header" style="justify-content:center;border:none;padding-bottom:0">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,71,87,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto">
+        <i class="ti ti-trash" style="font-size:1.5rem;color:var(--danger)"></i>
+      </div>
+    </div>
+    <div style="padding:1rem 2rem 0.5rem">
+      <h3 style="font-weight:700;margin-bottom:0.5rem">Xác nhận xóa đánh giá?</h3>
+      <p style="color:var(--text-muted);font-size:0.875rem">Đánh giá <strong id="deleteReviewTarget">---</strong> sẽ bị xóa vĩnh viễn.</p>
+    </div>
+    <div class="modal-footer" style="justify-content:center;gap:0.75rem">
+      <button class="btn btn-secondary" data-modal-close="deleteReviewModal">Hủy bỏ</button>
+      <button class="btn btn-danger" onclick="executeDeleteReview()"><i class="ti ti-trash"></i> Xóa</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sidebarOverlay"></div>
+<div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
 <script>
-  function openReplyModal(customer, rating) {
-    document.getElementById('replyCustomerName').textContent = customer + ' (' + rating + ')';
+  // ── View toggle ───────────────────────────────────────
+  let isCardView = false;
+  function toggleReviewView() {
+    isCardView = !isCardView;
+    document.getElementById('tableViewContainer').style.display = isCardView ? 'none' : '';
+    document.getElementById('cardViewContainer').style.display = isCardView ? '' : 'none';
+    const btn = document.getElementById('toggleViewBtn');
+    btn.innerHTML = isCardView
+      ? '<i class="ti ti-list"></i> Chế độ bảng'
+      : '<i class="ti ti-layout-grid"></i> Chế độ thẻ';
+  }
+
+  // ── Filter reviews ────────────────────────────────────
+  function filterReviews() {
+    const starVal = document.getElementById('starFilter').value;
+    const statusVal = document.getElementById('statusFilter').value.toLowerCase();
+    const searchVal = document.getElementById('tableSearchInput').value.toLowerCase();
+
+    const targets = isCardView
+      ? document.querySelectorAll('#reviewCardGrid .review-card')
+      : document.querySelectorAll('#mainDataTable tbody tr[data-rating]');
+
+    targets.forEach(row => {
+      const rating = parseFloat(row.dataset.rating || 5);
+      const status = (row.dataset.status || '').toLowerCase();
+      const text = row.textContent.toLowerCase();
+
+      const matchStar = !starVal || (starVal === 'low' ? rating < 3 : Math.round(rating) === parseInt(starVal));
+      const matchStatus = !statusVal || status.includes(statusVal);
+      const matchSearch = !searchVal || text.includes(searchVal);
+
+      row.style.display = (matchStar && matchStatus && matchSearch) ? '' : 'none';
+    });
+  }
+
+  document.getElementById('tableSearchInput').addEventListener('input', filterReviews);
+
+  // ── Bulk select ───────────────────────────────────────
+  function updateBulkBar() {
+    const checked = [...document.querySelectorAll('.row-checkbox:checked')].length;
+    const toolbar = document.getElementById('bulkToolbar');
+    toolbar.classList.toggle('active', checked > 0);
+    document.getElementById('bulkCount').textContent = checked + ' đánh giá được chọn';
+    const master = document.getElementById('masterCheckbox');
+    const all = document.querySelectorAll('.row-checkbox').length;
+    master.indeterminate = checked > 0 && checked < all;
+    master.checked = checked === all && all > 0;
+  }
+
+  document.getElementById('masterCheckbox').addEventListener('change', function() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
+    updateBulkBar();
+  });
+
+  function clearBulk() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('masterCheckbox').checked = false;
+    updateBulkBar();
+  }
+
+  function bulkApprove() {
+    const n = [...document.querySelectorAll('.row-checkbox:checked')].length;
+    CSKH.toast(`Đã duyệt ${n} đánh giá thành công!`);
+    clearBulk();
+  }
+
+  function bulkHide() {
+    const n = [...document.querySelectorAll('.row-checkbox:checked')].length;
+    CSKH.toast(`Đã ẩn ${n} đánh giá`, 'info');
+    clearBulk();
+  }
+
+  function bulkDeleteReviews() {
+    const n = [...document.querySelectorAll('.row-checkbox:checked')].length;
+    cskhConfirmDelete(`Xóa ${n} đánh giá đã chọn?`, () => {
+      CSKH.toast(`Đã xóa ${n} đánh giá!`, 'success');
+      clearBulk();
+    });
+  }
+
+  // ── Reply Modal ───────────────────────────────────────
+  function openReplyModal(btn) {
+    const kh = btn.dataset.kh || btn.getAttribute('data-kh') || 'Khách hàng';
+    const rating = parseInt(btn.dataset.rating || btn.getAttribute('data-rating') || 5);
+    const nhanxet = btn.dataset.nhanxet || btn.getAttribute('data-nhanxet') || '';
+
+    document.getElementById('replyKHAvatar').textContent = kh.charAt(0).toUpperCase();
+    document.getElementById('replyCustomerName').textContent = kh;
+    document.getElementById('replyRatingStars').textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    document.getElementById('replyOriginalText').textContent = nhanxet || '(Không có nhận xét)';
     ModalManager.open('replyModal');
+  }
+
+  function saveDraftReply() {
+    ModalManager.close('replyModal');
+    CSKH.toast('Đã lưu nháp phản hồi!', 'info');
+  }
+
+  function sendReply() {
+    const text = document.getElementById('replyPublicText').value.trim();
+    if (!text) { CSKH.toast('Vui lòng nhập nội dung phản hồi!', 'error'); return; }
+    ModalManager.close('replyModal');
+    CSKH.toast('Đã gửi phản hồi tới khách hàng thành công!');
+  }
+
+  // ── Edit Review Modal ─────────────────────────────────
+  let currentEditReviewId = null;
+  function openEditReviewModal(btn) {
+    currentEditReviewId = btn.dataset.id;
+    document.getElementById('edit-kh').value = btn.dataset.kh || '';
+    document.getElementById('edit-ctv').value = btn.dataset.ctv || '';
+    document.getElementById('edit-cl').value = btn.dataset.cl || 5;
+    document.getElementById('edit-td').value = btn.dataset.td || 5;
+    document.getElementById('edit-nx').value = btn.dataset.nx || '';
+    const ttSel = document.getElementById('edit-tt');
+    for (let opt of ttSel.options) opt.selected = opt.value === (btn.dataset.tt || '');
+    ModalManager.open('editReviewModal');
+  }
+
+  function saveEditReview() {
+    ModalManager.close('editReviewModal');
+    CSKH.toast('Cập nhật đánh giá thành công!');
+  }
+
+  function deleteCurrentEditReview() {
+    ModalManager.close('editReviewModal');
+    document.getElementById('deleteReviewTarget').textContent = '#DG-' + currentEditReviewId;
+    ModalManager.open('deleteReviewModal');
+  }
+
+  // ── Add Review Modal ──────────────────────────────────
+  function openAddReviewModal() {
+    ModalManager.open('addReviewModal');
+  }
+
+  function saveAddReview() {
+    const kh = document.getElementById('add-kh').value.trim();
+    if (!kh) { CSKH.toast('Vui lòng nhập tên khách hàng!', 'error'); return; }
+    ModalManager.close('addReviewModal');
+    CSKH.toast('Thêm đánh giá thành công!');
+  }
+
+  // ── Delete Review ─────────────────────────────────────
+  let deleteReviewTargetId = null;
+  function deleteReview(btn) {
+    deleteReviewTargetId = btn.dataset.id;
+    document.getElementById('deleteReviewTarget').textContent = '#DG-' + deleteReviewTargetId;
+    ModalManager.open('deleteReviewModal');
+  }
+
+  function executeDeleteReview() {
+    ModalManager.close('deleteReviewModal');
+    CSKH.toast('Đã xóa đánh giá thành công!', 'success');
+    deleteReviewTargetId = null;
   }
 </script>
 </body>

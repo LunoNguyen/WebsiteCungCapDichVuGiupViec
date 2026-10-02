@@ -57,7 +57,9 @@ public class CollaboratorApiService {
             item.put("thoiGianPhanCong", pc.getThoiGianPhanCong());
             item.put("donDatId", don.getId());
             item.put("maDonDat", don.getMaDonDat());
-            item.put("tenDichVu", don.getDichVu().getTenDichVu());
+            String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty())
+                    ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+            item.put("tenDichVu", tenDichVu);
             item.put("ngayThucHien", don.getNgayThucHien());
             item.put("gioBatDau", don.getGioBatDau());
             item.put("gioKetThuc", don.getGioKetThuc());
@@ -86,7 +88,9 @@ public class CollaboratorApiService {
 
         result.put("donDatId", don.getId());
         result.put("maDonDat", don.getMaDonDat());
-        result.put("tenDichVu", don.getDichVu().getTenDichVu());
+        String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty())
+                ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+        result.put("tenDichVu", tenDichVu);
         result.put("loaiHinhDat", don.getLoaiHinhDat());
         result.put("ngayThucHien", don.getNgayThucHien());
         result.put("gioBatDau", don.getGioBatDau());
@@ -108,7 +112,7 @@ public class CollaboratorApiService {
         PhanCongCTV pc = phanCongCTVRepository.findById(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
-        pc.setTrangThai("DaNhan");
+        pc.setTrangThai("DaXacNhan"); 
         pc.setThoiGianXacNhan(LocalDateTime.now());
         phanCongCTVRepository.save(pc);
 
@@ -285,7 +289,9 @@ public class CollaboratorApiService {
                 DonDatDichVu d = llv.getPhanCong().getDonDat();
                 item.put("donDatId", d.getId());
                 item.put("maDonDat", d.getMaDonDat());
-                item.put("tenDichVu", d.getDichVu().getTenDichVu());
+                String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
+                        ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+                item.put("tenDichVu", tenDv);
                 item.put("diaChi", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
                 item.put("khachHangTen", d.getKhachHang().getHoTen());
                 item.put("khachHangPhone", d.getKhachHang().getSoDienThoai());
@@ -312,12 +318,42 @@ public class CollaboratorApiService {
             DonDatDichVu d = llv.getPhanCong().getDonDat();
             result.put("donDatId", d.getId());
             result.put("maDonDat", d.getMaDonDat());
-            result.put("tenDichVu", d.getDichVu().getTenDichVu());
+            String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
+                    ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+            result.put("tenDichVu", tenDv);
             result.put("diaChi", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
             result.put("yeuCauDacBiet", d.getYeuCauDacBiet());
             result.put("khachHangTen", d.getKhachHang().getHoTen());
             result.put("khachHangPhone", d.getKhachHang().getSoDienThoai());
         }
+        return result;
+    }
+    // ==========================================
+    // UC-CTV04: QUẢN LÝ HỒ SƠ & TRẠNG THÁI (MỚI THÊM)
+    // ==========================================
+
+    /**
+     * Lấy thông tin hồ sơ của Cộng tác viên
+     */
+    public CongTacVien getCollaboratorProfile(Integer congTacVienId) {
+        return congTacVienRepository.findById(congTacVienId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên ID: " + congTacVienId));
+    }
+
+    /**
+     * Cập nhật trạng thái (Sẵn sàng / Tạm dừng) của CTV
+     */
+    public Map<String, Object> updateCollaboratorStatus(Integer congTacVienId, String trangThaiMoi) {
+        CongTacVien ctv = congTacVienRepository.findById(congTacVienId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên ID: " + congTacVienId));
+        
+        ctv.setTrangThai(trangThaiMoi);
+        congTacVienRepository.save(ctv);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("congTacVienId", ctv.getId());
+        result.put("trangThaiMoi", ctv.getTrangThai());
+        result.put("message", "Đã cập nhật trạng thái hoạt động thành công");
         return result;
     }
 }

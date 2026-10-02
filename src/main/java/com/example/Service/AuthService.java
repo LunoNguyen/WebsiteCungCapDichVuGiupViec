@@ -5,10 +5,16 @@ import com.example.Repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+<<<<<<< HEAD
 
 
 
+=======
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+>>>>>>> a25624ebd15815a0ea89369072fde09529700e50
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 /**
  * Xac thuc tai khoan va phan quyen tu CSDL.
  */
@@ -31,7 +37,7 @@ public class AuthService {
         this.nhanVienRepository = nhanVienRepository;
         this.khachHangRepository = khachHangRepository;
         this.congTacVienRepository = congTacVienRepository;
-        this.passwordEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();   
+        this.passwordEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
     }
 
     public AuthenticationResult authenticate(String tenDangNhap, String matKhau) {
@@ -71,7 +77,8 @@ public class AuthService {
                     role = "ROLE_GIAM_DOC";
                     redirectUrl = "/giam-doc/dashboard";
                     avatar = "GĐ";
-                } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu) || "CV-NVNS".equalsIgnoreCase(maChucVu)) {
+                } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu)
+                        || "CV-NVNS".equalsIgnoreCase(maChucVu)) {
                     role = "ROLE_HCNS";
                     redirectUrl = "/hcns/dashboard";
                     avatar = "HC";
@@ -107,22 +114,6 @@ public class AuthService {
                     avatar = "MKT";
                 }
             }
-        } else if ("KhachHang".equalsIgnoreCase(loaiTK)) {
-            role = "ROLE_KHACH_HANG";
-            redirectUrl = "/";
-            KhachHang kh = khachHangRepository.findByTaiKhoan(taiKhoan).orElse(null);
-            if (kh != null) {
-                fullName = kh.getHoTen();
-                avatar = "KH";
-            }
-        } else if ("CongTacVien".equalsIgnoreCase(loaiTK)) {
-            role = "ROLE_CTV";
-            redirectUrl = "/";
-            CongTacVien ctv = congTacVienRepository.findByTaiKhoan(taiKhoan).orElse(null);
-            if (ctv != null) {
-                fullName = ctv.getHoTen();
-                avatar = "CTV";
-            }
         }
 
         return AuthenticationResult.success(taiKhoan, role, fullName, avatar, redirectUrl);
@@ -132,14 +123,31 @@ public class AuthService {
         if (storedPassword == null || input == null) {
             return false;
         }
+<<<<<<< HEAD
         try {
             return passwordEncoder.matches(input, storedPassword);
         } catch (Exception e) {
             return false;
         }
+=======
+        // 1. Nếu mật khẩu trong CSDL đã được mã hóa bằng BCrypt (bắt đầu bằng $2a$,
+        // $2b$, $2y$)
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")
+                || storedPassword.startsWith("$2y$")) {
+            try {
+                if (passwordEncoder.matches(input, storedPassword)) {
+                    return true;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return false;
+>>>>>>> a25624ebd15815a0ea89369072fde09529700e50
     }
 
-    private boolean isBlank(String value) { return value == null || value.isBlank(); }
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
 
     public record AuthenticationResult(
             boolean success,
@@ -156,7 +164,8 @@ public class AuthService {
             return new AuthenticationResult(false, message, null, null, null, null, null, null, null);
         }
 
-        public static AuthenticationResult success(TaiKhoan taiKhoan, String role, String fullName, String avatar, String redirectUrl) {
+        public static AuthenticationResult success(TaiKhoan taiKhoan, String role, String fullName, String avatar,
+                String redirectUrl) {
             return new AuthenticationResult(
                     true,
                     null,

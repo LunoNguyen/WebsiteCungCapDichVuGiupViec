@@ -61,18 +61,40 @@ const DropdownManager = {
         const targetId = trigger.dataset.dropdown;
         const menu = document.getElementById(targetId);
         if (menu) {
-          const isOpen = menu.classList.contains('active');
+          const isOpen = menu.classList.contains('active') || menu.classList.contains('show');
           this.closeAll();
-          if (!isOpen) menu.classList.add('active');
+          if (!isOpen) {
+            menu.classList.add('active');
+            menu.classList.add('show');
+            const parent = menu.closest('.dropdown') || trigger.closest('.dropdown');
+            if (parent) {
+              parent.classList.add('open');
+              parent.classList.add('active');
+            }
+          }
         }
         return;
       }
+
+      // If clicking inside menu, don't close unless an action item (e.g. data-theme-set or link) was clicked
+      const insideMenu = e.target.closest('.dropdown-menu');
+      if (insideMenu && !e.target.closest('[data-theme-set]') && !e.target.closest('a')) {
+        return;
+      }
+
       // Close all if clicking elsewhere
       this.closeAll();
     });
   },
   closeAll() {
-    document.querySelectorAll('.dropdown-menu.active').forEach(m => m.classList.remove('active'));
+    document.querySelectorAll('.dropdown-menu.active, .dropdown-menu.show').forEach(m => {
+      m.classList.remove('active');
+      m.classList.remove('show');
+    });
+    document.querySelectorAll('.dropdown.open, .dropdown.active').forEach(d => {
+      d.classList.remove('open');
+      d.classList.remove('active');
+    });
   }
 };
 
@@ -429,8 +451,12 @@ const ThemeManager = {
         e.preventDefault();
         const mode = item.getAttribute('data-theme-set');
         this.set(mode);
-        const parentMenu = item.closest('.dropdown-menu');
-        if (parentMenu) parentMenu.classList.remove('active');
+        if (typeof DropdownManager !== 'undefined' && DropdownManager.closeAll) {
+          DropdownManager.closeAll();
+        } else {
+          const parentMenu = item.closest('.dropdown-menu');
+          if (parentMenu) parentMenu.classList.remove('active');
+        }
         const modeLabel = mode === 'light' ? 'Chế độ Sáng' : (mode === 'dark' ? 'Chế độ Tối' : 'Theo Hệ Thống');
         if (typeof Toast !== 'undefined' && Toast.show) {
           Toast.show(`Đã chuyển sang ${modeLabel}`, 'info', 2500);

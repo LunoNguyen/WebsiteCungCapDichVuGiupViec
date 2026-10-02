@@ -14,21 +14,62 @@
           <h1 class="page-title">Thống kê & Báo cáo</h1>
           <p class="page-subtitle">Phân tích hoạt động kinh doanh · UC-GD02</p>
         </div>
-        <div class="page-actions">
-          <!-- Period Filter -->
-<select class="filter-select" id="periodFilter" onchange="location.href='/giam-doc/bao-cao?period=' + this.value">
-            <option value="month" th:selected="${param.period == 'month' or param.period == null}">Tháng này</option>
-            <option value="quarter" th:selected="${param.period == 'quarter'}">Quý này</option>
-            <option value="year" th:selected="${param.period == 'year'}">Năm nay</option>
-            <option value="all" th:selected="${param.period == 'all'}">Toàn thời gian</option>
-          </select>
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">
-  <i class="ti ti-file-type-pdf"></i> PDF
-</button>
-<a th:href="@{/giam-doc/bao-cao/export-excel}" class="btn btn-success btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;">
-  <i class="ti ti-file-spreadsheet"></i> Excel
-</a>
-        </div>
+        <div class="page-actions" style="display:flex;gap:0.5rem;align-items:center">
+
+  <!-- Dropdown chọn Tháng -->
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="thangMenu"
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="${thangDangChon != null ? ('Tháng ' + thangDangChon) : 'Cả năm'}">Cả năm</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
+
+    <div class="dropdown-menu" id="thangMenu" style="right:0;left:auto;min-width:140px">
+      <a th:href="@{/giam-doc/bao-cao(nam=${namDangChon})}"
+         class="dropdown-item"
+         th:classappend="${thangDangChon == null} ? 'active' : ''">
+        Cả năm
+      </a>
+      <a th:each="t : ${#numbers.sequence(1, 12)}"
+         th:href="@{/giam-doc/bao-cao(thang=${t}, nam=${namDangChon})}"
+         class="dropdown-item"
+         th:classappend="${t == thangDangChon} ? 'active' : ''"
+         th:text="'Tháng ' + ${t}">
+        Tháng 1
+      </a>
+    </div>
+  </div>
+
+  <!-- Dropdown chọn Năm -->
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="namMenu"
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
+
+    <div class="dropdown-menu" id="namMenu" style="right:0;left:auto;min-width:140px">
+      <a th:each="n : ${danhSachNam}"
+         th:href="@{/giam-doc/bao-cao(thang=${thangDangChon}, nam=${n})}"
+         class="dropdown-item"
+         th:classappend="${n == namDangChon} ? 'active' : ''"
+         th:text="'Năm ' + ${n}">
+        Năm 2026
+      </a>
+    </div>
+  </div>
+
+    <button class="btn btn-secondary btn-sm" type="button" onclick="window.print()" title="Xuất PDF">
+      <i class="ti ti-file-type-pdf"></i>
+    </button>
+    <a th:href="@{/giam-doc/bao-cao/export-excel}" class="btn btn-success btn-sm" title="Xuất Excel"
+       style="text-decoration:none;display:inline-flex;align-items:center">
+      <i class="ti ti-file-spreadsheet"></i>
+    </a>
+  </form>
+</div>
       </div>
 
       <!-- Summary KPI -->
@@ -87,23 +128,47 @@
               <div style="font-weight:700;margin-bottom:1rem">Đơn đặt dịch vụ gần đây từ hệ thống</div>
               <div class="table-container">
                 <table class="table">
-                  <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>Thành tiền</th><th>Trạng thái</th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>Mã đơn</th>
+                      <th>Khách hàng</th>
+                      <th>Dịch vụ</th>
+                      <th>Ngày thực hiện</th>
+                      <th>Bắt đầu</th>
+                      <th>Kết thúc</th>
+                      <th>Mã KM</th>
+                      <th>Số tiền giảm</th>
+                      <th>Số tiền gốc</th>
+                      <th>Thành tiền</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     <tr th:each="order : ${recentOrders}">
                       <td style="font-weight:700;color:var(--primary-light)" th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
                       <td th:text="${order.khachHang != null ? order.khachHang.hoTen : 'Khách hàng'}">Nguyễn Văn A</td>
-                      <td th:text="${order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
+                      <td th:text="${order.chiTietList != null and !order.chiTietList.isEmpty() ? order.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
+                      <td th:text="${order.ngayThucHien != null ? #temporals.format(order.ngayThucHien, 'dd/MM/yyyy') : '---'}">20/09/2026</td>
+                      <td th:text="${order.gioBatDau != null ? #temporals.format(order.gioBatDau, 'HH:mm') : '---'}">08:00</td>
+                      <td th:text="${order.gioKetThuc != null ? #temporals.format(order.gioKetThuc, 'HH:mm') : '---'}">10:00</td>
+                      <td>
+                        <span th:if="${order.khuyenMai != null}" class="badge badge-warning" style="font-size:0.75rem;font-weight:700" th:text="${order.khuyenMai.codeKhuyenMai}">KM50K</span>
+                        <span th:if="${order.khuyenMai == null}" style="color:var(--text-muted);font-size:0.8rem">---</span>
+                      </td>
+                      <td style="color:var(--danger);font-size:0.85rem" th:text="${order.soTienGiam != null and order.soTienGiam > 0 ? ('-' + #numbers.formatDecimal(order.soTienGiam, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">0đ</td>
+                      <td style="color:var(--text-secondary);font-size:0.85rem" th:text="${order.chiPhiGoc != null ? (#numbers.formatDecimal(order.chiPhiGoc, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
                       <td style="font-weight:700;color:var(--accent)" th:text="${order.thanhTien != null ? (#numbers.formatDecimal(order.thanhTien, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
                       <td>
                         <span th:if="${order.trangThai == 'HoanThanh'}" class="badge badge-success">Hoàn thành</span>
                         <span th:if="${order.trangThai == 'DangThucHien'}" class="badge badge-primary">Đang thực hiện</span>
+                        <span th:if="${order.trangThai == 'DaXacNhan'}" class="badge badge-info">Đã xác nhận</span>
                         <span th:if="${order.trangThai == 'ChoDuyet'}" class="badge badge-warning">Chờ duyệt</span>
                         <span th:if="${order.trangThai == 'DaHuy'}" class="badge badge-danger">Đã hủy</span>
-                        <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy'}" class="badge badge-info" th:text="${order.trangThai}">Khác</span>
+                        <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'DaXacNhan' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy'}" class="badge badge-secondary" th:text="${order.trangThai}">Khác</span>
                       </td>
                     </tr>
                     <tr th:if="${recentOrders == null or #lists.isEmpty(recentOrders)}">
-                      <td colspan="5" style="text-align:center;color:var(--text-muted)">Chưa có đơn đặt dịch vụ nào</td>
+                      <td colspan="11" style="text-align:center;color:var(--text-muted)">Chưa có đơn đặt dịch vụ nào</td>
                     </tr>
                   </tbody>
                 </table>
@@ -242,12 +307,13 @@
 
 <script th:inline="javascript">
     window.chartData = {
-        doanhThuTrieu: /*[[${tongDoanhThuTrieu != null ? tongDoanhThuTrieu : 0}]]*/ 0,
-        topDichVu: /*[[${topDichVu}]]*/ {},
-        phanPhoiDanhGia: /*[[${phanPhoiDanhGia}]]*/ {},
-        doanhThuTheoThang: /*[[${doanhThuTheoThang}]]*/ {}, // Dòng quan trọng nhất để vẽ 12 tháng!
-        trangThaiKhieuNai: /*[[${trangThaiKhieuNai}]]*/ {}
-    };
+    doanhThuTrieu: /*[[${tongDoanhThuTrieu != null ? tongDoanhThuTrieu : 0}]]*/ 0,
+    topDichVu: /*[[${topDichVu}]]*/ {},
+    phanPhoiDanhGia: /*[[${phanPhoiDanhGia}]]*/ {},
+    doanhThuTheoThang: /*[[${doanhThuTheoThang}]]*/ {},
+    doanhThuTheoThangNamTruoc: /*[[${doanhThuTheoThangNamTruoc}]]*/ {},   // ← THÊM DÒNG NÀY
+    trangThaiKhieuNai: /*[[${trangThaiKhieuNai}]]*/ {}
+};
 </script>
 
 <script src="/js/charts.js"></script>
@@ -273,6 +339,29 @@
             });
         });
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-dropdown]').forEach(function (btn) {
+    var menu = document.getElementById(btn.getAttribute('data-dropdown'));
+    if (!menu) return;
+
+    // Khi menu được hiển thị (class 'show' hoặc tương tự do JS gốc thêm vào),
+    // ta chuyển nó sang position:fixed và đặt đúng vị trí dưới nút bấm.
+    var observer = new MutationObserver(function () {
+      var isVisible = getComputedStyle(menu).display !== 'none';
+      if (isVisible) {
+        var rect = btn.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.top = (rect.bottom + 4) + 'px';
+        menu.style.left = 'auto';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.style.zIndex = '9999';
+      }
+    });
+    observer.observe(menu, { attributes: true, attributeFilter: ['class', 'style'] });
+  });
+});
 </script>
 </body>
 </html>

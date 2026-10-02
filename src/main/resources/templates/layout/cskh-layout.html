@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- ============================================================
+     CSKH HEAD FRAGMENT
+     ============================================================ -->
+<head th:fragment="cskhHead(pageTitle)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${pageTitle != null ? pageTitle + ' – CSKH | Neatify' : 'CSKH – Chăm sóc Khách hàng | Neatify'}">CSKH – Neatify</title>
+
+  <!-- Anti-flicker Theme Script -->
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('neatify_theme') || 'system';
+        var isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme-mode', saved);
+      } catch(e) {}
+    })();
+  </script>
+
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+  <!-- Core CSS -->
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+
+  <!-- FullCalendar CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+  <!-- CSKH Extra Styles -->
+  <style>
+    :root {
+      --cskh-primary: #00B4D8;
+      --cskh-primary-dark: #0096B7;
+      --cskh-primary-light: #48CAE4;
+      --cskh-accent: #43E97B;
+      --cskh-warning: #FFB347;
+      --cskh-danger: #FF6B6B;
+      --cskh-info: #6C63FF;
+      --cskh-gradient: linear-gradient(135deg, #00B4D8 0%, #0096B7 100%);
+    }
+    .badge-cskh { background: rgba(0,180,216,0.15); color: #00B4D8; }
+    .modal-xl { max-width: 780px !important; }
+    .form-section-label {
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 0.875rem;
+      border-bottom: 1px solid var(--border-light); padding-bottom: 0.375rem;
+    }
+    .danger-zone {
+      border: 1px solid rgba(255,107,107,0.3);
+      background: rgba(255,107,107,0.04);
+      border-radius: var(--radius-md); padding: 1rem;
+    }
+    .bulk-toolbar {
+      display: none; align-items: center; gap: 0.75rem;
+      padding: 0.625rem 1rem;
+      background: rgba(0,180,216,0.06);
+      border: 1px solid var(--cskh-primary);
+      border-radius: var(--radius-md); font-size: 0.85rem;
+      animation: slideDown 0.2s ease;
+    }
+    .bulk-toolbar.active { display: flex; }
+    @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    /* Calendar */
+    .calendar-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg); padding: 1.25rem;
+    }
+    .fc .fc-toolbar-title { font-size: 1rem !important; font-weight: 700 !important; color: var(--text-primary) !important; }
+    .fc .fc-button {
+      background: var(--bg-card) !important; border: 1px solid var(--border) !important;
+      color: var(--text-primary) !important; font-size: 0.8rem !important;
+      padding: 0.3rem 0.7rem !important; border-radius: var(--radius-md) !important;
+      font-family: 'Inter', sans-serif !important; transition: all 0.2s !important;
+    }
+    .fc .fc-button:hover { background: var(--cskh-primary) !important; color: #fff !important; border-color: var(--cskh-primary) !important; }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active { background: var(--cskh-primary) !important; border-color: var(--cskh-primary) !important; color: #fff !important; }
+    .fc-daygrid-event { border-radius: 4px !important; font-size: 0.72rem !important; padding: 1px 4px !important; }
+    .fc .fc-daygrid-day-number { color: var(--text-primary) !important; font-size: 0.8rem !important; }
+    .fc .fc-col-header-cell-cushion { color: var(--text-secondary) !important; font-size: 0.78rem !important; font-weight: 600 !important; }
+    .fc .fc-daygrid-day.fc-day-today { background: rgba(0,180,216,0.06) !important; }
+    .fc-theme-standard td, .fc-theme-standard th { border-color: var(--border-light) !important; }
+    /* Split view */
+    .split-view { display: grid; grid-template-columns: 280px 1fr; gap: 1.25rem; }
+    @media (max-width: 900px) { .split-view { grid-template-columns: 1fr; } }
+    /* CTV list sidebar */
+    .ctv-list-sidebar { display: flex; flex-direction: column; gap: 0.5rem; max-height: 620px; overflow-y: auto; padding-right: 4px; }
+    .ctv-list-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem; border-radius: var(--radius-md);
+      border: 1px solid var(--border-light); background: var(--bg-card);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .ctv-list-item:hover { border-color: var(--cskh-primary); background: rgba(0,180,216,0.04); }
+    .ctv-list-item.active { border-color: var(--cskh-primary); background: rgba(0,180,216,0.08); }
+    .ctv-list-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--cskh-gradient); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.875rem; flex-shrink: 0;
+    }
+    .ctv-list-name { font-weight: 600; font-size: 0.85rem; }
+    .ctv-list-sub { font-size: 0.72rem; color: var(--text-muted); }
+    /* Review card */
+    .review-card {
+      background: var(--bg-card); border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg); padding: 1.25rem; transition: box-shadow 0.2s;
+    }
+    .review-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .review-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .review-stars { color: #FFC107; font-size: 1rem; font-weight: 700; letter-spacing: 2px; }
+    .review-text { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0.875rem; }
+    .review-reply {
+      background: rgba(0,180,216,0.06); border-left: 3px solid var(--cskh-primary);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 0.75rem;
+      font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.75rem;
+    }
+    .reply-label { font-weight: 700; font-size: 0.78rem; color: var(--cskh-primary); margin-bottom: 0.25rem; }
+    .review-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .table-hoverable tbody tr { transition: background 0.15s ease; }
+    .table-hoverable tbody tr:hover { background: rgba(0,180,216,0.04); }
+  </style>
+</head>
+
+<body>
+
+<!-- ============================================================
+     CSKH SIDEBAR FRAGMENT
+     ============================================================ -->
+<aside class="sidebar" id="sidebar" th:fragment="cskhSidebar(activeMenu)">
+  <div class="sidebar-header">
+    <a href="/cskh/dashboard" class="sidebar-logo-link" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;min-width:0;flex:1">
+      <img src="/images/Logo.png" class="sidebar-logo-img" alt="Neatify">
+      <span class="sidebar-logo-text">Neat<span>ify</span></span>
+    </a>
+    <button class="sidebar-toggle" id="sidebarToggle" title="Thu gọn / Mở rộng"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="avatar" style="background:linear-gradient(135deg,#00B4D8,#0096B7)"
+         th:text="${session.userAvatar != null ? session.userAvatar : 'CS'}">CS</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name" th:text="${session.authenticatedFullName != null ? session.authenticatedFullName : 'NV Chăm sóc KH'}">Họ và tên</div>
+      <div class="sidebar-user-role" th:text="${session.userRole != null ? session.userRole : 'NV Chăm sóc Khách hàng'}">NV CSKH</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="sidebar-nav-group">
+      <div class="sidebar-nav-group-label">Tổng quan</div>
+      <div class="sidebar-nav-items">
+        <a href="/cskh/dashboard" class="sidebar-item" th:classappend="${activeMenu == 'dashboard' ? 'active' : ''}">
+          <i class="ti ti-dashboard item-icon"></i><span class="item-label">Dashboard</span>
+        </a>
+      </div>
+    </div>
+    <div class="sidebar-nav-group">
+      <div class="sidebar-nav-group-label">Khách hàng</div>
+      <div class="sidebar-nav-items">
+        <a href="/cskh/khach-hang" class="sidebar-item" th:classappend="${activeMenu == 'khach-hang' ? 'active' : ''}">
+          <i class="ti ti-users item-icon"></i><span class="item-label">Quản lý Khách hàng</span>
+        </a>
+        <a href="/cskh/don-dat-dich-vu" class="sidebar-item" th:classappend="${activeMenu == 'don-dat-dich-vu' ? 'active' : ''}">
+          <i class="ti ti-clipboard-list item-icon"></i><span class="item-label">Đơn đặt dịch vụ</span>
+        </a>
+        <a href="/cskh/khieu-nai" class="sidebar-item" th:classappend="${activeMenu == 'khieu-nai' ? 'active' : ''}">
+          <i class="ti ti-alert-triangle item-icon"></i><span class="item-label">Khiếu nại</span>
+        </a>
+        <a href="/cskh/danh-gia" class="sidebar-item" th:classappend="${activeMenu == 'danh-gia' ? 'active' : ''}">
+          <i class="ti ti-star item-icon"></i><span class="item-label">Đánh giá dịch vụ</span>
+        </a>
+      </div>
+    </div>
+    <div class="sidebar-nav-group">
+      <div class="sidebar-nav-group-label">Vận hành</div>
+      <div class="sidebar-nav-items">
+        <a href="/cskh/lich-phan-cong" class="sidebar-item" th:classappend="${activeMenu == 'lich-phan-cong' ? 'active' : ''}">
+          <i class="ti ti-calendar-event item-icon"></i><span class="item-label">Lịch làm việc CTV</span>
+        </a>
+        <a href="/cskh/thong-bao" class="sidebar-item" th:classappend="${activeMenu == 'thong-bao' ? 'active' : ''}">
+          <i class="ti ti-bell item-icon"></i><span class="item-label">Thông báo CSKH</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="/logout" class="sidebar-logout" title="Đăng xuất khỏi hệ thống">
+      <i class="ti ti-logout item-icon"></i>
+      <span class="item-label">Đăng xuất</span>
+    </a>
+  </div>
+</aside>
+
+
+<!-- ============================================================
+     CSKH TOPBAR FRAGMENT
+     ============================================================ -->
+<header class="topbar" style="position:relative;z-index:100" th:fragment="cskhTopbar(pageTitle)">
+  <div class="topbar-breadcrumb">
+    <span>Neatify</span>
+    <span class="sep">/</span>
+    <a href="/cskh/dashboard" style="color:var(--text-muted);text-decoration:none">CSKH</a>
+    <span class="sep">/</span>
+    <span class="current" th:text="${pageTitle}">Trang hiện tại</span>
+  </div>
+
+  <div class="topbar-search hide-mobile">
+    <i class="ti ti-search search-icon"></i>
+    <input type="text" placeholder="Tìm kiếm đơn hàng, khách hàng...">
+  </div>
+
+  <div class="topbar-actions">
+    <div class="dropdown">
+      <button class="theme-toggle-btn" data-dropdown="themeMenu" id="themeToggleBtn" title="Chế độ giao diện" aria-label="Đổi theme">
+        <i class="ti ti-bulb" id="themeIcon"></i>
+      </button>
+      <div class="dropdown-menu theme-dropdown-menu" id="themeMenu">
+        <button class="theme-menu-item" data-theme-set="light"><i class="ti ti-sun theme-item-icon" style="color:#F59E0B"></i><span>Chế độ Sáng</span><i class="ti ti-check item-check"></i></button>
+        <button class="theme-menu-item" data-theme-set="dark"><i class="ti ti-moon theme-item-icon" style="color:#6366F1"></i><span>Chế độ Tối</span><i class="ti ti-check item-check"></i></button>
+        <button class="theme-menu-item" data-theme-set="system"><i class="ti ti-device-desktop theme-item-icon" style="color:#14BFC9"></i><span>Theo Hệ thống</span><i class="ti ti-check item-check"></i></button>
+      </div>
+    </div>
+    <div class="dropdown">
+      <button class="topbar-icon-btn" data-dropdown="topbarNotif" title="Thông báo">
+        <i class="ti ti-bell"></i><span class="notif-dot"></span>
+      </button>
+      <div class="dropdown-menu notif-dropdown" id="topbarNotif">
+        <div class="notif-header"><span class="notif-title">Thông báo CSKH</span></div>
+        <div class="notif-item unread">
+          <div class="notif-dot-item"></div>
+          <div class="notif-content"><p>Hệ thống CSKH hoạt động ổn định.</p><span>Vừa xong</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="dropdown">
+      <div class="avatar avatar-sm" data-dropdown="userMenu"
+           style="cursor:pointer;background:linear-gradient(135deg,#00B4D8,#0096B7);font-weight:700"
+           th:text="${session.userAvatar != null ? session.userAvatar : 'CS'}">CS</div>
+      <div class="dropdown-menu" id="userMenu">
+        <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border-light)">
+          <div style="font-weight:600;font-size:0.875rem" th:text="${session.authenticatedFullName != null ? session.authenticatedFullName : 'Nhân viên CSKH'}">Người dùng</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${session.userRole != null ? session.userRole : 'NV Chăm sóc Khách hàng'}">Vai trò</div>
+        </div>
+        <a href="/logout" class="dropdown-item" style="color:var(--danger)"><i class="ti ti-logout"></i> Đăng xuất</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+<!-- ============================================================
+     CSKH SCRIPTS FRAGMENT
+     ============================================================ -->
+<div th:fragment="cskhScripts">
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  <script>
+    const CSKH = {
+      toast(msg, type = 'success') {
+        if (typeof Toast !== 'undefined') Toast.show(msg, type);
+      },
+      confirm(msg, onConfirm) {
+        if (window.confirm(msg)) onConfirm();
+      },
+      formatVND(n) {
+        return Number(n).toLocaleString('vi-VN') + 'đ';
+      },
+      formatDate(d) {
+        if (!d) return '--';
+        return new Date(d).toLocaleDateString('vi-VN');
+      },
+      initTableSearch(inputId, tableId) {
+        const input = document.getElementById(inputId);
+        const table = document.getElementById(tableId);
+        if (!input || !table) return;
+        input.addEventListener('input', () => {
+          const q = input.value.toLowerCase();
+          table.querySelectorAll('tbody tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+          });
+        });
+      },
+      initBulkSelect(masterCbId, rowCbClass, toolbarId) {
+        const master = document.getElementById(masterCbId);
+        const toolbar = document.getElementById(toolbarId);
+        if (!master) return;
+        const rows = () => document.querySelectorAll('.' + rowCbClass);
+        master.addEventListener('change', () => {
+          rows().forEach(cb => cb.checked = master.checked);
+          if (toolbar) toolbar.classList.toggle('active', master.checked);
+        });
+        rows().forEach(cb => {
+          cb.addEventListener('change', () => {
+            const any = [...rows()].some(c => c.checked);
+            if (toolbar) toolbar.classList.toggle('active', any);
+          });
+        });
+      }
+    };
+
+    function cskhConfirmDelete(msg, callback) {
+      if (confirm(msg || 'Bạn có chắc muốn xóa mục này?')) callback();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      CSKH.initBulkSelect('masterCheckbox', 'rowCheckbox', 'bulkToolbar');
+      CSKH.initTableSearch('tableSearchInput', 'mainDataTable');
+    });
+  </script>
+</div>
+
+</body>
+</html>

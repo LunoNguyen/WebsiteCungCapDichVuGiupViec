@@ -53,15 +53,34 @@
 
       <div class="dashboard-grid" style="margin-top:1.5rem">
         <!-- Revenue + Conversion -->
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Tăng trưởng doanh thu 6 tháng gần nhất</div>
-              <div class="card-subtitle">Số liệu thực tế đơn hàng đã hoàn thành</div>
-            </div>
-          </div>
-          <div class="chart-wrapper"><canvas id="revenueChart"></canvas></div>
-        </div>
+            <div class="card">
+      <div class="card-header">
+  <div>
+    <div class="card-title">Tăng trưởng doanh thu theo tháng</div>
+    <div class="card-subtitle">Số liệu thực tế đơn hàng đã hoàn thành</div>
+  </div>
+
+  <div class="dropdown">
+    <button class="btn btn-outline btn-sm" data-dropdown="namMenu" 
+            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+      <i class="ti ti-calendar" style="color:var(--accent)"></i>
+      <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
+      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
+    </button>
+
+    <div class="dropdown-menu" id="namMenu" style="right:0;left:auto;min-width:140px">
+      <a th:each="n : ${danhSachNam}"
+         th:href="@{/marketing/dashboard(nam=${n})}"
+         class="dropdown-item"
+         th:classappend="${n == namDangChon} ? 'active' : ''"
+         th:text="'Năm ' + ${n}">
+        Năm 2026
+      </a>
+    </div>
+  </div>
+</div>
+      <div class="chart-wrapper"><canvas id="revenueChart"></canvas></div>
+    </div>
 
         <!-- Active Campaigns -->
         <div class="card">
@@ -125,73 +144,91 @@
 <script th:inline="javascript">
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;
-
+    const doanhThuTheoThang = /*[[${doanhThu12Thang}]]*/ {};
+    const revenueLabels = Object.keys(doanhThuTheoThang);
+    const revenueData = Object.values(doanhThuTheoThang);
     // Revenue chart
-    const ctx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(ctx, {
-      type:'bar',
-      data:{
-        labels:['Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9'],
-        datasets:[{
-          label:'Doanh thu (triệu đồng)',data:[520, 680, 910, 1240, 1620, 1850],
-          backgroundColor:'rgba(255,101,132,0.85)',
-          borderRadius: 6,
-          maxBarThickness: 40
-        }]
-      },
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
-        scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+' triệu'}}}}
-    });
+    const revCanvas = document.getElementById('revenueChart');
+    if (revCanvas) {
+      const ctx = revCanvas.getContext('2d');
+      new Chart(ctx, {
+        type:'bar',
+        data:{
+          labels: revenueLabels,
+          datasets:[{
+            label:'Doanh thu (triệu đồng)', data: revenueData,
+            backgroundColor:'rgba(255,101,132,0.85)',
+            borderRadius: 6,
+            maxBarThickness: 40
+          }]
+        },
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+' triệu'}}}}
+      });
+    }
+
+    const namFilter = document.getElementById('namFilter');
+    if (namFilter) {
+      namFilter.addEventListener('change', function() {
+        window.location.href = '/marketing/dashboard?nam=' + this.value;
+      });
+    }
 
     // Rating distribution
-    const phanPhoi = /*[[${phanPhoiDanhGia}]]*/ {};
-    const d5 = phanPhoi[5] || 0;
-    const d4 = phanPhoi[4] || 0;
-    const d3 = phanPhoi[3] || 0;
-    const d2 = phanPhoi[2] || 0;
-    const d1 = phanPhoi[1] || 0;
+    const ratingCanvas = document.getElementById('ratingChart');
+    if (ratingCanvas) {
+      const phanPhoi = /*[[${phanPhoiDanhGia}]]*/ {};
+      const d5 = phanPhoi[5] || 0;
+      const d4 = phanPhoi[4] || 0;
+      const d3 = phanPhoi[3] || 0;
+      const d2 = phanPhoi[2] || 0;
+      const d1 = phanPhoi[1] || 0;
 
-    new Chart(document.getElementById('ratingChart'), {
-      type:'bar',
-      data:{
-        labels:['5★','4★','3★','2★','1★'],
-        datasets:[{data:[d5, d4, d3, d2, d1],backgroundColor:['#43E97B','#6C63FF','#FFC107','#FF6584','#FF4757'],borderRadius:6,borderSkipped:false}]
-      },
-      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
-        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}},y:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}
-    });
+      new Chart(ratingCanvas, {
+        type:'bar',
+        data:{
+          labels:['5★','4★','3★','2★','1★'],
+          datasets:[{data:[d5, d4, d3, d2, d1],backgroundColor:['#43E97B','#6C63FF','#FFC107','#FF6584','#FF4757'],borderRadius:6,borderSkipped:false}]
+        },
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}},y:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}
+      });
+    }
 
     // Top services bar chart (thay thế doughnut)
-    const topDv = /*[[${topDichVu}]]*/ {};
-    const dvLabels = Object.keys(topDv);
-    const dvData = Object.values(topDv);
+    const ordersCanvas = document.getElementById('ordersDonut');
+    if (ordersCanvas) {
+      const topDv = /*[[${topDichVu}]]*/ {};
+      const dvLabels = Object.keys(topDv);
+      const dvData = Object.values(topDv);
 
-    new Chart(document.getElementById('ordersDonut'), {
-      type:'bar',
-      data:{
-        labels: dvLabels.length ? dvLabels : ['Dọn dẹp nhà', 'Tổng vệ sinh', 'Nấu ăn', 'Giặt ủi', 'Trông trẻ'],
-        datasets:[{
-          label: 'Số đơn đặt',
-          data: dvData.length ? dvData : [3, 2, 2, 2, 2],
-          backgroundColor:['#0D9BA3','#38D48A','#1585C0','#F59E0B','#FF6584'],
-          borderRadius: 6,
-          borderSkipped: false
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false}
+      new Chart(ordersCanvas, {
+        type:'bar',
+        data:{
+          labels: dvLabels.length ? dvLabels : ['Dọn dẹp nhà', 'Tổng vệ sinh', 'Nấu ăn', 'Giặt ủi', 'Trông trẻ'],
+          datasets:[{
+            label: 'Số đơn đặt',
+            data: dvData.length ? dvData : [3, 2, 2, 2, 2],
+            backgroundColor:['#0D9BA3','#38D48A','#1585C0','#F59E0B','#FF6584'],
+            borderRadius: 6,
+            borderSkipped: false
+          }]
         },
-        scales:{
-          x:{grid:{display:false},ticks:{font:{size:10}}},
-          y:{grid:{color:'rgba(13,155,163,0.06)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}}
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{
+            legend:{display:false}
+          },
+          scales:{
+            x:{grid:{display:false},ticks:{font:{size:10}}},
+            y:{grid:{color:'rgba(13,155,163,0.06)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}}
+          }
         }
-      }
-    });
+      });
+    }
   });
 </script>
 </body>
