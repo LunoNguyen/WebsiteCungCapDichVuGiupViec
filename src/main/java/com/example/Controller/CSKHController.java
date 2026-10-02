@@ -574,8 +574,11 @@ public class CSKHController {
             if (dd != null) {
                 dto.setDonDatId(dd.getId());
                 dto.setMaDonDat(dd.getMaDonDat());
-                if (dd.getDichVu() != null) {
-                    dto.setDichVuTen(dd.getDichVu().getTenDichVu());
+                if (dd.getChiTietList() != null && !dd.getChiTietList().isEmpty()) {
+                    var firstCt = dd.getChiTietList().get(0);
+                    if (firstCt.getDichVu() != null) {
+                        dto.setDichVuTen(firstCt.getDichVu().getTenDichVu());
+                    }
                 }
                 if (dd.getKhachHang() != null) {
                     dto.setKhachHangTen(dd.getKhachHang().getHoTen());

@@ -2,8 +2,9 @@ package com.example.DTO;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.*;
+import java.util.List;
 
-/** DTO cho DonDatDichVu. Quan he duoc truyen bang khoa ngoai id. */
+/** DTO cho DonDatDichVu. Phản ánh schema mới: 1 đơn chứa nhiều dịch vụ qua ChiTietDonDat. */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class DonDatDichVuDTO {
     private Integer id;
@@ -11,13 +12,13 @@ public class DonDatDichVuDTO {
     private Integer khachHangId;
     private Integer diaChiId;
     private Integer nhanVienTiepNhanId;
-    private Integer dichVuId;
-    private Integer bangGiaId;
-    private Integer goiDichVuId;
-    
+
     // Đổi tên trường từ couponId sang khuyenMaiId
-    private Integer khuyenMaiId; 
-    
+    private Integer khuyenMaiId;
+
+    /** Danh sách dịch vụ trong đơn (thay thế cho dichVuId / bangGiaId / goiDichVuId cũ) */
+    private List<ChiTietDonDatDTO> chiTietList;
+
     private String loaiHinhDat;
     private LocalDate ngayThucHien;
     private LocalTime gioBatDau;

@@ -6,11 +6,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /** Bang 19: ChuongTrinhKhuyenMai */
-@Entity @Table(name = "ChuongTrinhKhuyenMai")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Entity
+@Table(name = "ChuongTrinhKhuyenMai")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ChuongTrinhKhuyenMai {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "MaChuongTrinh", nullable = false, unique = true, length = 20)
@@ -45,8 +51,10 @@ public class ChuongTrinhKhuyenMai {
 
     @PrePersist
     protected void onCreate() {
-        if (trangThai == null) trangThai = "SapDienRa";
-        if (dieuKienToiThieu == null) dieuKienToiThieu = BigDecimal.ZERO;
+        if (trangThai == null)
+            trangThai = "SapDienRa";
+        if (dieuKienToiThieu == null)
+            dieuKienToiThieu = BigDecimal.ZERO;
     }
 
     public BigDecimal getGiaTriGiamToiDa() {

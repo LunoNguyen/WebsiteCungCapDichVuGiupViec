@@ -1,5 +1,6 @@
 package com.example.Service;
-
+import java.time.LocalDate;
+import java.time.YearMonth;
 import com.example.Model.*;
 import com.example.Repository.*;
 import com.example.DTO.*;
@@ -7,7 +8,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
+import com.example.Model.LichSuSuDungKhuyenMai;
+import com.example.Repository.LichSuSuDungKhuyenMaiRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -30,7 +32,7 @@ public class ThongKeService {
     private final ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository;
     private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final ThongBaoRepository thongBaoRepository;
-
+    private final LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository;
     public ThongKeService(
             DonDatDichVuRepository donDatDichVuRepository,
             KhachHangRepository khachHangRepository,
@@ -41,7 +43,8 @@ public class ThongKeService {
             KhieuNaiRepository khieuNaiRepository,
             ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository,
             MaKhuyenMaiRepository maKhuyenMaiRepository,
-            ThongBaoRepository thongBaoRepository) {
+            ThongBaoRepository thongBaoRepository,
+            LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository) {
         this.donDatDichVuRepository = donDatDichVuRepository;
         this.khachHangRepository = khachHangRepository;
         this.congTacVienRepository = congTacVienRepository;
@@ -52,6 +55,7 @@ public class ThongKeService {
         this.chuongTrinhKhuyenMaiRepository = chuongTrinhKhuyenMaiRepository;
         this.maKhuyenMaiRepository = maKhuyenMaiRepository;
         this.thongBaoRepository = thongBaoRepository;
+        this.lichSuSuDungKhuyenMaiRepository = lichSuSuDungKhuyenMaiRepository;
     }
 
     public long getTongDonHang() {
@@ -150,9 +154,13 @@ public class ThongKeService {
     public Map<String, Long> getTopDichVu() {
         Map<String, Long> map = new LinkedHashMap<>();
         for (DonDatDichVu d : donDatDichVuRepository.findAll()) {
-            if (d.getDichVu() != null) {
-                String ten = d.getDichVu().getTenDichVu();
-                map.put(ten, map.getOrDefault(ten, 0L) + 1);
+            if (d.getChiTietList() != null) {
+                for (ChiTietDonDat ct : d.getChiTietList()) {
+                    if (ct.getDichVu() != null) {
+                        String ten = ct.getDichVu().getTenDichVu();
+                        map.put(ten, map.getOrDefault(ten, 0L) + (ct.getSoLuong() != null ? ct.getSoLuong() : 1));
+                    }
+                }
             }
         }
         return map;
@@ -385,6 +393,40 @@ public class ThongKeService {
         }
         return map;
     }
+    // ===== HÀM MỚI THÊM VÀO — dùng cho bộ lọc năm ở Dashboard Marketing =====
+public Map<String, BigDecimal> getDoanhThu12Thang(int nam) {
+    Map<String, BigDecimal> map = new LinkedHashMap<>();
+    for (int i = 1; i <= 12; i++) {
+        map.put("Tháng " + i, BigDecimal.ZERO);
+    }
+
+    for (DonDatDichVu d : donDatDichVuRepository.findAll()) {
+        if ("HoanThanh".equalsIgnoreCase(d.getTrangThai()) && d.getNgayThucHien() != null) {
+            int month = d.getNgayThucHien().getMonthValue();
+            int year = d.getNgayThucHien().getYear();
+
+            if (year == nam) {   // dùng tham số truyền vào thay vì số cứng 2026
+                String key = "Tháng " + month;
+                BigDecimal current = map.getOrDefault(key, BigDecimal.ZERO);
+                BigDecimal value = d.getThanhTien() != null ? d.getThanhTien() : BigDecimal.ZERO;
+                map.put(key, current.add(value.divide(new BigDecimal("1000000"), 1, RoundingMode.HALF_UP)));
+            }
+        }
+    }
+    return map;
+}
+public List<Integer> getDanhSachNamCoDuLieu() {
+    Set<Integer> years = new TreeSet<>(Collections.reverseOrder()); // mới nhất trước
+    for (DonDatDichVu d : donDatDichVuRepository.findAll()) {
+        if (d.getNgayThucHien() != null) {
+            years.add(d.getNgayThucHien().getYear());
+        }
+    }
+    if (years.isEmpty()) {
+        years.add(java.time.LocalDate.now().getYear());
+    }
+    return new ArrayList<>(years);
+}
 
     public MarketingStatsDto getMarketingStats() {
         List<ChuongTrinhKhuyenMai> kmList = chuongTrinhKhuyenMaiRepository.findAll();
@@ -500,10 +542,14 @@ public class ThongKeService {
 
         // Gom nhóm điểm theo Tên Dịch Vụ
         for (DanhGia dg : list) {
-            if (dg.getDonDat() != null && dg.getDonDat().getDichVu() != null) {
-                String tenDV = dg.getDonDat().getDichVu().getTenDichVu();
-                int diem = dg.getDiemChatLuong() != null ? dg.getDiemChatLuong() : 5;
-                pointsPerService.computeIfAbsent(tenDV, k -> new ArrayList<>()).add(diem);
+            if (dg.getDonDat() != null && dg.getDonDat().getChiTietList() != null) {
+                for (ChiTietDonDat ct : dg.getDonDat().getChiTietList()) {
+                    if (ct.getDichVu() != null) {
+                        String tenDV = ct.getDichVu().getTenDichVu();
+                        int diem = dg.getDiemChatLuong() != null ? dg.getDiemChatLuong() : 5;
+                        pointsPerService.computeIfAbsent(tenDV, k -> new ArrayList<>()).add(diem);
+                    }
+                }
             }
         }
 
@@ -572,7 +618,7 @@ public class ThongKeService {
             if (count >= 5)
                 break;
             long luotDung = cp.getSoLuotDaDung() != null ? cp.getSoLuotDaDung() : 0;
-            // Giả định trung bình 1 đơn hàng dùng mã trị giá 400.000đ -> Đổi ra Triệu VNĐ
+        
             long doanhThuTrieu = (luotDung * 400000) / 1000000;
             if (luotDung > 0) {
                 map.put(cp.getCodeKhuyenMai(), doanhThuTrieu);
@@ -582,6 +628,159 @@ public class ThongKeService {
         // Nếu DB chưa có mã nào được dùng
         if (map.isEmpty()) {
             map.put("CHUA_CO_DATA", 0L);
+        }
+        return map;
+    }
+    // ==========================================
+// BÁO CÁO THEO KHOẢNG NGÀY TÙY CHỌN (UC-GD02 filter)
+// ==========================================
+
+public List<DonDatDichVu> getDonHangTheoKhoang(LocalDate tuNgay, LocalDate denNgay) {
+    return donDatDichVuRepository.findAll().stream()
+            .filter(d -> d.getNgayThucHien() != null)
+            .filter(d -> !d.getNgayThucHien().isBefore(tuNgay) && !d.getNgayThucHien().isAfter(denNgay))
+            .collect(Collectors.toList());
+}
+
+public BigDecimal getDoanhThuTheoKhoang(LocalDate tuNgay, LocalDate denNgay) {
+    return getDonHangTheoKhoang(tuNgay, denNgay).stream()
+            .filter(d -> "HoanThanh".equalsIgnoreCase(d.getTrangThai()))
+            .map(DonDatDichVu::getThanhTien)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+}
+
+public BigDecimal getDoanhThuTrieuTheoKhoang(LocalDate tuNgay, LocalDate denNgay) {
+    return getDoanhThuTheoKhoang(tuNgay, denNgay)
+            .divide(new BigDecimal("1000000"), 1, RoundingMode.HALF_UP);
+}
+
+// ==========================================
+// BÁO CÁO THEO THÁNG + NĂM CỤ THỂ (UC-GD02 filter)
+// ==========================================
+
+public List<DonDatDichVu> getDonHangTheoThangNam(Integer thang, int nam) {
+    return donDatDichVuRepository.findAll().stream()
+            .filter(d -> d.getNgayThucHien() != null)
+            .filter(d -> d.getNgayThucHien().getYear() == nam)
+            .filter(d -> thang == null || d.getNgayThucHien().getMonthValue() == thang)
+            .collect(Collectors.toList());
+}
+
+public BigDecimal getDoanhThuTheoThangNam(Integer thang, int nam) {
+    return getDonHangTheoThangNam(thang, nam).stream()
+            .filter(d -> "HoanThanh".equalsIgnoreCase(d.getTrangThai()))
+            .map(DonDatDichVu::getThanhTien)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+}
+
+public BigDecimal getDoanhThuTrieuTheoThangNam(Integer thang, int nam) {
+    return getDoanhThuTheoThangNam(thang, nam)
+            .divide(new BigDecimal("1000000"), 1, RoundingMode.HALF_UP);
+}
+
+public Map<String, Long> getTopDichVuTheoThangNam(Integer thang, int nam) {
+    Map<String, Long> map = new LinkedHashMap<>();
+    for (DonDatDichVu d : getDonHangTheoThangNam(thang, nam)) {
+        if (d.getChiTietList() != null) {
+            for (ChiTietDonDat ct : d.getChiTietList()) {
+                if (ct.getDichVu() != null) {
+                    String ten = ct.getDichVu().getTenDichVu();
+                    map.put(ten, map.getOrDefault(ten, 0L) + (ct.getSoLuong() != null ? ct.getSoLuong() : 1));
+                }
+            }
+        }
+    }
+    return map;
+}
+    public Map<String, Long> getPhanBoTrangThaiDonTheoThangNam(Integer thang, int nam) {
+    Map<String, Long> map = new LinkedHashMap<>();
+    map.put("Hoàn thành", 0L);
+    map.put("Đang thực hiện", 0L);
+    map.put("Đã xác nhận", 0L);
+    map.put("Chờ duyệt", 0L);
+    map.put("Đã hủy", 0L);
+
+    for (DonDatDichVu d : getDonHangTheoThangNam(thang, nam)) {
+        String st = d.getTrangThai();
+        if ("HoanThanh".equalsIgnoreCase(st))
+            map.put("Hoàn thành", map.get("Hoàn thành") + 1);
+        else if ("DangThucHien".equalsIgnoreCase(st))
+            map.put("Đang thực hiện", map.get("Đang thực hiện") + 1);
+        else if ("DaXacNhan".equalsIgnoreCase(st))
+            map.put("Đã xác nhận", map.get("Đã xác nhận") + 1);
+        else if ("ChoDuyet".equalsIgnoreCase(st))
+            map.put("Chờ duyệt", map.get("Chờ duyệt") + 1);
+        else if ("DaHuy".equalsIgnoreCase(st))
+            map.put("Đã hủy", map.get("Đã hủy") + 1);
+    }
+    return map;
+}
+// ==========================================
+// LỌC THEO THÁNG/NĂM CHO TRANG PHÂN TÍCH MARKETING
+// ==========================================
+
+// Tổng khách hàng mới đăng ký trong kỳ (dựa trên NgayDangKy thật trong DB)
+public long getTongKhachHangMoiTheoThangNam(Integer thang, int nam) {
+    return khachHangRepository.findAll().stream()
+            .filter(k -> k.getNgayDangKy() != null)
+            .filter(k -> k.getNgayDangKy().getYear() == nam)
+            .filter(k -> thang == null || k.getNgayDangKy().getMonthValue() == thang)
+            .count();
+}
+
+// Phân bổ nguồn khách hàng theo kênh: tổng SỐ THẬT theo kỳ, tỷ lệ % từng kênh vẫn là ước lượng
+// (DB hiện không lưu kênh marketing của từng khách hàng)
+public Map<String, Long> getNguonKhachHangTheoThangNam(Integer thang, int nam) {
+    long total = getTongKhachHangMoiTheoThangNam(thang, nam);
+    Map<String, Long> map = new LinkedHashMap<>();
+    if (total == 0) {
+        map.put("Facebook Ads", 0L);
+        map.put("Google Ads", 0L);
+        map.put("TikTok", 0L);
+        map.put("Giới thiệu", 0L);
+        map.put("SEO / Tự nhiên", 0L);
+        return map;
+    }
+    long fb = Math.round(total * 0.35);
+    long gg = Math.round(total * 0.25);
+    long tt = Math.round(total * 0.20);
+    long gt = Math.round(total * 0.12);
+    map.put("Facebook Ads", fb);
+    map.put("Google Ads", gg);
+    map.put("TikTok", tt);
+    map.put("Giới thiệu", gt);
+    map.put("SEO / Tự nhiên", total - (fb + gg + tt + gt));
+    return map;
+}
+
+// Top 5 mã khuyến mãi theo DOANH THU THẬT trong kỳ (dựa trên LichSuSuDungKhuyenMai.NgaySuDung)
+public Map<String, Double> getTopMaKhuyenMaiTheoThangNam(Integer thang, int nam) {
+        Map<String, Long> tongTienTheoMa = new LinkedHashMap<>();
+
+        for (LichSuSuDungKhuyenMai ls : lichSuSuDungKhuyenMaiRepository.findAll()) {
+            if (ls.getNgaySuDung() == null || ls.getKhuyenMai() == null) continue;
+            int year = ls.getNgaySuDung().getYear();
+            int month = ls.getNgaySuDung().getMonthValue();
+            if (year != nam) continue;
+            if (thang != null && month != thang) continue;
+
+            String code = ls.getKhuyenMai().getCodeKhuyenMai();
+            long soTien = ls.getSoTienDuocGiam() != null ? ls.getSoTienDuocGiam().longValue() : 0L;
+            tongTienTheoMa.merge(code, soTien, Long::sum);
+        }
+
+        // ĐỔI SANG MAP DOUBLE
+        Map<String, Double> map = new LinkedHashMap<>();
+        tongTienTheoMa.entrySet().stream()
+                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+                .limit(5)
+                // QUAN TRỌNG: Chia cho 1000000.0 (có .0) để ra số thập phân
+                .forEach(e -> map.put(e.getKey(), e.getValue() / 1000000.0)); 
+
+        if (map.isEmpty()) {
+            map.put("CHUA_CO_DATA", 0.0); // Cập nhật số 0.0
         }
         return map;
     }

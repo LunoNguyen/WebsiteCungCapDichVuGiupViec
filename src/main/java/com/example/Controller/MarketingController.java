@@ -1,5 +1,6 @@
 package com.example.Controller;
 import com.example.Model.DanhGia;
+import com.example.Model.LichSuSuDungKhuyenMai;
 import java.util.List;
 import com.example.DTO.*;
 import com.example.Model.ThongBao;
@@ -26,36 +27,89 @@ public class MarketingController {
     private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final ThongBaoRepository thongBaoRepository;
     private final DanhGiaRepository danhGiaRepository;
+    private final LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository;
 
     public MarketingController(
             ThongKeService thongKeService,
             ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository,
             MaKhuyenMaiRepository maKhuyenMaiRepository,
             ThongBaoRepository thongBaoRepository,
-            DanhGiaRepository danhGiaRepository) {
+            DanhGiaRepository danhGiaRepository,
+            LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository) {
         this.thongKeService = thongKeService;
         this.chuongTrinhKhuyenMaiRepository = chuongTrinhKhuyenMaiRepository;
         this.maKhuyenMaiRepository = maKhuyenMaiRepository;
         this.thongBaoRepository = thongBaoRepository;
         this.danhGiaRepository = danhGiaRepository;
+        this.lichSuSuDungKhuyenMaiRepository = lichSuSuDungKhuyenMaiRepository;
+    }
+
+    // UC-MKT05 – Lịch sử sử dụng khuyến mãi
+    @GetMapping("/lich-su-khuyen-mai")
+    public String lichSuKhuyenMai(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String maCode,
+            Model model) {
+
+        List<LichSuSuDungKhuyenMai> lichSuList = lichSuSuDungKhuyenMaiRepository.findAll();
+
+        // Sắp xếp mới nhất lên đầu
+        lichSuList = new java.util.ArrayList<>(lichSuList);
+        lichSuList.sort((a, b) -> b.getNgaySuDung().compareTo(a.getNgaySuDung()));
+
+        // Lọc theo tên khách hàng
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = keyword.trim().toLowerCase();
+            lichSuList = lichSuList.stream()
+                .filter(ls -> ls.getKhachHang() != null &&
+                              ls.getKhachHang().getHoTen().toLowerCase().contains(kw))
+                .toList();
+            model.addAttribute("keyword", keyword);
+        }
+
+        // Lọc theo mã code khuyến mãi
+        if (maCode != null && !maCode.trim().isEmpty()) {
+            lichSuList = lichSuList.stream()
+                .filter(ls -> ls.getKhuyenMai() != null &&
+                              ls.getKhuyenMai().getCodeKhuyenMai().equalsIgnoreCase(maCode.trim()))
+                .toList();
+            model.addAttribute("maCode", maCode);
+        }
+
+        model.addAttribute("lichSuList", lichSuList);
+        model.addAttribute("tongLuotSuDung", lichSuSuDungKhuyenMaiRepository.count());
+        model.addAttribute("danhSachCode", maKhuyenMaiRepository.findAll());
+        model.addAttribute("marketingStats", thongKeService.getMarketingStats());
+        return "marketing/lich-su-khuyen-mai";
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-        var mktStats = thongKeService.getMarketingStats();
-        model.addAttribute("marketingStats", mktStats);
-        model.addAttribute("tongKhuyenMai", mktStats.getTongKhuyenMai());
-        model.addAttribute("tongCoupons", mktStats.getTongCoupons());
-        model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
-        model.addAttribute("diemDanhGiaTB", thongKeService.getDiemDanhGiaTrungBinh());
-        model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
-        model.addAttribute("phanPhoiDanhGia", thongKeService.getPhanPhoiDanhGia());
-        model.addAttribute("topDichVu", thongKeService.getTopDichVu());
-        model.addAttribute("recentReviews", danhGiaRepository.findAll());
-        model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
-        model.addAttribute("coupons", maKhuyenMaiRepository.findAll());
-        return "marketing/dashboard";
-    }
+public String dashboard(
+        @RequestParam(required = false) Integer nam,
+        Model model) {
+
+    int namChon = (nam != null) ? nam : java.time.LocalDate.now().getYear();
+
+    var mktStats = thongKeService.getMarketingStats();
+    model.addAttribute("marketingStats", mktStats);
+    model.addAttribute("tongKhuyenMai", mktStats.getTongKhuyenMai());
+    model.addAttribute("tongCoupons", mktStats.getTongCoupons());
+    model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
+    model.addAttribute("diemDanhGiaTB", thongKeService.getDiemDanhGiaTrungBinh());
+    model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
+    model.addAttribute("phanPhoiDanhGia", thongKeService.getPhanPhoiDanhGia());
+    model.addAttribute("topDichVu", thongKeService.getTopDichVu());
+    model.addAttribute("recentReviews", danhGiaRepository.findAll());
+    model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
+    model.addAttribute("coupons", maKhuyenMaiRepository.findAll());
+
+    // Bộ lọc năm — chỉ gọi 1 lần với namChon, KHÔNG cần dòng gọi getDoanhThu12Thang() không tham số nữa
+    model.addAttribute("doanhThu12Thang", thongKeService.getDoanhThu12Thang(namChon));
+    model.addAttribute("danhSachNam", thongKeService.getDanhSachNamCoDuLieu());
+    model.addAttribute("namDangChon", namChon);
+
+    return "marketing/dashboard";
+}
 
     // UC-MKT01 – Quản lý khuyến mãi
     @GetMapping("/khuyen-mai")
@@ -139,23 +193,41 @@ public class MarketingController {
         return "marketing/thong-bao";
     }
 
-    // UC-MKT03 – Phân tích & báo cáo marketing
-   // UC-MKT03 – Phân tích & báo cáo marketing
+        // UC-MKT03 – Phân tích & báo cáo marketing
     @GetMapping("/phan-tich")
-    public String phanTich(Model model) {
+    public String phanTich(
+            @RequestParam(required = false) Integer thang,
+            @RequestParam(required = false) Integer nam,
+            Model model) {
+
+        int namChon = (nam != null) ? nam : java.time.LocalDate.now().getYear();
+
         var mktStats = thongKeService.getMarketingStats();
         model.addAttribute("marketingStats", mktStats);
         model.addAttribute("tongKhuyenMai", mktStats.getTongKhuyenMai());
         model.addAttribute("tongCoupons", mktStats.getTongCoupons());
-        model.addAttribute("tongKhachHang", thongKeService.getTongKhachHang());
-        
-        // Danh sách chiến dịch
-        model.addAttribute("khuyenMais", chuongTrinhKhuyenMaiRepository.findAll());
+
+        model.addAttribute("thangDangChon", thang);
+        model.addAttribute("namDangChon", namChon);
+        model.addAttribute("danhSachNam", thongKeService.getDanhSachNamCoDuLieu());
+
+        // Tổng khách hàng MỚI trong kỳ (dữ liệu thật theo NgayDangKy)
+        model.addAttribute("tongKhachHang", thongKeService.getTongKhachHangMoiTheoThangNam(thang, namChon));
+
+        // Bảng chiến dịch: lọc theo ngày bắt đầu thật
+        var khuyenMaiLoc = chuongTrinhKhuyenMaiRepository.findAll().stream()
+                .filter(km -> km.getNgayBatDau() != null && km.getNgayBatDau().getYear() == namChon)
+                .filter(km -> thang == null || km.getNgayBatDau().getMonthValue() == thang)
+                .toList();
+        model.addAttribute("khuyenMais", khuyenMaiLoc);
+
         model.addAttribute("tongDoanhThuTrieu", thongKeService.getDoanhThuTrieuDong());
 
-        // Truyền Data Biểu đồ
-        model.addAttribute("nguonKhachHang", thongKeService.getNguonKhachHangData());
-        model.addAttribute("topCoupons", thongKeService.getTopMaKhuyenMaiDoanhThu());
+        // Nguồn khách hàng: tổng thật theo kỳ, tỷ lệ từng kênh là ước lượng
+        model.addAttribute("nguonKhachHang", thongKeService.getNguonKhachHangTheoThangNam(thang, namChon));
+
+        // Top mã khuyến mãi theo doanh thu THẬT trong kỳ
+        model.addAttribute("topCoupons", thongKeService.getTopMaKhuyenMaiTheoThangNam(thang, namChon));
 
         return "marketing/phan-tich";
     }
@@ -216,6 +288,7 @@ public class MarketingController {
            @RequestParam String tenChuongTrinh, @RequestParam String maCoupon,
             @RequestParam String loaiGiamGia, @RequestParam java.math.BigDecimal mucGiam,
             @RequestParam java.math.BigDecimal dieuKienToiThieu, @RequestParam Integer gioiHanLuot,
+            @RequestParam(required = false) java.math.BigDecimal soTienGiamToiDa,
             @RequestParam String ngayBatDau, @RequestParam String ngayKetThuc,
             RedirectAttributes redirectAttributes) {
             
@@ -226,6 +299,17 @@ public class MarketingController {
             redirectAttributes.addFlashAttribute("error", "Lỗi: Mã Coupon '" + maCoupon + "' đã tồn tại!");
             return "redirect:/marketing/khuyen-mai";
         } 
+                // Kiểm tra Giảm tối đa: không âm và không vượt quá đơn hàng tối thiểu
+        if (soTienGiamToiDa != null) {
+            if (soTienGiamToiDa.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm tối đa không được là số âm!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+            if (dieuKienToiThieu != null && soTienGiamToiDa.compareTo(dieuKienToiThieu) > 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm tối đa không được vượt quá đơn hàng tối thiểu!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+        }
 
         // 2. Kiểm tra ràng buộc Mức giảm (Bao quát cả % và tiền mặt)
         if ("PhanTram".equals(loaiGiamGia)) {
@@ -274,6 +358,7 @@ public class MarketingController {
         ct.setLoaiGiam(loaiGiamGia);
         ct.setGiaTriGiam(mucGiam);
         ct.setDieuKienToiThieu(dieuKienToiThieu);
+        ct.setSoTienGiamToiDa(soTienGiamToiDa);
         
         try {
             java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -352,6 +437,7 @@ public class MarketingController {
             @RequestParam Integer id, 
             @RequestParam String tenChuongTrinh, @RequestParam String maCoupon,
             @RequestParam String loaiGiamGia, @RequestParam java.math.BigDecimal mucGiam,
+            @RequestParam(required = false) java.math.BigDecimal soTienGiamToiDa,
             @RequestParam java.math.BigDecimal dieuKienToiThieu, @RequestParam Integer gioiHanLuot,
             @RequestParam String ngayBatDau, @RequestParam String ngayKetThuc,
             RedirectAttributes redirectAttributes) {
@@ -363,7 +449,17 @@ public class MarketingController {
             redirectAttributes.addFlashAttribute("error", "Lỗi: Tên chương trình không được để trống!");
             return "redirect:/marketing/khuyen-mai";
         }
-
+        // Kiểm tra Giảm tối đa: không âm và không vượt quá đơn hàng tối thiểu
+        if (soTienGiamToiDa != null) {
+            if (soTienGiamToiDa.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm tối đa không được là số âm!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+            if (dieuKienToiThieu != null && soTienGiamToiDa.compareTo(dieuKienToiThieu) > 0) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Số tiền giảm tối đa không được vượt quá đơn hàng tối thiểu!");
+                return "redirect:/marketing/khuyen-mai";
+            }
+        }
         // 2. Kiểm tra Mã Coupon (Bắt buộc chỉ chứa chữ và số, KHÔNG dấu cách, KHÔNG ký tự đặc biệt)
         String maKhuyenMaiClean = maCoupon.trim();
         if (maKhuyenMaiClean.isEmpty()) {
@@ -417,6 +513,7 @@ public class MarketingController {
                 ct.setLoaiGiam(loaiGiamGia);
                 ct.setGiaTriGiam(mucGiam);
                 ct.setDieuKienToiThieu(dieuKienToiThieu);
+                ct.setSoTienGiamToiDa(soTienGiamToiDa);
 
                 java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 java.time.LocalDate start = java.time.LocalDate.parse(ngayBatDau, formatter);

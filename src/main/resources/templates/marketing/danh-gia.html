@@ -108,7 +108,7 @@
                       th:text="${dg.khachHang.soDienThoai} + ' · Khách hàng'">SĐT</div>
                   </td>
                   <td
-                    th:text="${dg.donDat != null and dg.donDat.dichVu != null ? dg.donDat.dichVu.tenDichVu : 'Dịch vụ'}">
+                    th:text="${dg.donDat != null and dg.donDat.chiTietList != null and !dg.donDat.chiTietList.isEmpty() ? dg.donDat.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ'}">
                     Dọn dẹp</td>
                   <td>
                     <!-- Vẽ số sao tương ứng với điểm -->

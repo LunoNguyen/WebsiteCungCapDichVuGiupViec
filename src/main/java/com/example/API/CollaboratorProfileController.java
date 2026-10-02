@@ -1,0 +1,73 @@
+package com.example.API;
+
+import com.example.Model.CongTacVien;
+import com.example.Service.CollaboratorApiService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/v1/collaborators")
+public class CollaboratorProfileController {
+
+    @Autowired
+    private CollaboratorApiService collaboratorApiService;
+
+    /** Lấy danh sách đơn hàng */
+    @GetMapping("/assignments")
+    public ResponseEntity<?> getAssignments(@RequestParam Integer congTacVienId, @RequestParam(required = false) String trangThai) {
+        return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.getAssignments(congTacVienId, trangThai)));
+    }
+
+    /** Lấy lịch làm việc */
+    @GetMapping("/schedules")
+    public ResponseEntity<?> getSchedules(@RequestParam Integer congTacVienId) {
+        return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.getSchedules(congTacVienId, null, null, null)));
+    }
+
+    /** Nhận đơn */
+    @PutMapping("/assignments/{id}/accept")
+    public ResponseEntity<?> acceptAssignment(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.acceptAssignment(id)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** Từ chối đơn (Hàm này bạn đang thiếu nè) */
+    @PutMapping("/assignments/{id}/reject")
+    public ResponseEntity<?> rejectAssignment(@PathVariable Integer id) {
+        try {
+            // Truyền Object rỗng thay vì null để tránh lỗi server
+            return ResponseEntity.ok(Map.of("success", true, "data", 
+                collaboratorApiService.rejectAssignment(id, new com.example.DTO.request.AssignmentActionRequest())));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** Hoàn thành đơn */
+    @PutMapping("/assignments/{id}/complete")
+    public ResponseEntity<?> completeAssignment(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", 
+                collaboratorApiService.completeAssignment(id, new com.example.DTO.request.AssignmentActionRequest())));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** Lấy thông tin hồ sơ */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProfile(@PathVariable Integer id) {
+        return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.getCollaboratorProfile(id)));
+    }
+
+    /** Cập nhật trạng thái Profile */
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateStatus(@PathVariable Integer id, @RequestBody Map<String, String> req) {
+        return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.updateCollaboratorStatus(id, req.get("trangThai"))));
+    }
+}
