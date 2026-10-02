@@ -4,6 +4,8 @@
       Máy chủ trả về objectName (object key) – giá trị này được gửi kèm hồ sơ.
    2. Gửi hồ sơ                                   → POST /v1/collaborators/register
    3. Tra cứu kết quả                             → GET  /v1/collaborators/application-status
+   Tỉnh/thành và phường/xã lấy từ https://provinces.open-api.vn/api/v2/ (đơn vị hành chính 2 cấp).
+   Máy chủ dựa vào tỉnh/thành + phường/xã để xếp cộng tác viên vào khu vực hoạt động.
    ========================================================== */
 (function () {
   'use strict';
@@ -82,6 +84,80 @@
     });
   });
 
+  // ---- Địa chỉ: tỉnh/thành → phường/xã ----
+  var DIA_CHI_API = 'https://provinces.open-api.vn/api/v2';
+  var tinhSelect = document.getElementById('tinhThanh');
+  var phuongSelect = document.getElementById('phuongXa');
+  var diaChiLoi = document.getElementById('diaChiLoi');
+
+  function doDuLieu(select, items, placeholder) {
+    select.innerHTML = '';
+    var first = document.createElement('option');
+    first.value = '';
+    first.textContent = placeholder;
+    select.appendChild(first);
+    items.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'vi'); }).forEach(function (item) {
+      var opt = document.createElement('option');
+      opt.value = item.name;            // tên gửi lên máy chủ
+      opt.setAttribute('data-code', item.code);
+      opt.textContent = item.name;
+      select.appendChild(opt);
+    });
+  }
+
+  function layJson(url) {
+    return fetch(url).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    });
+  }
+
+  function taiTinhThanh() {
+    diaChiLoi.classList.remove('is-shown');
+    tinhSelect.disabled = true;
+    tinhSelect.innerHTML = '<option value="">Đang tải danh sách…</option>';
+    layJson(DIA_CHI_API + '/p/')
+      .then(function (list) {
+        doDuLieu(tinhSelect, list || [], 'Chọn tỉnh, thành phố');
+        tinhSelect.disabled = false;
+      })
+      .catch(function () {
+        tinhSelect.innerHTML = '<option value="">Chưa tải được</option>';
+        diaChiLoi.classList.add('is-shown');
+      });
+  }
+
+  function taiPhuongXa() {
+    var chon = tinhSelect.options[tinhSelect.selectedIndex];
+    var code = chon ? chon.getAttribute('data-code') : null;
+    phuongSelect.disabled = true;
+    if (!code) {
+      phuongSelect.innerHTML = '<option value="">Chọn tỉnh, thành phố trước</option>';
+      return;
+    }
+    phuongSelect.innerHTML = '<option value="">Đang tải danh sách…</option>';
+    layJson(DIA_CHI_API + '/p/' + encodeURIComponent(code) + '?depth=2')
+      .then(function (tinh) {
+        // Đề phòng thao tác đổi tỉnh liên tiếp: chỉ nhận kết quả của tỉnh đang chọn
+        var hienTai = tinhSelect.options[tinhSelect.selectedIndex];
+        if (!hienTai || hienTai.getAttribute('data-code') !== code) return;
+        doDuLieu(phuongSelect, (tinh && tinh.wards) || [], 'Chọn phường, xã');
+        phuongSelect.disabled = false;
+      })
+      .catch(function () {
+        phuongSelect.innerHTML = '<option value="">Chưa tải được</option>';
+        diaChiLoi.classList.add('is-shown');
+      });
+  }
+
+  if (tinhSelect && phuongSelect) {
+    tinhSelect.addEventListener('change', taiPhuongXa);
+    document.getElementById('diaChiTaiLai').addEventListener('click', function () {
+      if (tinhSelect.value) { diaChiLoi.classList.remove('is-shown'); taiPhuongXa(); } else { taiTinhThanh(); }
+    });
+    taiTinhThanh();
+  }
+
   // ---- Kiểm tra dữ liệu ----
   function mark(field, bad) {
     if (field) field.classList.toggle('has-error', bad);
@@ -97,9 +173,12 @@
 
   function validate() {
     var bad = false;
-    ['hoTen', 'soDienThoai', 'email', 'noiCuTru', 'matKhau'].forEach(function (id) {
+    ['hoTen', 'soDienThoai', 'email', 'diaChiChiTiet', 'matKhau'].forEach(function (id) {
       var input = document.getElementById(id);
       if (mark(input.closest('.field'), !input.checkValidity())) bad = true;
+    });
+    [tinhSelect, phuongSelect].forEach(function (select) {
+      if (mark(select.closest('.field'), !select.value)) bad = true;
     });
     var ngaySinh = document.getElementById('ngaySinh');
     if (mark(ngaySinh.closest('.field'), !du18Tuoi(ngaySinh.value))) bad = true;
@@ -111,6 +190,14 @@
     if (mark(document.getElementById('hoSoField'), !duHoSo)) bad = true;
     return !bad;
   }
+
+  // Sửa xong mục nào thì bỏ đánh dấu lỗi của mục đó ngay
+  ['input', 'change'].forEach(function (evt) {
+    form.addEventListener(evt, function (e) {
+      var field = e.target.closest ? e.target.closest('.field') : null;
+      if (field) field.classList.remove('has-error');
+    });
+  });
 
   function checkedValues(name) {
     return Array.prototype.map.call(form.querySelectorAll('input[name="' + name + '"]:checked'),
@@ -163,9 +250,11 @@
           matKhau: document.getElementById('matKhau').value,
           ngaySinh: document.getElementById('ngaySinh').value,
           gioiTinh: document.getElementById('gioiTinh').value,
-          noiCuTru: document.getElementById('noiCuTru').value.trim(),
+          // Địa chỉ đầy đủ để hiển thị; tỉnh/thành + phường/xã để máy chủ xếp khu vực
+          noiCuTru: [document.getElementById('diaChiChiTiet').value.trim(), phuongSelect.value, tinhSelect.value].join(', '),
+          tinhThanh: tinhSelect.value,
+          phuongXa: phuongSelect.value,
           danhSachDichVuId: dichVuIds,
-          danhSachKhuVucId: checkedValues('khuVuc'),
           danhSachHoSo: hoSo,
           danhSachChungChi: chungChi
         };
@@ -183,6 +272,7 @@
         }
         var d = r.body.data || {};
         form.reset();
+        taiPhuongXa();
         uploaded = {};
         document.querySelectorAll('[data-upload]').forEach(function (zone) {
           zone.classList.remove('is-busy', 'is-done', 'is-failed');
@@ -191,6 +281,7 @@
         });
         show(okBox, 'Đã gửi hồ sơ' + (d.maCongTacVien ? ' ' + d.maCongTacVien : '') +
           '. Thời gian xét duyệt dự kiến ' + (d.thoiGianXetDuyetDuKien || '1-3 ngày làm việc') +
+          (d.khuVuc ? '. Khu vực nhận việc: ' + d.khuVuc : '') +
           '. Bạn có thể tra cứu kết quả bằng số điện thoại.');
       })
       .catch(function (err) { show(errorBox, err.message); })

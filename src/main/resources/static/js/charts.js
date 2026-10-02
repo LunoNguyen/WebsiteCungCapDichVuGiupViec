@@ -5,19 +5,86 @@
 
 'use strict';
 
+// Màu lấy từ token trong main.css: đổi theme là biểu đồ đổi theo khi tải lại.
+function cssVar(name, fallback) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+function withAlpha(color, alpha) {
+  const m = /^#([0-9a-f]{6})$/i.exec(color);
+  if (!m) return color;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+const ChartTheme = {
+  get primary() { return cssVar('--primary', '#08778C'); },
+  get muted() { return cssVar('--muted', '#707070'); },
+  get foreground() { return cssVar('--foreground', '#262626'); },
+  get line() { return cssVar('--line', '#F0F0F2'); },
+  get surface() { return cssVar('--surface-overlay', '#FFFFFF'); }
+};
+
 // Chart.js global defaults
 if (typeof Chart !== 'undefined') {
-  Chart.defaults.color = '#A8C4C8';
-  Chart.defaults.borderColor = 'rgba(13,155,163,0.10)';
+  Chart.defaults.color = ChartTheme.muted;
+  Chart.defaults.borderColor = ChartTheme.line;
   Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 12;
   Chart.defaults.plugins.legend.labels.usePointStyle = true;
   Chart.defaults.plugins.legend.labels.pointStyleWidth = 8;
-  Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(6, 13, 18, 0.96)';
-  Chart.defaults.plugins.tooltip.borderColor = 'rgba(13,155,163,0.35)';
+  Chart.defaults.plugins.tooltip.backgroundColor = ChartTheme.surface;
+  Chart.defaults.plugins.tooltip.titleColor = ChartTheme.foreground;
+  Chart.defaults.plugins.tooltip.bodyColor = ChartTheme.foreground;
+  Chart.defaults.plugins.tooltip.borderColor = ChartTheme.line;
   Chart.defaults.plugins.tooltip.borderWidth = 1;
-  Chart.defaults.plugins.tooltip.padding = 12;
-  Chart.defaults.plugins.tooltip.titleFont = { size: 13, weight: '700' };
+  Chart.defaults.plugins.tooltip.padding = 10;
+  Chart.defaults.plugins.tooltip.cornerRadius = 10;
+  Chart.defaults.plugins.tooltip.titleFont = { size: 12, weight: '600' };
   Chart.defaults.plugins.tooltip.bodyFont = { size: 12 };
+}
+
+// Ghi số lên đầu cột, để đọc cả năm một lượt không phải rê chuột
+const barValueLabels = {
+  id: 'barValueLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    const values = chart.data.datasets[0].data;
+    ctx.save();
+    ctx.font = "500 12px 'Inter', sans-serif";
+    ctx.fillStyle = ChartTheme.foreground;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    meta.data.forEach((bar, i) => {
+      const v = values[i];
+      if (v === null || v === undefined) return;
+      ctx.fillText(Number(v).toLocaleString('vi-VN'), bar.x, bar.y - 6);
+    });
+    ctx.restore();
+  }
+};
+
+// Danh sách thanh bằng HTML (trạng thái đơn, dịch vụ phổ biến): data là { nhãn: số }
+function renderBarList(elId, data, emptyText) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const rows = Object.entries(data || {}).map(([k, v]) => [k, Number(v) || 0]).filter(r => r[1] > 0).sort((a, b) => b[1] - a[1]);
+  const total = rows.reduce((sum, r) => sum + r[1], 0);
+  if (!rows.length) {
+    el.innerHTML = `<li class="bar-list-empty">${emptyText || 'Chưa có dữ liệu'}</li>`;
+    return;
+  }
+  const max = rows[0][1];
+  el.innerHTML = rows.map(([label, v]) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<div class="bar-list-row"><span class="bar-list-label"></span><span class="bar-list-value"></span><span class="bar-list-pct"></span></div><div class="bar-list-track"><div class="bar-list-fill"></div></div>`;
+    li.querySelector('.bar-list-label').textContent = label;
+    li.querySelector('.bar-list-label').title = label;
+    li.querySelector('.bar-list-value').textContent = v.toLocaleString('vi-VN');
+    li.querySelector('.bar-list-pct').textContent = Math.round((v / total) * 100) + '%';
+    li.querySelector('.bar-list-fill').style.width = Math.max((v / max) * 100, 2) + '%';
+    return li.outerHTML;
+  }).join('');
 }
 
 // ============================================================
@@ -60,20 +127,22 @@ function initRevenueChart(canvasId, data = null) {
       datasets: [{
         label: 'Doanh thu (triệu đồng)',
         data: values,
-        backgroundColor: 'rgba(13,155,163,0.85)',
-        hoverBackgroundColor: '#0D9BA3',
-        borderRadius: 8,
-        borderSkipped: false,
-        maxBarThickness: 42
+        backgroundColor: ChartTheme.primary,
+        hoverBackgroundColor: ChartTheme.primary,
+        borderRadius: { topLeft: 6, topRight: 6 },
+        borderSkipped: 'bottom',
+        maxBarThickness: 32
       }]
     },
+    plugins: [barValueLabels],
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 22 } },
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${ctx.parsed.y.toLocaleString('vi-VN')} triệu đồng` } } },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { font: { size: 11 }, callback: (val) => val.toLocaleString('vi-VN') + ' triệu' } }
+        x: { grid: { display: false }, border: { color: ChartTheme.line }, ticks: { font: { size: 12 } } },
+        y: { display: false, beginAtZero: true, grace: '8%' }
       }
     }
   });
@@ -103,15 +172,10 @@ function initOrdersDonut(canvasId) {
       datasets: [{
         label: 'Số đơn',
         data: values,
-        backgroundColor: [
-          'rgba(56,212,138,0.85)',
-          'rgba(13,155,163,0.85)',
-          'rgba(245,158,11,0.85)',
-          'rgba(20,191,201,0.85)',
-          'rgba(239,68,68,0.85)'
-        ],
-        borderRadius: 8,
-        borderSkipped: false
+        backgroundColor: ChartTheme.primary,
+        borderRadius: 6,
+        borderSkipped: false,
+        maxBarThickness: 32
       }]
     },
     options: {
@@ -125,7 +189,7 @@ function initOrdersDonut(canvasId) {
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { font: { size: 11 }, stepSize: 1 } }
+        y: { grid: { color: ChartTheme.line }, ticks: { font: { size: 11 }, stepSize: 1 } }
       }
     }
   });
@@ -142,14 +206,6 @@ function initServicesBarChart(canvasId) {
   if (!canvas) return null;
   const ctx = canvas.getContext('2d');
 
-  const gradients = [
-    createGradient(ctx, 'rgba(13,155,163,0.9)', 'rgba(13,155,163,0.5)'),
-    createGradient(ctx, 'rgba(21,133,192,0.9)', 'rgba(21,133,192,0.5)'),
-    createGradient(ctx, 'rgba(56,212,138,0.9)', 'rgba(56,212,138,0.5)'),
-    createGradient(ctx, 'rgba(245,158,11,0.9)', 'rgba(245,158,11,0.5)'),
-    createGradient(ctx, 'rgba(93,217,224,0.9)', 'rgba(93,217,224,0.5)'),
-    createGradient(ctx, 'rgba(10,123,130,0.9)', 'rgba(10,123,130,0.5)'),
-  ];
 
   let chartLabels = ['Dọn dẹp', 'Giặt ủi', 'Nấu ăn', 'Khác'];
   let chartValues = [0, 0, 0, 0]; 
@@ -166,9 +222,10 @@ function initServicesBarChart(canvasId) {
       datasets: [{
         label: 'Số đơn',
         data: chartValues,
-        backgroundColor: gradients,
-        borderRadius: 8,
-        borderSkipped: false
+        backgroundColor: ChartTheme.primary,
+        borderRadius: 6,
+        borderSkipped: false,
+        maxBarThickness: 32
       }]
     },
     options: {
@@ -177,7 +234,7 @@ function initServicesBarChart(canvasId) {
       plugins: { legend: { display: false } },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { font: { size: 11 }, stepSize: 1 } }
+        y: { grid: { color: ChartTheme.line }, ticks: { font: { size: 11 }, stepSize: 1 } }
       }
     }
   });
@@ -217,7 +274,7 @@ function initRatingChart(canvasId) {
       labels: ['5 ★', '4 ★', '3 ★', '2 ★', '1 ★'],
       datasets: [{
         data: chartValues,
-        backgroundColor: ['#43E97B', '#6C63FF', '#FFC107', '#FF6584', '#FF4757'],
+        backgroundColor: ChartTheme.primary,
         borderRadius: 6,
         borderSkipped: false,
       }]
@@ -228,7 +285,7 @@ function initRatingChart(canvasId) {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 11 }, stepSize: 1 } },
+        x: { grid: { color: ChartTheme.line }, ticks: { font: { size: 11 }, stepSize: 1 } },
         y: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' } } }
       }
     }
@@ -266,13 +323,7 @@ function initComplaintChart(canvasId) {
       datasets: [{
         label: 'Số khiếu nại',
         data: values,
-        backgroundColor: [
-          'rgba(56,212,138,0.85)', // Đã giải quyết (Xanh lá)
-          'rgba(13,155,163,0.85)', // Đang xử lý (Xanh ngọc)
-          'rgba(245,158,11,0.85)', // Mới (Cam vàng)
-          'rgba(20,191,201,0.85)', // Chờ xác minh (Xanh nhạt)
-          'rgba(239,68,68,0.85)'   // Leo thang (Đỏ)
-        ],
+        backgroundColor: ChartTheme.primary,
         borderRadius: 6,
         borderSkipped: false
       }]
@@ -289,7 +340,7 @@ function initComplaintChart(canvasId) {
       },
       scales: {
         x: {
-          grid: { color: 'rgba(13,155,163,0.06)' },
+          grid: { color: ChartTheme.line },
           ticks: { font: { size: 11 }, stepSize: 1 }
         },
         y: {
@@ -315,10 +366,10 @@ function initCtvRadarChart(canvasId) {
       datasets: [{
         label: 'Điểm TB',
         data: [4.5, 4.8, 4.2, 4.6, 4.4],
-        borderColor: '#6C63FF',
-        backgroundColor: 'rgba(108,99,255,0.15)',
+        borderColor: ChartTheme.primary,
+        backgroundColor: withAlpha(ChartTheme.primary, 0.12),
         borderWidth: 2,
-        pointBackgroundColor: '#6C63FF',
+        pointBackgroundColor: ChartTheme.primary,
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
         pointRadius: 4
@@ -331,8 +382,8 @@ function initCtvRadarChart(canvasId) {
         r: {
           min: 0, max: 5,
           ticks: { stepSize: 1, font: { size: 10 } },
-          grid: { color: 'rgba(255,255,255,0.06)' },
-          angleLines: { color: 'rgba(255,255,255,0.06)' },
+          grid: { color: ChartTheme.line },
+          angleLines: { color: ChartTheme.line },
           pointLabels: { font: { size: 12 } }
         }
       },
@@ -376,14 +427,14 @@ function initComparisonChart(canvasId) {
         {
           label: 'Năm nay',
           data: dataNamNay,
-          backgroundColor: 'rgba(13,155,163,0.85)',
+          backgroundColor: ChartTheme.primary,
           borderRadius: 6,
           borderSkipped: false
         },
         {
           label: 'Năm trước',
           data: dataNamTruoc,
-          backgroundColor: 'rgba(21,133,192,0.45)',
+          backgroundColor: withAlpha(cssVar('--tone-indigo', '#4F39F6'), 0.35),
           borderRadius: 6,
           borderSkipped: false
         }
@@ -398,7 +449,7 @@ function initComparisonChart(canvasId) {
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
         y: {
-          grid: { color: 'rgba(13,155,163,0.06)' },
+          grid: { color: ChartTheme.line },
           ticks: { callback: v => v + ' tr', font: { size: 11 } }
         }
       }
@@ -409,11 +460,11 @@ function initComparisonChart(canvasId) {
 // ============================================================
 // MINI SPARKLINE
 // ============================================================
-function initSparkline(canvasId, data, color = '#6C63FF') {
+function initSparkline(canvasId, data, color = ChartTheme.primary) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return null;
   const ctx = canvas.getContext('2d');
-  const gradient = createGradient(ctx, color + '60', color + '05');
+  const gradient = withAlpha(color, 0.12);
 
   return new Chart(ctx, {
     type: 'line',
@@ -465,11 +516,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Sparklines (mini charts in stat cards)
   const sparklines = [
-    { id: 'spark1', data: [10,15,12,18,22,20,28,25,32,30,38,35], color: '#0D9BA3' },
-    { id: 'spark2', data: [8,12,10,15,18,14,20,18,24,22,28,25], color: '#38D48A' },
-    { id: 'spark3', data: [5,8,7,10,9,12,11,14,13,16,15,18], color: '#1585C0' },
-    { id: 'spark4', data: [3,5,4,6,5,8,7,9,8,11,10,12], color: '#F59E0B' },
-    { id: 'spark5', data: [2,4,3,5,4,6,5,7,6,8,7,9], color: '#EF4444' },
+    { id: 'spark1', data: [10,15,12,18,22,20,28,25,32,30,38,35] },
+    { id: 'spark2', data: [8,12,10,15,18,14,20,18,24,22,28,25] },
+    { id: 'spark3', data: [5,8,7,10,9,12,11,14,13,16,15,18] },
+    { id: 'spark4', data: [3,5,4,6,5,8,7,9,8,11,10,12] },
+    { id: 'spark5', data: [2,4,3,5,4,6,5,7,6,8,7,9] },
   ];
-  sparklines.forEach(s => initSparkline(s.id, s.data, s.color));
+  sparklines.forEach(s => initSparkline(s.id, s.data));
+
+  // Danh sách thanh trên trang tổng quan Giám đốc
+  if (window.chartData) {
+    renderBarList('orderStatusList', window.chartData.orderDistribution, 'Chưa có đơn nào trong kỳ này');
+    renderBarList('topServiceList', window.chartData.topDichVu, 'Chưa có đơn nào trong kỳ này');
+  }
 });

@@ -9,12 +9,7 @@
     <header th:replace="~{layout/admin-layout :: adminTopbar('Giám đốc', '/giam-doc/dashboard', 'Quản lý Thông báo')}"></header>
 
     <main class="page-content">
-      <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Quản lý Thông báo</h1>
-          <p class="page-subtitle">Tạo, gửi thông báo nội bộ & duyệt thông báo từ Marketing · UC-GD04</p>
-        </div>
-      </div>
+      
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
         <!-- Left: Pending Approval -->
@@ -41,7 +36,7 @@
                   Đề xuất bởi: <span th:text="${tb.nguoiGui}">Người gửi</span> · <span th:text="${#temporals.format(tb.thoiGianGui, 'dd/MM/yyyy')}">Ngày</span>
                 </div>
               </div>
-              <div style="padding:0.75rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.5rem">
+              <div style="padding:0.75rem;background:var(--primary-soft);border-top:1px solid var(--border-light);display:flex;gap:0.5rem">
                 <!-- Nút Duyệt -->
                 <form th:action="@{/giam-doc/thong-bao/duyet}" method="post" style="margin:0;">
                   <input type="hidden" name="id" th:value="${tb.id}" />

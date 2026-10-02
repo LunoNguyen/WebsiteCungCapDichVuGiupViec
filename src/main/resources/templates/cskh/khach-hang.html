@@ -11,21 +11,18 @@
     <main class="page-content">
 
       <!-- Notifications -->
-      <div th:if="${successMessage}" class="alert alert-success" style="margin-bottom:1.25rem;padding:0.875rem 1.25rem;border-radius:var(--radius-md);background:rgba(67,233,123,0.15);color:#0f8a42;border:1px solid rgba(67,233,123,0.35);display:flex;align-items:center;gap:0.75rem;font-weight:600">
+      <div th:if="${successMessage}" class="alert alert-success" style="margin-bottom:1.25rem;padding:0.875rem 1.25rem;border-radius:var(--radius-md);background:var(--success-bg);color:#0f8a42;border:1px solid color-mix(in srgb, var(--success) 25%, transparent);display:flex;align-items:center;gap:0.75rem;font-weight:600">
         <i class="ti ti-circle-check" style="font-size:1.3rem"></i>
         <span th:text="${successMessage}">Thao tác thành công!</span>
       </div>
 
-      <div th:if="${errorMessage}" class="alert alert-danger" style="margin-bottom:1.25rem;padding:0.875rem 1.25rem;border-radius:var(--radius-md);background:rgba(255,107,107,0.15);color:#c92a2a;border:1px solid rgba(255,107,107,0.35);display:flex;align-items:center;gap:0.75rem;font-weight:600">
+      <div th:if="${errorMessage}" class="alert alert-danger" style="margin-bottom:1.25rem;padding:0.875rem 1.25rem;border-radius:var(--radius-md);background:var(--error-bg);color:#c92a2a;border:1px solid color-mix(in srgb, var(--error-text) 25%, transparent);display:flex;align-items:center;gap:0.75rem;font-weight:600">
         <i class="ti ti-alert-triangle" style="font-size:1.3rem"></i>
         <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
       </div>
 
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Hồ sơ Khách hàng</h1>
-          <p class="page-subtitle">Theo dõi lịch sử đơn hàng, địa chỉ, hạng thành viên và ghi chú chăm sóc</p>
-        </div>
+        
         <div class="page-actions">
           <button class="btn btn-primary btn-sm" data-modal-open="createCustomerModal" onclick="openCreateCustomerModal()"><i class="ti ti-user-plus"></i> Thêm khách hàng</button>
         </div>
@@ -34,25 +31,25 @@
       <!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
+          <div class="stat-icon"><i class="ti ti-users"></i></div>
           <div class="stat-value" th:text="${khachHangStats != null ? khachHangStats.tongKhachHang : 0}">0</div>
           <div class="stat-label">Tổng khách hàng</div>
           <div class="kpi-compare"><span class="arrow-up">Hệ thống thực tế</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">👑</div>
+          <div class="stat-icon"><i class="ti ti-crown"></i></div>
           <div class="stat-value" th:text="${khachHangStats != null ? khachHangStats.khachVipCount : 0}">0</div>
           <div class="stat-label">Khách hàng thân thiết</div>
           <div class="kpi-compare"><span class="arrow-up">Đặt nhiều đơn</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📦</div>
+          <div class="stat-icon"><i class="ti ti-package"></i></div>
           <div class="stat-value" th:text="${khachHangStats != null ? khachHangStats.khachCoDonHangCount : 0}">0</div>
           <div class="stat-label">Khách đã có đơn hàng</div>
           <div class="kpi-compare"><span class="arrow-up">Hoạt động</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
+          <div class="stat-icon"><i class="ti ti-star"></i></div>
           <div class="stat-value" th:text="${khachHangStats != null ? khachHangStats.diemDanhGiaTrungBinh + ' ★' : '5.0 ★'}">5.0 ★</div>
           <div class="stat-label">Đánh giá trung bình</div>
           <div class="kpi-compare"><span style="color:var(--accent)">Hài lòng cao</span></div>
@@ -170,7 +167,7 @@
       <h2 style="font-size:1.1rem;font-weight:700" id="detailName">Chi tiết Khách hàng</h2>
       <span style="font-size:0.8rem;color:var(--cskh-primary);font-weight:600" id="detailCode">--</span>
     </div>
-    <button class="modal-close" data-panel-close="customerDetailPanel">✕</button>
+    <button class="modal-close" data-panel-close="customerDetailPanel" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
   </div>
   <div class="detail-panel-body">
     <div class="info-row"><span class="info-label">Số điện thoại</span><span class="info-value" id="detailPhone" style="font-weight:600">--</span></div>
@@ -196,7 +193,7 @@
   <div class="modal" style="max-width:620px;max-height:90vh;overflow-y:auto">
     <div class="modal-header">
       <h2 class="modal-title"><i class="ti ti-user-plus" style="color:var(--cskh-primary)"></i> Thêm khách hàng mới</h2>
-      <button class="modal-close" data-modal-close="createCustomerModal">✕</button>
+      <button class="modal-close" data-modal-close="createCustomerModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
 
     <form id="createCustomerForm" method="POST" th:action="@{/cskh/khach-hang/them}" onsubmit="handleCustomerSubmit(event)">
@@ -276,7 +273,7 @@
         <input type="hidden" name="diaChiChiTiet" id="hiddenDiaChiChiTiet">
 
         <!-- Live Preview Box -->
-        <div id="addressPreviewBox" style="display:none;padding:0.875rem 1rem;background:rgba(67,233,123,0.08);border:1px dashed var(--success);border-radius:var(--radius-md)">
+        <div id="addressPreviewBox" style="display:none;padding:0.875rem 1rem;background:var(--success-bg);border:1px dashed var(--success);border-radius:var(--radius-md)">
           <div style="font-size:0.75rem;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:0.35rem">
             <i class="ti ti-circle-check"></i> Địa chỉ xác nhận:
           </div>
@@ -427,7 +424,7 @@
       box.style.display = 'block';
       text.textContent = full;
       if (phuongName && tinhName) {
-        area.textContent = `📍 Khu vực: ${phuongName}, ${tinhName}`;
+        area.textContent = `Khu vực: ${phuongName}, ${tinhName}`;
       } else {
         area.textContent = '';
       }

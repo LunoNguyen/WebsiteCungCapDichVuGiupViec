@@ -1,222 +1,157 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
-<head th:replace="~{layout/admin-layout :: adminHead('Quản lý Nhân viên – HCNS')}"></head>
+<head th:replace="~{layout/admin-layout :: adminHead('Nhân viên – HCNS')}"></head>
 
 <body>
   <div class="app-shell">
     <aside th:replace="~{layout/admin-layout :: adminSidebar('hcns', 'nhan-vien')}"></aside>
 
     <div class="main-area">
-      <header
-        th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Quản lý Nhân viên')}">
-      </header>
+      <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Nhân viên')}"></header>
 
       <main class="page-content">
-        <div class="page-header">
-          <div class="page-title-group">
-            <h1 class="page-title">Quản lý Nhân viên</h1>
-            <p class="page-subtitle">Danh sách &amp; thông tin nhân viên nội bộ</p>
+
+        <!-- Thông báo kết quả thao tác -->
+        <div class="alert alert-danger" th:if="${errorMessage}" role="alert"><i class="ti ti-alert-circle"></i><span th:text="${errorMessage}"></span></div>
+        <div class="alert alert-success" th:if="${successMessage}" role="status"><i class="ti ti-circle-check"></i><span th:text="${successMessage}"></span></div>
+
+        <!-- 1. Tab đếm theo trạng thái (vừa là số liệu, vừa là bộ lọc) + nút chính -->
+        <div class="toolbar">
+          <div class="tabs" role="tablist" aria-label="Lọc theo trạng thái" id="staffStatusTabs">
+            <button type="button" class="tab-btn active" role="tab" aria-selected="true" data-status="">Tất cả
+              <span class="tab-count" th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</span></button>
+            <button type="button" class="tab-btn" role="tab" aria-selected="false" data-status="DangLamViec">Đang làm việc
+              <span class="tab-count" th:text="${nhanVienStats != null ? nhanVienStats.dangLamViecCount : 0}">0</span></button>
+            <button type="button" class="tab-btn" role="tab" aria-selected="false" data-status="TamNghi">Tạm nghỉ
+              <span class="tab-count" th:text="${nhanVienStats != null ? nhanVienStats.tamNghiCount : 0}">0</span></button>
+            <button type="button" class="tab-btn" role="tab" aria-selected="false" data-status="DaNghi">Nghỉ việc
+              <span class="tab-count" th:text="${nhanVienStats != null ? nhanVienStats.nghiViecCount : 0}">0</span></button>
           </div>
-          <div class="page-actions">
-            <button class="btn btn-primary btn-sm" data-modal-open="addStaffModal"><i class="ti ti-plus"></i> Thêm nhân
-              viên</button>
+          <div class="toolbar-end">
+            <button type="button" class="btn btn-primary" data-modal-open="addStaffModal"><i class="ti ti-plus"></i>Thêm nhân viên</button>
           </div>
         </div>
 
-        <!-- Thông báo hệ thống -->
-        <div th:if="${errorMessage}"
-          style="padding:1rem;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600"
-          th:text="${errorMessage}"></div>
-        <div th:if="${successMessage}"
-          style="padding:1rem;background:rgba(67,233,123,0.12);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600"
-          th:text="${successMessage}"></div>
-
-        <!-- Quick Stats -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
-          <div class="quick-stat">
-            <div class="quick-stat-icon" style="background:rgba(13,155,163,0.15)"><i class="ti ti-users"
-                style="color:var(--primary)"></i></div>
-            <div>
-              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</div>
-              <div class="quick-stat-lbl">Tổng nhân viên</div>
-            </div>
-          </div>
-          <div class="quick-stat">
-            <div class="quick-stat-icon" style="background:rgba(56,212,138,0.15)"><i class="ti ti-user-check"
-                style="color:var(--accent)"></i></div>
-            <div>
-              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.dangLamViecCount : 0}">0
-              </div>
-              <div class="quick-stat-lbl">Đang làm việc</div>
-            </div>
-          </div>
-          <div class="quick-stat">
-            <div class="quick-stat-icon" style="background:rgba(245,158,11,0.15)"><i class="ti ti-clock-pause"
-                style="color:var(--warning)"></i></div>
-            <div>
-              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tamNghiCount : 0}">0</div>
-              <div class="quick-stat-lbl">Tạm nghỉ</div>
-            </div>
-          </div>
-          <div class="quick-stat">
-            <div class="quick-stat-icon" style="background:rgba(239,68,68,0.15)"><i class="ti ti-user-x"
-                style="color:var(--danger)"></i></div>
-            <div>
-              <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.nghiViecCount : 0}">0</div>
-              <div class="quick-stat-lbl">Nghỉ việc</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bộ lọc và tìm kiếm -->
+        <!-- 2. Tìm + lọc phòng ban -->
         <div class="filter-bar">
-          <div class="search-box" style="flex:1">
+          <div class="search-box" style="flex:0 1 24rem">
             <i class="ti ti-search search-icon"></i>
-            <input type="text" class="form-control" id="searchStaffInput" placeholder="Tìm tên, email, số điện thoại..."
-              oninput="filterStaffTable()">
+            <input type="search" class="form-control" id="searchStaffInput" placeholder="Tìm tên, email, số điện thoại"
+              aria-label="Tìm nhân viên" oninput="filterStaffTable()">
           </div>
-          <select class="filter-select" id="filterDeptSelect" onchange="filterStaffTable()">
-            <option value="">Tất cả phòng ban</option>
-            <option th:each="pb : ${phongBans}" th:value="${pb.tenPhongBan}" th:text="${pb.tenPhongBan}">Phòng ban
-            </option>
+          <select class="filter-select" id="filterDeptSelect" aria-label="Phòng ban" onchange="filterStaffTable()" style="width:13rem">
+            <option value="">Mọi phòng ban</option>
+            <option th:each="pb : ${phongBans}" th:value="${pb.tenPhongBan}" th:text="${pb.tenPhongBan}">Phòng ban</option>
           </select>
-          <select class="filter-select" id="filterStatusSelect" onchange="filterStaffTable()">
-            <option value="">Tất cả trạng thái</option>
-            <option value="DangLamViec">Đang làm việc</option>
-            <option value="TamNghi">Tạm nghỉ</option>
-            <option value="DaNghi">Nghỉ việc</option>
-          </select>
+          <input type="hidden" id="filterStatusSelect" value="">
         </div>
 
-        <div class="card" style="padding:0">
-          <div class="card-header"
-            style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
-            <div class="card-title">Danh sách nhân viên</div>
-            <span style="font-size:0.8rem;color:var(--text-muted)">Tổng số <span
-                th:text="${totalItems != null ? totalItems : 0}">0</span> nhân viên</span>
-          </div>
-          <div class="table-container" style="border:none;border-radius:0">
-            <table class="table" id="staffTable">
+        <!-- 3. Bảng nhân viên -->
+        <section class="card card-flush">
+          <div class="table-container" style="border:0;border-radius:0">
+            <table class="table table-stack" id="staffTable">
               <thead>
                 <tr>
-                  <th>Mã NV</th>
                   <th>Nhân viên</th>
-                  <th>Phòng ban</th>
-                  <th>Chức vụ</th>
-                  <th>Số điện thoại</th>
-                  <th>Ngày vào làm</th>
+                  <th class="hide-sm">Mã NV</th>
+                  <th class="hide-sm">Phòng ban</th>
+                  <th class="hide-md">Số điện thoại</th>
+                  <th class="hide-md">Ngày vào làm</th>
                   <th>Trạng thái</th>
-                  <th style="text-align:right">Thao tác</th>
+                  <th style="width:1%"><span class="sr-only">Thao tác</span></th>
                 </tr>
               </thead>
               <tbody>
                 <tr th:each="nv : ${nhanViens}"
                   th:data-dept="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : ''}"
-                  th:data-status="${nv.trangThai}">
-                  <td style="font-weight:700;color:var(--primary-light)" th:text="${nv.maNhanVien}">NV01</td>
+                  th:data-status="${nv.trangThai == 'NghiViec' ? 'DaNghi' : nv.trangThai}">
                   <td>
                     <div class="user-cell">
-                      <div class="avatar avatar-sm" th:text="${#strings.substring(nv.hoTen, 0, 1)}">N</div>
+                      <span class="avatar avatar-sm" th:attr="data-name=${nv.hoTen}" th:text="${#strings.substring(nv.hoTen, 0, 1)}">N</span>
                       <div class="user-cell-info">
-                        <div class="name" th:text="${nv.hoTen}">Họ tên</div>
-                        <div class="sub" th:text="${nv.email}">email@neatify.vn</div>
+                        <div class="name" th:text="${nv.hoTen}" th:title="${nv.hoTen}">Họ tên</div>
+                        <div class="sub" th:text="${nv.email != null and !#strings.isEmpty(nv.email) ? nv.email : '—'}">email@neatify.vn</div>
                       </div>
                     </div>
                   </td>
-                  <td
-                    th:text="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : '--'}">
-                    Phòng ban</td>
-                  <td th:text="${nv.chucVu != null ? nv.chucVu.tenChucVu : '--'}">Chức vụ</td>
-                  <td th:text="${nv.soDienThoai}">0900000000</td>
-                  <td th:text="${nv.ngayVaoLam != null ? #temporals.format(nv.ngayVaoLam, 'dd/MM/yyyy') : '--'}">
-                    01/01/2026</td>
-                  <td>
-                    <span class="badge badge-success" th:if="${nv.trangThai == 'DangLamViec'}"><span
-                        class="dot dot-green" style="width:6px;height:6px"></span>Đang làm việc</span>
-                    <span class="badge badge-warning" th:if="${nv.trangThai == 'TamNghi'}">Tạm nghỉ</span>
-                    <span class="badge badge-danger"
-                      th:if="${nv.trangThai == 'DaNghi' or nv.trangThai == 'NghiViec'}">Nghỉ việc</span>
+                  <td class="hide-sm cell-code" th:text="${nv.maNhanVien}">NV01</td>
+                  <td class="hide-sm nowrap">
+                    <div th:text="${nv.chucVu != null and nv.chucVu.phongBan != null ? nv.chucVu.phongBan.tenPhongBan : '—'}">Phòng ban</div>
+                    <span class="cell-sub" th:text="${nv.chucVu != null ? nv.chucVu.tenChucVu : '—'}">Chức vụ</span>
                   </td>
-                  <td style="text-align:right">
-                    <div class="table-actions" style="justify-content:flex-end">
-                      <button class="btn btn-outline btn-sm" th:data-id="${nv.id}" th:data-hoten="${nv.hoTen}"
-                        th:data-email="${nv.email}" th:data-sdt="${nv.soDienThoai}" th:data-diachi="${nv.diaChi}"
-                        th:data-chucvuid="${nv.chucVu != null ? nv.chucVu.id : ''}" th:data-trangthai="${nv.trangThai}"
-                        th:data-ngaysinh="${nv.ngaySinh != null ? #temporals.format(nv.ngaySinh, 'dd/MM/yyyy') : ''}"
-                        th:data-gioitinh="${nv.gioiTinh}" onclick="openEditStaffModal(this)">
-                        <i class="ti ti-edit"></i> Sửa
-                      </button>
-                      <form th:if="${nv.trangThai != 'DaNghi'}" th:action="@{/hcns/nhan-vien/doi-trang-thai}"
-                        method="post" style="display:inline"
-                        onsubmit="return confirm('Bạn có chắc muốn chuyển nhân viên này sang trạng thái Nghỉ việc?');">
-                        <input type="hidden" name="id" th:value="${nv.id}">
-                        <input type="hidden" name="trangThai" value="DaNghi">
-                        <button type="submit" class="btn btn-danger btn-sm" title="Cho thôi việc / Nghỉ việc"><i
-                            class="ti ti-user-x"></i></button>
-                      </form>
-                      <form th:if="${nv.trangThai == 'DaNghi'}" th:action="@{/hcns/nhan-vien/doi-trang-thai}"
-                        method="post" style="display:inline">
-                        <input type="hidden" name="id" th:value="${nv.id}">
-                        <input type="hidden" name="trangThai" value="DangLamViec">
-                        <button type="submit" class="btn btn-success btn-sm" title="Kích hoạt lại đi làm"><i
-                            class="ti ti-rotate-clockwise"></i></button>
-                      </form>
-                      <form th:action="@{/hcns/nhan-vien/xoa}" method="post" style="display:inline"
-                        onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn nhân viên này khỏi hệ thống?');">
-                        <input type="hidden" name="id" th:value="${nv.id}">
-                        <button type="submit" class="btn btn-outline btn-sm"
-                          style="color:var(--danger,#ef4444);border-color:rgba(239,68,68,0.3)" title="Xóa nhân viên"><i
-                            class="ti ti-trash"></i></button>
-                      </form>
+                  <td class="hide-md nowrap tabular" th:classappend="${nv.soDienThoai == null or #strings.isEmpty(nv.soDienThoai)} ? 'cell-empty' : ''"
+                      th:text="${nv.soDienThoai != null and !#strings.isEmpty(nv.soDienThoai) ? nv.soDienThoai : '—'}">0900000000</td>
+                  <td class="hide-md nowrap tabular cell-empty" th:text="${nv.ngayVaoLam != null ? #temporals.format(nv.ngayVaoLam, 'dd/MM/yyyy') : '—'}">01/01/2026</td>
+                  <td class="col-sub nowrap">
+                    <span class="badge badge-success" th:if="${nv.trangThai == 'DangLamViec'}">Đang làm việc</span>
+                    <span class="badge badge-warning" th:if="${nv.trangThai == 'TamNghi'}">Tạm nghỉ</span>
+                    <span class="badge badge-secondary" th:if="${nv.trangThai == 'DaNghi' or nv.trangThai == 'NghiViec'}">Nghỉ việc</span>
+                  </td>
+                  <td class="col-end">
+                    <div class="dropdown" style="display:inline-block">
+                      <button type="button" class="icon-btn" th:attr="data-dropdown='rowMenu' + ${nv.id},aria-label='Thao tác với ' + ${nv.hoTen}"><i class="ti ti-dots"></i></button>
+                      <div class="dropdown-menu dropdown-menu-fixed" th:id="'rowMenu' + ${nv.id}" style="min-width:13rem">
+                        <button type="button" class="dropdown-item" style="width:100%;border:0;background:none;font:inherit;text-align:left"
+                          th:data-id="${nv.id}" th:data-hoten="${nv.hoTen}"
+                          th:data-email="${nv.email}" th:data-sdt="${nv.soDienThoai}" th:data-diachi="${nv.diaChi}"
+                          th:data-chucvuid="${nv.chucVu != null ? nv.chucVu.id : ''}" th:data-trangthai="${nv.trangThai}"
+                          th:data-ngaysinh="${nv.ngaySinh != null ? #temporals.format(nv.ngaySinh, 'dd/MM/yyyy') : ''}"
+                          th:data-gioitinh="${nv.gioiTinh}" onclick="DropdownManager.closeAll(); openEditStaffModal(this)">
+                          <i class="ti ti-edit"></i>Sửa thông tin
+                        </button>
+                        <form th:if="${nv.trangThai == 'DaNghi'}" th:action="@{/hcns/nhan-vien/doi-trang-thai}" method="post">
+                          <input type="hidden" name="id" th:value="${nv.id}">
+                          <input type="hidden" name="trangThai" value="DangLamViec">
+                          <button type="submit" class="dropdown-item" style="width:100%;border:0;background:none;font:inherit;text-align:left"><i class="ti ti-user-check"></i>Cho làm lại</button>
+                        </form>
+                        <div class="dropdown-divider"></div>
+                        <form th:if="${nv.trangThai != 'DaNghi'}" th:action="@{/hcns/nhan-vien/doi-trang-thai}" method="post"
+                          onsubmit="return confirm('Chuyển nhân viên này sang trạng thái Nghỉ việc?');">
+                          <input type="hidden" name="id" th:value="${nv.id}">
+                          <input type="hidden" name="trangThai" value="DaNghi">
+                          <button type="submit" class="dropdown-item danger" style="width:100%;border:0;background:none;font:inherit;text-align:left"><i class="ti ti-user-x"></i>Cho nghỉ việc</button>
+                        </form>
+                        <form th:action="@{/hcns/nhan-vien/xoa}" method="post"
+                          onsubmit="return confirm('Xoá vĩnh viễn nhân viên này khỏi hệ thống? Không hoàn tác được.');">
+                          <input type="hidden" name="id" th:value="${nv.id}">
+                          <button type="submit" class="dropdown-item danger" style="width:100%;border:0;background:none;font:inherit;text-align:left"><i class="ti ti-trash"></i>Xoá nhân viên</button>
+                        </form>
+                      </div>
                     </div>
                   </td>
                 </tr>
                 <tr th:if="${nhanViens == null or #lists.isEmpty(nhanViens)}">
-                  <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu nhân
-                    viên</td>
+                  <td colspan="7" class="table-empty">
+                    Chưa có nhân viên nào.
+                    <div style="margin-top:0.75rem"><button type="button" class="btn btn-primary" data-modal-open="addStaffModal"><i class="ti ti-plus"></i>Thêm nhân viên</button></div>
+                  </td>
+                </tr>
+                <tr id="staffFilterEmpty" hidden>
+                  <td colspan="7" class="table-empty">Không có nhân viên nào khớp bộ lọc trên trang này.</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <!-- ============================================================
-               PHÂN TRANG 10 DÒNG (BẤM NÚT -> ĐỂ XEM TIẾP THEO YÊU CẦU)
-               ============================================================ -->
-          <div
-            style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-top:1px solid var(--border-light);background:var(--bg-card)">
-            <div style="font-size:0.875rem;color:var(--text-muted)">
-              Hiển thị trang <strong th:text="${currentPage + 1}">1</strong> / <strong
-                th:text="${totalPages > 0 ? totalPages : 1}">1</strong>
-              (Tổng cộng <span th:text="${totalItems}">0</span> nhân viên · 10 người/trang)
-            </div>
 
-            <div class="pagination" style="display:flex;gap:0.35rem;align-items:center">
-              <!-- Nút LÙI (<-) -->
-              <a th:href="@{/hcns/nhan-vien(page=${currentPage - 1})}" class="btn btn-outline btn-sm"
-                th:style="${currentPage == 0} ? 'pointer-events:none;opacity:0.4' : ''" title="Trang trước">
-                <i class="ti ti-arrow-left"></i> Trước
-              </a>
-
-              <!-- Các nút số trang lân cận -->
-              <th:block th:if="${totalPages > 1}">
-                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
-                  <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}" th:href="@{/hcns/nhan-vien(page=${i})}"
-                    class="page-btn" th:classappend="${i == currentPage} ? 'active' : ''" th:text="${i + 1}"
-                    style="min-width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);text-decoration:none;font-size:0.85rem;font-weight:600">
-                    1
-                  </a>
-                </th:block>
+          <!-- Phân trang: số đếm trái, điều hướng phải -->
+          <div class="table-footer" th:if="${totalItems != null and totalItems > 0}">
+            <span class="table-footer-count">
+              <span class="long" th:if="${totalPages > 1}" th:text="${currentPage * 10 + 1} + ' tới ' + ${currentPage * 10 + #lists.size(nhanViens)} + ' trong '">1 tới 10 trong </span><span th:text="${totalItems} + ' nhân viên'">24 nhân viên</span>
+            </span>
+            <nav class="pagination" aria-label="Phân trang" th:if="${totalPages > 1}">
+              <a th:href="@{/hcns/nhan-vien(page=${currentPage - 1})}" class="page-btn" aria-label="Trang trước"
+                 th:classappend="${currentPage == 0} ? 'is-disabled' : ''" th:attr="aria-disabled=${currentPage == 0}"><i class="ti ti-chevron-left"></i></a>
+              <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}" th:href="@{/hcns/nhan-vien(page=${i})}"
+                   class="page-btn" th:classappend="${i == currentPage} ? 'active' : ''"
+                   th:attr="aria-current=${i == currentPage ? 'page' : null}" th:text="${i + 1}">1</a>
               </th:block>
-
-              <!-- Nút TIẾP (->) ĐẶC TẢ: BẤM -> ĐỂ XEM TIẾP -->
-              <a th:href="@{/hcns/nhan-vien(page=${currentPage + 1})}" class="btn btn-primary btn-sm"
-                th:style="${currentPage >= totalPages - 1} ? 'pointer-events:none;opacity:0.4' : ''"
-                title="Xem tiếp các người tiếp theo">
-                Tiếp <i class="ti ti-arrow-right"></i>
-              </a>
-            </div>
+              <a th:href="@{/hcns/nhan-vien(page=${currentPage + 1})}" class="page-btn" aria-label="Trang sau"
+                 th:classappend="${currentPage >= totalPages - 1} ? 'is-disabled' : ''" th:attr="aria-disabled=${currentPage >= totalPages - 1}"><i class="ti ti-chevron-right"></i></a>
+            </nav>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   </div>
@@ -227,12 +162,12 @@
   <div class="modal-overlay" id="addStaffModal">
     <div class="modal" style="max-width:680px">
       <div class="modal-header">
-        <h2 class="modal-title"><i class="ti ti-user-plus"></i> Thêm Nhân viên mới</h2>
-        <button class="modal-close" data-modal-close="addStaffModal">✕</button>
+        <h2 class="modal-title">Thêm nhân viên</h2>
+        <button type="button" class="modal-close" data-modal-close="addStaffModal" aria-label="Đóng"><i class="ti ti-x"></i></button>
       </div>
       <form th:action="@{/hcns/nhan-vien/them}" method="post" id="addStaffForm"
         onsubmit="return validateStaffSubmit(event, 'addStaffNgaySinh', 'addStaffNgaySinhError', true)">
-        <div style="padding:1.5rem">
+        <div>
           <div class="form-row" style="margin-bottom:1rem">
             <div class="form-group">
               <label class="form-label">Họ và tên *</label>
@@ -275,7 +210,7 @@
                 </button>
               </div>
               <div id="addStaffNgaySinhError"
-                style="display:none;color:#ef4444;font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
+                class="form-error" style="display:none"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Ngày vào làm*</label>
@@ -312,8 +247,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-modal-close="addStaffModal">Hủy</button>
-          <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Lưu nhân viên</button>
+          <button type="button" class="btn btn-outline" data-modal-close="addStaffModal">Huỷ</button>
+          <button type="submit" class="btn btn-primary">Lưu nhân viên</button>
         </div>
       </form>
     </div>
@@ -325,13 +260,13 @@
   <div class="modal-overlay" id="editStaffModal">
     <div class="modal" style="max-width:680px">
       <div class="modal-header">
-        <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Hồ sơ Nhân viên</h2>
-        <button class="modal-close" data-modal-close="editStaffModal">✕</button>
+        <h2 class="modal-title">Sửa thông tin nhân viên</h2>
+        <button type="button" class="modal-close" data-modal-close="editStaffModal" aria-label="Đóng"><i class="ti ti-x"></i></button>
       </div>
       <form th:action="@{/hcns/nhan-vien/sua}" method="post" id="editStaffForm"
         onsubmit="return validateStaffSubmit(event, 'editStaffNgaySinh', 'editStaffNgaySinhError', false)">
         <input type="hidden" name="id" id="editStaffId">
-        <div style="padding:1.5rem">
+        <div>
           <div class="form-row" style="margin-bottom:1rem">
             <div class="form-group">
               <label class="form-label">Họ và tên *</label>
@@ -369,7 +304,7 @@
                 </button>
               </div>
               <div id="editStaffNgaySinhError"
-                style="display:none;color:#ef4444;font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
+                class="form-error" style="display:none"></div>
             </div>
           </div>
           <div class="form-row" style="margin-bottom:1rem">
@@ -402,8 +337,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-modal-close="editStaffModal">Hủy</button>
-          <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Cập nhật thay đổi</button>
+          <button type="button" class="btn btn-outline" data-modal-close="editStaffModal">Huỷ</button>
+          <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
         </div>
       </form>
     </div>
@@ -464,7 +399,7 @@
       if (!res.valid) {
         err.textContent = res.msg;
         err.style.display = 'block';
-        input.style.borderColor = '#ef4444';
+        input.style.borderColor = 'var(--error-text)';
         return false;
       } else {
         err.style.display = 'none';
@@ -587,7 +522,7 @@
       const dept = (document.getElementById('filterDeptSelect').value || '').toLowerCase().trim();
       const status = (document.getElementById('filterStatusSelect').value || '').trim();
 
-      const rows = document.querySelectorAll('#staffTable tbody tr');
+      const rows = document.querySelectorAll('#staffTable tbody tr[data-status]');
       rows.forEach(r => {
         const text = r.textContent.toLowerCase();
         const rDept = (r.getAttribute('data-dept') || '').toLowerCase();
@@ -599,7 +534,22 @@
 
         r.style.display = (matchQ && matchDept && matchStatus) ? '' : 'none';
       });
+      // Dòng "không khớp" chỉ hiện khi có nhân viên mà lọc ra rỗng
+      const dataRows = [...document.querySelectorAll('#staffTable tbody tr[data-status]')];
+      const emptyRow = document.getElementById('staffFilterEmpty');
+      if (emptyRow) emptyRow.hidden = !(dataRows.length && dataRows.every(r => r.style.display === 'none'));
     }
+
+    // Tab trạng thái đặt giá trị lọc rồi lọc lại bảng
+    document.querySelectorAll('#staffStatusTabs .tab-btn').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('#staffStatusTabs .tab-btn').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        document.getElementById('filterStatusSelect').value = tab.dataset.status;
+        filterStaffTable();
+      });
+    });
   </script>
 </body>
 

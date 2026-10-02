@@ -10,18 +10,15 @@
 
     <main class="page-content">
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Danh mục Dịch vụ</h1>
-          <p class="page-subtitle">Quản lý các nhóm và loại dịch vụ cung cấp</p>
-        </div>
+        
         <div class="page-actions">
           <button class="btn btn-primary btn-sm" data-modal-open="addCategoryModal"><i class="ti ti-plus"></i> Thêm danh mục</button>
         </div>
       </div>
 
       <!-- Thông báo hệ thống -->
-      <div th:if="${errorMessage}" style="padding:1rem;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
-      <div th:if="${successMessage}" style="padding:1rem;background:rgba(67,233,123,0.12);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
+      <div th:if="${errorMessage}" style="padding:1rem;background:var(--error-bg);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
+      <div th:if="${successMessage}" style="padding:1rem;background:var(--success-bg);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
 
       <!-- Grid danh mục dịch vụ -->
       <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:1.25rem;margin-bottom:2rem">
@@ -73,7 +70,7 @@
               </form>
               <form th:action="@{/hcns/danh-muc-dich-vu/xoa}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn danh mục này khỏi hệ thống?');">
                 <input type="hidden" name="id" th:value="${ldv.id}">
-                <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger,#ef4444);border-color:rgba(239,68,68,0.3)" title="Xóa danh mục"><i class="ti ti-trash"></i></button>
+                <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger,var(--danger));border-color:color-mix(in srgb, var(--error-text) 25%, transparent)" title="Xóa danh mục"><i class="ti ti-trash"></i></button>
               </form>
             </div>
           </div>
@@ -90,7 +87,7 @@
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
       <h2 class="modal-title"><i class="ti ti-folder-plus"></i> Thêm Danh mục Dịch vụ</h2>
-      <button class="modal-close" data-modal-close="addCategoryModal">✕</button>
+      <button class="modal-close" data-modal-close="addCategoryModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <form th:action="@{/hcns/danh-muc-dich-vu/them}" method="post" enctype="multipart/form-data">
       <div style="padding:1.5rem">
@@ -136,7 +133,7 @@
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
       <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Danh mục</h2>
-      <button class="modal-close" data-modal-close="editCategoryModal">✕</button>
+      <button class="modal-close" data-modal-close="editCategoryModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <form th:action="@{/hcns/danh-muc-dich-vu/sua}" method="post" enctype="multipart/form-data">
       <input type="hidden" name="id" id="editCatId">

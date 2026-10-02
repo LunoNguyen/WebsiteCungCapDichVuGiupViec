@@ -26,6 +26,11 @@ public class CollaboratorRegisterRequest {
     @NotBlank(message = "Nơi cư trú không được để trống")
     private String noiCuTru;
 
+    // Địa chỉ cư trú tách theo đơn vị hành chính (2 cấp: tỉnh/thành - phường/xã).
+    // Hệ thống dựa vào hai trường này để xếp cộng tác viên vào khu vực hoạt động.
+    private String tinhThanh;
+    private String phuongXa;
+
     private String tenDangNhap;
 
     // Danh sách ID các dịch vụ CTV muốn đăng ký

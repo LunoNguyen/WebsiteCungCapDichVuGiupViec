@@ -20,6 +20,7 @@ public class CollaboratorApiService {
     private final CongTacVienRepository congTacVienRepository;
     private final LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository;
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
+    private final TaiKhoanRepository taiKhoanRepository;
 
     public CollaboratorApiService(
             PhanCongCTVRepository phanCongCTVRepository,
@@ -27,13 +28,15 @@ public class CollaboratorApiService {
             LichLamViecRepository lichLamViecRepository,
             CongTacVienRepository congTacVienRepository,
             LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository,
-            ThongBaoNguoiDungRepository thongBaoNguoiDungRepository) {
+            ThongBaoNguoiDungRepository thongBaoNguoiDungRepository,
+            TaiKhoanRepository taiKhoanRepository) {
         this.phanCongCTVRepository = phanCongCTVRepository;
         this.donDatDichVuRepository = donDatDichVuRepository;
         this.lichLamViecRepository = lichLamViecRepository;
         this.congTacVienRepository = congTacVienRepository;
         this.lichSuTrangThaiDonRepository = lichSuTrangThaiDonRepository;
         this.thongBaoNguoiDungRepository = thongBaoNguoiDungRepository;
+        this.taiKhoanRepository = taiKhoanRepository;
     }
 
     // ==========================================
@@ -335,9 +338,64 @@ public class CollaboratorApiService {
     /**
      * Lấy thông tin hồ sơ của Cộng tác viên
      */
-    public CongTacVien getCollaboratorProfile(Integer congTacVienId) {
-        return congTacVienRepository.findById(congTacVienId)
+    public Map<String, Object> getCollaboratorProfile(Integer congTacVienId) {
+        CongTacVien ctv = congTacVienRepository.findById(congTacVienId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên ID: " + congTacVienId));
+        return toProfileMap(ctv);
+    }
+
+    /**
+     * Dùng khi CTV đăng nhập trên app: nếu tài khoản đã có hồ sơ thì trả về hồ sơ đó,
+     * nếu chưa có thì tạo một hồ sơ rỗng (chỉ có thông tin tối thiểu) để CTV bổ sung sau.
+     */
+    public Map<String, Object> ensureCollaboratorProfile(Integer taiKhoanId) {
+        TaiKhoan taiKhoan = taiKhoanRepository.findById(taiKhoanId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản ID: " + taiKhoanId));
+        if (!"CongTacVien".equalsIgnoreCase(taiKhoan.getLoaiTaiKhoan())) {
+            throw new IllegalArgumentException("Tài khoản này không phải tài khoản Cộng tác viên.");
+        }
+
+        Optional<CongTacVien> existing = congTacVienRepository.findByTaiKhoan_Id(taiKhoanId);
+        if (existing.isPresent()) {
+            Map<String, Object> result = toProfileMap(existing.get());
+            result.put("daTaoMoi", false);
+            return result;
+        }
+
+        CongTacVien ctv = CongTacVien.builder()
+                .maCongTacVien("CTV-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase())
+                .taiKhoan(taiKhoan)
+                .hoTen("")
+                .noiCuTru("")
+                .soDienThoai(taiKhoan.getSoDienThoai() != null ? taiKhoan.getSoDienThoai() : "")
+                .diemDanhGia(java.math.BigDecimal.ZERO)
+                .capDo("Moi")
+                .trangThai("ChoDuyet")
+                .ngayDangKy(LocalDate.now())
+                .build();
+        ctv = congTacVienRepository.save(ctv);
+
+        Map<String, Object> result = toProfileMap(ctv);
+        result.put("daTaoMoi", true);
+        return result;
+    }
+
+    /** Trả hồ sơ dạng Map phẳng (tránh serialize proxy LAZY của TaiKhoan) */
+    private Map<String, Object> toProfileMap(CongTacVien ctv) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", ctv.getId());
+        m.put("maCongTacVien", ctv.getMaCongTacVien());
+        m.put("taiKhoanId", ctv.getTaiKhoan() != null ? ctv.getTaiKhoan().getId() : null);
+        m.put("hoTen", ctv.getHoTen());
+        m.put("ngaySinh", ctv.getNgaySinh() != null ? ctv.getNgaySinh().toString() : null);
+        m.put("gioiTinh", ctv.getGioiTinh());
+        m.put("noiCuTru", ctv.getNoiCuTru());
+        m.put("soDienThoai", ctv.getSoDienThoai());
+        m.put("diemDanhGia", ctv.getDiemDanhGia());
+        m.put("capDo", ctv.getCapDo());
+        m.put("trangThai", ctv.getTrangThai());
+        m.put("ngayDangKy", ctv.getNgayDangKy() != null ? ctv.getNgayDangKy().toString() : null);
+        return m;
     }
 
     /**

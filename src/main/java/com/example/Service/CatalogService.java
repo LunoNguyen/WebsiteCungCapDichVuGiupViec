@@ -265,20 +265,6 @@ public class CatalogService {
         return new LinkedHashMap<>(ketQua);
     }
 
-    /** id khu vực → "Quận/huyện, Tỉnh/thành" cho form đăng ký cộng tác viên. */
-    @Cacheable(value = CacheNames.KHU_VUC, key = "'choDangKy'")
-    public Map<Integer, String> getKhuVucChoDangKy() {
-        List<KhuVuc> khuVucs = new ArrayList<>(khuVucRepository.findAll());
-        khuVucs.removeIf(kv -> !"HoatDong".equalsIgnoreCase(kv.getTrangThai()));
-        khuVucs.sort(Comparator.comparing((KhuVuc kv) -> kv.getTinhThanh() == null ? "" : kv.getTinhThanh())
-                .thenComparing(kv -> kv.getQuanHuyen() == null ? "" : kv.getQuanHuyen()));
-        Map<Integer, String> ketQua = new LinkedHashMap<>();
-        for (KhuVuc kv : khuVucs) {
-            ketQua.put(kv.getId(), kv.getQuanHuyen() + ", " + kv.getTinhThanh());
-        }
-        return ketQua;
-    }
-
     // =========================================================================
     // KHUYẾN MÃI
     // =========================================================================

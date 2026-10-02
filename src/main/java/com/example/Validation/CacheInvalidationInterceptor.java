@@ -37,6 +37,10 @@ public class CacheInvalidationInterceptor implements HandlerInterceptor {
         if (path.contains("/danh-muc-dich-vu") || path.contains("/dich-vu-bang-gia")) {
             cacheService.xoaCacheDichVu();
         }
+        // Đăng ký CTV hoặc CSKH thêm địa chỉ khách hàng có thể tạo khu vực mới
+        if (path.contains("/collaborators/register") || path.contains("/khach-hang")) {
+            cacheService.xoaCacheKhuVuc();
+        }
         if (path.contains("/khuyen-mai")) {
             cacheService.xoaCacheKhuyenMai();
         }

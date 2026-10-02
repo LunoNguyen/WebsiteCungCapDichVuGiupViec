@@ -73,10 +73,30 @@
                 <option value="Khac">Khác</option>
               </select>
             </div>
+            <!-- Nơi cư trú: tỉnh/thành và phường/xã lấy từ https://provinces.open-api.vn/api/v2/ -->
+            <div class="field">
+              <label for="tinhThanh">Tỉnh, thành phố đang sống</label>
+              <select id="tinhThanh" name="tinhThanh" required disabled>
+                <option value="">Đang tải danh sách…</option>
+              </select>
+              <div class="error">Chọn tỉnh, thành phố.</div>
+            </div>
+            <div class="field">
+              <label for="phuongXa">Phường, xã</label>
+              <select id="phuongXa" name="phuongXa" required disabled>
+                <option value="">Chọn tỉnh, thành phố trước</option>
+              </select>
+              <div class="error">Chọn phường, xã.</div>
+            </div>
             <div class="field full">
-              <label for="noiCuTru">Nơi cư trú</label>
-              <input type="text" id="noiCuTru" name="noiCuTru" autocomplete="street-address" required>
-              <div class="error">Nhập nơi cư trú hiện tại.</div>
+              <label for="diaChiChiTiet">Số nhà, tên đường</label>
+              <input type="text" id="diaChiChiTiet" name="diaChiChiTiet" autocomplete="address-line1" required>
+              <div class="hint" id="diaChiHint">Neatify dùng địa chỉ này để xếp bạn vào khu vực nhận việc gần nơi bạn sống.</div>
+              <div class="error">Nhập số nhà, tên đường.</div>
+            </div>
+            <div class="alert alert-error full" id="diaChiLoi" role="alert" style="margin:0">
+              Không tải được danh sách tỉnh, thành phố.
+              <button type="button" class="btn btn-line btn-sm" id="diaChiTaiLai" style="margin-left:0.5rem">Tải lại</button>
             </div>
             <div class="field full">
               <label for="matKhau">Mật khẩu đăng nhập ứng dụng</label>
@@ -97,16 +117,6 @@
               </label>
             </div>
             <div class="error">Chọn ít nhất một nhóm dịch vụ.</div>
-          </div>
-        </fieldset>
-
-        <fieldset th:if="${khuVucList != null and !khuVucList.isEmpty()}">
-          <legend>Khu vực muốn nhận việc</legend>
-          <div class="checks">
-            <label class="check" th:each="kv : ${khuVucList}">
-              <input type="checkbox" name="khuVuc" th:value="${kv.key}">
-              <span th:text="${kv.value}">Quận 1, TP. Hồ Chí Minh</span>
-            </label>
           </div>
         </fieldset>
 

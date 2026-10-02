@@ -70,12 +70,7 @@ public class SiteController {
 
     /** Đăng ký làm cộng tác viên (UC: Đăng ký làm cộng tác viên). */
     @GetMapping("/tro-thanh-doi-tac")
-    public String troThanhDoiTac(Model model) {
-        try {
-            model.addAttribute("khuVucList", catalogService.getKhuVucChoDangKy());
-        } catch (Exception e) {
-            log.warn("Trang đối tác: không tải được khu vực: {}", e.getMessage());
-        }
+    public String troThanhDoiTac() {
         return "site/tro-thanh-doi-tac";
     }
 }

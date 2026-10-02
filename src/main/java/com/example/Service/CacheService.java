@@ -27,6 +27,10 @@ public class CacheService {
         xoa(CacheNames.DANH_MUC_DICH_VU, CacheNames.DICH_VU, CacheNames.LOAI_DICH_VU);
     }
 
+    public void xoaCacheKhuVuc() {
+        xoa(CacheNames.KHU_VUC);
+    }
+
     public void xoaCacheKhuyenMai() {
         xoa(CacheNames.KHUYEN_MAI);
     }

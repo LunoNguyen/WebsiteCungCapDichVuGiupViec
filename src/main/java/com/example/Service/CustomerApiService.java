@@ -429,18 +429,17 @@ public class CustomerApiService {
         }
 
         // 4. Liên kết Khu vực
+        //    - Ưu tiên khu vực suy ra từ địa chỉ cư trú (tỉnh/thành + phường/xã) mà ứng viên cung cấp
+        //    - Vẫn nhận danhSachKhuVucId nếu client (ứng dụng di động) gửi kèm
+        Set<Integer> khuVucDaGan = new HashSet<>();
         if (req.getDanhSachKhuVucId() != null) {
             for (Integer kvId : req.getDanhSachKhuVucId()) {
-                khuVucRepository.findById(kvId).ifPresent(kv -> {
-                    KhuVucCTV kvCtv = KhuVucCTV.builder()
-                            .maKhuVucCTV(maNgauNhien("KVCTV-"))
-                            .congTacVien(savedCtv)
-                            .khuVuc(kv)
-                            .trangThai("HoatDong")
-                            .build();
-                    khuVucCTVRepository.save(kvCtv);
-                });
+                khuVucRepository.findById(kvId).ifPresent(kv -> ganKhuVucChoCtv(savedCtv, kv, khuVucDaGan));
             }
+        }
+        KhuVuc khuVucTheoDiaChi = timHoacTaoKhuVuc(req.getPhuongXa(), req.getTinhThanh());
+        if (khuVucTheoDiaChi != null) {
+            ganKhuVucChoCtv(savedCtv, khuVucTheoDiaChi, khuVucDaGan);
         }
 
         // 5. Lưu bằng cấp / chứng chỉ (URL MinIO)
@@ -481,9 +480,59 @@ public class CustomerApiService {
         result.put("maCongTacVien", savedCtv.getMaCongTacVien());
         result.put("hoTen", savedCtv.getHoTen());
         result.put("trangThai", savedCtv.getTrangThai());
+        result.put("khuVuc", khuVucTheoDiaChi != null
+                ? khuVucTheoDiaChi.getTenKhuVuc() + ", " + khuVucTheoDiaChi.getTinhThanh() : null);
         result.put("thoiGianXetDuyetDuKien", "1-3 ngày làm việc");
         result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt.");
         return result;
+    }
+
+    /** Gán một khu vực cho CTV, bỏ qua nếu đã gán (cặp congTacVienId - khuVucId là duy nhất). */
+    private void ganKhuVucChoCtv(CongTacVien ctv, KhuVuc kv, Set<Integer> daGan) {
+        if (!daGan.add(kv.getId())) {
+            return;
+        }
+        khuVucCTVRepository.save(KhuVucCTV.builder()
+                .maKhuVucCTV(maNgauNhien("KVCTV-"))
+                .congTacVien(ctv)
+                .khuVuc(kv)
+                .trangThai("HoatDong")
+                .build());
+    }
+
+    /**
+     * Xác định khu vực từ địa chỉ: tìm khu vực trùng phường/xã + tỉnh/thành, chưa có thì tạo mới
+     * (cùng cách CSKH đang làm khi thêm địa chỉ khách hàng).
+     *
+     * @return null nếu không có tỉnh/thành
+     */
+    private KhuVuc timHoacTaoKhuVuc(String phuongXa, String tinhThanh) {
+        if (tinhThanh == null || tinhThanh.isBlank()) {
+            return null;
+        }
+        String tinh = tinhThanh.trim();
+        String phuong = phuongXa != null ? phuongXa.trim() : "";
+
+        if (!phuong.isEmpty()) {
+            Optional<KhuVuc> coSan = khuVucRepository.findFirstByQuanHuyenAndTinhThanh(phuong, tinh)
+                    .or(() -> khuVucRepository.findFirstByTenKhuVucAndTinhThanh(phuong, tinh));
+            if (coSan.isPresent()) {
+                return coSan.get();
+            }
+        } else {
+            List<KhuVuc> trongTinh = khuVucRepository.findByTinhThanh(tinh);
+            if (!trongTinh.isEmpty()) {
+                return trongTinh.get(0);
+            }
+        }
+
+        return khuVucRepository.save(KhuVuc.builder()
+                .maKhuVuc(maNgauNhien("KV-"))
+                .tenKhuVuc(!phuong.isEmpty() ? phuong : tinh)
+                .quanHuyen(!phuong.isEmpty() ? phuong : "Chưa xác định")
+                .tinhThanh(tinh)
+                .trangThai("HoatDong")
+                .build());
     }
 
     /**
