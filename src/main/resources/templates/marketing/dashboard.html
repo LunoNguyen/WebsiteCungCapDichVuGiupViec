@@ -148,73 +148,87 @@
     const revenueLabels = Object.keys(doanhThuTheoThang);
     const revenueData = Object.values(doanhThuTheoThang);
     // Revenue chart
-    const ctx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(ctx, {
-      type:'bar',
-      data:{
-      labels: revenueLabels,
-      datasets:[{
-        label:'Doanh thu (triệu đồng)', data: revenueData,
-        backgroundColor:'rgba(255,101,132,0.85)',
-        borderRadius: 6,
-        maxBarThickness: 40
-      }]
-    },
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
-        scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+' triệu'}}}}
-    });
-      document.getElementById('namFilter').addEventListener('change', function() {
-      window.location.href = '/marketing/dashboard?nam=' + this.value;
-    });
-    // Rating distribution
-    const phanPhoi = /*[[${phanPhoiDanhGia}]]*/ {};
-    const d5 = phanPhoi[5] || 0;
-    const d4 = phanPhoi[4] || 0;
-    const d3 = phanPhoi[3] || 0;
-    const d2 = phanPhoi[2] || 0;
-    const d1 = phanPhoi[1] || 0;
+    const revCanvas = document.getElementById('revenueChart');
+    if (revCanvas) {
+      const ctx = revCanvas.getContext('2d');
+      new Chart(ctx, {
+        type:'bar',
+        data:{
+          labels: revenueLabels,
+          datasets:[{
+            label:'Doanh thu (triệu đồng)', data: revenueData,
+            backgroundColor:'rgba(255,101,132,0.85)',
+            borderRadius: 6,
+            maxBarThickness: 40
+          }]
+        },
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+' triệu'}}}}
+      });
+    }
 
-    new Chart(document.getElementById('ratingChart'), {
-      type:'bar',
-      data:{
-        labels:['5★','4★','3★','2★','1★'],
-        datasets:[{data:[d5, d4, d3, d2, d1],backgroundColor:['#43E97B','#6C63FF','#FFC107','#FF6584','#FF4757'],borderRadius:6,borderSkipped:false}]
-      },
-      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
-        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}},y:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}
-    });
+    const namFilter = document.getElementById('namFilter');
+    if (namFilter) {
+      namFilter.addEventListener('change', function() {
+        window.location.href = '/marketing/dashboard?nam=' + this.value;
+      });
+    }
+
+    // Rating distribution
+    const ratingCanvas = document.getElementById('ratingChart');
+    if (ratingCanvas) {
+      const phanPhoi = /*[[${phanPhoiDanhGia}]]*/ {};
+      const d5 = phanPhoi[5] || 0;
+      const d4 = phanPhoi[4] || 0;
+      const d3 = phanPhoi[3] || 0;
+      const d2 = phanPhoi[2] || 0;
+      const d1 = phanPhoi[1] || 0;
+
+      new Chart(ratingCanvas, {
+        type:'bar',
+        data:{
+          labels:['5★','4★','3★','2★','1★'],
+          datasets:[{data:[d5, d4, d3, d2, d1],backgroundColor:['#43E97B','#6C63FF','#FFC107','#FF6584','#FF4757'],borderRadius:6,borderSkipped:false}]
+        },
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}},y:{grid:{display:false},ticks:{font:{size:12,weight:'600'}}}}}
+      });
+    }
 
     // Top services bar chart (thay thế doughnut)
-    const topDv = /*[[${topDichVu}]]*/ {};
-    const dvLabels = Object.keys(topDv);
-    const dvData = Object.values(topDv);
+    const ordersCanvas = document.getElementById('ordersDonut');
+    if (ordersCanvas) {
+      const topDv = /*[[${topDichVu}]]*/ {};
+      const dvLabels = Object.keys(topDv);
+      const dvData = Object.values(topDv);
 
-    new Chart(document.getElementById('ordersDonut'), {
-      type:'bar',
-      data:{
-        labels: dvLabels.length ? dvLabels : ['Dọn dẹp nhà', 'Tổng vệ sinh', 'Nấu ăn', 'Giặt ủi', 'Trông trẻ'],
-        datasets:[{
-          label: 'Số đơn đặt',
-          data: dvData.length ? dvData : [3, 2, 2, 2, 2],
-          backgroundColor:['#0D9BA3','#38D48A','#1585C0','#F59E0B','#FF6584'],
-          borderRadius: 6,
-          borderSkipped: false
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false}
+      new Chart(ordersCanvas, {
+        type:'bar',
+        data:{
+          labels: dvLabels.length ? dvLabels : ['Dọn dẹp nhà', 'Tổng vệ sinh', 'Nấu ăn', 'Giặt ủi', 'Trông trẻ'],
+          datasets:[{
+            label: 'Số đơn đặt',
+            data: dvData.length ? dvData : [3, 2, 2, 2, 2],
+            backgroundColor:['#0D9BA3','#38D48A','#1585C0','#F59E0B','#FF6584'],
+            borderRadius: 6,
+            borderSkipped: false
+          }]
         },
-        scales:{
-          x:{grid:{display:false},ticks:{font:{size:10}}},
-          y:{grid:{color:'rgba(13,155,163,0.06)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}}
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{
+            legend:{display:false}
+          },
+          scales:{
+            x:{grid:{display:false},ticks:{font:{size:10}}},
+            y:{grid:{color:'rgba(13,155,163,0.06)'},ticks:{font:{size:11},stepSize:1,beginAtZero:true}}
+          }
         }
-      }
-    });
+      });
+    }
   });
 </script>
 </body>

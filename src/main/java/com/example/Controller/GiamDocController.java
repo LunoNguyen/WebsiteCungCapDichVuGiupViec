@@ -159,7 +159,6 @@ public String baoCao(
             .sorted((a, b) -> Integer.compare(
                     b.getId() != null ? b.getId() : 0,
                     a.getId() != null ? a.getId() : 0))
-            .limit(15)
             .toList());
 
     model.addAttribute("dichVus", dichVuRepository.findAll());

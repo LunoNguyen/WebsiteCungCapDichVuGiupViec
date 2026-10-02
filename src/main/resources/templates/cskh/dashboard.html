@@ -71,7 +71,7 @@
               <div class="avatar avatar-sm" th:text="${d.khachHang != null ? #strings.substring(d.khachHang.hoTen, 0, 1) : 'K'}">K</div>
               <div style="flex:1">
                 <div style="font-weight:600;font-size:0.875rem" th:text="${'#' + d.maDonDat + ' · ' + (d.khachHang != null ? d.khachHang.hoTen : 'Khách hàng')}">Mã đơn</div>
-                <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${(d.dichVu != null ? d.dichVu.tenDichVu : 'Dịch vụ') + ' · Ngày ' + d.ngayThucHien + ' ' + (d.gioBatDau != null ? d.gioBatDau : '')}">Thời gian</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${(d.chiTietList != null and !d.chiTietList.isEmpty() ? d.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ') + ' · Ngày ' + d.ngayThucHien + ' ' + (d.gioBatDau != null ? d.gioBatDau : '')}">Thời gian</div>
               </div>
               <div style="display:flex;gap:0.4rem">
                 <span class="badge" th:classappend="${d.trangThai == 'DangThucHien' ? 'badge-primary' : 'badge-warning'}" th:text="${d.trangThai}">Trạng thái</span>
@@ -135,7 +135,7 @@
                       </div>
                     </div>
                   </td>
-                  <td th:text="${d.dichVu != null ? d.dichVu.tenDichVu : 'Dịch vụ'}">Dịch vụ</td>
+                  <td th:text="${d.chiTietList != null and !d.chiTietList.isEmpty() ? d.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ'}">Dịch vụ</td>
                   <td style="font-weight:600;color:var(--accent)" th:text="${#numbers.formatDecimal(d.thanhTien != null ? d.thanhTien : 0, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</td>
                   <td style="font-size:0.8rem" th:text="${d.ngayThucHien + ' ' + (d.gioBatDau != null ? d.gioBatDau : '')}">Thời gian</td>
                   <td>

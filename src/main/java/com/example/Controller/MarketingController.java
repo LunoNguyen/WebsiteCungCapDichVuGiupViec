@@ -1,5 +1,6 @@
 package com.example.Controller;
 import com.example.Model.DanhGia;
+import com.example.Model.LichSuSuDungKhuyenMai;
 import java.util.List;
 import com.example.DTO.*;
 import com.example.Model.ThongBao;
@@ -26,18 +27,60 @@ public class MarketingController {
     private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final ThongBaoRepository thongBaoRepository;
     private final DanhGiaRepository danhGiaRepository;
+    private final LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository;
 
     public MarketingController(
             ThongKeService thongKeService,
             ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository,
             MaKhuyenMaiRepository maKhuyenMaiRepository,
             ThongBaoRepository thongBaoRepository,
-            DanhGiaRepository danhGiaRepository) {
+            DanhGiaRepository danhGiaRepository,
+            LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository) {
         this.thongKeService = thongKeService;
         this.chuongTrinhKhuyenMaiRepository = chuongTrinhKhuyenMaiRepository;
         this.maKhuyenMaiRepository = maKhuyenMaiRepository;
         this.thongBaoRepository = thongBaoRepository;
         this.danhGiaRepository = danhGiaRepository;
+        this.lichSuSuDungKhuyenMaiRepository = lichSuSuDungKhuyenMaiRepository;
+    }
+
+    // UC-MKT05 – Lịch sử sử dụng khuyến mãi
+    @GetMapping("/lich-su-khuyen-mai")
+    public String lichSuKhuyenMai(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String maCode,
+            Model model) {
+
+        List<LichSuSuDungKhuyenMai> lichSuList = lichSuSuDungKhuyenMaiRepository.findAll();
+
+        // Sắp xếp mới nhất lên đầu
+        lichSuList = new java.util.ArrayList<>(lichSuList);
+        lichSuList.sort((a, b) -> b.getNgaySuDung().compareTo(a.getNgaySuDung()));
+
+        // Lọc theo tên khách hàng
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = keyword.trim().toLowerCase();
+            lichSuList = lichSuList.stream()
+                .filter(ls -> ls.getKhachHang() != null &&
+                              ls.getKhachHang().getHoTen().toLowerCase().contains(kw))
+                .toList();
+            model.addAttribute("keyword", keyword);
+        }
+
+        // Lọc theo mã code khuyến mãi
+        if (maCode != null && !maCode.trim().isEmpty()) {
+            lichSuList = lichSuList.stream()
+                .filter(ls -> ls.getKhuyenMai() != null &&
+                              ls.getKhuyenMai().getCodeKhuyenMai().equalsIgnoreCase(maCode.trim()))
+                .toList();
+            model.addAttribute("maCode", maCode);
+        }
+
+        model.addAttribute("lichSuList", lichSuList);
+        model.addAttribute("tongLuotSuDung", lichSuSuDungKhuyenMaiRepository.count());
+        model.addAttribute("danhSachCode", maKhuyenMaiRepository.findAll());
+        model.addAttribute("marketingStats", thongKeService.getMarketingStats());
+        return "marketing/lich-su-khuyen-mai";
     }
 
     @GetMapping("/dashboard")

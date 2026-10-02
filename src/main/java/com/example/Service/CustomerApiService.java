@@ -28,13 +28,13 @@ public class CustomerApiService {
     private final DichVuRepository dichVuRepository;
     private final LoaiDichVuRepository loaiDichVuRepository;
     private final BangGiaDichVuRepository bangGiaDichVuRepository;
-    private final GoiDichVuRepository goiDichVuRepository;
     private final DichVuCTVRepository dichVuCTVRepository;
     private final KhuVucCTVRepository khuVucCTVRepository;
     private final ChungChiCTVRepository chungChiCTVRepository;
     private final HoSoCTVRepository hoSoCTVRepository;
     private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final DonDatDichVuRepository donDatDichVuRepository;
+    private final ChiTietDonDatRepository chiTietDonDatRepository;
     private final LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository;
     private final LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository;
     private final HoaDonRepository hoaDonRepository;
@@ -58,13 +58,13 @@ public class CustomerApiService {
             DichVuRepository dichVuRepository,
             LoaiDichVuRepository loaiDichVuRepository,
             BangGiaDichVuRepository bangGiaDichVuRepository,
-            GoiDichVuRepository goiDichVuRepository,
             DichVuCTVRepository dichVuCTVRepository,
             KhuVucCTVRepository khuVucCTVRepository,
             ChungChiCTVRepository chungChiCTVRepository,
             HoSoCTVRepository hoSoCTVRepository,
             MaKhuyenMaiRepository maKhuyenMaiRepository,
             DonDatDichVuRepository donDatDichVuRepository,
+            ChiTietDonDatRepository chiTietDonDatRepository,
             LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository,
             LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository,
             HoaDonRepository hoaDonRepository,
@@ -86,13 +86,13 @@ public class CustomerApiService {
         this.dichVuRepository = dichVuRepository;
         this.loaiDichVuRepository = loaiDichVuRepository;
         this.bangGiaDichVuRepository = bangGiaDichVuRepository;
-        this.goiDichVuRepository = goiDichVuRepository;
         this.dichVuCTVRepository = dichVuCTVRepository;
         this.khuVucCTVRepository = khuVucCTVRepository;
         this.chungChiCTVRepository = chungChiCTVRepository;
         this.hoSoCTVRepository = hoSoCTVRepository;
         this.maKhuyenMaiRepository = maKhuyenMaiRepository;
         this.donDatDichVuRepository = donDatDichVuRepository;
+        this.chiTietDonDatRepository = chiTietDonDatRepository;
         this.lichSuSuDungKhuyenMaiRepository = lichSuSuDungKhuyenMaiRepository;
         this.lichSuTrangThaiDonRepository = lichSuTrangThaiDonRepository;
         this.hoaDonRepository = hoaDonRepository;
@@ -526,17 +526,16 @@ public class CustomerApiService {
         result.put("donViTinh", dv.getDonViTinh());
         result.put("thoiGianThucHienPhut", dv.getThoiGianThucHien());
         result.put("moTaChiTiet", dv.getMoTaChiTiet());
+        result.put("soBuoi", dv.getSoBuoi());
+        result.put("soNguoiThucHien", dv.getSoNguoiThucHien());
+        result.put("giaHienTai", dv.getGiaHienTai());
 
-        // Bảng giá
+        // Lịch sử bảng giá
         List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
         result.put("bangGias", bangGias);
 
-        // Gói dịch vụ nếu có
-        List<GoiDichVu> gois = goiDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "HoatDong");
-        result.put("goiDichVus", gois);
-
-        // Đánh giá từ khách hàng
-        List<DanhGia> danhGias = danhGiaRepository.findByDonDat_DichVu_Id(dv.getId());
+        // Đánh giá từ khách hàng (tìm qua chiTietDonDat → donDat)
+        List<DanhGia> danhGias = danhGiaRepository.findByCongTacVien_Id(dv.getId());
         result.put("soLuongDanhGia", danhGias.size());
         double avgScore = danhGias.stream()
                 .mapToInt(d -> (d.getDiemChatLuong() + d.getDiemThaiDo()) / 2)
@@ -580,26 +579,18 @@ public class CustomerApiService {
         String loaiHinh = (req.getLoaiHinhDat() != null && !req.getLoaiHinhDat().isBlank())
                 ? req.getLoaiHinhDat() : dv.getLoaiHinhDat();
 
-        BigDecimal chiPhiGoc = BigDecimal.ZERO;
-
-        if ("GoiThang".equalsIgnoreCase(loaiHinh)) {
-            if (req.getGoiDichVuId() != null) {
-                GoiDichVu goi = goiDichVuRepository.findById(req.getGoiDichVuId())
-                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy gói dịch vụ ID: " + req.getGoiDichVuId()));
-                chiPhiGoc = goi.getGiaGoi();
-            } else {
-                List<GoiDichVu> gois = goiDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "HoatDong");
-                chiPhiGoc = gois.isEmpty() ? BigDecimal.valueOf(1500000) : gois.get(0).getGiaGoi();
-            }
+        // Tính giá gốc: ưu tiên bangGiaId được truyền vào, rồi đến GiaHienTai trên DichVu
+        BigDecimal chiPhiGoc;
+        if (req.getBangGiaId() != null) {
+            BangGiaDichVu bg = bangGiaDichVuRepository.findById(req.getBangGiaId())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy bảng giá ID: " + req.getBangGiaId()));
+            chiPhiGoc = bg.getDonGia();
+        } else if (dv.getGiaHienTai() != null && dv.getGiaHienTai().compareTo(BigDecimal.ZERO) > 0) {
+            chiPhiGoc = dv.getGiaHienTai();
         } else {
-            if (req.getBangGiaId() != null) {
-                BangGiaDichVu bg = bangGiaDichVuRepository.findById(req.getBangGiaId())
-                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy bảng giá ID: " + req.getBangGiaId()));
-                chiPhiGoc = bg.getDonGia();
-            } else {
-                List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
-                chiPhiGoc = bangGias.isEmpty() ? BigDecimal.valueOf(250000) : bangGias.get(0).getDonGia();
-            }
+            // Fallback: lấy giá từ bảng giá đang áp dụng
+            List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
+            chiPhiGoc = bangGias.isEmpty() ? BigDecimal.valueOf(250000) : bangGias.get(0).getDonGia();
         }
 
         BigDecimal soTienGiam = BigDecimal.ZERO;
@@ -718,12 +709,11 @@ public class CustomerApiService {
             else throw new IllegalArgumentException("Vui lòng cung cấp địa chỉ thực hiện dịch vụ.");
         }
 
-        // Tính giá
+        // Tính giá (không còn goiDichVuId)
         CalculatePriceRequest calcReq = new CalculatePriceRequest();
         calcReq.setDichVuId(dichVu.getId());
         calcReq.setLoaiHinhDat(req.getLoaiHinhDat());
         calcReq.setBangGiaId(req.getBangGiaId());
-        calcReq.setGoiDichVuId(req.getGoiDichVuId());
         calcReq.setCodeKhuyenMai(req.getCodeKhuyenMai());
         PriceCalculationResult priceResult = calculatePrice(calcReq);
 
@@ -733,8 +723,10 @@ public class CustomerApiService {
             mkm = maKhuyenMaiRepository.findByCodeKhuyenMaiIgnoreCase(req.getCodeKhuyenMai().trim()).orElse(null);
         }
 
-        BangGiaDichVu bg = req.getBangGiaId() != null ? bangGiaDichVuRepository.findById(req.getBangGiaId()).orElse(null) : null;
-        GoiDichVu goi = req.getGoiDichVuId() != null ? goiDichVuRepository.findById(req.getGoiDichVuId()).orElse(null) : null;
+        // Bảng giá snapshot tại thời điểm đặt
+        BangGiaDichVu bg = req.getBangGiaId() != null
+                ? bangGiaDichVuRepository.findById(req.getBangGiaId()).orElse(null)
+                : null;
 
         LocalTime gioKetThuc = req.getGioKetThuc();
         if (gioKetThuc == null && dichVu.getThoiGianThucHien() != null) {
@@ -750,9 +742,6 @@ public class CustomerApiService {
                 .maDonDat(maDonDat)
                 .khachHang(khachHang)
                 .diaChi(diaChi)
-                .dichVu(dichVu)
-                .bangGia(bg)
-                .goiDichVu(goi)
                 .khuyenMai(mkm)
                 .loaiHinhDat(priceResult.getLoaiHinhDat())
                 .ngayThucHien(req.getNgayThucHien())
@@ -767,6 +756,19 @@ public class CustomerApiService {
                 .ghiChu(req.getGhiChu())
                 .build();
         donDat = donDatDichVuRepository.save(donDat);
+
+        // Tạo ChiTietDonDat cho dịch vụ được đặt
+        ChiTietDonDat chiTiet = ChiTietDonDat.builder()
+                .donDat(donDat)
+                .dichVu(dichVu)
+                .bangGia(bg)
+                .soLuong(1)
+                .donGia(priceResult.getChiPhiGoc())
+                .thanhTien(priceResult.getChiPhiGoc())
+                .ngayThucHienTrongTuan(req.getNgayThucHienTrongTuan())
+                .ghiChu(req.getGhiChu())
+                .build();
+        chiTietDonDatRepository.save(chiTiet);
 
         // Lưu lịch sử trạng thái đơn
         LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()
@@ -851,7 +853,10 @@ public class CustomerApiService {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("id", d.getId());
             item.put("maDonDat", d.getMaDonDat());
-            item.put("tenDichVu", d.getDichVu().getTenDichVu());
+            // Lấy tên dịch vụ đầu tiên trong chiTietList
+            String tenDichVu = d.getChiTietList() != null && !d.getChiTietList().isEmpty()
+                    ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+            item.put("tenDichVu", tenDichVu);
             item.put("ngayThucHien", d.getNgayThucHien());
             item.put("gioBatDau", d.getGioBatDau());
             item.put("gioKetThuc", d.getGioKetThuc());
@@ -880,7 +885,21 @@ public class CustomerApiService {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("id", d.getId());
         result.put("maDonDat", d.getMaDonDat());
-        result.put("tenDichVu", d.getDichVu().getTenDichVu());
+        // Lấy danh sách dịch vụ trong đơn
+        String tenDichVu = d.getChiTietList() != null && !d.getChiTietList().isEmpty()
+                ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+        result.put("tenDichVu", tenDichVu);
+        result.put("danhSachDichVu", d.getChiTietList().stream()
+                .map(ct -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("dichVuId", ct.getDichVu().getId());
+                    m.put("tenDichVu", ct.getDichVu().getTenDichVu());
+                    m.put("soLuong", ct.getSoLuong());
+                    m.put("donGia", ct.getDonGia());
+                    m.put("thanhTien", ct.getThanhTien());
+                    m.put("ngayThucHienTrongTuan", ct.getNgayThucHienTrongTuan());
+                    return m;
+                }).toList());
         result.put("loaiHinhDat", d.getLoaiHinhDat());
         result.put("ngayThucHien", d.getNgayThucHien());
         result.put("gioBatDau", d.getGioBatDau());
@@ -1089,7 +1108,13 @@ public class CustomerApiService {
     }
 
     public List<DanhGia> getReviewsByService(Integer dichVuId) {
-        return danhGiaRepository.findByDonDat_DichVu_Id(dichVuId);
+        // Lọc đánh giá theo dịch vụ qua chiTietDonDat
+        return danhGiaRepository.findAll().stream()
+                .filter(dg -> dg.getDonDat() != null
+                        && dg.getDonDat().getChiTietList() != null
+                        && dg.getDonDat().getChiTietList().stream()
+                            .anyMatch(ct -> dichVuId.equals(ct.getDichVu().getId())))
+                .toList();
     }
 
     // ==========================================

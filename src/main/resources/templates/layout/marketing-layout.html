@@ -75,7 +75,10 @@
       <div class="sidebar-nav-group-label">Chiến dịch & Khuyến mãi</div>
       <div class="sidebar-nav-items">
         <a href="/marketing/khuyen-mai" class="sidebar-item" th:classappend="${activeMenu == 'khuyen-mai' ? 'active' : ''}">
-          <i class="ti ti-discount-2 item-icon"></i><span class="item-label">Khuyến mãi & Coupon</span>
+          <i class="ti ti-discount-2 item-icon"></i><span class="item-label">Khuyến mãi &amp; Coupon</span>
+        </a>
+        <a href="/marketing/lich-su-khuyen-mai" class="sidebar-item" th:classappend="${activeMenu == 'lich-su-khuyen-mai' ? 'active' : ''}">
+          <i class="ti ti-history item-icon"></i><span class="item-label">Lịch sử sử dụng KM</span>
         </a>
         <a href="/marketing/phan-tich" class="sidebar-item" th:classappend="${activeMenu == 'phan-tich' ? 'active' : ''}">
           <i class="ti ti-chart-line item-icon"></i><span class="item-label">Phân tích hiệu quả</span>

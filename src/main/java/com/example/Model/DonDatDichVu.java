@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity 
 @Table(name = "DonDatDichVu")
@@ -30,22 +32,17 @@ public class DonDatDichVu {
     @ManyToOne(fetch = FetchType.LAZY) 
     @JoinColumn(name = "nhanVienTiepNhanId") 
     private NhanVien nhanVienTiepNhan;
-
-    @ManyToOne(fetch = FetchType.LAZY) 
-    @JoinColumn(name = "dichVuId", nullable = false) 
-    private DichVu dichVu;
-
-    @ManyToOne(fetch = FetchType.LAZY) 
-    @JoinColumn(name = "bangGiaId") 
-    private BangGiaDichVu bangGia;
-
-    @ManyToOne(fetch = FetchType.LAZY) 
-    @JoinColumn(name = "goiDichVuId") 
-    private GoiDichVu goiDichVu;
     
     @ManyToOne(fetch = FetchType.LAZY) 
     @JoinColumn(name = "khuyenMaiId") 
     private MaKhuyenMai khuyenMai;
+
+    // Danh sách dịch vụ trong đơn (thay cho dichVu, bangGia, goiDichVu cũ)
+    @OneToMany(mappedBy = "donDat", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<ChiTietDonDat> chiTietList = new ArrayList<>();
     
     @Column(name = "LoaiHinhDat", nullable = false, length = 20) 
     private String loaiHinhDat;
@@ -79,6 +76,12 @@ public class DonDatDichVu {
 
     @Column(name = "GhiChu", columnDefinition = "TEXT") 
     private String ghiChu;
+
+    // Thêm một dịch vụ vào đơn và gắn quan hệ hai chiều
+    public void addChiTiet(ChiTietDonDat ct) {
+        ct.setDonDat(this);
+        chiTietList.add(ct);
+    }
     
     @PrePersist 
     protected void onCreate() { 

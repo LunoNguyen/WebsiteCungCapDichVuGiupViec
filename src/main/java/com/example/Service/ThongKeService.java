@@ -154,9 +154,13 @@ public class ThongKeService {
     public Map<String, Long> getTopDichVu() {
         Map<String, Long> map = new LinkedHashMap<>();
         for (DonDatDichVu d : donDatDichVuRepository.findAll()) {
-            if (d.getDichVu() != null) {
-                String ten = d.getDichVu().getTenDichVu();
-                map.put(ten, map.getOrDefault(ten, 0L) + 1);
+            if (d.getChiTietList() != null) {
+                for (ChiTietDonDat ct : d.getChiTietList()) {
+                    if (ct.getDichVu() != null) {
+                        String ten = ct.getDichVu().getTenDichVu();
+                        map.put(ten, map.getOrDefault(ten, 0L) + (ct.getSoLuong() != null ? ct.getSoLuong() : 1));
+                    }
+                }
             }
         }
         return map;
@@ -538,10 +542,14 @@ public List<Integer> getDanhSachNamCoDuLieu() {
 
         // Gom nhóm điểm theo Tên Dịch Vụ
         for (DanhGia dg : list) {
-            if (dg.getDonDat() != null && dg.getDonDat().getDichVu() != null) {
-                String tenDV = dg.getDonDat().getDichVu().getTenDichVu();
-                int diem = dg.getDiemChatLuong() != null ? dg.getDiemChatLuong() : 5;
-                pointsPerService.computeIfAbsent(tenDV, k -> new ArrayList<>()).add(diem);
+            if (dg.getDonDat() != null && dg.getDonDat().getChiTietList() != null) {
+                for (ChiTietDonDat ct : dg.getDonDat().getChiTietList()) {
+                    if (ct.getDichVu() != null) {
+                        String tenDV = ct.getDichVu().getTenDichVu();
+                        int diem = dg.getDiemChatLuong() != null ? dg.getDiemChatLuong() : 5;
+                        pointsPerService.computeIfAbsent(tenDV, k -> new ArrayList<>()).add(diem);
+                    }
+                }
             }
         }
 
@@ -675,9 +683,13 @@ public BigDecimal getDoanhThuTrieuTheoThangNam(Integer thang, int nam) {
 public Map<String, Long> getTopDichVuTheoThangNam(Integer thang, int nam) {
     Map<String, Long> map = new LinkedHashMap<>();
     for (DonDatDichVu d : getDonHangTheoThangNam(thang, nam)) {
-        if (d.getDichVu() != null) {
-            String ten = d.getDichVu().getTenDichVu();
-            map.put(ten, map.getOrDefault(ten, 0L) + 1);
+        if (d.getChiTietList() != null) {
+            for (ChiTietDonDat ct : d.getChiTietList()) {
+                if (ct.getDichVu() != null) {
+                    String ten = ct.getDichVu().getTenDichVu();
+                    map.put(ten, map.getOrDefault(ten, 0L) + (ct.getSoLuong() != null ? ct.getSoLuong() : 1));
+                }
+            }
         }
     }
     return map;

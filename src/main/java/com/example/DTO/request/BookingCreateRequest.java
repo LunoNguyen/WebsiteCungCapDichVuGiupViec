@@ -1,10 +1,14 @@
 package com.example.DTO.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class BookingCreateRequest {
@@ -18,12 +22,17 @@ public class BookingCreateRequest {
     private String diaChiChiTiet;
     private Integer khuVucId;
 
-    @NotNull(message = "dichVuId không được để trống")
+    // Danh sách dịch vụ trong đơn (đặt nhiều dịch vụ)
+    @Valid
+    private List<ChiTietDonDatRequest> chiTiet;
+
+    // Lối tắt cho đặt 1 dịch vụ (client cũ vẫn gửi trường này)
     private Integer dichVuId;
 
-    private String loaiHinhDat; // TheoLan | GoiThang (mặc định TheoLan)
     private Integer bangGiaId;
-    private Integer goiDichVuId;
+    private String ngayThucHienTrongTuan;
+
+    private String loaiHinhDat; // TheoLan | GoiThang (mặc định TheoLan)
 
     @NotNull(message = "Ngày thực hiện không được để trống")
     private LocalDate ngayThucHien;
@@ -35,4 +44,18 @@ public class BookingCreateRequest {
     private String yeuCauDacBiet;
     private String codeKhuyenMai;
     private String ghiChu;
+
+    /** Gộp chiTiet và dichVuId thành một danh sách duy nhất cho service dùng */
+    @JsonIgnore
+    public List<ChiTietDonDatRequest> getDanhSachDichVu() {
+        if (chiTiet != null && !chiTiet.isEmpty()) return chiTiet;
+        List<ChiTietDonDatRequest> ds = new ArrayList<>();
+        if (dichVuId != null) {
+            ChiTietDonDatRequest ct = new ChiTietDonDatRequest();
+            ct.setDichVuId(dichVuId);
+            ct.setSoLuong(1);
+            ds.add(ct);
+        }
+        return ds;
+    }
 }

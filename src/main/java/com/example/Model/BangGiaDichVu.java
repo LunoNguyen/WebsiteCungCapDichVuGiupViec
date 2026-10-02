@@ -5,7 +5,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Bang 17: BangGiaDichVu */
+/** Bang 17: BangGiaDichVu (lịch sử cập nhật giá) */
 @Entity @Table(name = "BangGiaDichVu")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class BangGiaDichVu {
@@ -30,8 +30,16 @@ public class BangGiaDichVu {
     @Column(name = "DonViTinh", nullable = false, length = 30)
     private String donViTinh;
 
+    // Giá mới sau khi cập nhật
     @Column(name = "DonGia", nullable = false, precision = 12, scale = 0)
     private BigDecimal donGia;
+
+    // --- Cột mới ---
+    @Column(name = "GiaCu", precision = 12, scale = 0)
+    private BigDecimal giaCu; // null nếu là bản ghi khởi tạo
+
+    @Column(name = "NguoiCapNhat", length = 100)
+    private String nguoiCapNhat;
 
     @Column(name = "NgayApDung", nullable = false)
     private LocalDate ngayApDung;

@@ -128,23 +128,47 @@
               <div style="font-weight:700;margin-bottom:1rem">Đơn đặt dịch vụ gần đây từ hệ thống</div>
               <div class="table-container">
                 <table class="table">
-                  <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>Thành tiền</th><th>Trạng thái</th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>Mã đơn</th>
+                      <th>Khách hàng</th>
+                      <th>Dịch vụ</th>
+                      <th>Ngày thực hiện</th>
+                      <th>Bắt đầu</th>
+                      <th>Kết thúc</th>
+                      <th>Mã KM</th>
+                      <th>Số tiền giảm</th>
+                      <th>Số tiền gốc</th>
+                      <th>Thành tiền</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     <tr th:each="order : ${recentOrders}">
                       <td style="font-weight:700;color:var(--primary-light)" th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
                       <td th:text="${order.khachHang != null ? order.khachHang.hoTen : 'Khách hàng'}">Nguyễn Văn A</td>
-                      <td th:text="${order.dichVu != null ? order.dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
+                      <td th:text="${order.chiTietList != null and !order.chiTietList.isEmpty() ? order.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
+                      <td th:text="${order.ngayThucHien != null ? #temporals.format(order.ngayThucHien, 'dd/MM/yyyy') : '---'}">20/09/2026</td>
+                      <td th:text="${order.gioBatDau != null ? #temporals.format(order.gioBatDau, 'HH:mm') : '---'}">08:00</td>
+                      <td th:text="${order.gioKetThuc != null ? #temporals.format(order.gioKetThuc, 'HH:mm') : '---'}">10:00</td>
+                      <td>
+                        <span th:if="${order.khuyenMai != null}" class="badge badge-warning" style="font-size:0.75rem;font-weight:700" th:text="${order.khuyenMai.codeKhuyenMai}">KM50K</span>
+                        <span th:if="${order.khuyenMai == null}" style="color:var(--text-muted);font-size:0.8rem">---</span>
+                      </td>
+                      <td style="color:var(--danger);font-size:0.85rem" th:text="${order.soTienGiam != null and order.soTienGiam > 0 ? ('-' + #numbers.formatDecimal(order.soTienGiam, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">0đ</td>
+                      <td style="color:var(--text-secondary);font-size:0.85rem" th:text="${order.chiPhiGoc != null ? (#numbers.formatDecimal(order.chiPhiGoc, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
                       <td style="font-weight:700;color:var(--accent)" th:text="${order.thanhTien != null ? (#numbers.formatDecimal(order.thanhTien, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
                       <td>
                         <span th:if="${order.trangThai == 'HoanThanh'}" class="badge badge-success">Hoàn thành</span>
                         <span th:if="${order.trangThai == 'DangThucHien'}" class="badge badge-primary">Đang thực hiện</span>
+                        <span th:if="${order.trangThai == 'DaXacNhan'}" class="badge badge-info">Đã xác nhận</span>
                         <span th:if="${order.trangThai == 'ChoDuyet'}" class="badge badge-warning">Chờ duyệt</span>
                         <span th:if="${order.trangThai == 'DaHuy'}" class="badge badge-danger">Đã hủy</span>
-                        <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy'}" class="badge badge-info" th:text="${order.trangThai}">Khác</span>
+                        <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'DaXacNhan' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy'}" class="badge badge-secondary" th:text="${order.trangThai}">Khác</span>
                       </td>
                     </tr>
                     <tr th:if="${recentOrders == null or #lists.isEmpty(recentOrders)}">
-                      <td colspan="5" style="text-align:center;color:var(--text-muted)">Chưa có đơn đặt dịch vụ nào</td>
+                      <td colspan="11" style="text-align:center;color:var(--text-muted)">Chưa có đơn đặt dịch vụ nào</td>
                     </tr>
                   </tbody>
                 </table>
