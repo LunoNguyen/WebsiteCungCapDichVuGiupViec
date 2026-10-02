@@ -113,6 +113,8 @@
                 </td>
                 <td>
                   <div class="table-actions" style="justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline btn-sm" title="Xem ảnh, video bằng chứng khách hàng gửi kèm"
+                            th:attr="data-files=@{/giam-doc/khieu-nai/{id}/tai-lieu(id=${kn.id})}"><i class="ti ti-paperclip"></i></button>
                     <button class="btn btn-primary btn-sm" th:attr="data-panel-open='complaintDetail_' + ${kn.id}">Xem xét</button>
                   </div>
                 </td>

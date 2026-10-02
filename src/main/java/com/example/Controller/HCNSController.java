@@ -43,6 +43,7 @@ public class HCNSController {
     private final ChucVuRepository chucVuRepository;
     private final KhachHangRepository khachHangRepository;
     private final NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository;
+    private final com.example.Service.MinioService minioService;
 
     public HCNSController(
             ThongKeService thongKeService,
@@ -55,7 +56,8 @@ public class HCNSController {
             PhongBanRepository phongBanRepository,
             ChucVuRepository chucVuRepository,
             KhachHangRepository khachHangRepository,
-            NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository) {
+            NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository,
+            com.example.Service.MinioService minioService) {
         this.thongKeService = thongKeService;
         this.nhanVienRepository = nhanVienRepository;
         this.congTacVienRepository = congTacVienRepository;
@@ -67,6 +69,7 @@ public class HCNSController {
         this.chucVuRepository = chucVuRepository;
         this.khachHangRepository = khachHangRepository;
         this.nhatKyTaiKhoanRepository = nhatKyTaiKhoanRepository;
+        this.minioService = minioService;
     }
 
     @GetMapping("/dashboard")
@@ -524,7 +527,39 @@ public class HCNSController {
     public String danhMucDichVu(Model model) {
         model.addAttribute("loaiDichVus", loaiDichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "thuTuHienThi").and(Sort.by(Sort.Direction.ASC, "id"))));
         model.addAttribute("dichVus", dichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
+        // id danh mục -> đường dẫn ảnh (/files/<object key>) lấy từ MinIO; danh mục chưa có ảnh thì không có trong map
+        java.util.Map<Integer, String> anhDanhMuc = new java.util.HashMap<>();
+        for (LoaiDichVu ldv : loaiDichVuRepository.findAll()) {
+            String url = minioService.getViewUrl(ldv.getHinhAnh());
+            if (url != null) {
+                anhDanhMuc.put(ldv.getId(), url);
+            }
+        }
+        model.addAttribute("anhDanhMuc", anhDanhMuc);
         return "hcns/danh-muc-dich-vu";
+    }
+
+        /**
+     * Tải ảnh danh mục lên MinIO (thư mục công khai) và gán object key vào cột HinhAnh.
+     * Ảnh cũ trên MinIO được xóa sau khi ảnh mới tải lên thành công.
+     *
+     * @return null nếu thành công hoặc không chọn ảnh; ngược lại là thông báo lỗi
+     */
+    private String luuAnhDanhMuc(LoaiDichVu ldv, org.springframework.web.multipart.MultipartFile hinhAnhFile) {
+        if (hinhAnhFile == null || hinhAnhFile.isEmpty()) {
+            return null;
+        }
+        try {
+            String anhCu = ldv.getHinhAnh();
+            String key = minioService.uploadImage(hinhAnhFile, com.example.Service.MinioService.Folder.LOAI_DICH_VU);
+            ldv.setHinhAnh(key);
+            if (anhCu != null && !anhCu.isBlank() && !anhCu.startsWith("/") && !anhCu.startsWith("http")) {
+                minioService.deleteFile(anhCu);
+            }
+            return null;
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 
     @PostMapping("/danh-muc-dich-vu/them")
@@ -533,6 +568,7 @@ public class HCNSController {
             @RequestParam(required = false) String moTa,
             @RequestParam(required = false, defaultValue = "1") Integer thuTuHienThi,
             @RequestParam(required = false, defaultValue = "HienThi") String trangThai,
+            @RequestParam(value = "hinhAnhFile", required = false) org.springframework.web.multipart.MultipartFile hinhAnhFile,
             RedirectAttributes redirectAttributes) {
         try {
             if (tenLoaiDichVu == null || tenLoaiDichVu.trim().isEmpty()) {
@@ -547,7 +583,12 @@ public class HCNSController {
             ldv.setThuTuHienThi(thuTuHienThi != null ? thuTuHienThi : 1);
             ldv.setTrangThai(trangThai);
 
+            String loiAnh = luuAnhDanhMuc(ldv, hinhAnhFile);
             loaiDichVuRepository.save(ldv);
+            if (loiAnh != null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Đã thêm danh mục nhưng chưa lưu được ảnh: " + loiAnh);
+                return "redirect:/hcns/danh-muc-dich-vu";
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Thêm danh mục dịch vụ thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
@@ -562,6 +603,7 @@ public class HCNSController {
             @RequestParam(required = false) String moTa,
             @RequestParam(required = false, defaultValue = "1") Integer thuTuHienThi,
             @RequestParam(required = false, defaultValue = "HienThi") String trangThai,
+            @RequestParam(value = "hinhAnhFile", required = false) org.springframework.web.multipart.MultipartFile hinhAnhFile,
             RedirectAttributes redirectAttributes) {
         try {
             var ldvOpt = loaiDichVuRepository.findById(id);
@@ -576,7 +618,12 @@ public class HCNSController {
             ldv.setThuTuHienThi(thuTuHienThi);
             ldv.setTrangThai(trangThai);
 
+            String loiAnh = luuAnhDanhMuc(ldv, hinhAnhFile);
             loaiDichVuRepository.save(ldv);
+            if (loiAnh != null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Đã cập nhật danh mục nhưng chưa lưu được ảnh: " + loiAnh);
+                return "redirect:/hcns/danh-muc-dich-vu";
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật danh mục thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());

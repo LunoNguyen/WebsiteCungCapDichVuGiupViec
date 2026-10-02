@@ -1,10 +1,5 @@
 package com.example.Config;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,20 +10,23 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Redis Cache Configuration
- * - Cache TTL mặc định: 10 phút
- * - Cache riêng cho từng domain với TTL tuỳ chỉnh
- * - Serialization: JSON (không dùng Java native)
+ * Cấu hình Redis làm bộ nhớ đệm (cache) dữ liệu.
+ *
+ * - Key lưu dạng chuỗi dễ đọc: neatify:<tên cache>::<khóa>  (xem bằng redis-cli: KEYS neatify:*)
+ * - Value lưu bằng Java serialization: giữ nguyên kiểu dữ liệu (Long, BigDecimal, LocalDate,
+ *   Map có khóa số...) nên dữ liệu đọc lại từ cache giống hệt dữ liệu gốc.
+ *   Vì vậy mọi đối tượng đưa vào cache phải implements Serializable.
+ * - Mỗi vùng cache có thời gian sống (TTL) riêng, chỉnh trong application.properties.
+ * - Redis tắt hoặc lỗi: ghi log cảnh báo, tạm bỏ qua cache và đọc thẳng từ MySQL (CacheManagerAnToan).
  */
 @Configuration
 @EnableCaching
@@ -36,85 +34,63 @@ public class RedisConfig {
 
     private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
 
-    @Value("${spring.data.redis.host:localhost}")
-    private String redisHost;
+    @Value("${app.cache.key-prefix:neatify:}")
+    private String keyPrefix;
 
-    @Value("${spring.data.redis.port:6379}")
-    private int redisPort;
+    @Value("${app.cache.ttl.mac-dinh:10}")
+    private long ttlMacDinh;
 
-    // ── ObjectMapper với Java 8 Time support ──────────────────────────────
-    @Bean(name = "redisObjectMapper")
-    public ObjectMapper redisObjectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        // Lưu type info để deserialize đúng class
-        mapper.activateDefaultTyping(
-                LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY
-        );
-        return mapper;
-    }
+    @Value("${app.cache.ttl.danh-muc-dich-vu:60}")
+    private long ttlDanhMuc;
 
-    // ── Redis Serializer ──────────────────────────────────────────────────
-    @Bean(name = "redisSerializer")
-    public GenericJackson2JsonRedisSerializer redisSerializer(ObjectMapper redisObjectMapper) {
-        return new GenericJackson2JsonRedisSerializer(redisObjectMapper);
-    }
+    @Value("${app.cache.ttl.khu-vuc:360}")
+    private long ttlKhuVuc;
 
-    // ── RedisTemplate ─────────────────────────────────────────────────────
+    @Value("${app.cache.ttl.khuyen-mai:10}")
+    private long ttlKhuyenMai;
+
+    @Value("${app.cache.ttl.danh-gia:10}")
+    private long ttlDanhGia;
+
+    @Value("${app.cache.ttl.thong-ke:5}")
+    private long ttlThongKe;
+
+    /** Số giây bỏ qua Redis sau khi gặp lỗi kết nối, trước khi thử lại. */
+    @Value("${app.cache.tam-ngung-khi-loi:30}")
+    private long tamNgungKhiLoi;
+
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(
-            RedisConnectionFactory connectionFactory,
-            GenericJackson2JsonRedisSerializer redisSerializer) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
+    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        // Dùng class loader của ứng dụng để không lỗi ClassCastException khi DevTools restart
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-        StringRedisSerializer keySerializer = new StringRedisSerializer();
-
-        template.setKeySerializer(keySerializer);
-        template.setValueSerializer(redisSerializer);
-        template.setHashKeySerializer(keySerializer);
-        template.setHashValueSerializer(redisSerializer);
-        template.afterPropertiesSet();
-
-        log.info("Redis: RedisTemplate đã cấu hình - {}:{}", redisHost, redisPort);
-        return template;
-    }
-
-    // ── CacheManager với TTL theo từng cache ─────────────────────────────
-    @Bean
-    public CacheManager cacheManager(
-            RedisConnectionFactory connectionFactory,
-            GenericJackson2JsonRedisSerializer redisSerializer) {
-
-        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10))          // TTL mặc định: 10 phút
+        RedisCacheConfiguration macDinh = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(ttlMacDinh))
                 .disableCachingNullValues()
-                .serializeKeysWith(
-                        RedisSerializationContext.SerializationPair
-                                .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(
-                        RedisSerializationContext.SerializationPair
-                                .fromSerializer(redisSerializer));
+                .prefixCacheNameWith(keyPrefix)
+                .serializeKeysWith(SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(SerializationPair.fromSerializer(
+                        new JdkSerializationRedisSerializer(classLoader)));
 
-        // TTL tuỳ chỉnh theo từng cache name
-        Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
-        cacheConfigs.put("khachHang",    defaultConfig.entryTtl(Duration.ofMinutes(15)));
-        cacheConfigs.put("donDatDichVu", defaultConfig.entryTtl(Duration.ofMinutes(5)));
-        cacheConfigs.put("dichVu",       defaultConfig.entryTtl(Duration.ofHours(1)));
-        cacheConfigs.put("congTacVien",  defaultConfig.entryTtl(Duration.ofMinutes(10)));
-        cacheConfigs.put("danhGia",      defaultConfig.entryTtl(Duration.ofMinutes(10)));
-        cacheConfigs.put("thongKe",      defaultConfig.entryTtl(Duration.ofMinutes(5)));
-        cacheConfigs.put("lichLamViec",  defaultConfig.entryTtl(Duration.ofMinutes(3)));
+        Map<String, RedisCacheConfiguration> cauHinh = new LinkedHashMap<>();
+        cauHinh.put(CacheNames.DANH_MUC_DICH_VU, macDinh.entryTtl(Duration.ofMinutes(ttlDanhMuc)));
+        cauHinh.put(CacheNames.DICH_VU, macDinh.entryTtl(Duration.ofMinutes(ttlDanhMuc)));
+        cauHinh.put(CacheNames.LOAI_DICH_VU, macDinh.entryTtl(Duration.ofMinutes(ttlDanhMuc)));
+        cauHinh.put(CacheNames.KHU_VUC, macDinh.entryTtl(Duration.ofMinutes(ttlKhuVuc)));
+        cauHinh.put(CacheNames.KHUYEN_MAI, macDinh.entryTtl(Duration.ofMinutes(ttlKhuyenMai)));
+        cauHinh.put(CacheNames.DANH_GIA, macDinh.entryTtl(Duration.ofMinutes(ttlDanhGia)));
+        cauHinh.put(CacheNames.THONG_KE, macDinh.entryTtl(Duration.ofMinutes(ttlThongKe)));
 
-        log.info("Redis: CacheManager đã cấu hình với {} caches tuỳ chỉnh", cacheConfigs.size());
+        log.info("Redis cache: {} vùng cache, tiền tố key '{}'", cauHinh.size(), keyPrefix);
 
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(defaultConfig)
-                .withInitialCacheConfigurations(cacheConfigs)
-                .transactionAware()
+        RedisCacheManager redisCacheManager = RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(macDinh)
+                .withInitialCacheConfigurations(cauHinh)
                 .build();
+        redisCacheManager.afterPropertiesSet();
+
+        // Bọc lại để Redis tắt/lỗi không làm chậm hay làm hỏng trang (xem CacheManagerAnToan)
+        return new CacheManagerAnToan(redisCacheManager, tamNgungKhiLoi);
     }
+
 }

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Trở thành đối tác', 'Đăng ký làm cộng tác viên Neatify: gửi hồ sơ, CCCD và chứng chỉ để được xét duyệt.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('doi-tac')}"></header>
+
+<main>
+  <section class="page-hero with-photo">
+    <div class="wrap">
+      <div>
+        <h1>Nhận việc gần nhà, chủ động thời gian cùng Neatify</h1>
+        <p>Gửi hồ sơ ngay trên trang này. Phòng Hành chính Nhân sự xét duyệt và báo kết quả trong 1 đến 3 ngày làm việc.</p>
+        <div class="hero-cta">
+          <a class="btn btn-sun" href="#dang-ky">Điền hồ sơ ứng tuyển</a>
+          <a class="btn btn-line" href="#tra-cuu">Tra cứu kết quả</a>
+        </div>
+      </div>
+      <div class="leaf"><img src="/images/services/ve-sinh-may-lanh.png" alt="Cộng tác viên Neatify vệ sinh máy lạnh"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Từ hồ sơ đến buổi làm đầu tiên</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Gửi hồ sơ</h3><p>Điền thông tin, chọn dịch vụ muốn làm, đính kèm ảnh chân dung, CCCD và chứng chỉ nếu có.</p></div>
+        <div class="step"><h3>Xét duyệt</h3><p>Phòng Hành chính Nhân sự kiểm tra hồ sơ. Hồ sơ đạt sẽ được mời phỏng vấn.</p></div>
+        <div class="step"><h3>Kích hoạt tài khoản</h3><p>Sau khi được duyệt, bạn đăng nhập ứng dụng cộng tác viên bằng số điện thoại đã đăng ký.</p></div>
+        <div class="step"><h3>Nhận việc</h3><p>Xem đơn được phân công, xác nhận hoặc từ chối, theo dõi thời gian biểu và báo cáo kết quả.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BIỂU MẪU ĐĂNG KÝ (UC-KH02) ===== -->
+  <section class="section section-foam" id="dang-ky">
+    <div class="wrap two-col">
+      <form class="form-card" id="ctvForm" novalidate>
+        <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:1.25rem">Hồ sơ ứng tuyển cộng tác viên</h2>
+
+        <div class="alert alert-error" id="ctvError" role="alert"></div>
+        <div class="alert alert-ok" id="ctvOk" role="status"></div>
+
+        <fieldset>
+          <legend>Thông tin cá nhân</legend>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="hoTen">Họ và tên</label>
+              <input type="text" id="hoTen" name="hoTen" autocomplete="name" required>
+              <div class="error">Nhập họ và tên.</div>
+            </div>
+            <div class="field">
+              <label for="soDienThoai">Số điện thoại</label>
+              <input type="tel" id="soDienThoai" name="soDienThoai" inputmode="numeric" autocomplete="tel" required pattern="0[0-9]{9}">
+              <div class="error">Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.</div>
+            </div>
+            <div class="field">
+              <label for="email">Email (không bắt buộc)</label>
+              <input type="email" id="email" name="email" autocomplete="email">
+              <div class="error">Email chưa đúng định dạng.</div>
+            </div>
+            <div class="field">
+              <label for="ngaySinh">Ngày sinh</label>
+              <input type="date" id="ngaySinh" name="ngaySinh" required>
+              <div class="error">Cộng tác viên phải từ đủ 18 tuổi.</div>
+            </div>
+            <div class="field">
+              <label for="gioiTinh">Giới tính</label>
+              <select id="gioiTinh" name="gioiTinh">
+                <option value="Nu">Nữ</option>
+                <option value="Nam">Nam</option>
+                <option value="Khac">Khác</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="noiCuTru">Nơi cư trú</label>
+              <input type="text" id="noiCuTru" name="noiCuTru" autocomplete="street-address" required>
+              <div class="error">Nhập nơi cư trú hiện tại.</div>
+            </div>
+            <div class="field full">
+              <label for="matKhau">Mật khẩu đăng nhập ứng dụng</label>
+              <input type="password" id="matKhau" name="matKhau" autocomplete="new-password" required minlength="6">
+              <div class="hint">Ít nhất 6 ký tự. Dùng cùng số điện thoại để đăng nhập sau khi hồ sơ được duyệt.</div>
+              <div class="error">Mật khẩu cần ít nhất 6 ký tự.</div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Dịch vụ muốn tham gia</legend>
+          <div class="field" id="dichVuField">
+            <div class="checks">
+              <label class="check" th:each="dm : ${danhMucs}">
+                <input type="checkbox" name="loaiDichVu" th:value="${dm.id}">
+                <span th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</span>
+              </label>
+            </div>
+            <div class="error">Chọn ít nhất một nhóm dịch vụ.</div>
+          </div>
+        </fieldset>
+
+        <fieldset th:if="${khuVucList != null and !khuVucList.isEmpty()}">
+          <legend>Khu vực muốn nhận việc</legend>
+          <div class="checks">
+            <label class="check" th:each="kv : ${khuVucList}">
+              <input type="checkbox" name="khuVuc" th:value="${kv.key}">
+              <span th:text="${kv.value}">Quận 1, TP. Hồ Chí Minh</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Tài liệu đính kèm</legend>
+          <div class="field" id="hoSoField">
+            <div class="uploads">
+              <label class="upload" data-upload="AnhChanDung" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
+                <span><svg class="ic"><use href="#i-upload"/></svg><b>Ảnh chân dung</b>jpg, png</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp">
+                <span class="state"></span>
+              </label>
+              <label class="upload" data-upload="CCCD_Mat_Truoc" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
+                <span><svg class="ic"><use href="#i-upload"/></svg><b>CCCD mặt trước</b>jpg, png</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp">
+                <span class="state"></span>
+              </label>
+              <label class="upload" data-upload="CCCD_Mat_Sau" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
+                <span><svg class="ic"><use href="#i-upload"/></svg><b>CCCD mặt sau</b>jpg, png</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp">
+                <span class="state"></span>
+              </label>
+              <label class="upload" data-upload="ChungChi" data-endpoint="/api/storage/upload/ctv-chung-chi">
+                <span><svg class="ic"><use href="#i-upload"/></svg><b>Chứng chỉ, bằng cấp</b>không bắt buộc, jpg, png, pdf</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+                <span class="state"></span>
+              </label>
+            </div>
+            <div class="hint">Mỗi file tối đa 20 MB. File được tải lên ngay khi bạn chọn.</div>
+            <div class="error">Cần đủ ảnh chân dung và hai mặt CCCD.</div>
+          </div>
+          <div class="field" style="margin-top:1rem">
+            <label for="tenChungChi">Tên chứng chỉ (nếu có đính kèm)</label>
+            <input type="text" id="tenChungChi" name="tenChungChi" placeholder="Ví dụ: Chứng chỉ nghiệp vụ buồng phòng">
+          </div>
+        </fieldset>
+
+        <button class="btn btn-teal" type="submit" id="ctvSubmit">Gửi hồ sơ</button>
+      </form>
+
+      <aside>
+        <div class="side-note">
+          <h3>Hồ sơ cần có</h3>
+          <ul>
+            <li><svg class="ic"><use href="#i-check"/></svg>Từ đủ 18 tuổi</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Ảnh chân dung rõ mặt</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Ảnh hai mặt căn cước công dân</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Chứng chỉ, bằng cấp liên quan (nếu có)</li>
+          </ul>
+        </div>
+
+        <div class="side-note" id="tra-cuu" style="margin-top:1.25rem">
+          <h3>Tra cứu kết quả xét duyệt</h3>
+          <form id="traCuuForm" novalidate>
+            <div class="field">
+              <label for="traCuuSdt">Số điện thoại đã đăng ký</label>
+              <input type="tel" id="traCuuSdt" inputmode="numeric" required>
+            </div>
+            <button class="btn btn-line btn-sm" type="submit" style="margin-top:0.75rem">Tra cứu</button>
+          </form>
+          <p id="traCuuKetQua" style="margin-top:0.75rem;font-weight:600" role="status"></p>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+<script src="/js/dang-ky-ctv.js"></script>
+</body>
+</html>

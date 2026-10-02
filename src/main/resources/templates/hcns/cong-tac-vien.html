@@ -84,6 +84,9 @@
               </div>
             </div>
             <div style="padding:0.875rem 1.25rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
+              <!-- Xem ảnh chân dung, CCCD, chứng chỉ ứng viên đã tải lên MinIO -->
+              <button type="button" class="btn btn-outline btn-sm" style="flex:1"
+                      th:attr="data-files=@{/hcns/cong-tac-vien/{id}/tai-lieu(id=${ctv.id})}"><i class="ti ti-paperclip"></i> Hồ sơ</button>
               <form th:action="@{/hcns/cong-tac-vien/duyet}" method="post" style="flex:1">
                 <input type="hidden" name="id" th:value="${ctv.id}">
                 <button type="submit" class="btn btn-success btn-sm" style="width:100%"><i class="ti ti-check"></i> Phê duyệt</button>
@@ -169,6 +172,8 @@
                 </td>
                 <td style="text-align:right">
                   <div class="table-actions" style="justify-content:flex-end">
+                    <button type="button" class="btn btn-outline btn-sm" title="Xem hồ sơ, chứng chỉ đã tải lên"
+                            th:attr="data-files=@{/hcns/cong-tac-vien/{id}/tai-lieu(id=${ctv.id})}"><i class="ti ti-paperclip"></i></button>
                     <button class="btn btn-outline btn-sm"
                             th:data-id="${ctv.id}"
                             th:data-hoten="${ctv.hoTen}"

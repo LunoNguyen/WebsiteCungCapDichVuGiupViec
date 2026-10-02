@@ -15,11 +15,11 @@ public interface LichLamViecRepository extends JpaRepository<LichLamViec, Intege
     List<LichLamViec> findByCongTacVien_IdAndNgayLamBetweenOrderByNgayLamAscGioBatDauAsc(Integer congTacVienId, LocalDate from, LocalDate to);
     List<LichLamViec> findByPhanCong_DonDat_Id(Integer donDatId);
 
+    // Dịch vụ của đơn nằm ở ChiTietDonDat (dd.chiTietList), DonDatDichVu không còn cột dichVuId
     @Query("SELECT DISTINCT l FROM LichLamViec l "
          + "JOIN FETCH l.congTacVien ctv "
          + "LEFT JOIN FETCH l.phanCong pc "
          + "LEFT JOIN FETCH pc.donDat dd "
-         + "LEFT JOIN FETCH dd.dichVu dv "
          + "LEFT JOIN FETCH dd.khachHang kh "
          + "LEFT JOIN FETCH dd.diaChi dc "
          + "ORDER BY l.ngayLam ASC, l.gioBatDau ASC")
@@ -29,7 +29,6 @@ public interface LichLamViecRepository extends JpaRepository<LichLamViec, Intege
          + "JOIN FETCH l.congTacVien ctv "
          + "LEFT JOIN FETCH l.phanCong pc "
          + "LEFT JOIN FETCH pc.donDat dd "
-         + "LEFT JOIN FETCH dd.dichVu dv "
          + "LEFT JOIN FETCH dd.khachHang kh "
          + "LEFT JOIN FETCH dd.diaChi dc "
          + "WHERE ctv.id = :ctvId "

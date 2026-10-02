@@ -103,7 +103,11 @@
                   <span class="badge badge-secondary" th:if="${kn.trangThai == 'Moi' or kn.trangThai == 'ChuaXuLy'}">Chưa xử lý</span>
                   <span class="badge badge-success" th:if="${kn.trangThai == 'DaGiaiQuyet'}">Đã giải quyết</span>
                 </td>
-                <td><div class="table-actions"><button class="btn btn-outline btn-sm" data-panel-open="cmpDetail">Chi tiết</button></div></td>
+                <td><div class="table-actions">
+                  <button type="button" class="btn btn-outline btn-sm" title="Xem ảnh, video bằng chứng khách hàng gửi kèm"
+                          th:attr="data-files=@{/cskh/khieu-nai/{id}/tai-lieu(id=${kn.id})}"><i class="ti ti-paperclip"></i></button>
+                  <button class="btn btn-outline btn-sm" data-panel-open="cmpDetail">Chi tiết</button>
+                </div></td>
               </tr>
               <tr th:if="${khieuNais == null or #lists.isEmpty(khieuNais)}">
                 <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có khiếu nại nào</td>

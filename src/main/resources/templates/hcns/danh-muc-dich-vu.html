@@ -28,7 +28,10 @@
         <div th:each="ldv : ${loaiDichVus}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition-base);display:flex;flex-direction:column;justify-content:space-between">
           <div>
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
-              <div style="font-size:1.75rem;color:var(--primary)"><i class="ti ti-category"></i></div>
+              <!-- Ảnh danh mục lấy từ MinIO qua /files/<object key>; chưa có ảnh thì hiện biểu tượng -->
+              <img th:if="${anhDanhMuc[ldv.id] != null}" th:src="${anhDanhMuc[ldv.id]}" th:alt="${ldv.tenLoaiDichVu}"
+                   style="width:72px;height:72px;object-fit:cover;border-radius:12px;border:1px solid var(--border)" loading="lazy">
+              <div th:if="${anhDanhMuc[ldv.id] == null}" style="font-size:1.75rem;color:var(--primary)"><i class="ti ti-category"></i></div>
               <span class="badge badge-success" th:if="${ldv.trangThai == 'HienThi'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Hiển thị</span>
               <span class="badge badge-secondary" th:unless="${ldv.trangThai == 'HienThi'}">Đang ẩn</span>
             </div>
@@ -48,6 +51,7 @@
                       th:data-mota="${ldv.moTa}"
                       th:data-thutu="${ldv.thuTuHienThi}"
                       th:data-trangthai="${ldv.trangThai}"
+                      th:data-hinhanh="${anhDanhMuc[ldv.id]}"
                       onclick="openEditCategoryModal(this)">
                 <i class="ti ti-edit"></i> Sửa
               </button>
@@ -88,7 +92,7 @@
       <h2 class="modal-title"><i class="ti ti-folder-plus"></i> Thêm Danh mục Dịch vụ</h2>
       <button class="modal-close" data-modal-close="addCategoryModal">✕</button>
     </div>
-    <form th:action="@{/hcns/danh-muc-dich-vu/them}" method="post">
+    <form th:action="@{/hcns/danh-muc-dich-vu/them}" method="post" enctype="multipart/form-data">
       <div style="padding:1.5rem">
         <div class="form-group" style="margin-bottom:1rem">
           <label class="form-label">Tên danh mục *</label>
@@ -111,6 +115,11 @@
           <label class="form-label">Mô tả ngắn</label>
           <textarea class="form-control" name="moTa" rows="3" placeholder="Mô tả tóm tắt về loại dịch vụ này..."></textarea>
         </div>
+        <div class="form-group" style="margin-top:1rem;margin-bottom:0">
+          <label class="form-label">Ảnh danh mục (lưu trên MinIO)</label>
+          <input class="form-control" type="file" name="hinhAnhFile" accept="image/jpeg,image/png,image/webp,image/gif">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.35rem">jpg, png, webp hoặc gif, tối đa 20 MB. Ảnh hiển thị trên website công khai.</div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-modal-close="addCategoryModal">Hủy</button>
@@ -129,7 +138,7 @@
       <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Danh mục</h2>
       <button class="modal-close" data-modal-close="editCategoryModal">✕</button>
     </div>
-    <form th:action="@{/hcns/danh-muc-dich-vu/sua}" method="post">
+    <form th:action="@{/hcns/danh-muc-dich-vu/sua}" method="post" enctype="multipart/form-data">
       <input type="hidden" name="id" id="editCatId">
       <div style="padding:1.5rem">
         <div class="form-group" style="margin-bottom:1rem">
@@ -153,6 +162,12 @@
           <label class="form-label">Mô tả chi tiết</label>
           <textarea class="form-control" name="moTa" id="editCatMoTa" rows="3"></textarea>
         </div>
+        <div class="form-group" style="margin-top:1rem;margin-bottom:0">
+          <label class="form-label">Ảnh danh mục (lưu trên MinIO)</label>
+          <img id="editCatAnh" alt="Ảnh hiện tại" style="display:none;width:120px;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--border);margin-bottom:0.5rem">
+          <input class="form-control" type="file" name="hinhAnhFile" accept="image/jpeg,image/png,image/webp,image/gif">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.35rem">Để trống nếu giữ ảnh hiện tại. Chọn ảnh mới sẽ thay ảnh cũ.</div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-modal-close="editCategoryModal">Hủy</button>
@@ -172,6 +187,14 @@
     document.getElementById('editCatThuTu').value = btn.dataset.thutu || '1';
     if (btn.dataset.trangthai) {
       document.getElementById('editCatTrangThai').value = btn.dataset.trangthai;
+    }
+    var anh = document.getElementById('editCatAnh');
+    if (btn.dataset.hinhanh) {
+      anh.src = btn.dataset.hinhanh;
+      anh.style.display = 'block';
+    } else {
+      anh.removeAttribute('src');
+      anh.style.display = 'none';
     }
     ModalManager.open('editCategoryModal');
   }
