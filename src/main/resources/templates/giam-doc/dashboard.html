@@ -1,292 +1,187 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/admin-layout :: adminHead('Dashboard – Giám đốc')}"></head>
+<head th:replace="~{layout/admin-layout :: adminHead('Tổng quan – Giám đốc')}"></head>
 <body>
 
 <div class="app-shell">
   <aside th:replace="~{layout/admin-layout :: adminSidebar('giam-doc', 'dashboard')}"></aside>
 
-  <!-- ===== MAIN AREA ===== -->
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('Giám đốc', '/giam-doc/dashboard', 'Dashboard')}"></header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('Giám đốc', '/giam-doc/dashboard', 'Tổng quan')}"></header>
 
-    <!-- Page Content -->
     <main class="page-content">
-      <!-- Page Header -->
-      <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Dashboard Giám đốc</h1>
-          <p class="page-subtitle" th:text="'Tổng quan hoạt động kinh doanh · ' + (${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}">Tổng quan hoạt động kinh doanh · Năm 2026</p>
-        </div>
 
-       <div class="page-actions" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
-
-  <!-- Dropdown chọn Tháng (UI mới, logic link cũ) -->
-  <div class="dropdown">
-    <button class="btn btn-outline btn-sm" data-dropdown="thangMenu"
-            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
-      <i class="ti ti-calendar" style="color:var(--accent)"></i>
-      <span th:text="${thangDangChon != null ? ('Tháng ' + thangDangChon) : 'Cả năm'}">Cả năm</span>
-      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
-    </button>
-
-    <div class="dropdown-menu" id="thangMenu" style="right:0;left:auto;min-width:140px">
-      <!-- Link Cả năm -->
-      <a th:href="@{/giam-doc/dashboard(nam=${namDangChon})}"
-         class="dropdown-item"
-         th:classappend="${thangDangChon == null} ? 'active' : ''">
-        Cả năm
-      </a>
-      <!-- Link Tháng 1 đến 12 -->
-      <a th:each="t : ${#numbers.sequence(1, 12)}"
-         th:href="@{/giam-doc/dashboard(thang=${t}, nam=${namDangChon})}"
-         class="dropdown-item"
-         th:classappend="${t == thangDangChon} ? 'active' : ''"
-         th:text="'Tháng ' + ${t}">
-        Tháng 1
-      </a>
-    </div>
-  </div>
-
-  <!-- Dropdown chọn Năm (UI mới, logic link cũ) -->
-  <div class="dropdown">
-    <button class="btn btn-outline btn-sm" data-dropdown="namMenu"
-            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
-      <i class="ti ti-calendar" style="color:var(--accent)"></i>
-      <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
-      <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
-    </button>
-
-    <div class="dropdown-menu" id="namMenu" style="right:0;left:auto;min-width:140px">
-      <a th:each="n : ${danhSachNam}"
-         th:href="@{/giam-doc/dashboard(thang=${thangDangChon}, nam=${n})}"
-         class="dropdown-item"
-         th:classappend="${n == namDangChon} ? 'active' : ''"
-         th:text="'Năm ' + ${n}">
-        Năm 2026
-      </a>
-    </div>
-  </div>
-
-  <!-- Các nút gốc giữ nguyên không đụng chạm -->
-  <button class="btn btn-secondary btn-sm" onclick="window.location.href='/giam-doc/bao-cao'">
-    <i class="ti ti-download"></i> Xuất báo cáo
-  </button>
-  
-  <button class="btn btn-primary btn-sm" onclick="window.location.reload()">
-    <i class="ti ti-refresh"></i> Làm mới
-  </button>
-
-</div>
-      </div>
-
-      <!-- KPI Stats -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">💰</div>
-          <div class="stat-value" th:attr="data-count=${doanhThuTrieuDong != null ? doanhThuTrieuDong : 1850}" th:text="${doanhThuTrieuDong != null ? #numbers.formatDecimal(doanhThuTrieuDong, 0, 'POINT', 0, 'COMMA') : '1.850'}">1.850</div>
-          <div class="stat-label">Doanh thu tích lũy (triệu đồng)</div>
-          <div class="kpi-compare">
-            <span class="arrow-up">↑ 12.5%</span>
-            <span class="period">tăng trưởng so với năm trước</span>
+      <!-- 1. Kỳ xem + xuất báo cáo -->
+      <div class="toolbar">
+        <div class="dropdown">
+          <button type="button" class="ui-select-trigger" data-dropdown="thangMenu" style="width:8rem" aria-label="Chọn tháng">
+            <span class="ui-select-value" th:text="${thangDangChon != null ? ('Tháng ' + thangDangChon) : 'Cả năm'}">Cả năm</span>
+            <i class="ti ti-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="thangMenu" style="left:0;right:auto;min-width:10rem;max-height:20rem;overflow-y:auto">
+            <a th:href="@{/giam-doc/dashboard(nam=${namDangChon})}" class="dropdown-item"
+               th:classappend="${thangDangChon == null} ? 'active' : ''">Cả năm</a>
+            <a th:each="t : ${#numbers.sequence(1, 12)}"
+               th:href="@{/giam-doc/dashboard(thang=${t}, nam=${namDangChon})}"
+               class="dropdown-item"
+               th:classappend="${t == thangDangChon} ? 'active' : ''"
+               th:text="'Tháng ' + ${t}">Tháng 1</a>
           </div>
-          <div class="sparkline-wrapper"><canvas id="spark1"></canvas></div>
         </div>
-
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📋</div>
-          <div class="stat-value" th:attr="data-count=${tongDonHang != null ? tongDonHang : 11}" th:text="${tongDonHang != null ? tongDonHang : 11}">11</div>
-          <div class="stat-label">Tổng đơn đặt dịch vụ</div>
-          <div class="kpi-compare">
-            <span class="arrow-up">↑ 8.3%</span>
-            <span class="period">tổng số đơn toàn hệ thống</span>
+        <div class="dropdown">
+          <button type="button" class="ui-select-trigger" data-dropdown="namMenu" style="width:8rem" aria-label="Chọn năm">
+            <span class="ui-select-value" th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
+            <i class="ti ti-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="namMenu" style="left:0;right:auto;min-width:10rem">
+            <a th:each="n : ${danhSachNam}"
+               th:href="@{/giam-doc/dashboard(thang=${thangDangChon}, nam=${n})}"
+               class="dropdown-item"
+               th:classappend="${n == namDangChon} ? 'active' : ''"
+               th:text="'Năm ' + ${n}">Năm 2026</a>
           </div>
-          <div class="sparkline-wrapper"><canvas id="spark2"></canvas></div>
         </div>
-
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">👤</div>
-          <div class="stat-value" th:attr="data-count=${tongKhachHang != null ? tongKhachHang : 6}" th:text="${tongKhachHang != null ? tongKhachHang : 6}">6</div>
-          <div class="stat-label">Khách hàng đăng ký</div>
-          <div class="kpi-compare">
-            <span class="arrow-up">↑ 15.2%</span>
-            <span class="period">khách hàng kích hoạt</span>
-          </div>
-          <div class="sparkline-wrapper"><canvas id="spark3"></canvas></div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
-          <div class="stat-value" th:text="${diemDanhGiaTB != null ? diemDanhGiaTB : 4.9}">4.9</div>
-          <div class="stat-label">Điểm đánh giá trung bình</div>
-          <div class="kpi-compare">
-            <span class="arrow-up">↑ 0.2</span>
-            <span class="period">đánh giá từ khách hàng</span>
-          </div>
-          <div class="sparkline-wrapper"><canvas id="spark4"></canvas></div>
-        </div>
-
-        <div class="stat-card" style="grid-column: span 1">
-          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">⚠️</div>
-          <div class="stat-value" th:attr="data-count=${tongKhieuNai != null ? tongKhieuNai : 3}" th:text="${tongKhieuNai != null ? tongKhieuNai : 3}">3</div>
-          <div class="stat-label">Tổng khiếu nại ghi nhận</div>
-          <div class="kpi-compare">
-            <span class="arrow-down" th:text="'Leo thang: ' + (${khieuNaiLeoThangCount != null ? khieuNaiLeoThangCount : 1})">Leo thang: 1</span>
-            <span class="period">cần xử lý ngay</span>
-          </div>
-          <div class="sparkline-wrapper"><canvas id="spark5"></canvas></div>
+        <span class="toolbar-note" th:text="'Số liệu ' + (${thangDangChon != null} ? ('tháng ' + ${thangDangChon} + '/') : 'năm ') + ${namDangChon}">Số liệu năm 2026</span>
+        <div class="toolbar-end">
+          <a href="/giam-doc/bao-cao" class="btn btn-outline"><i class="ti ti-download"></i>Xuất báo cáo</a>
         </div>
       </div>
 
-
-      <!-- Charts Row -->
-      <div class="dashboard-grid" style="margin-bottom:1.5rem">
-        <!-- Revenue Chart -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <div class="chart-title">Doanh thu theo tháng</div>
-              <div class="chart-subtitle" th:text="'Đơn vị: Triệu đồng · ' + (${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : '') + ${namDangChon}">Đơn vị: Triệu đồng · Năm 2026</div>
-            </div>
+      <!-- 2. Hàng số liệu: một khối, một màu -->
+      <section class="stat-strip" aria-label="Số liệu chính">
+        <div class="stat-strip-item">
+          <div class="stat-strip-head"><span class="stat-strip-icon"><i class="ti ti-coin"></i></span><span class="stat-strip-label">Doanh thu</span></div>
+          <div class="stat-strip-value">
+            <span th:text="${doanhThuTrieuDong != null ? #numbers.formatDecimal(doanhThuTrieuDong, 1, 'POINT', 0, 'COMMA') : '0'}">1.390</span>
+            <span class="stat-strip-unit">triệu đ</span>
           </div>
-          <div class="chart-wrapper">
-            <canvas id="revenueChart"></canvas>
-          </div>
+          <div class="stat-strip-delta"><span class="up"><i class="ti ti-trending-up"></i> 12,5%</span> so với năm trước</div>
         </div>
-
-        <!-- Orders Donut -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <div class="chart-title">Trạng thái đơn đặt dịch vụ</div>
-              <div class="chart-subtitle" th:text="(${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}">Tháng 9/2026</div>
-            </div>
-          </div>
-          <div class="chart-wrapper">
-            <canvas id="ordersDonut"></canvas>
-          </div>
+        <div class="stat-strip-item">
+          <div class="stat-strip-head"><span class="stat-strip-icon"><i class="ti ti-clipboard-list"></i></span><span class="stat-strip-label">Đơn đặt dịch vụ</span></div>
+          <div class="stat-strip-value" th:text="${tongDonHang != null ? #numbers.formatInteger(tongDonHang, 1, 'POINT') : 0}">1.284</div>
+          <div class="stat-strip-delta"><span class="up"><i class="ti ti-trending-up"></i> 8,3%</span> so với năm trước</div>
         </div>
-      </div>
-
-      <!-- Second Charts Row -->
-      <div class="dashboard-grid-3" style="margin-bottom:1.5rem">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-title">Dịch vụ phổ biến</div>
-          </div>
-          <div class="chart-wrapper" style="height:220px;max-height:220px">
-            <canvas id="servicesChart"></canvas>
-          </div>
+        <div class="stat-strip-item">
+          <div class="stat-strip-head"><span class="stat-strip-icon"><i class="ti ti-user-plus"></i></span><span class="stat-strip-label">Khách hàng đăng ký</span></div>
+          <div class="stat-strip-value" th:text="${tongKhachHang != null ? #numbers.formatInteger(tongKhachHang, 1, 'POINT') : 0}">96</div>
+          <div class="stat-strip-delta"><span class="up"><i class="ti ti-trending-up"></i> 15,2%</span> so với năm trước</div>
         </div>
-
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-title">Phân phối đánh giá</div>
-          </div>
-          <div class="chart-wrapper" style="height:220px;max-height:220px">
-            <canvas id="ratingChart"></canvas>
-          </div>
+        <div class="stat-strip-item">
+          <div class="stat-strip-head"><span class="stat-strip-icon"><i class="ti ti-star"></i></span><span class="stat-strip-label">Điểm đánh giá TB</span></div>
+          <div class="stat-strip-value"><span th:text="${diemDanhGiaTB != null ? diemDanhGiaTB : 0}">4,7</span> <span class="stat-strip-unit">/ 5</span></div>
+          <div class="stat-strip-delta"><span class="up"><i class="ti ti-trending-up"></i> 0,2 điểm</span> so với năm trước</div>
         </div>
+      </section>
 
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-title">Trạng thái khiếu nại</div>
-          </div>
-          <div class="chart-wrapper" style="height:220px;max-height:220px">
-            <canvas id="complaintChart"></canvas>
-          </div>
+      <!-- 3. Việc cần Giám đốc duyệt: đứng trước biểu đồ -->
+      <section class="card card-flush" aria-labelledby="pendingTitle">
+        <div class="card-header">
+          <h2 class="card-title" id="pendingTitle">Khiếu nại chờ bạn duyệt<span class="card-count" th:text="${khieuNaiLeoThangCount != null ? khieuNaiLeoThangCount : 0}">2</span></h2>
+          <a href="/giam-doc/khieu-nai" class="link-action" th:if="${khieuNaiLeoThangCount != null and khieuNaiLeoThangCount > 0}">Xem tất cả</a>
         </div>
-      </div>
+        <ul class="pending-list">
+          <th:block th:each="kn : ${pendingComplaints}">
+            <li class="pending-item" th:if="${kn.trangThai == 'LeoThang' or kn.trangThai == 'LeoCao'}">
+              <div class="pending-main">
+                <span class="avatar avatar-sm" th:attr="data-name=${kn.khachHang != null ? kn.khachHang.hoTen : kn.maKhieuNai}"
+                      th:text="${kn.khachHang != null ? #strings.substring(kn.khachHang.hoTen, 0, 1) : 'K'}">K</span>
+                <div class="pending-text">
+                  <p class="pending-title"><strong th:text="${kn.khachHang != null ? kn.khachHang.hoTen : 'Khách hàng'}">Trần Thị Mai Phương</strong> <span th:text="'· ' + ${kn.loaiVanDe}">· Tài sản hư hỏng</span></p>
+                  <p class="pending-desc" th:text="${kn.noiDung}" th:title="${kn.noiDung}">Nội dung khiếu nại</p>
+                </div>
+              </div>
+              <div class="pending-meta">
+                <span class="wait-text" th:attr="data-since=${kn.ngayGui}" th:text="${kn.ngayGui != null ? #temporals.format(kn.ngayGui, 'dd/MM/yyyy') : ''}">Chờ 3 ngày</span>
+                <a href="/giam-doc/khieu-nai" class="btn btn-outline btn-sm">Xem xét</a>
+              </div>
+            </li>
+          </th:block>
+        </ul>
+        <p class="pending-empty" th:if="${khieuNaiLeoThangCount == null or khieuNaiLeoThangCount == 0}">Không có khiếu nại nào chờ bạn duyệt.</p>
+        <p class="pending-empty" id="pendingOverflow" hidden>Các khiếu nại chờ duyệt nằm ngoài danh sách gần đây. <a href="/giam-doc/khieu-nai" class="link-action" style="margin:0">Mở danh sách khiếu nại</a></p>
+      </section>
 
-      <!-- Recent Orders + Pending Approvals -->
+      <!-- 4. Doanh thu + trạng thái đơn -->
       <div class="dashboard-grid">
-        <!-- Recent Orders -->
-        <div class="card" style="padding:0">
-          <div class="card-header" style="padding:1.25rem 1.5rem">
-            <div>
-              <div class="card-title">Đơn dịch vụ gần đây</div>
-              <div class="card-subtitle">Các đơn hàng mới nhất trên hệ thống</div>
-            </div>
-            <a href="/giam-doc/bao-cao" class="btn btn-outline btn-sm">Xem tất cả</a>
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">Doanh thu theo tháng · triệu đồng</h2>
+            <span class="card-subtitle" style="margin:0" th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
           </div>
-          <div class="table-container" style="border:none;border-radius:0 0 var(--radius-lg) var(--radius-lg)">
-            <table class="table" id="recentOrders">
+          <div class="chart-wrapper" style="height:280px;max-height:280px">
+            <canvas id="revenueChart" role="img" th:attr="aria-label='Doanh thu theo tháng năm ' + ${namDangChon}"></canvas>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">Trạng thái đơn</h2>
+          </div>
+          <ul class="bar-list" id="orderStatusList"></ul>
+        </section>
+      </div>
+
+      <!-- 5. Đơn gần đây + dịch vụ phổ biến -->
+      <div class="dashboard-grid grid-start">
+        <section class="card card-flush">
+          <div class="card-header">
+            <h2 class="card-title">Đơn dịch vụ gần đây</h2>
+            <a href="/giam-doc/bao-cao" class="link-action">Xem tất cả</a>
+          </div>
+          <div class="table-container" style="border:0;border-radius:0">
+            <table class="table table-stack" id="recentOrders">
               <thead>
                 <tr>
-                  <th>Mã đơn</th>
                   <th>Khách hàng</th>
-                  <th>Dịch vụ</th>
-                  <th>Ngày thực hiện</th>
-                  <th>Thành tiền</th>
+                  <th class="hide-sm">Thời gian</th>
+                  <th class="num">Thành tiền</th>
                   <th>Trạng thái</th>
                 </tr>
               </thead>
               <tbody>
                 <tr th:each="order : ${recentOrders}">
-                  <td style="font-weight:600;font-size:0.8rem" th:text="${order.maDonDat}">#DD-01</td>
                   <td>
                     <div class="user-cell">
-                      <div class="avatar avatar-sm" th:text="${order.khachHang != null ? #strings.substring(order.khachHang.hoTen, 0, 1) : 'K'}">H</div>
+                      <span class="avatar avatar-sm" th:attr="data-name=${order.khachHang != null ? order.khachHang.hoTen : order.maDonDat}"
+                            th:text="${order.khachHang != null ? #strings.substring(order.khachHang.hoTen, 0, 1) : 'K'}">H</span>
                       <div class="user-cell-info">
                         <div class="name" th:text="${order.khachHang != null ? order.khachHang.hoTen : 'Khách hàng'}">Khách hàng</div>
-                        <div class="sub" th:text="${order.khachHang != null ? order.khachHang.soDienThoai : ''}">0901234567</div>
+                        <div class="sub" th:text="${(order.chiTietList != null and !order.chiTietList.isEmpty() ? order.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ') + ' · ' + order.maDonDat}">Dọn dẹp nhà cửa · DD-01</div>
                       </div>
                     </div>
                   </td>
-                  <td th:text="${order.chiTietList != null and !order.chiTietList.isEmpty() ? order.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
-                  <td style="font-size:0.8rem" th:text="${order.ngayThucHien + ' ' + (order.gioBatDau != null ? order.gioBatDau : '')}">20/09/2026</td>
-                  <td style="font-weight:700;color:var(--accent)" th:text="${#numbers.formatDecimal(order.thanhTien != null ? order.thanhTien : 0, 0, 'COMMA', 0, 'POINT') + 'đ'}">240.000đ</td>
-                  <td>
-                    <span class="badge" 
-                          th:classappend="${order.trangThai == 'HoanThanh' ? 'badge-success' : (order.trangThai == 'DangThucHien' ? 'badge-primary' : (order.trangThai == 'DaXacNhan' ? 'badge-warning' : 'badge-secondary'))}"
-                          th:text="${order.trangThai == 'HoanThanh' ? 'Hoàn thành' : (order.trangThai == 'DangThucHien' ? 'Đang thực hiện' : (order.trangThai == 'DaXacNhan' ? 'Đã xác nhận' : (order.trangThai == 'ChoDuyet' ? 'Chờ duyệt' : order.trangThai)))}">
-                      Hoàn thành
-                    </span>
+                  <td class="hide-sm nowrap tabular" style="color:var(--muted)" th:text="${order.ngayThucHien + ' ' + (order.gioBatDau != null ? order.gioBatDau : '')}">20/09/2026</td>
+                  <td class="num col-end" style="font-weight:500" th:text="${#numbers.formatDecimal(order.thanhTien != null ? order.thanhTien : 0, 0, 'POINT', 0, 'COMMA') + ' đ'}">240.000 đ</td>
+                  <td class="col-sub">
+                    <span class="badge"
+                          th:classappend="${order.trangThai == 'HoanThanh' ? 'badge-success' : (order.trangThai == 'DangThucHien' ? 'badge-primary' : (order.trangThai == 'DaHuy' ? 'badge-danger' : 'badge-secondary'))}"
+                          th:text="${order.trangThai == 'HoanThanh' ? 'Hoàn thành' : (order.trangThai == 'DangThucHien' ? 'Đang thực hiện' : (order.trangThai == 'DaXacNhan' ? 'Đã xác nhận' : (order.trangThai == 'ChoDuyet' ? 'Chờ duyệt' : (order.trangThai == 'DaHuy' ? 'Đã huỷ' : order.trangThai))))}">Hoàn thành</span>
                   </td>
+                </tr>
+                <tr th:if="${recentOrders == null or recentOrders.isEmpty()}">
+                  <td colspan="4" class="table-empty">Chưa có đơn đặt dịch vụ nào trong kỳ này.</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
-
-        <!-- Pending Approvals -->
-        <div class="card">
+        </section>
+        <section class="card">
           <div class="card-header">
-            <div class="card-title">Danh sách chờ phê duyệt</div>
-            <span class="badge badge-warning" th:text="${pendingComplaints != null ? pendingComplaints.size() + ' mục' : '0 mục'}">0 mục</span>
+            <h2 class="card-title">Dịch vụ phổ biến · số đơn</h2>
           </div>
-
-          <div style="display:flex;flex-direction:column;gap:0.875rem">
-            <div th:each="kn : ${pendingComplaints}" style="padding:0.875rem;background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:var(--radius-md)">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-                <span class="badge" th:classappend="${kn.trangThai == 'LeoThang' || kn.trangThai == 'LeoCao' ? 'badge-danger' : 'badge-warning'}" th:text="${kn.trangThai == 'LeoThang' || kn.trangThai == 'LeoCao' ? 'Khiếu nại leo thang' : 'Khiếu nại ' + kn.trangThai}">Khiếu nại leo thang</span>
-                <span style="font-size:0.72rem;color:var(--text-muted)" th:text="${kn.maKhieuNai}">#KN</span>
-              </div>
-              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem" th:text="${kn.noiDung}">Nội dung khiếu nại...</p>
-              <div style="display:flex;gap:0.5rem">
-                <a href="/giam-doc/khieu-nai" class="btn btn-primary btn-sm">Xem chi tiết & Xử lý</a>
-              </div>
-            </div>
-            <div th:if="${pendingComplaints == null || pendingComplaints.isEmpty()}" style="text-align:center;padding:1.5rem;color:var(--text-muted)">
-              Không có mục nào chờ phê duyệt
-            </div>
-          </div>
-        </div>
-
+          <ul class="bar-list" id="topServiceList"></ul>
+        </section>
       </div>
     </main>
   </div>
 </div>
-
-<!-- Overlay for sidebar on mobile -->
-<div class="overlay" id="sidebarOverlay"></div>
 
 <!-- Complaint Modal -->
 <div class="modal-overlay" id="approveModal">
   <div class="modal" style="max-width:700px">
     <div class="modal-header">
       <h2 class="modal-title">Xem xét khiếu nại leo thang</h2>
-      <button class="modal-close" data-modal-close="approveModal">✕</button>
+      <button class="modal-close" data-modal-close="approveModal" aria-label="Đóng"><i class="ti ti-x"></i></button>
     </div>
     <div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
@@ -296,7 +191,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Trạng thái</label>
-          <div><span class="badge badge-danger" style="font-size:0.85rem;padding:0.4rem 0.875rem">Leo thang</span></div>
+          <div><span class="badge badge-danger">Leo thang</span></div>
         </div>
       </div>
       <div class="form-group" style="margin-bottom:1rem">
@@ -318,7 +213,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close="approveModal">Hủy</button>
+      <button class="btn btn-outline" data-modal-close="approveModal">Hủy</button>
       <button class="btn btn-danger">Từ chối</button>
       <button class="btn btn-primary" onclick="document.getElementById('approveModal').classList.remove('active');Toast.show('Đã phê duyệt phương án xử lý thành công!')">Phê duyệt</button>
     </div>
@@ -339,5 +234,22 @@
 </script>
 
 <script src="/js/charts.js"></script>
+<script>
+  // "Chờ N ngày" tính từ ngày gửi; chờ lâu thì tô hổ phách, quá lâu thì đỏ.
+  document.querySelectorAll('.wait-text[data-since]').forEach(function (el) {
+    var since = new Date(el.dataset.since);
+    if (isNaN(since)) return;
+    var days = Math.floor((Date.now() - since.getTime()) / 86400000);
+    el.textContent = days <= 0 ? 'Gửi hôm nay' : 'Chờ ' + days + ' ngày';
+    if (days >= 7) el.classList.add('is-danger');
+    else if (days >= 3) el.classList.add('is-warning');
+  });
+  // Có khiếu nại chờ duyệt nhưng không nằm trong 5 khiếu nại gần nhất
+  (function () {
+    var list = document.querySelector('.pending-list');
+    var count = parseInt(document.querySelector('#pendingTitle .card-count').textContent, 10) || 0;
+    if (count > 0 && list && !list.children.length) document.getElementById('pendingOverflow').hidden = false;
+  })();
+</script>
 </body>
 </html>

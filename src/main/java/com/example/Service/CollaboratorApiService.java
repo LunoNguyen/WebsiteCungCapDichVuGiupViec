@@ -631,9 +631,218 @@ public class CollaboratorApiService {
     /**
      * Lấy thông tin hồ sơ của Cộng tác viên
      */
-    public CongTacVien getCollaboratorProfile(Integer congTacVienId) {
-        return congTacVienRepository.findById(congTacVienId)
+    public Map<String, Object> getCollaboratorProfile(Integer congTacVienId) {
+        CongTacVien ctv = congTacVienRepository.findById(congTacVienId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên ID: " + congTacVienId));
+        return toProfileMap(ctv);
+    }
+
+    /**
+     * Dùng khi CTV đăng nhập trên app: nếu tài khoản đã có hồ sơ thì trả về hồ sơ đó,
+     * nếu chưa có thì tạo một hồ sơ rỗng (chỉ có thông tin tối thiểu) để CTV bổ sung sau.
+     */
+    public Map<String, Object> ensureCollaboratorProfile(Integer taiKhoanId) {
+        TaiKhoan taiKhoan = taiKhoanRepository.findById(taiKhoanId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản ID: " + taiKhoanId));
+        if (!"CongTacVien".equalsIgnoreCase(taiKhoan.getLoaiTaiKhoan())) {
+            throw new IllegalArgumentException("Tài khoản này không phải tài khoản Cộng tác viên.");
+        }
+
+        Optional<CongTacVien> existing = congTacVienRepository.findByTaiKhoan_Id(taiKhoanId);
+        if (existing.isPresent()) {
+            Map<String, Object> result = toProfileMap(existing.get());
+            result.put("daTaoMoi", false);
+            return result;
+        }
+
+        CongTacVien ctv = CongTacVien.builder()
+                .maCongTacVien("CTV-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase())
+                .taiKhoan(taiKhoan)
+                .hoTen("")
+                .noiCuTru("")
+                .soDienThoai(taiKhoan.getSoDienThoai() != null ? taiKhoan.getSoDienThoai() : "")
+                .diemDanhGia(java.math.BigDecimal.ZERO)
+                .capDo("Moi")
+                .trangThai("ChoDuyet")
+                .ngayDangKy(LocalDate.now())
+                .build();
+        ctv = congTacVienRepository.save(ctv);
+
+        Map<String, Object> result = toProfileMap(ctv);
+        result.put("daTaoMoi", true);
+        return result;
+    }
+
+    /** Trả hồ sơ dạng Map phẳng (tránh serialize proxy LAZY của TaiKhoan) */
+    private Map<String, Object> toProfileMap(CongTacVien ctv) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", ctv.getId());
+        m.put("maCongTacVien", ctv.getMaCongTacVien());
+        m.put("taiKhoanId", ctv.getTaiKhoan() != null ? ctv.getTaiKhoan().getId() : null);
+        m.put("hoTen", ctv.getHoTen());
+        m.put("ngaySinh", ctv.getNgaySinh() != null ? ctv.getNgaySinh().toString() : null);
+        m.put("gioiTinh", ctv.getGioiTinh());
+        m.put("noiCuTru", ctv.getNoiCuTru());
+        m.put("soDienThoai", ctv.getSoDienThoai());
+        m.put("diemDanhGia", ctv.getDiemDanhGia());
+        m.put("capDo", ctv.getCapDo());
+        m.put("trangThai", ctv.getTrangThai());
+        m.put("ngayDangKy", ctv.getNgayDangKy() != null ? ctv.getNgayDangKy().toString() : null);
+        return m;
+    }
+
+    // ==========================================
+    // UC-CTV-POOL: NHẬN ĐƠN TỪ POOL CHUNG
+    // ==========================================
+
+    /**
+     * Lấy danh sách đơn đang tìm CTV (pool chung).
+     */
+    public List<Map<String, Object>> getAvailableOrders(Integer congTacVienId) {
+        List<DonDatDichVu> donList = donDatDichVuRepository.findByTrangThaiOrderByNgayTaoDesc("DangTimCTV");
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (DonDatDichVu don : donList) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("donDatId", don.getId());
+            item.put("maDonDat", don.getMaDonDat());
+            String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty())
+                    ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ";
+            item.put("tenDichVu", tenDichVu);
+            item.put("ngayThucHien", don.getNgayThucHien());
+            item.put("gioBatDau", don.getGioBatDau());
+            item.put("gioKetThuc", don.getGioKetThuc());
+            item.put("diaChi", don.getDiaChi() != null ? don.getDiaChi().getDiaChiChiTiet() : "");
+            item.put("yeuCauDacBiet", don.getYeuCauDacBiet());
+            item.put("thanhTien", don.getThanhTien());
+            item.put("ngayTao", don.getNgayTao());
+            // Không expose thông tin khách hàng cho CTV khi đơn chưa được nhận
+            item.put("khachHangTen", "Khách hàng");
+            item.put("khachHangPhone", "");
+            result.add(item);
+        }
+        return result;
+    }
+
+    /**
+     * CTV nhận đơn từ pool (atomic - first-come-first-served).
+     * Dùng database-level lock để đảm bảo chỉ 1 CTV thắng khi nhiều người ấn cùng lúc.
+     */
+    @Transactional
+    public Map<String, Object> acceptOrderFromPool(Integer congTacVienId, Integer donDatId) {
+        // Resolve congTacVienId
+        CongTacVien ctv = congTacVienRepository.findById(congTacVienId).orElse(null);
+        if (ctv == null) {
+            TaiKhoan tk = taiKhoanRepository.findById(congTacVienId).orElse(null);
+            if (tk != null) ctv = congTacVienRepository.findByTaiKhoan_Id(tk.getId()).orElse(null);
+        }
+        if (ctv == null) throw new IllegalArgumentException("Không tìm thấy CTV ID: " + congTacVienId);
+        if (ctv.getTaiKhoan() == null) throw new IllegalStateException("CTV chưa có tài khoản");
+
+        // !! ATOMIC UPDATE - chỉ 1 request thắng !!
+        int rowsAffected = donDatDichVuRepository.atomicAcceptOrder(donDatId);
+        if (rowsAffected == 0) {
+            throw new IllegalStateException("Đơn này vừa có người nhận rồi! Vui lòng chọn đơn khác.");
+        }
+
+        DonDatDichVu don = donDatDichVuRepository.findById(donDatId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn ID: " + donDatId));
+
+        // Tạo 1 bản ghi PhanCongCTV duy nhất khi nhận việc
+        PhanCongCTV pc = PhanCongCTV.builder()
+                .maPhanCong("PC-" + (System.currentTimeMillis() % 1000000))
+                .donDat(don)
+                .congTacVien(ctv)
+                .trangThai("DaXacNhan")
+                .thoiGianPhanCong(LocalDateTime.now())
+                .thoiGianXacNhan(LocalDateTime.now())
+                .build();
+        phanCongCTVRepository.save(pc);
+
+        // Tạo Lịch làm việc
+        LichLamViec llv = LichLamViec.builder()
+                .maLichLamViec("LLV-" + (System.currentTimeMillis() % 1000000))
+                .phanCong(pc)
+                .congTacVien(ctv)
+                .ngayLam(don.getNgayThucHien())
+                .gioBatDau(don.getGioBatDau())
+                .gioKetThuc(don.getGioKetThuc())
+                .trangThai("SapToi")
+                .build();
+        lichLamViecRepository.save(llv);
+
+        // Lưu lịch sử
+        LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()
+                .donDat(don)
+                .trangThaiCu("DangTimCTV")
+                .trangThaiMoi("DaPhanCong")
+                .nguoiThucHien("CongTacVien: " + ctv.getHoTen())
+                .thoiGian(LocalDateTime.now())
+                .ghiChu("CTV tự nhận đơn từ pool qua Mobile App")
+                .build();
+        lichSuTrangThaiDonRepository.save(ls);
+
+        // Thông báo xác nhận cho CTV
+        LocalDate ngayThucHien = don.getNgayThucHien();
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
+        LocalTime gioBatDau = don.getGioBatDau();
+        String gioStr = gioBatDau != null ? gioBatDau.format(DateTimeFormatter.ofPattern("HH:mm")) : "giờ quy định";
+        String ngayStr = ngayThucHien != null ? ngayThucHien.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+        String thu = getThuTrongTuan(ngayThucHien);
+
+        String tieuDe;
+        String noiDung;
+        String tenCTV = ctv.getHoTen();
+        String prefixCTV = "CTV " + tenCTV;
+
+        if (ngayThucHien != null && !ngayThucHien.isAfter(today)) {
+            tieuDe = prefixCTV + " – Nhắc lịch ca làm gấp: " + don.getMaDonDat();
+            noiDung = prefixCTV + " đã nhận đơn gấp hôm nay (" + thu + ", " + ngayStr + "). Vui lòng nhớ có mặt trước " + gioStr + " hôm nay!";
+        } else if (ngayThucHien != null && ngayThucHien.isEqual(tomorrow)) {
+            tieuDe = prefixCTV + " – Nhắc lịch ca làm ngày mai: " + don.getMaDonDat();
+            noiDung = prefixCTV + " đã nhận đơn vào ngày mai (" + thu + ", " + ngayStr + "). Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
+        } else {
+            tieuDe = prefixCTV + " – Nhắc lịch ca làm: " + don.getMaDonDat();
+            noiDung = prefixCTV + " đã nhận đơn vào " + thu + ", ngày " + ngayStr + ". Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
+        }
+
+        ThongBao tbNhacLich = ThongBao.builder()
+                .maThongBao("TB-NL-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                .tieuDe(tieuDe)
+                .noiDung(noiDung)
+                .nguoiGui("Hệ thống CSKH")
+                .nhomNhan("CongTacVien")
+                .thoiGianGui(LocalDateTime.now())
+                .trangThai("DaGui")
+                .build();
+        thongBaoRepository.save(tbNhacLich);
+
+        ThongBaoNguoiDung tbnd = ThongBaoNguoiDung.builder()
+                .thongBao(tbNhacLich)
+                .taiKhoan(ctv.getTaiKhoan())
+                .daDoc(false)
+                .trangThai("DaGui")
+                .build();
+        thongBaoNguoiDungRepository.save(tbnd);
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("phanCongId", pc.getId());
+        res.put("maDonDat", don.getMaDonDat());
+        res.put("trangThai", "DaXacNhan");
+        res.put("message", "Đã nhận đơn thành công!");
+        return res;
+    }
+
+    /**
+     * CTV bỏ qua / từ chối đơn từ pool trên ứng dụng.
+     * Không chèn bản ghi vào DB. Mobile app tự ẩn đơn trên giao diện local.
+     */
+    public Map<String, Object> rejectOrderFromPool(Integer congTacVienId, Integer donDatId, String lyDo) {
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("donDatId", donDatId);
+        res.put("message", "Đã bỏ qua đơn hàng");
+        return res;
     }
 
     /**

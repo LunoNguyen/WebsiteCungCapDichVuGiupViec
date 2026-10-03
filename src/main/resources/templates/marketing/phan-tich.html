@@ -12,20 +12,14 @@
 
       <main class="page-content">
         <div class="page-header">
-          <div class="page-title-group">
-            <h1 class="page-title">Báo cáo Hiệu quả Marketing & Chuyển đổi</h1>
-            <p class="page-subtitle"
-               th:text="'Theo dõi ROI chiến dịch, chi phí chuyển đổi (CAC), giá trị vòng đời (LTV) và tăng trưởng · ' + (${thangDangChon != null} ? ('Tháng ' + ${thangDangChon} + '/') : 'Cả năm ') + ${namDangChon}">
-              Theo dõi ROI chiến dịch, chi phí chuyển đổi (CAC), giá trị vòng đời (LTV) và tăng trưởng
-            </p>
-          </div>
+          
 
           <div class="page-actions" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
 
   <!-- Dropdown chọn Tháng (UI mới, logic link cũ của trang phân tích) -->
   <div class="dropdown">
     <button class="btn btn-outline btn-sm" data-dropdown="thangMenu"
-            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+            style="gap:0.4rem;font-weight:600;border-color:var(--line-strong);color:var(--text-primary)">
       <i class="ti ti-calendar" style="color:var(--accent)"></i>
       <span th:text="${thangDangChon != null ? ('Tháng ' + thangDangChon) : 'Cả năm'}">Cả năm</span>
       <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
@@ -52,7 +46,7 @@
   <!-- Dropdown chọn Năm (UI mới, logic link cũ của trang phân tích) -->
   <div class="dropdown">
     <button class="btn btn-outline btn-sm" data-dropdown="namMenu"
-            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+            style="gap:0.4rem;font-weight:600;border-color:var(--line-strong);color:var(--text-primary)">
       <i class="ti ti-calendar" style="color:var(--accent)"></i>
       <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
       <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
@@ -75,26 +69,26 @@
         <!-- Stats Grid -->
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(13,155,163,0.15)">👥</div>
+            <div class="stat-icon"><i class="ti ti-users"></i></div>
             <div class="stat-value" th:text="${tongKhachHang != null ? tongKhachHang : 0}">0</div>
             <div class="stat-label">Khách hàng mới trong kỳ</div>
             <div class="kpi-compare"><span class="arrow-up">Dữ liệu thực tế</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🎟️</div>
+            <div class="stat-icon"><i class="ti ti-ticket"></i></div>
             <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongCoupons : 0}">0</div>
             <div class="stat-label">Tổng mã ưu đãi</div>
             <div class="kpi-compare"><span class="arrow-up">Đang quản lý</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(255,101,132,0.15)">📈</div>
+            <div class="stat-icon"><i class="ti ti-trending-up"></i></div>
             <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongLuotSuDungCoupon : 0}">0
             </div>
             <div class="stat-label">Lượt đã áp dụng mã</div>
             <div class="kpi-compare"><span class="arrow-up">Chuyển đổi thực</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(255,193,7,0.15)">💰</div>
+            <div class="stat-icon"><i class="ti ti-coin"></i></div>
             <div class="stat-value"
               th:text="${marketingStats != null ? marketingStats.doanhThuKhuyenMaiTrieuDong + ' triệu' : '0 triệu'}">0
               triệu</div>

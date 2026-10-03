@@ -6,7 +6,7 @@ import lombok.*;
 /** Bang 14: LoaiDichVu (Service Category) */
 @Entity @Table(name = "LoaiDichVu")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class LoaiDichVu {
+public class LoaiDichVu implements java.io.Serializable {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

@@ -1,6 +1,7 @@
 package com.example.Controller;
 
 import com.example.Service.AuthService;
+import com.example.Service.CatalogService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,41 +16,26 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class LandingController {
 
-    private final AuthService authService;
-    private final com.example.Service.CustomerApiService customerApiService;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LandingController.class);
 
-    public LandingController(AuthService authService, com.example.Service.CustomerApiService customerApiService) {
+    private final AuthService authService;
+    private final CatalogService catalogService;
+
+    public LandingController(AuthService authService, CatalogService catalogService) {
         this.authService = authService;
-        this.customerApiService = customerApiService;
+        this.catalogService = catalogService;
     }
 
+    /** Trang chủ: dữ liệu lấy từ CatalogService (đã cache Redis). Danh mục cho menu do SiteModelAdvice nạp. */
     @GetMapping("/")
     public String index(Model model) {
         try {
-            java.util.List<java.util.Map<String, Object>> allServices = customerApiService.getServices(null, null, null, null, null, null);
-            if (allServices != null && !allServices.isEmpty()) {
-                // Chọn 6 dịch vụ đại diện cho 6 mảng dịch vụ hoàn toàn khác nhau để trực quan, dễ lấy ảnh minh họa
-                java.util.List<String> targetCodes = java.util.List.of("DV-001", "DV-051", "DV-123", "DV-072", "DV-079", "DV-129");
-                java.util.List<java.util.Map<String, Object>> distinctServices = new java.util.ArrayList<>();
-                for (String code : targetCodes) {
-                    allServices.stream()
-                            .filter(s -> code.equalsIgnoreCase((String) s.get("maDichVu")))
-                            .findFirst()
-                            .ifPresent(distinctServices::add);
-                }
-                // Nếu chưa đủ 6 dịch vụ thì lấy bù từ danh sách còn lại
-                if (distinctServices.size() < 6) {
-                    for (java.util.Map<String, Object> s : allServices) {
-                        if (!distinctServices.contains(s) && distinctServices.size() < 6) {
-                            distinctServices.add(s);
-                        }
-                    }
-                }
-                model.addAttribute("featuredServices", distinctServices);
-            }
-            model.addAttribute("categories", customerApiService.getServiceTypes());
+            model.addAttribute("dichVuNoiBat", CatalogService.chonDichVuNoiBat(catalogService.getDanhMuc()));
+            model.addAttribute("danhGias", catalogService.getDanhGiaNoiBat());
+            model.addAttribute("khuyenMais", catalogService.getKhuyenMaiDangChay());
+            model.addAttribute("soLieu", catalogService.getSoLieuCongKhai());
         } catch (Exception e) {
-            // Log fallback
+            log.warn("Trang chủ: không tải được dữ liệu từ CSDL: {}", e.getMessage());
         }
         return "index";
     }

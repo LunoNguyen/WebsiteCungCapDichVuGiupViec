@@ -11,10 +11,7 @@
 
     <main class="page-content">
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Thông báo Chăm sóc Khách hàng & Cộng tác viên</h1>
-          <p class="page-subtitle">Gửi nhắc hẹn dịch vụ, thông báo tiến độ xử lý và tin nhắn hỗ trợ trực tiếp</p>
-        </div>
+        
         <div class="page-actions">
           <button class="btn btn-primary btn-sm" data-modal-open="createNotifModal"><i class="ti ti-send"></i> Gửi thông báo mới</button>
         </div>
@@ -23,25 +20,25 @@
       <!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">📬</div>
+          <div class="stat-icon"><i class="ti ti-mail"></i></div>
           <div class="stat-value" th:text="${thongBaos != null ? #lists.size(thongBaos) : 0}">0</div>
           <div class="stat-label">Tổng thông báo hệ thống</div>
           <div class="kpi-compare"><span class="arrow-up">Hệ thống thực tế</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">👁️</div>
+          <div class="stat-icon"><i class="ti ti-eye"></i></div>
           <div class="stat-value">100%</div>
           <div class="stat-label">Tỷ lệ truyền tải tin nhắn</div>
           <div class="kpi-compare"><span class="arrow-up">Hoạt động tốt</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏰</div>
+          <div class="stat-icon">⏰</div>
           <div class="stat-value" th:text="${donHangStats != null ? donHangStats.choDuyetCount : 0}">0</div>
           <div class="stat-label">Đơn cần điều phối</div>
           <div class="kpi-compare"><span class="period">Cần gửi phân công</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🛡️</div>
+          <div class="stat-icon"><i class="ti ti-shield"></i></div>
           <div class="stat-value" th:text="${khieuNaiStats != null ? khieuNaiStats.chuaXuLyCount : 0}">0</div>
           <div class="stat-label">Khiếu nại cần xử lý</div>
           <div class="kpi-compare"><span class="period">Cần phản hồi</span></div>
@@ -109,7 +106,7 @@
   <div class="modal" style="max-width:550px">
     <div class="modal-header">
       <h2 class="modal-title">Gửi thông báo CSKH</h2>
-      <button class="modal-close" data-modal-close="createNotifModal">✕</button>
+      <button class="modal-close" data-modal-close="createNotifModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <div>
       <div class="form-group" style="margin-bottom:1rem">

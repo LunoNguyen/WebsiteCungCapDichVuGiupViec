@@ -13,4 +13,8 @@ public interface PhanCongCTVRepository extends JpaRepository<PhanCongCTV, Intege
     List<PhanCongCTV> findByCongTacVien_IdAndTrangThaiOrderByThoiGianPhanCongDesc(Integer congTacVienId, String trangThai);
     Optional<PhanCongCTV> findByDonDat_IdAndCongTacVien_Id(Integer donDatId, Integer congTacVienId);
     Optional<PhanCongCTV> findByDonDat_Id(Integer donDatId);
+
+    /** Kiểm tra xem có phân công active cho đơn không */
+    boolean existsByDonDat_IdAndTrangThaiIn(Integer donDatId, java.util.List<String> trangThaiList);
 }
+

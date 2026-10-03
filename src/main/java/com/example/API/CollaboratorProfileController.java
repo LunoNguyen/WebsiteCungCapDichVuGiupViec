@@ -67,7 +67,25 @@ public class CollaboratorProfileController {
     /** Lấy thông tin hồ sơ */
     @GetMapping("/{id}")
     public ResponseEntity<?> getProfile(@PathVariable Integer id) {
-        return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.getCollaboratorProfile(id)));
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.getCollaboratorProfile(id)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** Lấy hồ sơ theo tài khoản, chưa có thì tạo hồ sơ rỗng (dùng sau khi CTV đăng nhập app) */
+    @PostMapping("/profile/ensure")
+    public ResponseEntity<?> ensureProfile(@RequestBody Map<String, Integer> req) {
+        Integer taiKhoanId = req.get("taiKhoanId");
+        if (taiKhoanId == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Thiếu taiKhoanId"));
+        }
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.ensureCollaboratorProfile(taiKhoanId)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     /** Cập nhật trạng thái Profile */
@@ -75,4 +93,53 @@ public class CollaboratorProfileController {
     public ResponseEntity<?> updateStatus(@PathVariable Integer id, @RequestBody Map<String, String> req) {
         return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.updateCollaboratorStatus(id, req.get("trangThai"))));
     }
-}
+
+    /** [POOL] Lấy danh sách đơn đang tìm CTV */
+    @GetMapping("/available-orders")
+    public ResponseEntity<?> getAvailableOrders(@RequestParam Integer congTacVienId) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data",
+                    collaboratorApiService.getAvailableOrders(congTacVienId)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** [POOL] CTV nhận đơn từ pool (atomic) */
+    @PostMapping("/orders/{donId}/accept")
+    public ResponseEntity<?> acceptOrderFromPool(
+            @PathVariable Integer donId,
+            @RequestBody Map<String, Integer> req) {
+        try {
+            Integer congTacVienId = req.get("congTacVienId");
+            if (congTacVienId == null) congTacVienId = req.get("taiKhoanId");
+            if (congTacVienId == null) return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Thiếu congTacVienId"));
+            return ResponseEntity.ok(Map.of("success", true, "data",
+                    collaboratorApiService.acceptOrderFromPool(congTacVienId, donId)));
+        } catch (IllegalStateException e) {
+            // Đơn đã có người nhận → 409 Conflict
+            return ResponseEntity.status(409).body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** [POOL] CTV từ chối đơn từ pool */
+    @PostMapping("/orders/{donId}/reject")
+    public ResponseEntity<?> rejectOrderFromPool(
+            @PathVariable Integer donId,
+            @RequestBody Map<String, Object> req) {
+        try {
+            Object ctvIdObj = req.get("congTacVienId") != null ? req.get("congTacVienId") : req.get("taiKhoanId");
+            if (ctvIdObj == null) return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Thiếu congTacVienId"));
+            Integer congTacVienId = Integer.valueOf(ctvIdObj.toString());
+            String lyDo = req.getOrDefault("lyDo", "").toString();
+            return ResponseEntity.ok(Map.of("success", true, "data",
+                    collaboratorApiService.rejectOrderFromPool(congTacVienId, donId, lyDo)));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+}

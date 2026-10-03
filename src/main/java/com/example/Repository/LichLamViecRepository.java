@@ -15,6 +15,7 @@ public interface LichLamViecRepository extends JpaRepository<LichLamViec, Intege
     List<LichLamViec> findByCongTacVien_IdAndNgayLamBetweenOrderByNgayLamAscGioBatDauAsc(Integer congTacVienId, LocalDate from, LocalDate to);
     List<LichLamViec> findByPhanCong_DonDat_Id(Integer donDatId);
 
+    // Dịch vụ của đơn nằm ở ChiTietDonDat (dd.chiTietList), DonDatDichVu không còn cột dichVuId
     @Query("SELECT DISTINCT l FROM LichLamViec l "
          + "JOIN FETCH l.congTacVien ctv "
          + "LEFT JOIN FETCH l.phanCong pc "
@@ -38,3 +39,4 @@ public interface LichLamViecRepository extends JpaRepository<LichLamViec, Intege
          + "ORDER BY l.ngayLam ASC, l.gioBatDau ASC")
     List<LichLamViec> findByCongTacVienIdWithDetails(@org.springframework.data.repository.query.Param("ctvId") Integer ctvId);
 }
+

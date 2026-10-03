@@ -10,10 +10,7 @@
 
     <main class="page-content">
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Lịch sử sử dụng Khuyến mãi</h1>
-          <p class="page-subtitle">Theo dõi danh sách khách hàng đã áp dụng mã khuyến mãi & coupon</p>
-        </div>
+        
         <div class="page-actions">
           <span class="badge badge-primary" style="font-size:0.875rem;padding:0.5rem 0.85rem;font-weight:600" th:text="'Tổng lượt dùng: ' + ${tongLuotSuDung}">Tổng lượt dùng: 0</span>
         </div>
@@ -22,19 +19,19 @@
       <!-- Stats Grid -->
       <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 1.5rem;">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🏷️</div>
+          <div class="stat-icon"><i class="ti ti-tag"></i></div>
           <div class="stat-value" th:text="${tongLuotSuDung}">0</div>
           <div class="stat-label">Tổng lượt sử dụng</div>
           <div class="kpi-compare"><span class="arrow-up">Trong hệ thống</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(13,155,163,0.15)">🎟️</div>
+          <div class="stat-icon"><i class="ti ti-ticket"></i></div>
           <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongKhuyenMai : 0}">0</div>
           <div class="stat-label">Chương trình Khuyến mãi</div>
           <div class="kpi-compare"><span class="arrow-up">Đang quản lý</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🎁</div>
+          <div class="stat-icon"><i class="ti ti-gift"></i></div>
           <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongCoupons : 0}">0</div>
           <div class="stat-label">Mã Coupon</div>
           <div class="kpi-compare"><span class="arrow-up">Đang phát hành</span></div>
@@ -99,7 +96,7 @@
                 <td>
                   <div style="display:flex;align-items:center;gap:0.625rem">
                     <div class="avatar avatar-sm"
-                         style="background:linear-gradient(135deg,#FF9966,#FF5E62)"
+                         style="background:var(--primary-soft)"
                          th:text="${ls.khachHang != null and ls.khachHang.hoTen != null ? #strings.substring(ls.khachHang.hoTen, 0, 1) : 'K'}">K</div>
                     <div>
                       <div style="font-weight:600;font-size:0.875rem"
@@ -132,7 +129,7 @@
               </tr>
               <tr th:if="${lichSuList == null or #lists.isEmpty(lichSuList)}">
                 <td colspan="8" style="text-align:center;padding:2.5rem;color:var(--text-muted)">
-                  <div style="font-size:1.5rem;margin-bottom:0.5rem">📭</div>
+                  <div style="font-size:1.5rem;margin-bottom:0.5rem;color:var(--muted)"><i class="ti ti-inbox"></i></div>
                   Chưa có lịch sử sử dụng khuyến mãi nào
                 </td>
               </tr>

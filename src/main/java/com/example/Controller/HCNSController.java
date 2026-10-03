@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,6 +44,7 @@ public class HCNSController {
     private final ChucVuRepository chucVuRepository;
     private final KhachHangRepository khachHangRepository;
     private final NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository;
+    private final com.example.Service.MinioService minioService;
 
     public HCNSController(
             ThongKeService thongKeService,
@@ -55,7 +57,8 @@ public class HCNSController {
             PhongBanRepository phongBanRepository,
             ChucVuRepository chucVuRepository,
             KhachHangRepository khachHangRepository,
-            NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository) {
+            NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository,
+            com.example.Service.MinioService minioService) {
         this.thongKeService = thongKeService;
         this.nhanVienRepository = nhanVienRepository;
         this.congTacVienRepository = congTacVienRepository;
@@ -67,6 +70,7 @@ public class HCNSController {
         this.chucVuRepository = chucVuRepository;
         this.khachHangRepository = khachHangRepository;
         this.nhatKyTaiKhoanRepository = nhatKyTaiKhoanRepository;
+        this.minioService = minioService;
     }
 
     @GetMapping("/dashboard")
@@ -524,7 +528,39 @@ public class HCNSController {
     public String danhMucDichVu(Model model) {
         model.addAttribute("loaiDichVus", loaiDichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "thuTuHienThi").and(Sort.by(Sort.Direction.ASC, "id"))));
         model.addAttribute("dichVus", dichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
+        // id danh mục -> đường dẫn ảnh (/files/<object key>) lấy từ MinIO; danh mục chưa có ảnh thì không có trong map
+        java.util.Map<Integer, String> anhDanhMuc = new java.util.HashMap<>();
+        for (LoaiDichVu ldv : loaiDichVuRepository.findAll()) {
+            String url = minioService.getViewUrl(ldv.getHinhAnh());
+            if (url != null) {
+                anhDanhMuc.put(ldv.getId(), url);
+            }
+        }
+        model.addAttribute("anhDanhMuc", anhDanhMuc);
         return "hcns/danh-muc-dich-vu";
+    }
+
+        /**
+     * Tải ảnh danh mục lên MinIO (thư mục công khai) và gán object key vào cột HinhAnh.
+     * Ảnh cũ trên MinIO được xóa sau khi ảnh mới tải lên thành công.
+     *
+     * @return null nếu thành công hoặc không chọn ảnh; ngược lại là thông báo lỗi
+     */
+    private String luuAnhDanhMuc(LoaiDichVu ldv, org.springframework.web.multipart.MultipartFile hinhAnhFile) {
+        if (hinhAnhFile == null || hinhAnhFile.isEmpty()) {
+            return null;
+        }
+        try {
+            String anhCu = ldv.getHinhAnh();
+            String key = minioService.uploadImage(hinhAnhFile, com.example.Service.MinioService.Folder.LOAI_DICH_VU);
+            ldv.setHinhAnh(key);
+            if (anhCu != null && !anhCu.isBlank() && !anhCu.startsWith("/") && !anhCu.startsWith("http")) {
+                minioService.deleteFile(anhCu);
+            }
+            return null;
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 
     @PostMapping("/danh-muc-dich-vu/them")
@@ -533,6 +569,7 @@ public class HCNSController {
             @RequestParam(required = false) String moTa,
             @RequestParam(required = false, defaultValue = "1") Integer thuTuHienThi,
             @RequestParam(required = false, defaultValue = "HienThi") String trangThai,
+            @RequestParam(value = "hinhAnhFile", required = false) org.springframework.web.multipart.MultipartFile hinhAnhFile,
             RedirectAttributes redirectAttributes) {
         try {
             if (tenLoaiDichVu == null || tenLoaiDichVu.trim().isEmpty()) {
@@ -547,7 +584,12 @@ public class HCNSController {
             ldv.setThuTuHienThi(thuTuHienThi != null ? thuTuHienThi : 1);
             ldv.setTrangThai(trangThai);
 
+            String loiAnh = luuAnhDanhMuc(ldv, hinhAnhFile);
             loaiDichVuRepository.save(ldv);
+            if (loiAnh != null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Đã thêm danh mục nhưng chưa lưu được ảnh: " + loiAnh);
+                return "redirect:/hcns/danh-muc-dich-vu";
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Thêm danh mục dịch vụ thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
@@ -562,6 +604,7 @@ public class HCNSController {
             @RequestParam(required = false) String moTa,
             @RequestParam(required = false, defaultValue = "1") Integer thuTuHienThi,
             @RequestParam(required = false, defaultValue = "HienThi") String trangThai,
+            @RequestParam(value = "hinhAnhFile", required = false) org.springframework.web.multipart.MultipartFile hinhAnhFile,
             RedirectAttributes redirectAttributes) {
         try {
             var ldvOpt = loaiDichVuRepository.findById(id);
@@ -576,7 +619,12 @@ public class HCNSController {
             ldv.setThuTuHienThi(thuTuHienThi);
             ldv.setTrangThai(trangThai);
 
+            String loiAnh = luuAnhDanhMuc(ldv, hinhAnhFile);
             loaiDichVuRepository.save(ldv);
+            if (loiAnh != null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Đã cập nhật danh mục nhưng chưa lưu được ảnh: " + loiAnh);
+                return "redirect:/hcns/danh-muc-dich-vu";
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật danh mục thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
@@ -608,24 +656,118 @@ public class HCNSController {
     // =========================================================================
     // 4. UC-HCNS04 – Quản lý Dịch vụ và Bảng giá (CRUD + Phân trang 10 dòng/trang)
     // =========================================================================
+    /**
+     * Bảng giá có lọc ở server (đúng trên mọi trang): từ khoá, trạng thái, danh mục, dịch vụ,
+     * loại hình đặt, khoảng giá, khoảng ngày áp dụng; sắp xếp; 10 dòng/trang.
+     */
     @GetMapping("/dich-vu-bang-gia")
     public String dichVuBangGia(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String trangThai,
+            @RequestParam(required = false) Integer loaiDichVuId,
+            @RequestParam(required = false) Integer dichVuId,
+            @RequestParam(required = false) String loaiHinhDat,
+            @RequestParam(required = false) BigDecimal giaTu,
+            @RequestParam(required = false) BigDecimal giaDen,
+            @RequestParam(required = false) String tuNgay,
+            @RequestParam(required = false) String denNgay,
+            @RequestParam(defaultValue = "macDinh") String sapXep,
             Model model) {
         if (page < 0) page = 0;
         int pageSize = 10; // ĐẶC TẢ: hiển thị đúng 10 dòng, muốn xem tiếp phải nhấn ->
 
-        Page<BangGiaDichVu> pageBangGia = bangGiaDichVuRepository.findAll(
-                PageRequest.of(page, pageSize, Sort.by(Sort.Direction.ASC, "id"))
-        );
+        String tuKhoa = q != null ? q.trim().toLowerCase() : "";
+        LocalDate ngayTu = parseNgay(tuNgay);
+        LocalDate ngayDen = parseNgay(denNgay);
 
-        model.addAttribute("bangGias", pageBangGia.getContent());
+        // Lọc mọi điều kiện trừ trạng thái, để đếm số cho từng tab trạng thái
+        List<BangGiaDichVu> truocTrangThai = bangGiaDichVuRepository.findAll().stream()
+                .filter(bg -> tuKhoa.isEmpty() || chua(bg.getMaBangGia(), tuKhoa)
+                        || (bg.getDichVu() != null && (chua(bg.getDichVu().getTenDichVu(), tuKhoa) || chua(bg.getDichVu().getMaDichVu(), tuKhoa))))
+                .filter(bg -> loaiDichVuId == null || (bg.getDichVu() != null && bg.getDichVu().getLoaiDichVu() != null
+                        && loaiDichVuId.equals(bg.getDichVu().getLoaiDichVu().getId())))
+                .filter(bg -> dichVuId == null || (bg.getDichVu() != null && dichVuId.equals(bg.getDichVu().getId())))
+                .filter(bg -> loaiHinhDat == null || loaiHinhDat.isBlank() || loaiHinhDat.equals(bg.getLoaiHinhDat()))
+                .filter(bg -> giaTu == null || (bg.getDonGia() != null && bg.getDonGia().compareTo(giaTu) >= 0))
+                .filter(bg -> giaDen == null || (bg.getDonGia() != null && bg.getDonGia().compareTo(giaDen) <= 0))
+                .filter(bg -> ngayTu == null || (bg.getNgayApDung() != null && !bg.getNgayApDung().isBefore(ngayTu)))
+                .filter(bg -> ngayDen == null || (bg.getNgayApDung() != null && !bg.getNgayApDung().isAfter(ngayDen)))
+                .toList();
+
+        long demDangApDung = truocTrangThai.stream().filter(bg -> "DangApDung".equals(bg.getTrangThai())).count();
+        String tab = "DangApDung".equals(trangThai) || "HetHan".equals(trangThai) ? trangThai : "";
+        java.util.Comparator<BangGiaDichVu> thuTu = switch (sapXep) {
+            case "giaTang" -> java.util.Comparator.comparing(BangGiaDichVu::getDonGia, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            case "giaGiam" -> java.util.Comparator.comparing(BangGiaDichVu::getDonGia, java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()));
+            case "tenDichVu" -> java.util.Comparator.comparing(bg -> bg.getDichVu() != null ? bg.getDichVu().getTenDichVu() : "",
+                    java.text.Collator.getInstance(new java.util.Locale("vi", "VN")));
+            case "ngayMoi" -> java.util.Comparator.comparing(BangGiaDichVu::getNgayApDung, java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()));
+            default -> java.util.Comparator.comparing(BangGiaDichVu::getId);
+        };
+        List<BangGiaDichVu> ketQua = truocTrangThai.stream()
+                .filter(bg -> tab.isEmpty() || (tab.equals("DangApDung") == "DangApDung".equals(bg.getTrangThai())))
+                .sorted(thuTu)
+                .toList();
+
+        int totalItems = ketQua.size();
+        int totalPages = (int) Math.ceil(totalItems / (double) pageSize);
+        if (totalPages > 0 && page >= totalPages) page = totalPages - 1;
+        int from = Math.min(page * pageSize, totalItems);
+        int to = Math.min(from + pageSize, totalItems);
+
+        // Chuỗi query giữ bộ lọc cho link phân trang, tab, sắp xếp (không kèm page)
+        org.springframework.web.util.UriComponentsBuilder qs = org.springframework.web.util.UriComponentsBuilder.newInstance();
+        if (!tuKhoa.isEmpty()) qs.queryParam("q", q.trim());
+        if (loaiDichVuId != null) qs.queryParam("loaiDichVuId", loaiDichVuId);
+        if (dichVuId != null) qs.queryParam("dichVuId", dichVuId);
+        if (loaiHinhDat != null && !loaiHinhDat.isBlank()) qs.queryParam("loaiHinhDat", loaiHinhDat);
+        if (giaTu != null) qs.queryParam("giaTu", giaTu.toPlainString());
+        if (giaDen != null) qs.queryParam("giaDen", giaDen.toPlainString());
+        if (ngayTu != null) qs.queryParam("tuNgay", ngayTu);
+        if (ngayDen != null) qs.queryParam("denNgay", ngayDen);
+        if (!"macDinh".equals(sapXep)) qs.queryParam("sapXep", sapXep);
+        String boLocQuery = qs.build().encode().getQuery();
+        String filterQuery = boLocQuery == null ? "" : boLocQuery + "&";
+        String tabQuery = filterQuery + (tab.isEmpty() ? "" : "trangThai=" + tab + "&");
+
+        model.addAttribute("bangGias", ketQua.subList(from, to));
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", pageBangGia.getTotalPages());
-        model.addAttribute("totalItems", pageBangGia.getTotalElements());
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", (long) totalItems);
         model.addAttribute("pageSize", pageSize);
         model.addAttribute("dichVus", dichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
+        model.addAttribute("loaiDichVus", loaiDichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "thuTuHienThi").and(Sort.by(Sort.Direction.ASC, "id"))));
+
+        model.addAttribute("demTatCa", truocTrangThai.size());
+        model.addAttribute("demDangApDung", demDangApDung);
+        model.addAttribute("demHetHan", truocTrangThai.size() - demDangApDung);
+        model.addAttribute("fTrangThai", tab);
+        model.addAttribute("fQ", q != null ? q.trim() : "");
+        model.addAttribute("fLoaiDichVuId", loaiDichVuId);
+        model.addAttribute("fDichVuId", dichVuId);
+        model.addAttribute("fLoaiHinhDat", loaiHinhDat != null ? loaiHinhDat : "");
+        model.addAttribute("fGiaTu", giaTu);
+        model.addAttribute("fGiaDen", giaDen);
+        model.addAttribute("fTuNgay", ngayTu);
+        model.addAttribute("fDenNgay", ngayDen);
+        model.addAttribute("fSapXep", sapXep);
+        model.addAttribute("filterQuery", filterQuery);   // bộ lọc, chưa kèm trạng thái
+        model.addAttribute("tabQuery", tabQuery);         // bộ lọc + trạng thái, dùng cho phân trang
+        model.addAttribute("coBoLoc", !filterQuery.isEmpty() && !filterQuery.equals("sapXep=" + sapXep + "&"));
         return "hcns/dich-vu-bang-gia";
+    }
+
+    private static boolean chua(String giaTri, String tuKhoa) {
+        return giaTri != null && giaTri.toLowerCase().contains(tuKhoa);
+    }
+
+    private static LocalDate parseNgay(String s) {
+        try {
+            return (s == null || s.isBlank()) ? null : LocalDate.parse(s.trim());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @PostMapping("/dich-vu-bang-gia/them")
@@ -716,6 +858,48 @@ public class HCNSController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật bảng giá: " + e.getMessage());
         }
         return "redirect:/hcns/dich-vu-bang-gia";
+    }
+
+    /**
+     * Sửa giá nhiều gói cùng lúc. ids[i] nhận donGia[i]; ngayApDung (nếu có) áp cho mọi gói đã chọn.
+     * Chạy trong một giao dịch: một gói lỗi thì không gói nào bị đổi.
+     */
+    @PostMapping("/dich-vu-bang-gia/sua-hang-loat")
+    @Transactional
+    public String suaGiaHangLoat(
+            @RequestParam(name = "ids", required = false) List<Integer> ids,
+            @RequestParam(name = "donGia", required = false) List<BigDecimal> donGias,
+            @RequestParam(required = false) String ngayApDung,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String returnQuery,
+            RedirectAttributes redirectAttributes) {
+        // Quay về đúng bộ lọc và trang đang xem; chỉ nhận ký tự của query string đã mã hoá
+        String giuLoc = (returnQuery != null && returnQuery.matches("[A-Za-z0-9%&=._+\\-]*")) ? returnQuery : "";
+        String back = "redirect:/hcns/dich-vu-bang-gia?" + giuLoc + "page=" + Math.max(page, 0);
+        if (ids == null || ids.isEmpty() || donGias == null || ids.size() != donGias.size()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Chưa chọn gói giá nào để sửa.");
+            return back;
+        }
+        try {
+            LocalDate ngayMoi = (ngayApDung != null && !ngayApDung.isBlank()) ? LocalDate.parse(ngayApDung.trim()) : null;
+            Map<Integer, BangGiaDichVu> theoId = new HashMap<>();
+            for (BangGiaDichVu bg : bangGiaDichVuRepository.findAllById(ids)) theoId.put(bg.getId(), bg);
+
+            for (int i = 0; i < ids.size(); i++) {
+                BangGiaDichVu bg = theoId.get(ids.get(i));
+                BigDecimal gia = donGias.get(i);
+                if (bg == null) throw new IllegalArgumentException("Gói giá #" + ids.get(i) + " không còn tồn tại");
+                if (gia == null || gia.signum() < 0) throw new IllegalArgumentException("Giá mới của " + bg.getMaBangGia() + " không hợp lệ");
+                bg.setDonGia(gia);
+                if (ngayMoi != null) bg.setNgayApDung(ngayMoi);
+            }
+            bangGiaDichVuRepository.saveAll(theoId.values());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật giá cho " + ids.size() + " gói.");
+        } catch (Exception e) {
+            org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            redirectAttributes.addFlashAttribute("errorMessage", "Không cập nhật được giá: " + e.getMessage() + ". Chưa gói nào bị đổi.");
+        }
+        return back;
     }
 
     @PostMapping("/dich-vu-bang-gia/xoa")

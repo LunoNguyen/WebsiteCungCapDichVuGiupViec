@@ -9,12 +9,7 @@
     <header th:replace="~{layout/admin-layout :: adminTopbar('Giám đốc', '/giam-doc/dashboard', 'Quản lý Nhân viên')}"></header>
 
     <main class="page-content">
-      <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Quản lý Nhân viên</h1>
-          <p class="page-subtitle">Xem thông tin & phê duyệt thay đổi nhân sự · UC-GD03</p>
-        </div>
-      </div>
+      
 
       <!-- Dept Tabs -->
       <div class="tabs" style="margin-bottom:1.5rem;max-width:500px">
@@ -27,28 +22,28 @@
       <!-- Stats Cards -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:1.5rem">
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-users" style="color:var(--primary)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tongNhanVien : 0}">0</div>
             <div class="quick-stat-lbl">Tổng nhân viên</div>
           </div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.dangLamViecCount : 0}">0</div>
             <div class="quick-stat-lbl">Đang làm việc</div>
           </div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-user-pause" style="color:var(--warning)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-user-pause" style="color:var(--warning)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.tamNghiCount : 0}">0</div>
             <div class="quick-stat-lbl">Tạm nghỉ</div>
           </div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-user-x" style="color:var(--danger)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-user-x" style="color:var(--danger)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${nhanVienStats != null ? nhanVienStats.nghiViecCount : 0}">0</div>
             <div class="quick-stat-lbl">Đã nghỉ việc</div>
@@ -143,7 +138,7 @@
         <h2 style="font-size:1.1rem;font-weight:700">Hồ sơ nhân viên</h2>
         <span style="font-size:0.8rem;color:var(--text-muted)" th:text="${nv.maNhanVien}">NV-001</span>
       </div>
-      <button class="modal-close" th:attr="data-panel-close='staffDetail_' + ${nv.id}">✕</button>
+      <button class="modal-close" th:attr="data-panel-close='staffDetail_' + ${nv.id}" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <div class="detail-panel-body">
       <div style="text-align:center;padding:1.5rem 0;border-bottom:1px solid var(--border-light);margin-bottom:1.25rem">

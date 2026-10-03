@@ -1,0 +1,28 @@
+# Dịch vụ phụ trợ cho Neatify: Redis (cache) và MinIO (lưu file).
+# Chạy:  docker compose up -d
+# MySQL bạn đang chạy riêng nên không khai báo ở đây.
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: neatify-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: neatify-minio
+    ports:
+      - "9000:9000"   # API  -> minio.endpoint=http://localhost:9000
+      - "9001:9001"   # Console quản trị: http://localhost:9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+volumes:
+  minio-data:
