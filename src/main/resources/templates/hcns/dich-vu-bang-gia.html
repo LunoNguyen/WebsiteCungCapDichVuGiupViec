@@ -11,24 +11,29 @@
     <main class="page-content">
       <div class="page-header">
         <div class="page-title-group">
-          <h1 class="page-title">Dich vu &amp; Bang gia</h1>
-          <p class="page-subtitle">Quan ly goi dich vu va cau hinh gia cuoc</p>
+          <h1 class="page-title">Dịch vụ &amp; Bảng giá</h1>
+          <p class="page-subtitle">Quản lý gói dịch vụ và cấu hình giá cước hệ thống</p>
         </div>
         <div class="page-actions">
-          <button class="btn btn-secondary btn-sm"><i class="ti ti-file-export"></i> Xuat bang gia</button>
-          <button class="btn btn-primary btn-sm" data-modal-open="addPriceModal"><i class="ti ti-plus"></i> Them goi dich vu</button>
+          <button class="btn btn-primary btn-sm" data-modal-open="addPriceModal"><i class="ti ti-plus"></i> Thêm bảng giá mới</button>
         </div>
       </div>
+
+      <!-- Thông báo hệ thống -->
+      <div th:if="${errorMessage}" style="padding:1rem;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
+      <div th:if="${successMessage}" style="padding:1rem;background:rgba(67,233,123,0.12);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
+
       <div class="card" style="padding:0">
         <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
           <div>
-            <div class="card-title">Bảng giá dịch vụ hiện hành</div>
+            <div class="card-title">Bảng giá dịch vụ hiện hành (10 dòng / trang)</div>
             <div class="card-subtitle">Giá cước niêm yết áp dụng trong hệ thống Neatify</div>
           </div>
-          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${bangGias != null ? #lists.size(bangGias) : 0}">0</strong> gói giá</span>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${totalItems != null ? totalItems : 0}">0</strong> gói giá</span>
         </div>
+        
         <div class="table-container" style="border:none">
-          <table class="table">
+          <table class="table" id="priceTable">
             <thead>
               <tr>
                 <th>Mã bảng giá</th>
@@ -50,13 +55,52 @@
                   <span class="badge badge-info" th:if="${bg.loaiHinhDat == 'GoiThang'}">Gói tháng</span>
                 </td>
                 <td th:text="${bg.donViTinh}">Giờ</td>
-                <td style="color:var(--accent);font-weight:700;font-size:0.95rem" th:text="${#numbers.formatDecimal(bg.donGia, 0, 'COMMA', 0, 'POINT')} + 'đ'">120.000đ</td>
+                <td style="color:var(--accent);font-weight:700;font-size:0.95rem" th:text="${bg.donGia != null ? #numbers.formatDecimal(bg.donGia, 0, 'POINT', 0, 'COMMA') + 'đ' : '--'}">120.000đ</td>
                 <td style="font-size:0.85rem" th:text="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
                 <td>
-                  <span class="badge badge-success" th:if="${bg.trangThai == 'DangApDung'}">Đang áp dụng</span>
+                  <span class="badge badge-success" th:if="${bg.trangThai == 'DangApDung'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang áp dụng</span>
                   <span class="badge badge-secondary" th:unless="${bg.trangThai == 'DangApDung'}">Hết hạn</span>
                 </td>
-                <td><button class="btn btn-outline btn-sm" data-modal-open="addPriceModal">Chỉnh sửa</button></td>
+                <td style="text-align:right">
+                  <div class="table-actions" style="justify-content:flex-end">
+                    <button class="btn btn-outline btn-sm"
+                            th:data-id="${bg.id}"
+                            th:data-dichvuid="${bg.dichVu != null ? bg.dichVu.id : ''}"
+                            th:data-loaihinh="${bg.loaiHinhDat}"
+                            th:data-donvitinh="${bg.donViTinh}"
+                            th:data-dongia="${bg.donGia}"
+                            th:data-ngayapdung="${bg.ngayApDung}"
+                            th:data-ngayketthuc="${bg.ngayKetThuc}"
+                            th:data-trangthai="${bg.trangThai}"
+                            onclick="openEditPriceModal(this)">
+                      <i class="ti ti-edit"></i> Sửa
+                    </button>
+                    <form th:if="${bg.trangThai == 'DangApDung'}" th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post" style="display:inline">
+                      <input type="hidden" name="id" th:value="${bg.id}">
+                      <input type="hidden" name="dichVuId" th:value="${bg.dichVu != null ? bg.dichVu.id : ''}">
+                      <input type="hidden" name="loaiHinhDat" th:value="${bg.loaiHinhDat}">
+                      <input type="hidden" name="donViTinh" th:value="${bg.donViTinh}">
+                      <input type="hidden" name="donGia" th:value="${bg.donGia}">
+                      <input type="hidden" name="ngayApDung" th:value="${bg.ngayApDung}">
+                      <input type="hidden" name="trangThai" value="HetHan">
+                      <button type="submit" class="btn btn-warning btn-sm" title="Chuyển sang Hết hạn"><i class="ti ti-ban"></i></button>
+                    </form>
+                    <form th:if="${bg.trangThai != 'DangApDung'}" th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post" style="display:inline">
+                      <input type="hidden" name="id" th:value="${bg.id}">
+                      <input type="hidden" name="dichVuId" th:value="${bg.dichVu != null ? bg.dichVu.id : ''}">
+                      <input type="hidden" name="loaiHinhDat" th:value="${bg.loaiHinhDat}">
+                      <input type="hidden" name="donViTinh" th:value="${bg.donViTinh}">
+                      <input type="hidden" name="donGia" th:value="${bg.donGia}">
+                      <input type="hidden" name="ngayApDung" th:value="${bg.ngayApDung}">
+                      <input type="hidden" name="trangThai" value="DangApDung">
+                      <button type="submit" class="btn btn-success btn-sm" title="Áp dụng lại"><i class="ti ti-check"></i></button>
+                    </form>
+                    <form th:action="@{/hcns/dich-vu-bang-gia/xoa}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn gói giá này khỏi hệ thống?');">
+                      <input type="hidden" name="id" th:value="${bg.id}">
+                      <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger,#ef4444);border-color:rgba(239,68,68,0.3)" title="Xóa gói giá"><i class="ti ti-trash"></i></button>
+                    </form>
+                  </div>
+                </td>
               </tr>
               <tr th:if="${bangGias == null or #lists.isEmpty(bangGias)}">
                 <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu bảng giá</td>
@@ -64,48 +108,191 @@
             </tbody>
           </table>
         </div>
+
+        <!-- ============================================================
+             PHÂN TRANG 10 DÒNG (BẤM NÚT -> ĐỂ XEM TIẾP THEO YÊU CẦU)
+             ============================================================ -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-top:1px solid var(--border-light);background:var(--bg-card)">
+          <div style="font-size:0.875rem;color:var(--text-muted)">
+            Hiển thị trang <strong th:text="${currentPage + 1}">1</strong> / <strong th:text="${totalPages > 0 ? totalPages : 1}">1</strong>
+            (Tổng cộng <span th:text="${totalItems}">0</span> mục · 10 dòng/trang)
+          </div>
+
+          <div class="pagination" style="display:flex;gap:0.35rem;align-items:center">
+            <!-- Nút LÙI (<-) -->
+            <a th:href="@{/hcns/dich-vu-bang-gia(page=${currentPage - 1})}"
+               class="btn btn-outline btn-sm"
+               th:style="${currentPage == 0} ? 'pointer-events:none;opacity:0.4' : ''"
+               title="Trang trước">
+              <i class="ti ti-arrow-left"></i> Trước
+            </a>
+
+            <!-- Các nút số trang lân cận -->
+            <th:block th:if="${totalPages > 1}">
+              <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
+                   th:href="@{/hcns/dich-vu-bang-gia(page=${i})}"
+                   class="page-btn"
+                   th:classappend="${i == currentPage} ? 'active' : ''"
+                   th:text="${i + 1}"
+                   style="min-width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);text-decoration:none;font-size:0.85rem;font-weight:600">
+                  1
+                </a>
+              </th:block>
+            </th:block>
+
+            <!-- Nút TIẾP (->) ĐẶC TẢ: BẤM -> ĐỂ XEM TIẾP -->
+            <a th:href="@{/hcns/dich-vu-bang-gia(page=${currentPage + 1})}"
+               class="btn btn-primary btn-sm"
+               th:style="${currentPage >= totalPages - 1} ? 'pointer-events:none;opacity:0.4' : ''"
+               title="Xem tiếp các dòng tiếp theo">
+              Tiếp <i class="ti ti-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: THÊM BẢNG GIÁ MỚI (CREATE)
+     ============================================================ -->
 <div class="modal-overlay" id="addPriceModal">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
-      <h2 class="modal-title">Them / Sua Goi Dich vu</h2>
-      <button class="modal-close" data-modal-close="addPriceModal">x</button>
+      <h2 class="modal-title"><i class="ti ti-receipt"></i> Thêm Gói Bảng giá Mới</h2>
+      <button class="modal-close" data-modal-close="addPriceModal">✕</button>
     </div>
-    <div class="form-row" style="margin-bottom:1rem">
-      <div class="form-group">
-        <label class="form-label">Danh muc *</label>
-        <select class="form-control" required>
-          <option>Don dep nha</option><option>Giat ui</option><option>Nau an</option><option>Trong tre</option><option>Cham soc NCT</option>
-        </select>
+    <form th:action="@{/hcns/dich-vu-bang-gia/them}" method="post">
+      <div style="padding:1.5rem">
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Chọn Dịch vụ áp dụng *</label>
+          <select class="form-control" name="dichVuId" required>
+            <option value="">-- Chọn dịch vụ --</option>
+            <option th:each="dv : ${dichVus}" th:value="${dv.id}" th:text="${dv.tenDichVu + ' (' + dv.maDichVu + ')'}">Dịch vụ</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">Loại hình đặt *</label>
+            <select class="form-control" name="loaiHinhDat">
+              <option value="TheoLan">Theo lần (Giờ / Buổi)</option>
+              <option value="GoiThang">Gói định kỳ (Tháng)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Đơn vị tính *</label>
+            <input class="form-control" name="donViTinh" placeholder="VD: Buổi (3h), Giờ, Lần, m²" required>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">Đơn giá niêm yết (VNĐ) *</label>
+            <input class="form-control" type="number" name="donGia" placeholder="VD: 150000" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ngày áp dụng</label>
+            <input class="form-control" type="date" name="ngayApDung">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Ngày kết thúc (Để trống nếu áp dụng vĩnh viễn)</label>
+          <input class="form-control" type="date" name="ngayKetThuc">
+        </div>
       </div>
-      <div class="form-group"><label class="form-label">Ten goi *</label><input class="form-control" placeholder="VD: Tieu chuan (3 phong)" required></div>
-    </div>
-    <div class="form-row" style="margin-bottom:1rem">
-      <div class="form-group"><label class="form-label">Gia co ban (dong) *</label><input class="form-control" type="number" placeholder="240000" required></div>
-      <div class="form-group"><label class="form-label">Gia uu tien (dong)</label><input class="form-control" type="number" placeholder="290000"></div>
-    </div>
-    <div class="form-row" style="margin-bottom:1rem">
-      <div class="form-group"><label class="form-label">Gia cuoi tuan (dong)</label><input class="form-control" type="number" placeholder="310000"></div>
-      <div class="form-group"><label class="form-label">Hoa hong CTV (%)</label><input class="form-control" type="number" placeholder="70" min="0" max="100"></div>
-    </div>
-    <div class="form-row" style="margin-bottom:0">
-      <div class="form-group"><label class="form-label">Thoi gian uoc tinh</label><input class="form-control" placeholder="VD: 4 gio"></div>
-      <div class="form-group">
-        <label class="form-label">Trang thai</label>
-        <select class="form-control"><option>Hoat dong</option><option>An tam</option></select>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close="addPriceModal">Hủy</button>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Lưu bảng giá</button>
       </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: CHỈNH SỬA BẢNG GIÁ (UPDATE)
+     ============================================================ -->
+<div class="modal-overlay" id="editPriceModal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Bảng giá Dịch vụ</h2>
+      <button class="modal-close" data-modal-close="editPriceModal">✕</button>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close="addPriceModal">Huy</button>
-      <button class="btn btn-primary" onclick="document.getElementById('addPriceModal').classList.remove('active');Toast.show('Da luu bang gia thanh cong!')">Luu thay doi</button>
-    </div>
+    <form th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post">
+      <input type="hidden" name="id" id="editBgId">
+      <div style="padding:1.5rem">
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Dịch vụ áp dụng *</label>
+          <select class="form-control" name="dichVuId" id="editBgDichVuId" required>
+            <option th:each="dv : ${dichVus}" th:value="${dv.id}" th:text="${dv.tenDichVu + ' (' + dv.maDichVu + ')'}">Dịch vụ</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">Loại hình đặt *</label>
+            <select class="form-control" name="loaiHinhDat" id="editBgLoaiHinh">
+              <option value="TheoLan">Theo lần (Giờ / Buổi)</option>
+              <option value="GoiThang">Gói định kỳ (Tháng)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Đơn vị tính *</label>
+            <input class="form-control" name="donViTinh" id="editBgDonViTinh" required>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">Đơn giá niêm yết (VNĐ) *</label>
+            <input class="form-control" type="number" name="donGia" id="editBgDonGia" required min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trạng thái</label>
+            <select class="form-control" name="trangThai" id="editBgTrangThai">
+              <option value="DangApDung">Đang áp dụng</option>
+              <option value="HetHan">Hết hạn</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div class="form-group">
+            <label class="form-label">Ngày áp dụng</label>
+            <input class="form-control" type="date" name="ngayApDung" id="editBgNgayApDung">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ngày kết thúc</label>
+            <input class="form-control" type="date" name="ngayKetThuc" id="editBgNgayKetThuc">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close="editPriceModal">Hủy</button>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Cập nhật bảng giá</button>
+      </div>
+    </form>
   </div>
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+<script>
+  function openEditPriceModal(btn) {
+    document.getElementById('editBgId').value = btn.dataset.id;
+    if (btn.dataset.dichvuid) {
+      document.getElementById('editBgDichVuId').value = btn.dataset.dichvuid;
+    }
+    if (btn.dataset.loaihinh) {
+      document.getElementById('editBgLoaiHinh').value = btn.dataset.loaihinh;
+    }
+    document.getElementById('editBgDonViTinh').value = btn.dataset.donvitinh || '';
+    document.getElementById('editBgDonGia').value = btn.dataset.dongia ? Math.round(btn.dataset.dongia) : '';
+    document.getElementById('editBgNgayApDung').value = btn.dataset.ngayapdung || '';
+    document.getElementById('editBgNgayKetThuc').value = btn.dataset.ngayketthuc || '';
+    if (btn.dataset.trangthai) {
+      document.getElementById('editBgTrangThai').value = btn.dataset.trangthai;
+    }
+    ModalManager.open('editPriceModal');
+  }
+</script>
 </body>
 </html>

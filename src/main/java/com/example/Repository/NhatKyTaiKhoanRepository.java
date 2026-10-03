@@ -7,4 +7,5 @@ import java.util.List;
 @Repository
 public interface NhatKyTaiKhoanRepository extends JpaRepository<NhatKyTaiKhoan, Integer> {
     List<NhatKyTaiKhoan> findTop5ByOrderByThoiGianDesc();
- }
+    void deleteByTaiKhoan(com.example.Model.TaiKhoan taiKhoan);
+}

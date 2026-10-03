@@ -10,4 +10,6 @@ import java.util.List;
 public interface DiaChiKhachHangRepository extends JpaRepository<DiaChiKhachHang, Integer> {
     List<DiaChiKhachHang> findByKhachHang_IdAndTrangThai(Integer khachHangId, String trangThai);
     List<DiaChiKhachHang> findByKhachHang_Id(Integer khachHangId);
+    java.util.Optional<DiaChiKhachHang> findFirstByKhachHang_IdAndLaMacDinhTrue(Integer khachHangId);
+    java.util.Optional<DiaChiKhachHang> findByMaDiaChi(String maDiaChi);
 }

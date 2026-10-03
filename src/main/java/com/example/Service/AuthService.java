@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Xac thuc tai khoan va phan quyen tu CSDL.
@@ -19,6 +20,7 @@ public class AuthService {
     private final NhanVienRepository nhanVienRepository;
     private final KhachHangRepository khachHangRepository;
     private final CongTacVienRepository congTacVienRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(
             TaiKhoanRepository taiKhoanRepository,
@@ -29,6 +31,7 @@ public class AuthService {
         this.nhanVienRepository = nhanVienRepository;
         this.khachHangRepository = khachHangRepository;
         this.congTacVienRepository = congTacVienRepository;
+        this.passwordEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
     }
 
     public AuthenticationResult authenticate(String tenDangNhap, String matKhau) {
@@ -36,7 +39,10 @@ public class AuthService {
             return AuthenticationResult.failure("Vui lòng nhập tên đăng nhập và mật khẩu.");
         }
 
-        TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(tenDangNhap.trim()).orElse(null);
+        String loginIdentifier = tenDangNhap.trim();
+        TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(loginIdentifier)
+                .or(() -> taiKhoanRepository.findBySoDienThoai(loginIdentifier))
+                .orElse(null);
         if (taiKhoan == null || !passwordMatches(matKhau, taiKhoan.getMatKhau())) {
             return AuthenticationResult.failure("Tên đăng nhập hoặc mật khẩu không chính xác.");
         }
@@ -68,7 +74,8 @@ public class AuthService {
                     role = "ROLE_GIAM_DOC";
                     redirectUrl = "/giam-doc/dashboard";
                     avatar = "GĐ";
-                } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu) || "CV-NVNS".equalsIgnoreCase(maChucVu)) {
+                } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu)
+                        || "CV-NVNS".equalsIgnoreCase(maChucVu)) {
                     role = "ROLE_HCNS";
                     redirectUrl = "/hcns/dashboard";
                     avatar = "HC";
@@ -104,33 +111,36 @@ public class AuthService {
                     avatar = "MKT";
                 }
             }
-        } else if ("KhachHang".equalsIgnoreCase(loaiTK)) {
-            role = "ROLE_KHACH_HANG";
-            redirectUrl = "/";
-            KhachHang kh = khachHangRepository.findByTaiKhoan(taiKhoan).orElse(null);
-            if (kh != null) {
-                fullName = kh.getHoTen();
-                avatar = "KH";
-            }
-        } else if ("CongTacVien".equalsIgnoreCase(loaiTK)) {
-            role = "ROLE_CTV";
-            redirectUrl = "/";
-            CongTacVien ctv = congTacVienRepository.findByTaiKhoan(taiKhoan).orElse(null);
-            if (ctv != null) {
-                fullName = ctv.getHoTen();
-                avatar = "CTV";
-            }
         }
 
         return AuthenticationResult.success(taiKhoan, role, fullName, avatar, redirectUrl);
     }
 
     private boolean passwordMatches(String input, String storedPassword) {
-        return storedPassword != null && MessageDigest.isEqual(
-                input.getBytes(StandardCharsets.UTF_8), storedPassword.getBytes(StandardCharsets.UTF_8));
+        if (storedPassword == null || input == null) {
+            return false;
+        }
+        // 1. Nếu mật khẩu trong CSDL đã được mã hóa bằng BCrypt (bắt đầu bằng $2a$,
+        // $2b$, $2y$)
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")
+                || storedPassword.startsWith("$2y$")) {
+            try {
+                if (passwordEncoder.matches(input, storedPassword)) {
+                    return true;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        // 2. Tương thích ngược: Mật khẩu cũ lưu dạng thường (plaintext)
+        return MessageDigest.isEqual(
+                input.getBytes(StandardCharsets.UTF_8),
+                storedPassword.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
-    private boolean isBlank(String value) { return value == null || value.isBlank(); }
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
 
     public record AuthenticationResult(
             boolean success,
@@ -147,7 +157,8 @@ public class AuthService {
             return new AuthenticationResult(false, message, null, null, null, null, null, null, null);
         }
 
-        public static AuthenticationResult success(TaiKhoan taiKhoan, String role, String fullName, String avatar, String redirectUrl) {
+        public static AuthenticationResult success(TaiKhoan taiKhoan, String role, String fullName, String avatar,
+                String redirectUrl) {
             return new AuthenticationResult(
                     true,
                     null,

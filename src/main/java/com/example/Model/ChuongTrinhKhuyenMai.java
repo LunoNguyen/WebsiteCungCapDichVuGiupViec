@@ -29,7 +29,7 @@ public class ChuongTrinhKhuyenMai {
     private BigDecimal giaTriGiam;
 
     @Column(name = "SoTienGiamToiDa", precision = 12, scale = 0)
-    private BigDecimal soTienGiamToiDa; 
+    private BigDecimal soTienGiamToiDa;
 
     @Column(name = "DieuKienToiThieu", nullable = false, precision = 12, scale = 0)
     private BigDecimal dieuKienToiThieu;
@@ -47,5 +47,13 @@ public class ChuongTrinhKhuyenMai {
     protected void onCreate() {
         if (trangThai == null) trangThai = "SapDienRa";
         if (dieuKienToiThieu == null) dieuKienToiThieu = BigDecimal.ZERO;
+    }
+
+    public BigDecimal getGiaTriGiamToiDa() {
+        return this.soTienGiamToiDa;
+    }
+
+    public void setGiaTriGiamToiDa(BigDecimal giaTriGiamToiDa) {
+        this.soTienGiamToiDa = giaTriGiamToiDa;
     }
 }

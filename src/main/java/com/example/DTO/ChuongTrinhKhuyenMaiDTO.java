@@ -16,4 +16,12 @@ public class ChuongTrinhKhuyenMaiDTO {
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;
     private String trangThai;
+
+    public BigDecimal getGiaTriGiamToiDa() {
+        return this.soTienGiamToiDa;
+    }
+
+    public void setGiaTriGiamToiDa(BigDecimal giaTriGiamToiDa) {
+        this.soTienGiamToiDa = giaTriGiamToiDa;
+    }
 }

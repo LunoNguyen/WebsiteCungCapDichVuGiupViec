@@ -36,13 +36,15 @@ public class CollaboratorProfileController {
         }
     }
 
-    /** Từ chối đơn (Hàm này bạn đang thiếu nè) */
+    /** Từ chối đơn */
     @PutMapping("/assignments/{id}/reject")
-    public ResponseEntity<?> rejectAssignment(@PathVariable Integer id) {
+    public ResponseEntity<?> rejectAssignment(
+            @PathVariable Integer id,
+            @RequestBody(required = false) com.example.DTO.request.AssignmentActionRequest req) {
         try {
-            // Truyền Object rỗng thay vì null để tránh lỗi server
+            com.example.DTO.request.AssignmentActionRequest body = req != null ? req : new com.example.DTO.request.AssignmentActionRequest();
             return ResponseEntity.ok(Map.of("success", true, "data", 
-                collaboratorApiService.rejectAssignment(id, new com.example.DTO.request.AssignmentActionRequest())));
+                collaboratorApiService.rejectAssignment(id, body)));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
@@ -50,10 +52,13 @@ public class CollaboratorProfileController {
 
     /** Hoàn thành đơn */
     @PutMapping("/assignments/{id}/complete")
-    public ResponseEntity<?> completeAssignment(@PathVariable Integer id) {
+    public ResponseEntity<?> completeAssignment(
+            @PathVariable Integer id,
+            @RequestBody(required = false) com.example.DTO.request.AssignmentActionRequest req) {
         try {
+            com.example.DTO.request.AssignmentActionRequest body = req != null ? req : new com.example.DTO.request.AssignmentActionRequest();
             return ResponseEntity.ok(Map.of("success", true, "data", 
-                collaboratorApiService.completeAssignment(id, new com.example.DTO.request.AssignmentActionRequest())));
+                collaboratorApiService.completeAssignment(id, body)));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }

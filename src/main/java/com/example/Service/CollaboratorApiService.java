@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -20,6 +22,8 @@ public class CollaboratorApiService {
     private final CongTacVienRepository congTacVienRepository;
     private final LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository;
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
+    private final ThongBaoRepository thongBaoRepository;
+    private final TaiKhoanRepository taiKhoanRepository;
 
     public CollaboratorApiService(
             PhanCongCTVRepository phanCongCTVRepository,
@@ -27,13 +31,17 @@ public class CollaboratorApiService {
             LichLamViecRepository lichLamViecRepository,
             CongTacVienRepository congTacVienRepository,
             LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository,
-            ThongBaoNguoiDungRepository thongBaoNguoiDungRepository) {
+            ThongBaoNguoiDungRepository thongBaoNguoiDungRepository,
+            ThongBaoRepository thongBaoRepository,
+            TaiKhoanRepository taiKhoanRepository) {
         this.phanCongCTVRepository = phanCongCTVRepository;
         this.donDatDichVuRepository = donDatDichVuRepository;
         this.lichLamViecRepository = lichLamViecRepository;
         this.congTacVienRepository = congTacVienRepository;
         this.lichSuTrangThaiDonRepository = lichSuTrangThaiDonRepository;
         this.thongBaoNguoiDungRepository = thongBaoNguoiDungRepository;
+        this.thongBaoRepository = thongBaoRepository;
+        this.taiKhoanRepository = taiKhoanRepository;
     }
 
     // ==========================================
@@ -147,6 +155,51 @@ public class CollaboratorApiService {
             lichLamViecRepository.save(llv);
         }
 
+        // Tự động gửi thông báo nhắc lịch / xác nhận ca làm cho CTV
+        if (pc.getCongTacVien() != null && pc.getCongTacVien().getTaiKhoan() != null) {
+            String tieuDe;
+            String noiDung;
+            String tenCTV = pc.getCongTacVien().getHoTen();
+            String prefixCTV = "CTV " + tenCTV;
+            LocalDate today = LocalDate.now();
+            LocalDate tomorrow = today.plusDays(1);
+            LocalDate ngayThucHien = don.getNgayThucHien();
+            LocalTime gioBatDau = don.getGioBatDau();
+            String gioStr = gioBatDau != null ? gioBatDau.format(DateTimeFormatter.ofPattern("HH:mm")) : "giờ quy định";
+            String ngayStr = ngayThucHien != null ? ngayThucHien.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+            String thu = getThuTrongTuan(ngayThucHien);
+
+            if (ngayThucHien != null && !ngayThucHien.isAfter(today)) {
+                tieuDe = prefixCTV + " – Nhắc lịch ca làm gấp: " + don.getMaDonDat();
+                noiDung = prefixCTV + " đã nhận đơn gấp hôm nay (" + thu + ", " + ngayStr + "). Vui lòng nhớ có mặt trước " + gioStr + " hôm nay để chuẩn bị làm việc!";
+            } else if (ngayThucHien != null && ngayThucHien.isEqual(tomorrow)) {
+                tieuDe = prefixCTV + " – Nhắc lịch ca làm ngày mai: " + don.getMaDonDat();
+                noiDung = prefixCTV + " đã nhận đơn vào ngày mai (" + thu + ", " + ngayStr + "). Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
+            } else {
+                tieuDe = prefixCTV + " – Nhắc lịch ca làm: " + don.getMaDonDat();
+                noiDung = prefixCTV + " đã nhận đơn vào " + thu + ", ngày " + ngayStr + ". Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
+            }
+
+            ThongBao tbNhacLich = ThongBao.builder()
+                    .maThongBao("TB-NL-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                    .tieuDe(tieuDe)
+                    .noiDung(noiDung)
+                    .nguoiGui("Hệ thống CSKH")
+                    .nhomNhan("CongTacVien")
+                    .thoiGianGui(LocalDateTime.now())
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoRepository.save(tbNhacLich);
+
+            ThongBaoNguoiDung tbnd = ThongBaoNguoiDung.builder()
+                    .thongBao(tbNhacLich)
+                    .taiKhoan(pc.getCongTacVien().getTaiKhoan())
+                    .daDoc(false)
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoNguoiDungRepository.save(tbnd);
+        }
+
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("phanCongId", pc.getId());
         res.put("trangThaiPhanCong", pc.getTrangThai());
@@ -160,7 +213,10 @@ public class CollaboratorApiService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
         pc.setTrangThai("TuChoi");
-        pc.setLyDoTuChoi(req.getLyDoTuChoi() != null ? req.getLyDoTuChoi() : "Bận lịch cá nhân");
+        String rawLyDo = (req != null) ? req.getLyDoTuChoi() : null;
+        String cleanLyDo = (rawLyDo != null) ? rawLyDo.trim().replaceAll("\\s+", " ") : "";
+        String lyDo = !cleanLyDo.isEmpty() ? cleanLyDo : "Bận lịch cá nhân";
+        pc.setLyDoTuChoi(lyDo);
         phanCongCTVRepository.save(pc);
 
         DonDatDichVu don = pc.getDonDat();
@@ -173,9 +229,33 @@ public class CollaboratorApiService {
                 .trangThaiMoi("ChoDuyet")
                 .nguoiThucHien("CongTacVien: " + pc.getCongTacVien().getHoTen())
                 .thoiGian(LocalDateTime.now())
-                .ghiChu("CTV từ chối đơn. Lý do: " + pc.getLyDoTuChoi())
+                .ghiChu("CTV từ chối đơn. Lý do: " + lyDo)
                 .build();
         lichSuTrangThaiDonRepository.save(ls);
+
+        // Tạo thông báo xác nhận đã từ chối đơn cho CTV
+        if (pc.getCongTacVien() != null && pc.getCongTacVien().getTaiKhoan() != null) {
+            String tenCTV = pc.getCongTacVien().getHoTen();
+            String prefixCTV = "CTV " + tenCTV;
+            ThongBao tbTuChoi = ThongBao.builder()
+                    .maThongBao("TB-TC-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                    .tieuDe(prefixCTV + " đã từ chối đơn: " + don.getMaDonDat())
+                    .noiDung(prefixCTV + " đã từ chối nhận đơn " + don.getMaDonDat() + ". Lý do: \"" + lyDo + "\". Hệ thống đã chuyển lại đơn cho phòng CSKH để điều phối nhân sự khác.")
+                    .nguoiGui("Hệ thống CSKH")
+                    .nhomNhan("CongTacVien")
+                    .thoiGianGui(LocalDateTime.now())
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoRepository.save(tbTuChoi);
+
+            ThongBaoNguoiDung tbnd = ThongBaoNguoiDung.builder()
+                    .thongBao(tbTuChoi)
+                    .taiKhoan(pc.getCongTacVien().getTaiKhoan())
+                    .daDoc(false)
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoNguoiDungRepository.save(tbnd);
+        }
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("phanCongId", pc.getId());
@@ -199,8 +279,9 @@ public class CollaboratorApiService {
         List<LichLamViec> sches = lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId());
         for (LichLamViec llv : sches) {
             llv.setTrangThai("HoanThanh");
-            if (req.getKetQuaThucHien() != null) {
-                llv.setKetQuaThucHien(req.getKetQuaThucHien());
+            if (req != null && req.getKetQuaThucHien() != null) {
+                String cleanKetQua = req.getKetQuaThucHien().trim().replaceAll("\\s+", " ");
+                llv.setKetQuaThucHien(cleanKetQua.isEmpty() ? "Hoàn thành công việc" : cleanKetQua);
             }
             lichLamViecRepository.save(llv);
         }
@@ -215,6 +296,33 @@ public class CollaboratorApiService {
                 .build();
         lichSuTrangThaiDonRepository.save(ls);
 
+        // Tạo thông báo hoàn thành đơn cho CTV
+        if (pc.getCongTacVien() != null && pc.getCongTacVien().getTaiKhoan() != null) {
+            String tenCTV = pc.getCongTacVien().getHoTen();
+            String prefixCTV = "CTV " + tenCTV;
+            String tienStr = don.getThanhTien() != null ? String.format("%,d", don.getThanhTien().longValue()) + "đ" : "";
+            ThongBao tbComplete = ThongBao.builder()
+                    .maThongBao("TB-" + System.currentTimeMillis())
+                    .tieuDe(prefixCTV + " – Đơn đã hoàn thành: " + don.getMaDonDat())
+                    .noiDung(prefixCTV + " đã hoàn thành đơn " + don.getMaDonDat()
+                            + (tienStr.isEmpty() ? "" : ". Tiền công nhận được: " + tienStr)
+                            + ". Chúc mừng bạn đã hoàn thành ca làm việc!")
+                    .nguoiGui("Hệ thống")
+                    .nhomNhan("CongTacVien")
+                    .thoiGianGui(LocalDateTime.now())
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoRepository.save(tbComplete);
+
+            ThongBaoNguoiDung tbnd = ThongBaoNguoiDung.builder()
+                    .thongBao(tbComplete)
+                    .taiKhoan(pc.getCongTacVien().getTaiKhoan())
+                    .daDoc(false)
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoNguoiDungRepository.save(tbnd);
+        }
+
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("phanCongId", pc.getId());
         res.put("donDatTrangThai", "HoanThanh");
@@ -226,34 +334,222 @@ public class CollaboratorApiService {
     // UC-CTV02: NHẬN THÔNG BÁO CỦA CỘNG TÁC VIÊN
     // ==========================================
     public List<Map<String, Object>> getCollaboratorNotifications(Integer taiKhoanId) {
-        List<ThongBaoNguoiDung> list = thongBaoNguoiDungRepository.findByTaiKhoan_IdOrderByThongBao_ThoiGianGuiDesc(taiKhoanId);
+        // Resolve TaiKhoan linh hoạt (hỗ trợ truyền taiKhoanId hoặc congTacVienId)
+        TaiKhoan tk = taiKhoanRepository.findById(taiKhoanId).orElse(null);
+        CongTacVien ctv = null;
+        if (tk == null) {
+            ctv = congTacVienRepository.findById(taiKhoanId).orElse(null);
+            if (ctv != null) {
+                tk = ctv.getTaiKhoan();
+            }
+        } else {
+            ctv = congTacVienRepository.findByTaiKhoan_Id(tk.getId()).orElse(null);
+            if (ctv == null) {
+                ctv = congTacVienRepository.findById(tk.getId()).orElse(null);
+            }
+        }
+        if (tk == null) {
+            return Collections.emptyList();
+        }
+        Integer actualTaiKhoanId = tk.getId();
+
+        // 1. Tự động đồng bộ các thông báo chung từ Ban Giám Đốc (nhomNhan = CongTacVien hoặc TatCa)
+        List<ThongBao> broadcastList = thongBaoRepository.findAll().stream()
+                .filter(tb -> "DaGui".equalsIgnoreCase(tb.getTrangThai()) &&
+                        ("CongTacVien".equalsIgnoreCase(tb.getNhomNhan()) || "TatCa".equalsIgnoreCase(tb.getNhomNhan())))
+                .toList();
+
+        List<ThongBaoNguoiDung> existingList = thongBaoNguoiDungRepository.findByTaiKhoan_IdOrderByThongBao_ThoiGianGuiDesc(actualTaiKhoanId);
+        Set<Integer> existingTbIds = new HashSet<>();
+        for (ThongBaoNguoiDung item : existingList) {
+            if (item.getThongBao() != null) {
+                existingTbIds.add(item.getThongBao().getId());
+            }
+        }
+
+        List<ThongBaoNguoiDung> newlyCreated = new ArrayList<>();
+        for (ThongBao tb : broadcastList) {
+            if (!existingTbIds.contains(tb.getId())) {
+                ThongBaoNguoiDung nb = ThongBaoNguoiDung.builder()
+                        .thongBao(tb)
+                        .taiKhoan(tk)
+                        .daDoc(false)
+                        .trangThai("DaGui")
+                        .build();
+                newlyCreated.add(nb);
+                existingTbIds.add(tb.getId());
+            }
+        }
+
+        // 2. Tự động đồng bộ thông báo cho các đơn phân công thực tế của CTV (Hoàn thành, Đơn mới)
+        if (ctv != null) {
+            List<PhanCongCTV> pcList = phanCongCTVRepository.findByCongTacVien_IdOrderByThoiGianPhanCongDesc(ctv.getId());
+            Set<String> notifiedKeys = new HashSet<>();
+            for (ThongBaoNguoiDung item : existingList) {
+                if (item.getThongBao() != null) {
+                    String fullText = ((item.getThongBao().getTieuDe() != null ? item.getThongBao().getTieuDe() : "") + " "
+                            + (item.getThongBao().getNoiDung() != null ? item.getThongBao().getNoiDung() : "")).toLowerCase();
+                    for (PhanCongCTV pc : pcList) {
+                        if (pc.getDonDat() != null && pc.getDonDat().getMaDonDat() != null) {
+                            String code = pc.getDonDat().getMaDonDat().toLowerCase();
+                            if (fullText.contains(code)) {
+                                if (fullText.contains("hoàn thành")) {
+                                    notifiedKeys.add(pc.getDonDat().getMaDonDat() + "_HOAN_THANH");
+                                } else {
+                                    notifiedKeys.add(pc.getDonDat().getMaDonDat() + "_DON_MOI");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (PhanCongCTV pc : pcList) {
+                if (pc.getDonDat() == null || pc.getDonDat().getMaDonDat() == null) continue;
+                String maDon = pc.getDonDat().getMaDonDat();
+                if ("HoanThanh".equalsIgnoreCase(pc.getTrangThai())) {
+                    if (!notifiedKeys.contains(maDon + "_HOAN_THANH")) {
+                        String tienStr = pc.getDonDat().getThanhTien() != null
+                                ? String.format("%,d", pc.getDonDat().getThanhTien().longValue()) + "đ"
+                                : "";
+                        LocalDateTime tg = pc.getThoiGianXacNhan() != null ? pc.getThoiGianXacNhan()
+                                : (pc.getThoiGianPhanCong() != null ? pc.getThoiGianPhanCong() : LocalDateTime.now());
+                        ThongBao tbComplete = ThongBao.builder()
+                                .maThongBao("TB-HT-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                                .tieuDe("Đơn " + maDon + " đã hoàn thành")
+                                .noiDung("Bạn nhận được " + tienStr + " từ đơn " + maDon + ". Chúc mừng bạn đã hoàn thành xuất sắc ca làm việc!")
+                                .nguoiGui("Hệ thống")
+                                .nhomNhan("CongTacVien")
+                                .thoiGianGui(tg)
+                                .trangThai("DaGui")
+                                .build();
+                        thongBaoRepository.save(tbComplete);
+
+                        ThongBaoNguoiDung nb = ThongBaoNguoiDung.builder()
+                                .thongBao(tbComplete)
+                                .taiKhoan(tk)
+                                .daDoc(false)
+                                .trangThai("DaGui")
+                                .build();
+                        newlyCreated.add(nb);
+                        notifiedKeys.add(maDon + "_HOAN_THANH");
+                    }
+                } else if ("DaPhanCong".equalsIgnoreCase(pc.getTrangThai()) || "ChoXacNhan".equalsIgnoreCase(pc.getTrangThai())) {
+                    if (!notifiedKeys.contains(maDon + "_DON_MOI")) {
+                        LocalDateTime tg = pc.getThoiGianPhanCong() != null ? pc.getThoiGianPhanCong() : LocalDateTime.now();
+                        ThongBao tbAssign = ThongBao.builder()
+                                .maThongBao("TB-PC-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                                .tieuDe("Bạn có đơn mới: " + maDon)
+                                .noiDung("Bạn vừa được phân công đơn mới " + maDon + ". Vui lòng kiểm tra chi tiết và xác nhận nhận đơn!")
+                                .nguoiGui("Hệ thống CSKH")
+                                .nhomNhan("CongTacVien")
+                                .thoiGianGui(tg)
+                                .trangThai("DaGui")
+                                .build();
+                        thongBaoRepository.save(tbAssign);
+
+                        ThongBaoNguoiDung nb = ThongBaoNguoiDung.builder()
+                                .thongBao(tbAssign)
+                                .taiKhoan(tk)
+                                .daDoc(false)
+                                .trangThai("DaGui")
+                                .build();
+                        newlyCreated.add(nb);
+                        notifiedKeys.add(maDon + "_DON_MOI");
+                    }
+                }
+            }
+        }
+
+        // 3. Nếu CTV chưa có thông báo cá nhân nào từ trước, tạo các thông báo thực tế theo trạng thái tài khoản
+        if (existingList.isEmpty() && newlyCreated.isEmpty()) {
+            ThongBao welcomeTb = ThongBao.builder()
+                    .maThongBao("TB-WELCOME-" + actualTaiKhoanId)
+                    .tieuDe("Chào mừng đến Neatify")
+                    .noiDung("Chào mừng bạn gia nhập đội ngũ Cộng tác viên Neatify! Hoàn thiện hồ sơ để bắt đầu nhận được nhiều đơn hơn.")
+                    .nguoiGui("Ban Giám đốc")
+                    .nhomNhan("CongTacVien")
+                    .thoiGianGui(LocalDateTime.now().minusDays(2))
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoRepository.save(welcomeTb);
+            newlyCreated.add(ThongBaoNguoiDung.builder().thongBao(welcomeTb).taiKhoan(tk).daDoc(false).trangThai("DaGui").build());
+        }
+
+        if (!newlyCreated.isEmpty()) {
+            thongBaoNguoiDungRepository.saveAll(newlyCreated);
+            existingList = thongBaoNguoiDungRepository.findByTaiKhoan_IdOrderByThongBao_ThoiGianGuiDesc(actualTaiKhoanId);
+        }
+
         List<Map<String, Object>> result = new ArrayList<>();
-        for (ThongBaoNguoiDung tbnd : list) {
+        for (ThongBaoNguoiDung tbnd : existingList) {
+            if (tbnd.getThongBao() == null) continue;
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", tbnd.getId());
             m.put("thongBaoId", tbnd.getThongBao().getId());
             m.put("tieuDe", tbnd.getThongBao().getTieuDe());
             m.put("noiDung", tbnd.getThongBao().getNoiDung());
+            m.put("nguoiGui", tbnd.getThongBao().getNguoiGui());
             m.put("thoiGianGui", tbnd.getThongBao().getThoiGianGui());
             m.put("daDoc", tbnd.getDaDoc());
             m.put("thoiGianDoc", tbnd.getThoiGianDoc());
+            m.put("loai", resolveLoaiThongBao(tbnd.getThongBao().getTieuDe(), tbnd.getThongBao().getNhomNhan()));
             result.add(m);
         }
         return result;
     }
 
+    private String resolveLoaiThongBao(String tieuDe, String nhomNhan) {
+        if (tieuDe == null) return "heThong";
+        String lower = tieuDe.toLowerCase();
+        if (lower.contains("nhắc lịch") || lower.contains("giờ làm") || lower.contains("ca làm") || lower.contains("sắp đến")) {
+            return "nhacLich";
+        }
+        if (lower.contains("hoàn thành") || lower.contains("thanh toán") || lower.contains("tiền")) {
+            return "hoanThanh";
+        }
+        if (lower.contains("đơn mới") || lower.contains("phân công") || lower.contains("nhận đơn") || lower.contains("giao đơn")) {
+            return "donMoi";
+        }
+        if (lower.contains("từ chối") || lower.contains("hủy")) {
+            return "huy";
+        }
+        return "heThong";
+    }
+
+    private String getThuTrongTuan(LocalDate date) {
+        if (date == null) return "";
+        switch (date.getDayOfWeek()) {
+            case MONDAY: return "Thứ Hai";
+            case TUESDAY: return "Thứ Ba";
+            case WEDNESDAY: return "Thứ Tư";
+            case THURSDAY: return "Thứ Năm";
+            case FRIDAY: return "Thứ Sáu";
+            case SATURDAY: return "Thứ Bảy";
+            case SUNDAY: return "Chủ Nhật";
+            default: return "";
+        }
+    }
+
     public void markNotificationRead(Integer notificationId, Integer taiKhoanId) {
         thongBaoNguoiDungRepository.findById(notificationId).ifPresent(tbnd -> {
-            if (tbnd.getTaiKhoan().getId().equals(taiKhoanId)) {
-                tbnd.setDaDoc(true);
-                tbnd.setThoiGianDoc(LocalDateTime.now());
-                thongBaoNguoiDungRepository.save(tbnd);
-            }
+            tbnd.setDaDoc(true);
+            tbnd.setThoiGianDoc(LocalDateTime.now());
+            thongBaoNguoiDungRepository.save(tbnd);
         });
     }
 
     public void markAllNotificationsRead(Integer taiKhoanId) {
-        List<ThongBaoNguoiDung> list = thongBaoNguoiDungRepository.findByTaiKhoan_IdAndDaDocFalseOrderByThongBao_ThoiGianGuiDesc(taiKhoanId);
+        // Resolve TaiKhoan nếu truyền ctvId
+        Integer actualId = taiKhoanId;
+        TaiKhoan tk = taiKhoanRepository.findById(taiKhoanId).orElse(null);
+        if (tk == null) {
+            CongTacVien ctv = congTacVienRepository.findById(taiKhoanId).orElse(null);
+            if (ctv != null && ctv.getTaiKhoan() != null) {
+                actualId = ctv.getTaiKhoan().getId();
+            }
+        }
+        List<ThongBaoNguoiDung> list = thongBaoNguoiDungRepository.findByTaiKhoan_IdAndDaDocFalseOrderByThongBao_ThoiGianGuiDesc(actualId);
         for (ThongBaoNguoiDung tb : list) {
             tb.setDaDoc(true);
             tb.setThoiGianDoc(LocalDateTime.now());

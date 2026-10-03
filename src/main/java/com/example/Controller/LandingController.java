@@ -16,13 +16,41 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class LandingController {
 
     private final AuthService authService;
+    private final com.example.Service.CustomerApiService customerApiService;
 
-    public LandingController(AuthService authService) {
+    public LandingController(AuthService authService, com.example.Service.CustomerApiService customerApiService) {
         this.authService = authService;
+        this.customerApiService = customerApiService;
     }
 
     @GetMapping("/")
-    public String index() {
+    public String index(Model model) {
+        try {
+            java.util.List<java.util.Map<String, Object>> allServices = customerApiService.getServices(null, null, null, null, null, null);
+            if (allServices != null && !allServices.isEmpty()) {
+                // Chọn 6 dịch vụ đại diện cho 6 mảng dịch vụ hoàn toàn khác nhau để trực quan, dễ lấy ảnh minh họa
+                java.util.List<String> targetCodes = java.util.List.of("DV-001", "DV-051", "DV-123", "DV-072", "DV-079", "DV-129");
+                java.util.List<java.util.Map<String, Object>> distinctServices = new java.util.ArrayList<>();
+                for (String code : targetCodes) {
+                    allServices.stream()
+                            .filter(s -> code.equalsIgnoreCase((String) s.get("maDichVu")))
+                            .findFirst()
+                            .ifPresent(distinctServices::add);
+                }
+                // Nếu chưa đủ 6 dịch vụ thì lấy bù từ danh sách còn lại
+                if (distinctServices.size() < 6) {
+                    for (java.util.Map<String, Object> s : allServices) {
+                        if (!distinctServices.contains(s) && distinctServices.size() < 6) {
+                            distinctServices.add(s);
+                        }
+                    }
+                }
+                model.addAttribute("featuredServices", distinctServices);
+            }
+            model.addAttribute("categories", customerApiService.getServiceTypes());
+        } catch (Exception e) {
+            // Log fallback
+        }
         return "index";
     }
 
