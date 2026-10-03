@@ -161,6 +161,12 @@ public class CollaboratorApiService {
             String noiDung;
             String tenCTV = pc.getCongTacVien().getHoTen();
             String prefixCTV = "CTV " + tenCTV;
+            String tenKhach = (don.getKhachHang() != null && don.getKhachHang().getHoTen() != null)
+                    ? don.getKhachHang().getHoTen() : "Khách hàng";
+            String diaChiStr = (don.getDiaChi() != null && don.getDiaChi().getDiaChiChiTiet() != null)
+                    ? don.getDiaChi().getDiaChiChiTiet() : "";
+            String suffixKH = " của KH " + tenKhach + (diaChiStr.isEmpty() ? "" : " (Đ/c: " + diaChiStr + ")");
+
             LocalDate today = LocalDate.now();
             LocalDate tomorrow = today.plusDays(1);
             LocalDate ngayThucHien = don.getNgayThucHien();
@@ -171,13 +177,13 @@ public class CollaboratorApiService {
 
             if (ngayThucHien != null && !ngayThucHien.isAfter(today)) {
                 tieuDe = prefixCTV + " – Nhắc lịch ca làm gấp: " + don.getMaDonDat();
-                noiDung = prefixCTV + " đã nhận đơn gấp hôm nay (" + thu + ", " + ngayStr + "). Vui lòng nhớ có mặt trước " + gioStr + " hôm nay để chuẩn bị làm việc!";
+                noiDung = prefixCTV + " đã nhận đơn" + suffixKH + " hôm nay (" + thu + ", " + ngayStr + "). Vui lòng nhớ có mặt trước " + gioStr + " hôm nay!";
             } else if (ngayThucHien != null && ngayThucHien.isEqual(tomorrow)) {
                 tieuDe = prefixCTV + " – Nhắc lịch ca làm ngày mai: " + don.getMaDonDat();
-                noiDung = prefixCTV + " đã nhận đơn vào ngày mai (" + thu + ", " + ngayStr + "). Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
+                noiDung = prefixCTV + " đã nhận đơn" + suffixKH + " vào ngày mai (" + thu + ", " + ngayStr + "). Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
             } else {
                 tieuDe = prefixCTV + " – Nhắc lịch ca làm: " + don.getMaDonDat();
-                noiDung = prefixCTV + " đã nhận đơn vào " + thu + ", ngày " + ngayStr + ". Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
+                noiDung = prefixCTV + " đã nhận đơn" + suffixKH + " vào " + thu + ", ngày " + ngayStr + ". Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
             }
 
             ThongBao tbNhacLich = ThongBao.builder()
@@ -795,16 +801,21 @@ public class CollaboratorApiService {
         String noiDung;
         String tenCTV = ctv.getHoTen();
         String prefixCTV = "CTV " + tenCTV;
+        String tenKhach = (don.getKhachHang() != null && don.getKhachHang().getHoTen() != null)
+                ? don.getKhachHang().getHoTen() : "Khách hàng";
+        String diaChiStr = (don.getDiaChi() != null && don.getDiaChi().getDiaChiChiTiet() != null)
+                ? don.getDiaChi().getDiaChiChiTiet() : "";
+        String suffixKH = " của KH " + tenKhach + (diaChiStr.isEmpty() ? "" : " (Đ/c: " + diaChiStr + ")");
 
         if (ngayThucHien != null && !ngayThucHien.isAfter(today)) {
             tieuDe = prefixCTV + " – Nhắc lịch ca làm gấp: " + don.getMaDonDat();
-            noiDung = prefixCTV + " đã nhận đơn gấp hôm nay (" + thu + ", " + ngayStr + "). Vui lòng nhớ có mặt trước " + gioStr + " hôm nay!";
+            noiDung = prefixCTV + " đã nhận đơn" + suffixKH + " hôm nay (" + thu + ", " + ngayStr + "). Vui lòng nhớ có mặt trước " + gioStr + " hôm nay!";
         } else if (ngayThucHien != null && ngayThucHien.isEqual(tomorrow)) {
             tieuDe = prefixCTV + " – Nhắc lịch ca làm ngày mai: " + don.getMaDonDat();
-            noiDung = prefixCTV + " đã nhận đơn vào ngày mai (" + thu + ", " + ngayStr + "). Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
+            noiDung = prefixCTV + " đã nhận đơn" + suffixKH + " vào ngày mai (" + thu + ", " + ngayStr + "). Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
         } else {
             tieuDe = prefixCTV + " – Nhắc lịch ca làm: " + don.getMaDonDat();
-            noiDung = prefixCTV + " đã nhận đơn vào " + thu + ", ngày " + ngayStr + ". Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
+            noiDung = prefixCTV + " đã nhận đơn" + suffixKH + " vào " + thu + ", ngày " + ngayStr + ". Nhớ có mặt trước thời gian làm việc (" + gioStr + ") nhé!";
         }
 
         ThongBao tbNhacLich = ThongBao.builder()
@@ -861,4 +872,56 @@ public class CollaboratorApiService {
         result.put("message", "Đã cập nhật trạng thái hoạt động thành công");
         return result;
     }
+
+    /**
+     * Tạo đơn test DangTimCTV (Pool) + Thông báo Broadcast gửi TẤT CẢ CTV
+     */
+    public Map<String, Object> createTestPoolOrder(String maDon, String tenDichVu, Integer thanhTien) {
+        String finalMaDon = (maDon != null && !maDon.isBlank()) ? maDon : "DON-POOL-" + (System.currentTimeMillis() % 100000);
+        
+        // Lấy đơn mẫu để lấy khachHang & diaChi
+        DonDatDichVu sampleOrder = donDatDichVuRepository.findAll().stream().findFirst().orElse(null);
+        if (sampleOrder == null) throw new IllegalStateException("Chưa có đơn mẫu nào trong DB");
+
+        DonDatDichVu don = DonDatDichVu.builder()
+                .maDonDat(finalMaDon)
+                .khachHang(sampleOrder.getKhachHang())
+                .diaChi(sampleOrder.getDiaChi())
+                .trangThai("DangTimCTV")
+                .ngayTao(LocalDateTime.now())
+                .ngayThucHien(LocalDate.now().plusDays(1))
+                .gioBatDau(LocalTime.of(9, 0))
+                .gioKetThuc(LocalTime.of(11, 0))
+                .loaiHinhDat("TheoGio")
+                .thanhTien(thanhTien != null ? java.math.BigDecimal.valueOf(thanhTien) : java.math.BigDecimal.valueOf(320000))
+                .yeuCauDacBiet("Căn hộ 2 phòng ngủ - Test Pool đơn mới")
+                .build();
+        don = donDatDichVuRepository.save(don);
+
+        String sampleKhach = (sampleOrder.getKhachHang() != null && sampleOrder.getKhachHang().getHoTen() != null)
+                ? sampleOrder.getKhachHang().getHoTen() : "Nguyễn Thị Thu Lan";
+        String sampleDiaChi = (sampleOrder.getDiaChi() != null && sampleOrder.getDiaChi().getDiaChiChiTiet() != null)
+                ? sampleOrder.getDiaChi().getDiaChiChiTiet() : "123 Nguyễn Trãi, Q.1";
+
+        // Tạo thông báo Broadcast tới TẤT CẢ CTV (nhomNhan = CongTacVien)
+        ThongBao tbBroadcast = ThongBao.builder()
+                .maThongBao("TB-POOL-" + don.getId() + "-" + (System.currentTimeMillis() % 100000))
+                .tieuDe("Bạn có đơn mới: " + finalMaDon)
+                .noiDung("Có đơn mới " + (tenDichVu != null ? tenDichVu : "Dọn dẹp nhà cửa") + " của KH " + sampleKhach + " vào ngày mai lúc 09:00 (Địa chỉ: " + sampleDiaChi + "). Vui lòng vào ứng dụng bấm Nhận việc!")
+                .nguoiGui("Hệ thống CSKH")
+                .nhomNhan("CongTacVien")
+                .thoiGianGui(LocalDateTime.now())
+                .trangThai("DaGui")
+                .build();
+        thongBaoRepository.save(tbBroadcast);
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("donDatId", don.getId());
+        res.put("maDonDat", don.getMaDonDat());
+        res.put("trangThai", don.getTrangThai());
+        res.put("thongBaoId", tbBroadcast.getId());
+        res.put("message", "Đã tạo đơn pool test thành công và phát thông báo tới tất cả CTV!");
+        return res;
+    }
 }
+

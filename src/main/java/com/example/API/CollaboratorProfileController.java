@@ -142,4 +142,18 @@ public class CollaboratorProfileController {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
     }
+
+    /** [TEST] Tạo đơn pool test + thông báo broadcast tất cả CTV */
+    @PostMapping("/test-create-pool-order")
+    public ResponseEntity<?> createTestPoolOrder(@RequestBody(required = false) Map<String, Object> req) {
+        try {
+            String maDon = (req != null && req.get("maDon") != null) ? req.get("maDon").toString() : null;
+            String tenDichVu = (req != null && req.get("tenDichVu") != null) ? req.get("tenDichVu").toString() : "Dọn dẹp nhà cửa";
+            Integer thanhTien = (req != null && req.get("thanhTien") != null) ? Integer.valueOf(req.get("thanhTien").toString()) : 320000;
+            return ResponseEntity.ok(Map.of("success", true, "data",
+                    collaboratorApiService.createTestPoolOrder(maDon, tenDichVu, thanhTien)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
 }
