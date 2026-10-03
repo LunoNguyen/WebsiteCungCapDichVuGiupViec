@@ -578,7 +578,7 @@ public class HCNSController {
             }
 
             LoaiDichVu ldv = new LoaiDichVu();
-            ldv.setMaLoaiDichVu("LDV-" + (loaiDichVuRepository.count() + 1));
+            ldv.setMaLoaiDichVu(com.example.Service.MaSinh.tao("LDV-"));
             ldv.setTenLoaiDichVu(tenLoaiDichVu.trim());
             ldv.setMoTa(moTa != null ? moTa.trim() : "");
             ldv.setThuTuHienThi(thuTuHienThi != null ? thuTuHienThi : 1);
@@ -787,7 +787,7 @@ public class HCNSController {
             }
 
             BangGiaDichVu bg = new BangGiaDichVu();
-            bg.setMaBangGia("BG-" + System.currentTimeMillis() % 1000000);
+            bg.setMaBangGia(com.example.Service.MaSinh.tao("BG-"));
             bg.setDichVu(dvOpt.get());
             bg.setLoaiHinhDat(loaiHinhDat);
             bg.setDonViTinh(donViTinh != null ? donViTinh.trim() : "Lần");
@@ -1079,7 +1079,7 @@ public class HCNSController {
 
             // 9. Lưu tài khoản mới
             TaiKhoan tk = new TaiKhoan();
-            tk.setMaTaiKhoan("TK-" + System.currentTimeMillis());
+            tk.setMaTaiKhoan(com.example.Service.MaSinh.tao("TK-"));
             tk.setTenDangNhap(tenDangNhap);
             tk.setMatKhau(encodedPassword); // Mật khẩu được mã hóa an toàn bằng BCrypt
             tk.setEmail(email);

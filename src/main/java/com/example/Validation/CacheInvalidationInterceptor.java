@@ -1,22 +1,26 @@
 package com.example.Validation;
 
 import com.example.Service.CacheService;
+import com.example.Service.RealtimeService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Sau mỗi thao tác ghi (POST/PUT/DELETE) thành công, xóa các vùng cache Redis liên quan.
+ * Sau mỗi thao tác ghi (POST/PUT/DELETE) thành công: xóa các vùng cache Redis liên quan
+ * và phát sự kiện thời gian thực cho các trang quản trị đang mở.
  * Đặt ở một chỗ nên các controller thêm/sửa/xóa không cần tự gọi xóa cache.
  */
 @Component
 public class CacheInvalidationInterceptor implements HandlerInterceptor {
 
     private final CacheService cacheService;
+    private final RealtimeService realtimeService;
 
-    public CacheInvalidationInterceptor(CacheService cacheService) {
+    public CacheInvalidationInterceptor(CacheService cacheService, RealtimeService realtimeService) {
         this.cacheService = cacheService;
+        this.realtimeService = realtimeService;
     }
 
     @Override
@@ -55,6 +59,8 @@ public class CacheInvalidationInterceptor implements HandlerInterceptor {
                 || path.startsWith("/login");
         if (!khongDoiSoLieu) {
             cacheService.xoaCacheThongKe();
+            // Báo cho các trang quản trị đang mở để tự cập nhật dữ liệu (thời gian thực)
+            realtimeService.phatSuKien(path);
         }
     }
 }

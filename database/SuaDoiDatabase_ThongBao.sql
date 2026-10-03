@@ -1,0 +1,2 @@
+-- Không còn cần script này: chức năng thông báo đã bỏ phần ảnh, bảng ThongBao giữ nguyên.
+-- Có thể xóa file này.

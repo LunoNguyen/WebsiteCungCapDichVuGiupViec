@@ -198,6 +198,17 @@
     <div class="info-row"><span class="info-label">SĐT</span><span class="info-value" id="pd-sdt">---</span></div>
     <div class="info-row"><span class="info-label">Dịch vụ</span><span class="info-value" id="pd-dv">---</span></div>
     <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" id="pd-dc">---</span></div>
+    <!-- Bản đồ vị trí thực hiện dịch vụ (Google Maps tìm theo địa chỉ của đơn) -->
+    <div id="pd-map-wrap" style="margin:0.75rem 0 1rem;display:none">
+      <div style="border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:var(--bg-card)">
+        <iframe id="pd-map" title="Bản đồ vị trí thực hiện dịch vụ" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                style="display:block;width:100%;height:260px;border:0" allowfullscreen></iframe>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+        <a id="pd-map-open" class="btn btn-outline btn-sm" target="_blank" rel="noopener"><i class="ti ti-map-pin"></i> Mở Google Maps</a>
+        <a id="pd-map-route" class="btn btn-outline btn-sm" target="_blank" rel="noopener"><i class="ti ti-route"></i> Chỉ đường</a>
+      </div>
+    </div>
     <div class="info-row"><span class="info-label">Ngày thực hiện</span><span class="info-value" id="pd-ngay">---</span></div>
     <div class="info-row"><span class="info-label">Giờ</span><span class="info-value" id="pd-gio">---</span></div>
     <div class="info-row"><span class="info-label">CTV phụ trách</span><span class="info-value" id="pd-ctv" style="color:var(--cskh-accent)">---</span></div>
@@ -456,17 +467,70 @@
   }
 
   // ── Detail Panel ───────────────────────────────────
+  var TRANG_THAI_DON = {
+    ChoDuyet: 'Chờ duyệt', DaXacNhan: 'Đã xác nhận', DangThucHien: 'Đang thực hiện',
+    HoanThanh: 'Hoàn thành', DaHuy: 'Đã hủy'
+  };
+
+  function setText(id, value) {
+    document.getElementById(id).textContent = value && String(value).trim() ? value : '---';
+  }
+
+  // Hiển thị vị trí thực hiện dịch vụ theo địa chỉ của đơn
+  function showOrderMap(address) {
+    var wrap = document.getElementById('pd-map-wrap');
+    var frame = document.getElementById('pd-map');
+    if (!address) {
+      wrap.style.display = 'none';
+      frame.removeAttribute('src');
+      return;
+    }
+    var q = encodeURIComponent(address);
+    frame.src = 'https://www.google.com/maps?q=' + q + '&z=16&hl=vi&output=embed';
+    document.getElementById('pd-map-open').href = 'https://www.google.com/maps/search/?api=1&query=' + q;
+    document.getElementById('pd-map-route').href = 'https://www.google.com/maps/dir/?api=1&destination=' + q;
+    wrap.style.display = 'block';
+  }
+
+  // Mở khung chi tiết và tải dữ liệu thật của đơn: GET /cskh/don-dat-dich-vu/{id}/chi-tiet
   function openDetailPanel(id) {
     document.getElementById('panelOverlay').classList.add('active');
-    document.getElementById('orderDetailPanel').classList.add('active');
-    document.getElementById('panelOrderCode').textContent = '#DD-' + id;
-    document.getElementById('pd-ma').textContent = '#DD-' + id;
-    document.getElementById('pd-kh').textContent = 'Xem chi tiết đơn #' + id;
+    // CSS hiện khung chi tiết bằng lớp 'open' (dashboard.css: .detail-panel.open)
+    document.getElementById('orderDetailPanel').classList.add('active', 'open');
+    document.getElementById('panelOrderCode').textContent = 'Đang tải…';
+    ['pd-ma', 'pd-kh', 'pd-sdt', 'pd-dv', 'pd-dc', 'pd-ngay', 'pd-gio', 'pd-ctv', 'pd-tien', 'pd-tt', 'pd-ghichu']
+      .forEach(function (el) { setText(el, ''); });
+    showOrderMap('');
+
+    fetch('/cskh/don-dat-dich-vu/' + id + '/chi-tiet', { headers: { 'Accept': 'application/json' } })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (d) {
+        document.getElementById('panelOrderCode').textContent = d.maDonDat;
+        setText('pd-ma', d.maDonDat);
+        setText('pd-kh', d.khachHang);
+        setText('pd-sdt', d.soDienThoai);
+        setText('pd-dv', (d.dichVu || []).join('; '));
+        setText('pd-dc', d.diaChi + (d.dienTichNha ? ' (' + d.dienTichNha + ')' : ''));
+        setText('pd-ngay', d.ngayThucHien);
+        setText('pd-gio', d.gio);
+        setText('pd-ctv', (d.congTacVien || []).join(', ') || 'Chưa phân công');
+        setText('pd-tien', d.thanhTien);
+        setText('pd-tt', TRANG_THAI_DON[d.trangThai] || d.trangThai);
+        setText('pd-ghichu', [d.yeuCauDacBiet, d.luuYDiaChi, d.ghiChu].filter(Boolean).join(' · '));
+        showOrderMap(d.diaChi);
+      })
+      .catch(function () {
+        document.getElementById('panelOrderCode').textContent = 'Không tải được chi tiết đơn';
+        if (window.CSKH && CSKH.toast) CSKH.toast('Không tải được chi tiết đơn. Thử lại sau.', 'error');
+      });
   }
 
   function closePanels() {
     document.getElementById('panelOverlay').classList.remove('active');
-    document.getElementById('orderDetailPanel').classList.remove('active');
+    document.getElementById('orderDetailPanel').classList.remove('active', 'open');
   }
 
   // ── Create Modal ───────────────────────────────────
