@@ -73,21 +73,21 @@
       <div class="stats-grid" style="margin-bottom:1.5rem">
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-coin"></i></div>
-          <div class="stat-value" th:attr="data-count=${doanhThuTrieuDong != null ? doanhThuTrieuDong : 0}" th:text="${doanhThuTrieuDong != null ? #numbers.formatDecimal(doanhThuTrieuDong, 0, 'POINT', 0, 'COMMA') : '0'}">0</div>
+          <div class="stat-value" th:attr="data-count=${doanhThuTrieuDong != null ? doanhThuTrieuDong : 0}" th:text="${doanhThuTrieuDong != null ? #numbers.formatDecimal(doanhThuTrieuDong, 1, 'POINT', 1, 'COMMA') : '0'}">0</div>
           <div class="stat-label">Doanh thu (triệu đồng)</div>
-          <div class="kpi-compare"><span class="arrow-up">↑ 12.5%</span><span class="period">so với tháng trước</span></div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 12,5%</span><span class="period">so với tháng trước</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-clipboard-list"></i></div>
           <div class="stat-value" th:attr="data-count=${tongDonHang != null ? tongDonHang : 0}" th:text="${tongDonHang != null ? tongDonHang : 0}">0</div>
           <div class="stat-label">Tổng đơn dịch vụ</div>
-          <div class="kpi-compare"><span class="arrow-up">↑ 8.3%</span><span class="period">so với tháng trước</span></div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 8,3%</span><span class="period">so với tháng trước</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-users"></i></div>
           <div class="stat-value" th:attr="data-count=${tongKhachHang != null ? tongKhachHang : 0}" th:text="${tongKhachHang != null ? tongKhachHang : 0}">0</div>
           <div class="stat-label">Tổng khách hàng</div>
-          <div class="kpi-compare"><span class="arrow-up">↑ 15.2%</span><span class="period">so với tháng trước</span></div>
+          <div class="kpi-compare"><span class="arrow-up">↑ 15,2%</span><span class="period">so với tháng trước</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-chart-bar"></i></div>
@@ -109,7 +109,7 @@
         <div data-tabs-container>
           <!-- Revenue Tab -->
           <div data-tab-panel="revenue">
-            <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem">
+            <div class="grid-2-1">
               <div>
                 <div style="font-weight:700;margin-bottom:1rem">Doanh thu theo tháng</div>
                 <div class="chart-wrapper"><canvas id="revenueChart"></canvas></div>
@@ -142,7 +142,7 @@
                   </thead>
                   <tbody>
                     <tr th:each="order : ${recentOrders}">
-                      <td style="font-weight:700;color:var(--primary-light)" th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
+                      <td class="nowrap" style="font-weight:700;color:var(--primary-light)" th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
                       <td th:text="${order.khachHang != null ? order.khachHang.hoTen : 'Khách hàng'}">Nguyễn Văn A</td>
                       <td th:text="${order.chiTietList != null and !order.chiTietList.isEmpty() ? order.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ'}">Dọn dẹp nhà</td>
                       <td th:text="${order.ngayThucHien != null ? #temporals.format(order.ngayThucHien, 'dd/MM/yyyy') : '---'}">20/09/2026</td>
@@ -152,7 +152,7 @@
                         <span th:if="${order.khuyenMai != null}" class="badge badge-warning" style="font-size:0.75rem;font-weight:700" th:text="${order.khuyenMai.codeKhuyenMai}">KM50K</span>
                         <span th:if="${order.khuyenMai == null}" style="color:var(--text-muted);font-size:0.8rem">---</span>
                       </td>
-                      <td style="color:var(--danger);font-size:0.85rem" th:text="${order.soTienGiam != null and order.soTienGiam > 0 ? ('-' + #numbers.formatDecimal(order.soTienGiam, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">0đ</td>
+                      <td class="nowrap" style="font-size:0.85rem" th:style="${order.soTienGiam != null and order.soTienGiam > 0 ? 'font-size:0.85rem;color:var(--danger)' : 'font-size:0.85rem;color:var(--muted)'}" th:text="${order.soTienGiam != null and order.soTienGiam > 0 ? ('-' + #numbers.formatDecimal(order.soTienGiam, 0, 'POINT', 0, 'COMMA') + 'đ') : '—'}">—</td>
                       <td style="color:var(--text-secondary);font-size:0.85rem" th:text="${order.chiPhiGoc != null ? (#numbers.formatDecimal(order.chiPhiGoc, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
                       <td style="font-weight:700;color:var(--accent)" th:text="${order.thanhTien != null ? (#numbers.formatDecimal(order.thanhTien, 0, 'POINT', 0, 'COMMA') + 'đ') : '0đ'}">240.000đ</td>
                       <td>
@@ -175,7 +175,7 @@
 
           <!-- Services Tab -->
           <div data-tab-panel="services" style="display:none">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+            <div class="grid-2">
               <div>
                 <div style="font-weight:700;margin-bottom:1rem">Đơn theo loại dịch vụ</div>
                 <div class="chart-wrapper"><canvas id="servicesChart"></canvas></div>
@@ -204,7 +204,7 @@
 
           <!-- CTV Tab -->
           <div data-tab-panel="ctv" style="display:none">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+            <div class="grid-2">
               <div>
                 <div style="font-weight:700;margin-bottom:1rem">Hiệu suất Cộng tác viên</div>
                 <div class="chart-wrapper"><canvas id="ctvRadarChart"></canvas></div>
@@ -216,19 +216,19 @@
                     <div style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0">1</div>
                     <div class="avatar avatar-sm">N</div>
                     <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Nguyễn Thị Ngọc</div><div style="font-size:0.72rem;color:var(--text-muted)">Cộng tác viên Ưu tú</div></div>
-                    <span style="color:#F59E0B;font-weight:700">★ 4.98</span>
+                    <span class="nowrap" style="font-weight:600"><span style="color:#F59E0B" aria-hidden="true">★</span> 4,98</span>
                   </div>
                   <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
                     <div style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0">2</div>
                     <div class="avatar avatar-sm" style="background:var(--primary-soft)">T</div>
                     <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Trần Thị Hoa</div><div style="font-size:0.72rem;color:var(--text-muted)">Cộng tác viên Ưu tú</div></div>
-                    <span style="color:#F59E0B;font-weight:700">★ 4.96</span>
+                    <span class="nowrap" style="font-weight:600"><span style="color:#F59E0B" aria-hidden="true">★</span> 4,96</span>
                   </div>
                   <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
                     <div style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0">3</div>
                     <div class="avatar avatar-sm" style="background:var(--primary-soft)">L</div>
                     <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Lê Thị Mai</div><div style="font-size:0.72rem;color:var(--text-muted)">Cộng tác viên Ưu tú</div></div>
-                    <span style="color:#F59E0B;font-weight:700">★ 4.95</span>
+                    <span class="nowrap" style="font-weight:600"><span style="color:#F59E0B" aria-hidden="true">★</span> 4,95</span>
                   </div>
                 </div>
               </div>
@@ -236,7 +236,7 @@
           </div>
 <!-- Complaints Tab -->
           <div data-tab-panel="complaints" style="display:none">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+            <div class="grid-2">
               <!-- Cột trái: Biểu đồ -->
               <div>
                 <div style="font-weight:700;margin-bottom:1rem">Phân loại khiếu nại</div>
@@ -251,7 +251,7 @@
                   <div>
                     <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem">
                       <span>Tỷ lệ giải quyết đúng hạn</span>
-                      <span style="font-weight:700;color:var(--accent)" th:text="${tyLeDungHan + '%'}">100%</span>
+                      <span style="font-weight:700;color:var(--accent)" th:text="${#numbers.formatDecimal(tyLeDungHan, 1, 'POINT', 0, 'COMMA') + '%'}">100%</span>
                     </div>
                     <div class="progress"><div class="progress-bar success" th:style="'width: ' + ${tyLeDungHan} + '%'"></div></div>
                   </div>
@@ -260,7 +260,7 @@
                   <div>
                     <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem">
                       <span>Khiếu nại hợp lệ</span>
-                      <span style="font-weight:700;color:var(--warning)" th:text="${tyLeHopLe + '%'}">67%</span>
+                      <span style="font-weight:700;color:var(--warning)" th:text="${#numbers.formatDecimal(tyLeHopLe, 1, 'POINT', 0, 'COMMA') + '%'}">67%</span>
                     </div>
                     <div class="progress"><div class="progress-bar warning" th:style="'width: ' + ${tyLeHopLe} + '%'"></div></div>
                   </div>
@@ -269,7 +269,7 @@
                   <div>
                     <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem">
                       <span>Tỷ lệ khiếu nại leo thang</span>
-                      <span style="font-weight:700;color:var(--danger)" th:text="${tyLeLeoThang + '%'}">33%</span>
+                      <span style="font-weight:700;color:var(--danger)" th:text="${#numbers.formatDecimal(tyLeLeoThang, 1, 'POINT', 0, 'COMMA') + '%'}">33%</span>
                     </div>
                     <div class="progress"><div class="progress-bar danger" th:style="'width: ' + ${tyLeLeoThang} + '%'"></div></div>
                   </div>
@@ -278,7 +278,7 @@
                   <div>
                     <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.4rem">
                       <span>Khách hàng hài lòng sau xử lý</span>
-                      <span style="font-weight:700;color:var(--accent)" th:text="${tyLeHaiLong + '%'}">95%</span>
+                      <span style="font-weight:700;color:var(--accent)" th:text="${#numbers.formatDecimal(tyLeHaiLong, 1, 'POINT', 0, 'COMMA') + '%'}">95%</span>
                     </div>
                     <div class="progress"><div class="progress-bar success" th:style="'width: ' + ${tyLeHaiLong} + '%'"></div></div>
                   </div>

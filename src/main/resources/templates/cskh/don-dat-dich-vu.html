@@ -23,7 +23,7 @@
       </div>
 
       <!-- Stats -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
+      <div class="stats-grid stats-grid-5" style="margin-bottom:1.5rem">
         <div class="quick-stat">
           <div class="quick-stat-icon"><i class="ti ti-clipboard-list" style="color:var(--primary)"></i></div>
           <div><div class="quick-stat-val" th:text="${donHangStats != null ? donHangStats.tongDonHang : 0}">0</div><div class="quick-stat-lbl">Tổng đơn hàng</div></div>
@@ -85,7 +85,7 @@
           <table class="table table-hoverable" id="mainDataTable">
             <thead>
               <tr>
-                <th><input type="checkbox" id="masterCheckbox" style="width:16px;height:16px;accent-color:var(--cskh-primary)" onchange="updateBulkBar()"></th>
+                <th><input type="checkbox" id="masterCheckbox" onchange="updateBulkBar()"></th>
                 <th>Mã đơn</th>
                 <th>Khách hàng</th>
                 <th>Dịch vụ</th>
@@ -100,8 +100,8 @@
                   th:data-status="${order.trangThai}"
                   th:data-service="${order.chiTietList != null and !order.chiTietList.isEmpty() ? order.chiTietList[0].dichVu.tenDichVu : ''}"
                   th:data-date="${order.ngayThucHien != null ? order.ngayThucHien : ''}">
-                <td><input type="checkbox" class="rowCheckbox row-checkbox" style="width:16px;height:16px;accent-color:var(--cskh-primary)" onchange="updateBulkBar()"></td>
-                <td style="font-weight:700;font-size:0.8rem;color:var(--cskh-primary)"
+                <td><input type="checkbox" class="rowCheckbox row-checkbox" onchange="updateBulkBar()"></td>
+                <td class="nowrap" style="font-weight:700;font-size:0.8rem;color:var(--cskh-primary)"
                     th:text="${order.maDonDat != null ? order.maDonDat : ('#DD-' + order.id)}">#DD-001</td>
                 <td>
                   <div class="user-cell">
@@ -142,6 +142,9 @@
                             th:onclick="'openAssignModal(' + ${order.id} + ')'">
                       <i class="ti ti-user-check"></i>
                     </button>
+                    <!-- Giữ chỗ để các nút thẳng cột khi đơn không cần phân công -->
+                    <span class="btn btn-outline btn-sm" style="visibility:hidden" aria-hidden="true"
+                          th:unless="${order.trangThai == 'ChoDuyet' or order.trangThai == 'DaXacNhan'}"><i class="ti ti-user-check"></i></span>
                     <button class="btn btn-outline btn-sm" title="Chỉnh sửa"
                             th:data-id="${order.id}"
                             th:data-ma="${order.maDonDat != null ? order.maDonDat : ''}"
@@ -156,8 +159,8 @@
                             onclick="openEditModal(this)">
                       <i class="ti ti-pencil"></i>
                     </button>
-                    <button class="btn btn-outline btn-sm" title="Xóa đơn"
-                            style="color:var(--danger);border-color:color-mix(in srgb, var(--error-text) 25%, transparent)"
+                    <button class="btn btn-outline btn-sm" title="Xóa đơn" aria-label="Xóa đơn"
+                            style="color:var(--danger)"
                             th:data-ma="${order.maDonDat}"
                             th:data-id="${order.id}"
                             onclick="deleteOrder(this)">
@@ -230,7 +233,7 @@
     </div>
     <div style="margin-top:1rem">
       <div class="form-section-label">Đổi trạng thái nhanh</div>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:0.5rem">
         <button class="btn btn-warning btn-sm" onclick="CSKH.toast('Đã chuyển sang Chờ duyệt','info')">Chờ duyệt</button>
         <button class="btn btn-primary btn-sm" onclick="CSKH.toast('Đang thực hiện','info')">Đang thực hiện</button>
         <button class="btn btn-success btn-sm" onclick="CSKH.toast('Đã hoàn thành!')">Hoàn thành</button>
@@ -286,7 +289,7 @@
       <h2 class="modal-title"><i class="ti ti-clipboard-plus" style="color:var(--cskh-primary)"></i> Tạo đơn dịch vụ mới</h2>
       <button class="modal-close" data-modal-close="createOrderModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+    <div class="form-row" style="gap:1.25rem">
       <div class="form-group" style="grid-column:span 2">
         <div class="form-section-label">Thông tin khách hàng</div>
         <label class="form-label">Khách hàng <span style="color:var(--danger)">*</span></label>
@@ -352,7 +355,7 @@
       <h2 class="modal-title"><i class="ti ti-pencil" style="color:var(--cskh-primary)"></i> Chỉnh sửa Đơn dịch vụ</h2>
       <button class="modal-close" data-modal-close="editOrderModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+    <div class="form-row" style="gap:1.25rem">
       <div class="form-group">
         <label class="form-label">Mã đơn</label>
         <input type="text" class="form-control" id="e-ma" readonly style="opacity:0.6">

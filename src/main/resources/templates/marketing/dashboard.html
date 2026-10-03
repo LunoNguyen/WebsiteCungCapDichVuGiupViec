@@ -13,7 +13,7 @@
       
 
       <!-- Stats -->
-      <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+      <div class="stats-grid stats-grid-5">
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-speakerphone"></i></div>
           <div class="stat-value" th:attr="data-count=${tongKhuyenMai}" th:text="${tongKhuyenMai}">0</div>
@@ -34,7 +34,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-star"></i></div>
-          <div class="stat-value" th:text="${diemDanhGiaTB}">4.8</div>
+          <div class="stat-value" th:text="${#numbers.formatDecimal(diemDanhGiaTB, 1, 'POINT', 1, 'COMMA')}">4,8</div>
           <div class="stat-label">Đánh giá trung bình</div>
           <div class="kpi-compare"><span class="arrow-up">Hài lòng dịch vụ</span></div>
         </div>
@@ -92,7 +92,7 @@
               <div style="font-size:0.8rem;color:var(--text-muted)" th:text="${km.moTa}">Mô tả</div>
               <div style="margin-top:0.625rem;font-size:0.75rem;display:flex;justify-content:space-between">
                 <span>Thời hạn: <strong th:text="${km.ngayBatDau + ' đến ' + km.ngayKetThuc}">2026</strong></span>
-                <span style="color:var(--accent);font-weight:600" th:text="${km.loaiGiam == 'PhanTram' ? ('Giảm ' + km.giaTriGiam + '%') : ('Giảm ' + #numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT') + 'đ')}">Giảm 20%</span>
+                <span style="color:var(--accent);font-weight:600" th:text="${km.loaiGiam == 'PhanTram' ? ('Giảm ' + km.giaTriGiam + '%') : ('Giảm ' + #numbers.formatDecimal(km.giaTriGiam, 0, 'POINT', 0, 'COMMA') + 'đ')}">Giảm 20%</span>
               </div>
             </div>
             <div th:if="${khuyenMais == null || khuyenMais.isEmpty()}" style="text-align:center;padding:1.5rem;color:var(--text-muted)">
@@ -121,7 +121,7 @@
             <div th:each="dg : ${recentReviews}" style="border-bottom:1px solid var(--border-light);padding-bottom:0.625rem">
               <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem">
                 <span style="font-weight:600;font-size:0.8rem" th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}">Khách hàng</span>
-                <span style="color:#F59E0B;font-size:0.8rem" th:text="${(dg.diemChatLuong != null ? dg.diemChatLuong : 5) + ' sao'}">★★★★★</span>
+                <span style="color:var(--muted);font-size:0.8rem" th:text="${(dg.diemChatLuong != null ? dg.diemChatLuong : 5) + ' sao'}">★★★★★</span>
               </div>
               <div style="font-size:0.75rem;color:var(--text-secondary)" th:text="${dg.nhanXet != null ? dg.nhanXet : 'Dịch vụ tốt'}">Nhận xét</div>
             </div>
@@ -152,14 +152,14 @@
           labels: revenueLabels,
           datasets:[{
             label:'Doanh thu (triệu đồng)', data: revenueData,
-            backgroundColor:'rgba(255,101,132,0.85)',
+            backgroundColor:ChartTones.css('--primary'),
             borderRadius: 6,
             maxBarThickness: 40
           }]
         },
         options:{responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false}},
-          scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+' triệu'}}}}
+          scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>Number(v).toLocaleString('vi-VN')+' triệu'}}}}
       });
     }
 
@@ -180,11 +180,12 @@
       const d2 = phanPhoi[2] || 0;
       const d1 = phanPhoi[1] || 0;
 
-      new Chart(ratingCanvas, {
+      if (ChartEmpty.isEmpty([d5, d4, d3, d2, d1])) ChartEmpty.show('ratingChart', 'Chưa có đánh giá nào');
+      else new Chart(ratingCanvas, {
         type:'bar',
         data:{
           labels:['5★','4★','3★','2★','1★'],
-          datasets:[{data:[d5, d4, d3, d2, d1],backgroundColor:['#43E97B','#6C63FF','#FFC107','#FF6584','#FF4757'],borderRadius:6,borderSkipped:false}]
+          datasets:[{data:[d5, d4, d3, d2, d1],backgroundColor:ChartTones.rating(),borderRadius:6,borderSkipped:false}]
         },
         options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false}},
@@ -206,7 +207,7 @@
           datasets:[{
             label: 'Số đơn đặt',
             data: dvData.length ? dvData : [3, 2, 2, 2, 2],
-            backgroundColor:['#0D9BA3','#38D48A','#1585C0','#F59E0B','#FF6584'],
+            backgroundColor:ChartTones.series(5),
             borderRadius: 6,
             borderSkipped: false
           }]

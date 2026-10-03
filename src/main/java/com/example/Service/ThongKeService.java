@@ -625,10 +625,6 @@ public List<Integer> getDanhSachNamCoDuLieu() {
                 count++;
             }
         }
-        // Nếu DB chưa có mã nào được dùng
-        if (map.isEmpty()) {
-            map.put("CHUA_CO_DATA", 0L);
-        }
         return map;
     }
     // ==========================================
@@ -779,9 +775,6 @@ public Map<String, Double> getTopMaKhuyenMaiTheoThangNam(Integer thang, int nam)
                 // QUAN TRỌNG: Chia cho 1000000.0 (có .0) để ra số thập phân
                 .forEach(e -> map.put(e.getKey(), e.getValue() / 1000000.0)); 
 
-        if (map.isEmpty()) {
-            map.put("CHUA_CO_DATA", 0.0); // Cập nhật số 0.0
-        }
         return map;
     }
 }

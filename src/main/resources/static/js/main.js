@@ -577,7 +577,9 @@ function animateCounter(el, target, duration = 1500) {
     const progress = Math.min(elapsed / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3); // ease out cubic
     const current = start + (target - start) * eased;
-    el.textContent = isDecimal ? current.toFixed(1) : Math.round(current).toLocaleString('vi-VN');
+    el.textContent = isDecimal
+      ? current.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+      : Math.round(current).toLocaleString('vi-VN');
     if (progress < 1) requestAnimationFrame(update);
   }
   requestAnimationFrame(update);
@@ -711,6 +713,41 @@ document.addEventListener('DOMContentLoaded', () => {
     Toast.show('Bạn không có quyền truy cập vào đường dẫn yêu cầu! Hệ thống đã đưa bạn về trang thuộc quyền hạn của bạn.', 'error', 6000);
   }
 });
+
+// ============================================================
+// BIỂU ĐỒ RỖNG: thay vùng vẽ bằng một câu báo, không để trục trống
+// ChartEmpty.isEmpty(values) -> true khi không có giá trị nào khác 0
+// ChartEmpty.show(canvasId, 'Chưa có dữ liệu ...')
+// ============================================================
+const ChartEmpty = {
+  isEmpty(values) {
+    const list = Array.isArray(values) ? values : Object.values(values || {});
+    return !list.some(v => Number(v) > 0);
+  },
+  show(canvasId, message) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !canvas.parentElement) return;
+    const box = document.createElement('div');
+    box.className = 'chart-empty';
+    box.textContent = message || 'Chưa có dữ liệu trong kỳ này';
+    canvas.replaceWith(box);
+  }
+};
+window.ChartEmpty = ChartEmpty;
+
+// Màu biểu đồ lấy từ token (main.css), tự đổi theo dark mode
+const ChartTones = {
+  css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); },
+  series(n) {
+    const list = ['--primary', '--tone-indigo', '--tone-sky', '--tone-violet', '--tone-rose'];
+    return Array.from({ length: n }, (_, i) => this.css(list[i % list.length]));
+  },
+  // 5 sao -> 1 sao
+  rating() { return ['--success', '--primary', '--warning', '--tone-rose', '--danger'].map(v => this.css(v)); },
+  // Hoàn thành, Đang thực hiện, Đã xác nhận, Chờ duyệt, Đã huỷ
+  orderStatus() { return ['--success', '--tone-indigo', '--tone-sky', '--warning', '--danger'].map(v => this.css(v)); }
+};
+window.ChartTones = ChartTones;
 
 // Add form error style
 const style = document.createElement('style');

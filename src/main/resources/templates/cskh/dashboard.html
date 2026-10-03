@@ -20,7 +20,7 @@
       </div>
 
       <!-- Stats -->
-      <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+      <div class="stats-grid stats-grid-5">
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-clipboard-list"></i></div>
           <div class="stat-value" th:attr="data-count=${tongDonHang}" th:text="${tongDonHang}">0</div>
@@ -41,7 +41,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-star"></i></div>
-          <div class="stat-value" th:text="${diemDanhGiaTB}">4.8</div>
+          <div class="stat-value" th:text="${#numbers.formatDecimal(diemDanhGiaTB, 1, 'POINT', 1, 'COMMA')}">4,8</div>
           <div class="stat-label">Đánh giá trung bình</div>
           <div class="kpi-compare"><span class="arrow-up">Mức độ hài lòng cao</span></div>
         </div>
@@ -68,10 +68,10 @@
               <div class="avatar avatar-sm" th:text="${d.khachHang != null ? #strings.substring(d.khachHang.hoTen, 0, 1) : 'K'}">K</div>
               <div style="flex:1">
                 <div style="font-weight:600;font-size:0.875rem" th:text="${'#' + d.maDonDat + ' · ' + (d.khachHang != null ? d.khachHang.hoTen : 'Khách hàng')}">Mã đơn</div>
-                <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${(d.chiTietList != null and !d.chiTietList.isEmpty() ? d.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ') + ' · Ngày ' + d.ngayThucHien + ' ' + (d.gioBatDau != null ? d.gioBatDau : '')}">Thời gian</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${(d.chiTietList != null and !d.chiTietList.isEmpty() ? d.chiTietList[0].dichVu.tenDichVu + ' · ' : '') + (d.ngayThucHien != null ? #temporals.format(d.ngayThucHien, 'dd/MM/yyyy') : '') + (d.gioBatDau != null ? ' ' + #temporals.format(d.gioBatDau, 'HH:mm') : '')}">Thời gian</div>
               </div>
               <div style="display:flex;gap:0.4rem">
-                <span class="badge" th:classappend="${d.trangThai == 'DangThucHien' ? 'badge-primary' : 'badge-warning'}" th:text="${d.trangThai}">Trạng thái</span>
+                <span th:replace="~{layout/status :: orderBadge(${d.trangThai})}"></span>
               </div>
             </div>
             <div th:if="${recentOrders == null || recentOrders.isEmpty()}" style="text-align:center;padding:1.5rem;color:var(--text-muted)">
@@ -100,7 +100,7 @@
                   <div class="avatar" style="width:28px;height:28px;font-size:0.7rem" th:text="${kn.khachHang != null ? #strings.substring(kn.khachHang.hoTen, 0, 1) : 'K'}">K</div>
                   <span style="font-weight:600" th:text="${kn.khachHang != null ? kn.khachHang.hoTen : 'Khách hàng'}">Khách hàng</span>
                 </div>
-                <span class="badge" th:classappend="${kn.trangThai == 'LeoThang' || kn.trangThai == 'LeoCao' ? 'badge-danger' : (kn.trangThai == 'DangXuLy' ? 'badge-warning' : 'badge-secondary')}" th:text="${kn.trangThai}">Trạng thái</span>
+                <span th:replace="~{layout/status :: complaintBadge(${kn.trangThai})}"></span>
               </div>
               <div th:if="${recentComplaints == null || recentComplaints.isEmpty()}" style="text-align:center;padding:1rem;color:var(--text-muted)">
                 Không có khiếu nại nào
@@ -122,7 +122,7 @@
               <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>Thành tiền</th><th>Ngày thực hiện</th><th>Trạng thái</th></tr></thead>
               <tbody>
                 <tr th:each="d : ${recentOrders}">
-                  <td style="font-weight:600;font-size:0.8rem;color:var(--primary-light)" th:text="${'#' + d.maDonDat}">#DD-01</td>
+                  <td class="nowrap" style="font-weight:600;font-size:0.8rem;color:var(--primary-light)" th:text="${d.maDonDat}">#DD-01</td>
                   <td>
                     <div class="user-cell">
                       <div class="avatar avatar-sm" th:text="${d.khachHang != null ? #strings.substring(d.khachHang.hoTen, 0, 1) : 'K'}">K</div>
@@ -133,10 +133,10 @@
                     </div>
                   </td>
                   <td th:text="${d.chiTietList != null and !d.chiTietList.isEmpty() ? d.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ'}">Dịch vụ</td>
-                  <td style="font-weight:600;color:var(--accent)" th:text="${#numbers.formatDecimal(d.thanhTien != null ? d.thanhTien : 0, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</td>
-                  <td style="font-size:0.8rem" th:text="${d.ngayThucHien + ' ' + (d.gioBatDau != null ? d.gioBatDau : '')}">Thời gian</td>
+                  <td style="font-weight:600;color:var(--accent)" th:text="${#numbers.formatDecimal(d.thanhTien != null ? d.thanhTien : 0, 0, 'POINT', 0, 'COMMA') + 'đ'}">0đ</td>
+                  <td class="nowrap tabular" style="font-size:0.8rem" th:text="${(d.ngayThucHien != null ? #temporals.format(d.ngayThucHien, 'dd/MM/yyyy') : '') + (d.gioBatDau != null ? ' ' + #temporals.format(d.gioBatDau, 'HH:mm') : '')}">Thời gian</td>
                   <td>
-                    <span class="badge" th:classappend="${d.trangThai == 'HoanThanh' ? 'badge-success' : (d.trangThai == 'DangThucHien' ? 'badge-primary' : (d.trangThai == 'ChoDuyet' ? 'badge-warning' : 'badge-secondary'))}" th:text="${d.trangThai}">Trạng thái</span>
+                    <span th:replace="~{layout/status :: orderBadge(${d.trangThai})}"></span>
                   </td>
                 </tr>
                 <tr th:if="${recentOrders == null || recentOrders.isEmpty()}">
@@ -150,7 +150,6 @@
     </main>
   </div>
 </div>
-<script src="/js/main.js"></script>
 <script th:inline="javascript">
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') return;
@@ -165,7 +164,7 @@
         datasets: [{
           label: 'Số đơn',
           data: data.length ? data : [0, 0, 0, 0, 0],
-          backgroundColor: ['#38D48A', '#0D9BA3', '#1585C0', '#F59E0B', '#EF4444'],
+          backgroundColor: ChartTones.orderStatus(),
           borderRadius: 6,
           borderSkipped: false
         }]
