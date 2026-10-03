@@ -126,7 +126,8 @@
                   <span th:if="${order.trangThai == 'DangThucHien'}" class="badge badge-primary">Đang thực hiện</span>
                   <span th:if="${order.trangThai == 'ChoDuyet'}" class="badge badge-warning">Chờ duyệt</span>
                   <span th:if="${order.trangThai == 'DaHuy'}" class="badge badge-danger">Đã hủy</span>
-                  <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy'}"
+                  <span th:if="${order.trangThai == 'DaXacNhan'}" class="badge badge-info">Đã xác nhận</span>
+                  <span th:if="${order.trangThai != 'HoanThanh' and order.trangThai != 'DangThucHien' and order.trangThai != 'ChoDuyet' and order.trangThai != 'DaHuy' and order.trangThai != 'DaXacNhan'}"
                         class="badge badge-secondary" th:text="${order.trangThai}">Khác</span>
                 </td>
                 <td>
@@ -135,6 +136,11 @@
                             th:onclick="'openDetailPanel(' + ${order.id} + ')'"
                             onclick="openDetailPanel(0)">
                       <i class="ti ti-eye"></i>
+                    </button>
+                    <button class="btn btn-outline btn-sm" title="Phân công cộng tác viên" type="button"
+                            th:if="${order.trangThai == 'ChoDuyet' or order.trangThai == 'DaXacNhan'}"
+                            th:onclick="'openAssignModal(' + ${order.id} + ')'">
+                      <i class="ti ti-user-check"></i>
                     </button>
                     <button class="btn btn-outline btn-sm" title="Chỉnh sửa"
                             th:data-id="${order.id}"
@@ -233,8 +239,41 @@
     </div>
   </div>
   <div class="detail-panel-footer">
-    <button class="btn btn-outline btn-sm" onclick="CSKH.toast('Đang mở form ghép CTV...')"><i class="ti ti-user-check"></i> Ghép CTV</button>
+    <button class="btn btn-outline btn-sm" type="button" onclick="openAssignModal(currentOrderId)"><i class="ti ti-user-check"></i> Phân công CTV</button>
     <button class="btn btn-secondary" onclick="closePanels()">Đóng</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PHÂN CÔNG CỘNG TÁC VIÊN – gợi ý theo thuật toán xếp lịch
+     ══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="assignModal">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">Phân công cộng tác viên</h2>
+        <div id="pcTomTat" style="font-size:0.8rem;color:var(--text-muted);margin-top:2px"></div>
+      </div>
+      <button class="modal-close" data-modal-close="assignModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="max-height:65vh;overflow:auto">
+      <div id="pcThongBao" role="status" style="display:none;margin-bottom:0.75rem;padding:0.6rem 0.8rem;border-radius:var(--radius-md);font-weight:600;font-size:0.875rem"></div>
+
+      <div class="form-section-label">Đang phụ trách đơn này</div>
+      <div id="pcDaPhanCong" style="display:grid;gap:0.5rem;margin-bottom:1.25rem"></div>
+
+      <div class="form-section-label">Gợi ý phù hợp nhất</div>
+      <div id="pcQuyTac" style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.6rem"></div>
+      <div id="pcGoiY" style="display:grid;gap:0.6rem;margin-bottom:1.25rem"></div>
+
+      <details id="pcKhongPhuHopWrap">
+        <summary style="cursor:pointer;font-weight:600;font-size:0.875rem">Không xếp được (<span id="pcKhongPhuHopSo">0</span>)</summary>
+        <div id="pcKhongPhuHop" style="display:grid;gap:0.4rem;margin-top:0.6rem"></div>
+      </details>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-modal-close="assignModal">Đóng</button>
+    </div>
   </div>
 </div>
 
@@ -467,6 +506,140 @@
   }
 
   // ── Detail Panel ───────────────────────────────────
+  // ── Phân công cộng tác viên ────────────────────────
+  // Gợi ý lấy từ GET /cskh/don-dat-dich-vu/{id}/goi-y-phan-cong (thuật toán ở PhanCongService)
+  var currentOrderId = null;
+  var assignOrderId = null;
+
+  function pcEl(tag, css, text) {
+    var e = document.createElement(tag);
+    if (css) e.style.cssText = css;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function pcBao(text, ok) {
+    var box = document.getElementById('pcThongBao');
+    if (!text) { box.style.display = 'none'; return; }
+    box.textContent = text;
+    box.style.display = 'block';
+    box.style.color = ok ? 'var(--success)' : 'var(--danger)';
+    box.style.border = '1px solid ' + (ok ? 'var(--success)' : 'var(--danger)');
+  }
+
+  function pcGui(url, body, nut) {
+    nut.disabled = true;
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
+      .then(function (res) { return res.json().catch(function () { return {}; }).then(function (b) { return { ok: res.ok, b: b }; }); })
+      .then(function (r) {
+        pcBao(r.b.message || (r.ok ? 'Đã lưu.' : 'Chưa lưu được. Thử lại sau.'), r.ok && r.b.success);
+        taiGoiY();
+        if (currentOrderId === assignOrderId && document.getElementById('orderDetailPanel').classList.contains('open')) {
+          openDetailPanel(assignOrderId);
+        }
+      })
+      .catch(function () { pcBao('Không kết nối được máy chủ. Thử lại sau.', false); nut.disabled = false; });
+  }
+
+  function taiGoiY() {
+    var goiY = document.getElementById('pcGoiY');
+    goiY.textContent = 'Đang tính gợi ý…';
+    fetch('/cskh/don-dat-dich-vu/' + assignOrderId + '/goi-y-phan-cong', { headers: { 'Accept': 'application/json' } })
+      .then(function (res) { if (!res.ok) throw new Error(); return res.json(); })
+      .then(function (d) {
+        document.getElementById('pcTomTat').textContent = d.maDonDat + ' · ' + d.ngay + ' · ' + d.gio + (d.khuVuc ? ' · ' + d.khuVuc : '');
+        document.getElementById('pcQuyTac').textContent = 'Mỗi cộng tác viên: cách việc khác ít nhất ' + d.khoangCachPhut +
+          ' phút, tối đa ' + d.toiDaDonMoiNgay + ' việc và ' + d.toiDaGioMoiNgay + ' giờ mỗi ngày.';
+
+        // Đang phụ trách
+        var da = document.getElementById('pcDaPhanCong');
+        da.innerHTML = '';
+        var coTheDoi = d.trangThai === 'ChoDuyet' || d.trangThai === 'DaXacNhan';
+        if (!d.daPhanCong.length) {
+          da.appendChild(pcEl('div', 'font-size:0.875rem;color:var(--text-muted)',
+            'Chưa có ai.' + (d.soNguoiCan > 1 ? ' Đơn này cần ' + d.soNguoiCan + ' người.' : '')));
+        } else {
+          if (d.soNguoiCan > 1) {
+            da.appendChild(pcEl('div', 'font-size:0.8rem;color:var(--text-muted)', 'Đã có ' + d.daPhanCong.length + ' / ' + d.soNguoiCan + ' người cần cho đơn này.'));
+          }
+          d.daPhanCong.forEach(function (p) {
+            var dong = pcEl('div', 'display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.6rem 0.8rem;border:1px solid var(--border);border-radius:var(--radius-md)');
+            dong.appendChild(pcEl('div', 'font-weight:600', p.hoTen + ' · ' + (p.soDienThoai || '') +
+              (p.trangThai === 'ChoPhanCong' ? ' (chờ xác nhận)' : '')));
+            if (coTheDoi && p.trangThai !== 'HoanThanh') {
+              var bo = pcEl('button', '', 'Bỏ phân công');
+              bo.type = 'button';
+              bo.className = 'btn btn-outline btn-sm';
+              bo.addEventListener('click', function () {
+                if (confirm('Bỏ phân công ' + p.hoTen + ' khỏi đơn này?')) {
+                  pcGui('/cskh/don-dat-dich-vu/' + assignOrderId + '/bo-phan-cong', 'phanCongId=' + p.phanCongId, bo);
+                }
+              });
+              dong.appendChild(bo);
+            }
+            da.appendChild(dong);
+          });
+        }
+
+        // Gợi ý
+        goiY.innerHTML = '';
+        if (!coTheDoi) {
+          goiY.appendChild(pcEl('div', 'font-size:0.875rem;color:var(--text-muted)', 'Đơn ở trạng thái này không phân công thêm được.'));
+        } else if (!d.phuHop.length) {
+          goiY.appendChild(pcEl('div', 'font-size:0.875rem;color:var(--text-muted)',
+            'Không có cộng tác viên nào xếp được vào khung giờ này. Xem lý do ở danh sách bên dưới, hoặc đổi giờ thực hiện của đơn.'));
+        }
+        if (coTheDoi) d.phuHop.forEach(function (c, i) {
+          var the = pcEl('div', 'display:grid;grid-template-columns:1fr auto;gap:0.75rem;align-items:center;padding:0.75rem 0.9rem;border:1px solid ' +
+            (i === 0 ? 'var(--cskh-primary)' : 'var(--border)') + ';border-radius:var(--radius-md)');
+          var trai = pcEl('div');
+          var ten = pcEl('div', 'font-weight:700', c.hoTen + ' · ' + (c.soDienThoai || ''));
+          trai.appendChild(ten);
+          trai.appendChild(pcEl('div', 'font-size:0.8rem;color:var(--text-muted);margin-top:2px',
+            'Điểm phù hợp ' + c.diem + '/100 · ' + c.soDonTrongNgay + ' việc (' + c.gioTrongNgay + ' giờ) trong ngày · ' + c.soDonTrongTuan + ' việc trong tuần'));
+          var thanh = pcEl('div', 'height:6px;border-radius:999px;background:var(--border);margin-top:6px;overflow:hidden');
+          thanh.appendChild(pcEl('div', 'height:100%;width:' + c.diem + '%;background:var(--cskh-primary)'));
+          trai.appendChild(thanh);
+          if (c.lyDo.length) trai.appendChild(pcEl('div', 'font-size:0.8rem;margin-top:6px', c.lyDo.join(' · ')));
+          if (c.canhBao.length) trai.appendChild(pcEl('div', 'font-size:0.8rem;margin-top:4px;color:var(--warning)', 'Lưu ý: ' + c.canhBao.join(' · ')));
+          if (c.lichTrongNgay.length) trai.appendChild(pcEl('div', 'font-size:0.78rem;color:var(--text-muted);margin-top:4px', 'Lịch trong ngày: ' + c.lichTrongNgay.join(', ')));
+          the.appendChild(trai);
+          var nut = pcEl('button', '', i === 0 ? 'Phân công' : 'Chọn');
+          nut.type = 'button';
+          nut.className = i === 0 ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+          nut.addEventListener('click', function () {
+            pcGui('/cskh/don-dat-dich-vu/' + assignOrderId + '/phan-cong', 'ctvId=' + c.ctvId, nut);
+          });
+          the.appendChild(nut);
+          goiY.appendChild(the);
+        });
+
+        // Không xếp được
+        var kp = document.getElementById('pcKhongPhuHop');
+        kp.innerHTML = '';
+        document.getElementById('pcKhongPhuHopSo').textContent = d.khongPhuHop.length;
+        document.getElementById('pcKhongPhuHopWrap').style.display = d.khongPhuHop.length ? '' : 'none';
+        d.khongPhuHop.forEach(function (c) {
+          var dong = pcEl('div', 'font-size:0.85rem;padding:0.5rem 0.75rem;border:1px dashed var(--border);border-radius:var(--radius-md)');
+          dong.appendChild(pcEl('b', '', c.hoTen));
+          dong.appendChild(document.createTextNode(': ' + c.lyDoLoai));
+          kp.appendChild(dong);
+        });
+      })
+      .catch(function () { goiY.textContent = 'Không tải được gợi ý. Thử lại sau.'; });
+  }
+
+  function openAssignModal(id) {
+    if (!id) return;
+    assignOrderId = id;
+    pcBao('');
+    document.getElementById('pcTomTat').textContent = '';
+    document.getElementById('pcDaPhanCong').innerHTML = '';
+    document.getElementById('pcKhongPhuHop').innerHTML = '';
+    ModalManager.open('assignModal');
+    taiGoiY();
+  }
+
   var TRANG_THAI_DON = {
     ChoDuyet: 'Chờ duyệt', DaXacNhan: 'Đã xác nhận', DangThucHien: 'Đang thực hiện',
     HoanThanh: 'Hoàn thành', DaHuy: 'Đã hủy'
@@ -494,6 +667,7 @@
 
   // Mở khung chi tiết và tải dữ liệu thật của đơn: GET /cskh/don-dat-dich-vu/{id}/chi-tiet
   function openDetailPanel(id) {
+    currentOrderId = id;
     document.getElementById('panelOverlay').classList.add('active');
     // CSS hiện khung chi tiết bằng lớp 'open' (dashboard.css: .detail-panel.open)
     document.getElementById('orderDetailPanel').classList.add('active', 'open');
