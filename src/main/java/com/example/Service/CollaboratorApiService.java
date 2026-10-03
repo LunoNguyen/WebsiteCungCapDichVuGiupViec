@@ -24,6 +24,7 @@ public class CollaboratorApiService {
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
     private final ThongBaoRepository thongBaoRepository;
     private final TaiKhoanRepository taiKhoanRepository;
+    private final KhachHangRepository khachHangRepository;
 
     public CollaboratorApiService(
             PhanCongCTVRepository phanCongCTVRepository,
@@ -33,7 +34,8 @@ public class CollaboratorApiService {
             LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository,
             ThongBaoNguoiDungRepository thongBaoNguoiDungRepository,
             ThongBaoRepository thongBaoRepository,
-            TaiKhoanRepository taiKhoanRepository) {
+            TaiKhoanRepository taiKhoanRepository,
+            KhachHangRepository khachHangRepository) {
         this.phanCongCTVRepository = phanCongCTVRepository;
         this.donDatDichVuRepository = donDatDichVuRepository;
         this.lichLamViecRepository = lichLamViecRepository;
@@ -42,6 +44,7 @@ public class CollaboratorApiService {
         this.thongBaoNguoiDungRepository = thongBaoNguoiDungRepository;
         this.thongBaoRepository = thongBaoRepository;
         this.taiKhoanRepository = taiKhoanRepository;
+        this.khachHangRepository = khachHangRepository;
     }
 
     // ==========================================
@@ -207,6 +210,46 @@ public class CollaboratorApiService {
             thongBaoNguoiDungRepository.save(tbnd);
         }
 
+        // Tự động gửi thông báo tới Khách hàng: CTV đã nhận đơn
+        KhachHang kh = don.getKhachHang();
+        TaiKhoan custAccount = (kh != null) ? kh.getTaiKhoan() : null;
+        if (custAccount == null && kh != null && kh.getSoDienThoai() != null) {
+            custAccount = taiKhoanRepository.findBySoDienThoai(kh.getSoDienThoai()).orElse(null);
+        }
+        if (custAccount != null) {
+            String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty() && don.getChiTietList().get(0).getDichVu() != null)
+                    ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ gia đình";
+            LocalDate ngayThucHien = don.getNgayThucHien();
+            LocalTime gioBatDau = don.getGioBatDau();
+            String gioStr = gioBatDau != null ? gioBatDau.format(DateTimeFormatter.ofPattern("HH:mm")) : "giờ quy định";
+            String ngayStr = ngayThucHien != null ? ngayThucHien.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+            String thu = getThuTrongTuan(ngayThucHien);
+            String tenCTV = pc.getCongTacVien() != null ? pc.getCongTacVien().getHoTen() : "Cộng tác viên";
+
+            String tieuDeKH = "Đơn " + don.getMaDonDat() + " – Đã có cộng tác viên tiếp nhận";
+            String noiDungKH = "Cộng tác viên " + tenCTV + " đã tiếp nhận thực hiện công việc " + tenDichVu
+                    + " (Đơn " + don.getMaDonDat() + "). Lịch hẹn: lúc " + gioStr + ", " + thu + " (ngày " + ngayStr + "). CTV sẽ có mặt đúng giờ để phục vụ quý khách!";
+
+            ThongBao tbKH = ThongBao.builder()
+                    .maThongBao("TB-KH-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                    .tieuDe(tieuDeKH)
+                    .noiDung(noiDungKH)
+                    .nguoiGui("Hệ thống Neatify")
+                    .nhomNhan("KhachHang")
+                    .thoiGianGui(LocalDateTime.now())
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoRepository.save(tbKH);
+
+            ThongBaoNguoiDung tbndKH = ThongBaoNguoiDung.builder()
+                    .thongBao(tbKH)
+                    .taiKhoan(custAccount)
+                    .daDoc(false)
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoNguoiDungRepository.save(tbndKH);
+        }
+
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("phanCongId", pc.getId());
         res.put("trangThaiPhanCong", pc.getTrangThai());
@@ -305,18 +348,24 @@ public class CollaboratorApiService {
                 .build();
         lichSuTrangThaiDonRepository.save(ls);
 
-        // Tạo thông báo hoàn thành đơn cho CTV
+        String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty() && don.getChiTietList().get(0).getDichVu() != null)
+                ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ gia đình";
+        String tenCTV = pc.getCongTacVien() != null ? pc.getCongTacVien().getHoTen() : "Cộng tác viên";
+        String gioHoanThanh = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+        String ngayHoanThanh = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        String thu = getThuTrongTuan(LocalDate.now());
+
+        // 1. Tạo thông báo hoàn thành đơn cho CTV (ghi rõ nhiệm vụ gì, ngày nào, mấy giờ)
         if (pc.getCongTacVien() != null && pc.getCongTacVien().getTaiKhoan() != null) {
-            String tenCTV = pc.getCongTacVien().getHoTen();
             String prefixCTV = "CTV " + tenCTV;
             String tienStr = don.getThanhTien() != null ? String.format("%,d", don.getThanhTien().longValue()) + "đ" : "";
             ThongBao tbComplete = ThongBao.builder()
-                    .maThongBao("TB-" + System.currentTimeMillis())
-                    .tieuDe(prefixCTV + " – Đơn đã hoàn thành: " + don.getMaDonDat())
-                    .noiDung(prefixCTV + " đã hoàn thành đơn " + don.getMaDonDat()
+                    .maThongBao("TB-CTV-HT-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                    .tieuDe(prefixCTV + " – Hoàn thành nhiệm vụ: " + don.getMaDonDat())
+                    .noiDung(prefixCTV + " đã hoàn thành nhiệm vụ " + tenDichVu + " (Đơn " + don.getMaDonDat() + ") vào lúc " + gioHoanThanh + ", " + thu + " (ngày " + ngayHoanThanh + ")"
                             + (tienStr.isEmpty() ? "" : ". Tiền công nhận được: " + tienStr)
-                            + ". Chúc mừng bạn đã hoàn thành ca làm việc!")
-                    .nguoiGui("Hệ thống")
+                            + ". Chúc mừng bạn đã hoàn thành xuất sắc ca làm việc!")
+                    .nguoiGui("Hệ thống Neatify")
                     .nhomNhan("CongTacVien")
                     .thoiGianGui(LocalDateTime.now())
                     .trangThai("DaGui")
@@ -330,6 +379,33 @@ public class CollaboratorApiService {
                     .trangThai("DaGui")
                     .build();
             thongBaoNguoiDungRepository.save(tbnd);
+        }
+
+        // 2. Tạo thông báo hoàn thành đơn cho Khách hàng (ghi rõ tên CTV, nhiệm vụ, ngày giờ)
+        KhachHang kh = don.getKhachHang();
+        TaiKhoan custAccount = (kh != null) ? kh.getTaiKhoan() : null;
+        if (custAccount == null && kh != null && kh.getSoDienThoai() != null) {
+            custAccount = taiKhoanRepository.findBySoDienThoai(kh.getSoDienThoai()).orElse(null);
+        }
+        if (custAccount != null) {
+            ThongBao tbKH = ThongBao.builder()
+                    .maThongBao("TB-KH-HT-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                    .tieuDe("Đơn " + don.getMaDonDat() + " – Hoàn thành nhiệm vụ")
+                    .noiDung("Cộng tác viên " + tenCTV + " đã hoàn thành nhiệm vụ " + tenDichVu + " (Đơn " + don.getMaDonDat() + ") vào lúc " + gioHoanThanh + ", " + thu + " (ngày " + ngayHoanThanh + "). Quý khách vui lòng kiểm tra và gửi đánh giá dịch vụ nhé!")
+                    .nguoiGui("Hệ thống Neatify")
+                    .nhomNhan("KhachHang")
+                    .thoiGianGui(LocalDateTime.now())
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoRepository.save(tbKH);
+
+            ThongBaoNguoiDung tbndKH = ThongBaoNguoiDung.builder()
+                    .thongBao(tbKH)
+                    .taiKhoan(custAccount)
+                    .daDoc(false)
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoNguoiDungRepository.save(tbndKH);
         }
 
         Map<String, Object> res = new LinkedHashMap<>();
@@ -839,6 +915,39 @@ public class CollaboratorApiService {
                 .trangThai("DaGui")
                 .build();
         thongBaoNguoiDungRepository.save(tbnd);
+
+        // Thông báo tới Khách hàng: CTV đã nhận đơn từ pool
+        KhachHang kh = don.getKhachHang();
+        TaiKhoan custAccountKH = (kh != null) ? kh.getTaiKhoan() : null;
+        if (custAccountKH == null && kh != null && kh.getSoDienThoai() != null) {
+            custAccountKH = taiKhoanRepository.findBySoDienThoai(kh.getSoDienThoai()).orElse(null);
+        }
+        if (custAccountKH != null) {
+            String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty() && don.getChiTietList().get(0).getDichVu() != null)
+                    ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ gia đình";
+            String tieuDeKH = "Đơn " + don.getMaDonDat() + " – Đã có cộng tác viên tiếp nhận";
+            String noiDungKH = "Cộng tác viên " + tenCTV + " đã tiếp nhận thực hiện công việc " + tenDichVu
+                    + " (Đơn " + don.getMaDonDat() + "). Lịch hẹn: lúc " + gioStr + ", " + thu + " (ngày " + ngayStr + "). CTV sẽ có mặt đúng giờ để phục vụ quý khách!";
+
+            ThongBao tbKH = ThongBao.builder()
+                    .maThongBao("TB-KH-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
+                    .tieuDe(tieuDeKH)
+                    .noiDung(noiDungKH)
+                    .nguoiGui("Hệ thống Neatify")
+                    .nhomNhan("KhachHang")
+                    .thoiGianGui(LocalDateTime.now())
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoRepository.save(tbKH);
+
+            ThongBaoNguoiDung tbndKH = ThongBaoNguoiDung.builder()
+                    .thongBao(tbKH)
+                    .taiKhoan(custAccountKH)
+                    .daDoc(false)
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoNguoiDungRepository.save(tbndKH);
+        }
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("phanCongId", pc.getId());

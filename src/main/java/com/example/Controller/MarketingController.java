@@ -401,6 +401,28 @@ public String dashboard(
         mk.setChuongTrinhKhuyenMai(ct); 
         maKhuyenMaiRepository.save(mk);
         
+        // Tự động phát thông báo khuyến mãi gửi tới toàn thể Khách hàng
+        try {
+            String giamStr = "PhanTram".equals(loaiGiamGia)
+                    ? (mucGiam.stripTrailingZeros().toPlainString() + "%")
+                    : (String.format("%,d", mucGiam.longValue()) + "đ");
+            String dieuKienStr = (dieuKienToiThieu != null && dieuKienToiThieu.compareTo(java.math.BigDecimal.ZERO) > 0)
+                    ? (" cho đơn từ " + String.format("%,d", dieuKienToiThieu.longValue()) + "đ") : "";
+            String hanDungStr = (ct.getNgayKetThuc() != null)
+                    ? (" đến hết ngày " + ct.getNgayKetThuc().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))) : "";
+
+            ThongBao tbKM = ThongBao.builder()
+                    .maThongBao(com.example.Service.MaSinh.tao("TB-KM-"))
+                    .tieuDe("Ưu đãi mới: Tặng bạn mã giảm giá " + maCoupon.trim().toUpperCase())
+                    .noiDung("Neatify gửi tặng bạn mã ưu đãi " + maCoupon.trim().toUpperCase() + " giảm ngay " + giamStr + dieuKienStr + ". Áp dụng" + hanDungStr + ". Nhập mã ngay khi đặt dịch vụ để nhận ưu đãi!")
+                    .nguoiGui("Phòng Marketing")
+                    .nhomNhan("KhachHang")
+                    .thoiGianGui(java.time.LocalDateTime.now())
+                    .trangThai("DaGui")
+                    .build();
+            thongBaoRepository.save(tbKM);
+        } catch (Exception ignored) {}
+
         redirectAttributes.addFlashAttribute("success", "Đã phát hành thành công mã " + maCoupon.toUpperCase());
         return "redirect:/marketing/khuyen-mai";
     }
