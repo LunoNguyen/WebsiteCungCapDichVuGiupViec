@@ -11,87 +11,97 @@
 
     <main class="page-content">
       <div class="page-header">
-        
         <div class="page-actions">
           <button class="btn btn-primary btn-sm" data-modal-open="createNotifModal"><i class="ti ti-send"></i> Gửi thông báo mới</button>
         </div>
       </div>
 
-      <!-- Stats Grid -->
+      <!-- Kết quả thao tác -->
+      <div th:if="${errorMessage}" role="alert" style="padding:0.875rem 1rem;background:color-mix(in srgb, var(--danger) 10%, transparent);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);font-weight:600" th:text="${errorMessage}"></div>
+      <div th:if="${successMessage}" role="status" style="padding:0.875rem 1rem;background:color-mix(in srgb, var(--success) 10%, transparent);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);font-weight:600" th:text="${successMessage}"></div>
+
+      <!-- Số liệu thật từ CSDL -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-mail"></i></div>
           <div class="stat-value" th:text="${thongBaos != null ? #lists.size(thongBaos) : 0}">0</div>
-          <div class="stat-label">Tổng thông báo hệ thống</div>
-          <div class="kpi-compare"><span class="arrow-up">Hệ thống thực tế</span></div>
+          <div class="stat-label">Thông báo trong hệ thống</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-eye"></i></div>
-          <div class="stat-value">100%</div>
-          <div class="stat-label">Tỷ lệ truyền tải tin nhắn</div>
-          <div class="kpi-compare"><span class="arrow-up">Hoạt động tốt</span></div>
+          <div class="stat-value" id="statDaDoc">0</div>
+          <div class="stat-label">Lượt đã đọc / lượt nhận</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">⏰</div>
+          <div class="stat-icon"><i class="ti ti-clock"></i></div>
           <div class="stat-value" th:text="${donHangStats != null ? donHangStats.choDuyetCount : 0}">0</div>
           <div class="stat-label">Đơn cần điều phối</div>
-          <div class="kpi-compare"><span class="period">Cần gửi phân công</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-shield"></i></div>
           <div class="stat-value" th:text="${khieuNaiStats != null ? khieuNaiStats.chuaXuLyCount : 0}">0</div>
           <div class="stat-label">Khiếu nại cần xử lý</div>
-          <div class="kpi-compare"><span class="period">Cần phản hồi</span></div>
         </div>
       </div>
 
-      <!-- Filter Bar -->
-      <div class="filter-bar">
+      <!-- Tìm và lọc -->
+      <div class="filter-bar" data-rt-ignore>
         <div class="search-box">
           <i class="ti ti-search search-icon"></i>
-          <input type="text" class="form-control" placeholder="Tìm kiếm tiêu đề, người nhận...">
+          <input type="search" class="form-control" id="tbSearch" placeholder="Tìm theo tiêu đề, người gửi, người nhận...">
         </div>
-        <select class="filter-select">
-          <option value="">Tất cả loại thông báo</option>
-          <option>Nhắc hẹn dịch vụ</option>
-          <option>Ghép đơn CTV thành công</option>
-          <option>Xử lý khiếu nại</option>
-          <option>Tin nhắn chăm sóc cá nhân</option>
-        </select>
-        <select class="filter-select">
+        <select class="filter-select" id="tbNhom" aria-label="Lọc theo đối tượng">
           <option value="">Tất cả đối tượng</option>
-          <option>Khách hàng</option>
-          <option>Cộng tác viên</option>
+          <option value="KhachHang">Tất cả khách hàng</option>
+          <option value="CongTacVien">Tất cả cộng tác viên</option>
+          <option value="TatCa">Khách hàng và cộng tác viên</option>
+          <option value="CaNhan">Gửi riêng một người</option>
+          <option value="NhanVien">Nhân viên</option>
         </select>
       </div>
 
-      <!-- History Table -->
+      <!-- Danh sách thông báo -->
       <div class="card" style="padding:0">
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
-                <th>Tiêu đề thông báo</th>
+                <th>Thông báo</th>
+                <th>Người gửi</th>
                 <th>Người nhận</th>
-                <th>Đối tượng</th>
-                <th>Kênh gửi</th>
+                <th>Đã đọc</th>
                 <th>Thời gian gửi</th>
                 <th>Trạng thái</th>
                 <th style="text-align:right">Thao tác</th>
               </tr>
             </thead>
-            <tbody>
-              <tr th:each="tb : ${thongBaos}">
-                <td style="font-weight:600" th:text="${tb.tieuDe}">Tiêu đề thông báo</td>
-                <td th:text="${tb.nguoiGui != null ? tb.nguoiGui : 'Hệ thống Neatify'}">Người gửi</td>
-                <td><span class="badge badge-primary" th:text="${tb.nhomNhan}">Đối tượng</span></td>
-                <td>App Push + SMS</td>
-                <td style="font-size:0.8rem" th:text="${tb.thoiGianGui != null ? #temporals.format(tb.thoiGianGui, 'dd/MM/yyyy HH:mm') : '--'}">Thời gian</td>
-                <td><span class="badge badge-success" th:text="${tb.trangThai}">Đã gửi</span></td>
-                <td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="Toast.show('Đang xem chi tiết thông báo...')">Xem</button></td>
+            <tbody id="tbRows">
+              <tr th:each="tb : ${thongBaos}" th:attr="data-nhom=${tb.nhomNhan},data-nhan=${tb.soNguoiNhan},data-doc=${tb.soDaDoc}">
+                <td>
+                  <span style="font-weight:600" th:text="${tb.tieuDe}">Tiêu đề thông báo</span>
+                </td>
+                <td th:text="${tb.nguoiGui}">Người gửi</td>
+                <td th:text="${tb.doiTuong}">Tất cả khách hàng</td>
+                <td style="font-size:0.85rem" th:text="${tb.soDaDoc} + ' / ' + ${tb.soNguoiNhan}">0 / 0</td>
+                <td style="font-size:0.8rem" th:text="${tb.thoiGianGui}">01/01/2026 08:00</td>
+                <td>
+                  <span class="badge" th:classappend="${tb.trangThai == 'DaGui'} ? 'badge-success' : 'badge-warning'" th:text="${tb.tenTrangThai}">Đã gửi</span>
+                </td>
+                <td>
+                  <div class="table-actions" style="justify-content:flex-end">
+                    <button type="button" class="btn btn-outline btn-sm" title="Xem thông báo" th:attr="data-xem=${tb.id}"><i class="ti ti-eye"></i></button>
+                    <form th:action="@{/cskh/thong-bao/{id}/xoa(id=${tb.id})}" method="post" style="display:inline"
+                          onsubmit="return confirm('Xóa thông báo này? Người nhận sẽ không còn thấy nó trong ứng dụng.');">
+                      <button type="submit" class="btn btn-outline btn-sm" title="Xóa thông báo" style="color:var(--danger)"><i class="ti ti-trash"></i></button>
+                    </form>
+                  </div>
+                </td>
               </tr>
               <tr th:if="${thongBaos == null or #lists.isEmpty(thongBaos)}">
-                <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu thông báo</td>
+                <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Chưa có thông báo nào. Bấm "Gửi thông báo mới" để gửi thông báo đầu tiên.</td>
+              </tr>
+              <tr id="tbKhongKhop" hidden>
+                <td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có thông báo nào khớp bộ lọc.</td>
               </tr>
             </tbody>
           </table>
@@ -101,47 +111,193 @@
   </div>
 </div>
 
-<!-- Modal Create Notification -->
+<!-- ══════════════ GỬI THÔNG BÁO ══════════════ -->
 <div class="modal-overlay" id="createNotifModal">
-  <div class="modal" style="max-width:550px">
+  <div class="modal" style="max-width:560px">
     <div class="modal-header">
-      <h2 class="modal-title">Gửi thông báo CSKH</h2>
+      <h2 class="modal-title">Gửi thông báo</h2>
       <button class="modal-close" data-modal-close="createNotifModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
-    <div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Đối tượng nhận tin</label>
-        <select class="form-control">
-          <option>Một khách hàng cụ thể</option>
-          <option>Một cộng tác viên cụ thể</option>
-          <option>Tất cả khách hàng có đơn hôm nay</option>
-          <option>Tất cả CTV đang trực ca</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Tiêu đề thông báo *</label>
-        <input type="text" class="form-control" placeholder="vd: Neatify xác nhận lịch hẹn của bạn">
-      </div>
-      <div class="form-group" style="margin-bottom:1rem">
-        <label class="form-label">Nội dung chi tiết *</label>
-        <textarea class="form-control" rows="4" placeholder="Nhập nội dung chi tiết tin nhắn..."></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Kênh gửi</label>
-        <div style="display:flex;gap:1.5rem;margin-top:0.5rem">
-          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox" checked> App Push</label>
-          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox" checked> Tin nhắn SMS</label>
-          <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.875rem"><input type="checkbox"> Email</label>
+    <form th:action="@{/cskh/thong-bao/gui}" method="post" id="tbForm">
+      <div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label" for="tbDoiTuong">Gửi tới</label>
+          <select class="form-control" id="tbDoiTuong">
+            <option value="KhachHang">Tất cả khách hàng</option>
+            <option value="CongTacVien">Tất cả cộng tác viên</option>
+            <option value="TatCa">Khách hàng và cộng tác viên</option>
+            <option value="CaNhan:KhachHang">Một khách hàng</option>
+            <option value="CaNhan:CongTacVien">Một cộng tác viên</option>
+          </select>
+          <input type="hidden" name="nhomNhan" id="tbNhomNhan" value="KhachHang">
+          <input type="hidden" name="taiKhoanNhanId" id="tbTaiKhoanNhanId">
         </div>
+
+        <!-- Chọn một người nhận -->
+        <div class="form-group" id="tbNguoiNhanGroup" style="margin-bottom:1rem;display:none">
+          <label class="form-label" for="tbTimNguoi">Người nhận *</label>
+          <input type="search" class="form-control" id="tbTimNguoi" placeholder="Nhập tên hoặc số điện thoại" autocomplete="off">
+          <div id="tbKetQuaTim" style="margin-top:0.4rem;display:grid;gap:0.25rem;max-height:160px;overflow:auto"></div>
+          <div id="tbDaChon" style="margin-top:0.4rem;font-size:0.85rem;font-weight:600;color:var(--cskh-primary)"></div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label" for="tbTieuDe">Tiêu đề *</label>
+          <input type="text" class="form-control" id="tbTieuDe" name="tieuDe" maxlength="200" required placeholder="vd: Neatify xác nhận lịch hẹn của bạn">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="tbNoiDung">Nội dung *</label>
+          <textarea class="form-control" id="tbNoiDung" name="noiDung" rows="4" required placeholder="Nội dung người nhận sẽ thấy trong ứng dụng"></textarea>
+        </div>
+        <div id="tbLoi" role="alert" style="display:none;margin-top:0.75rem;color:var(--danger);font-weight:600;font-size:0.875rem"></div>
       </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close="createNotifModal">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="tbGui"><i class="ti ti-send"></i> Gửi thông báo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════ XEM THÔNG BÁO ══════════════ -->
+<div class="modal-overlay" id="viewNotifModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="xemTieuDe">Thông báo</h2>
+      <button class="modal-close" data-modal-close="viewNotifModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
+    </div>
+    <div>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem" id="xemThongTin"></div>
+      <div id="xemNoiDung" style="white-space:pre-wrap;line-height:1.6"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close="createNotifModal">Hủy</button>
-      <button class="btn btn-primary" onclick="ModalManager.close('createNotifModal');Toast.show('Đã gửi thông báo thành công!')">Gửi ngay</button>
+      <button type="button" class="btn btn-secondary" data-modal-close="viewNotifModal">Đóng</button>
     </div>
   </div>
 </div>
 
 <div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
+<script>
+(function () {
+  'use strict';
+
+  // ---- Tổng lượt đã đọc / lượt nhận ----
+  var nhan = 0, doc = 0;
+  document.querySelectorAll('#tbRows tr[data-nhan]').forEach(function (r) {
+    nhan += parseInt(r.dataset.nhan, 10) || 0;
+    doc += parseInt(r.dataset.doc, 10) || 0;
+  });
+  document.getElementById('statDaDoc').textContent = doc + ' / ' + nhan;
+
+  // ---- Tìm kiếm và lọc ----
+  function boDau(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+  }
+  var oTim = document.getElementById('tbSearch'), oNhom = document.getElementById('tbNhom');
+  function loc() {
+    var q = boDau(oTim.value.trim()), nhom = oNhom.value, hien = 0, tong = 0;
+    document.querySelectorAll('#tbRows tr[data-nhom]').forEach(function (r) {
+      tong++;
+      var ok = (!q || boDau(r.textContent).indexOf(q) !== -1) && (!nhom || r.dataset.nhom === nhom);
+      r.hidden = !ok;
+      if (ok) hien++;
+    });
+    document.getElementById('tbKhongKhop').hidden = !(tong > 0 && hien === 0);
+  }
+  oTim.addEventListener('input', loc);
+  oNhom.addEventListener('change', loc);
+
+  // ---- Form gửi: chọn đối tượng / một người nhận ----
+  var doiTuong = document.getElementById('tbDoiTuong');
+  var nhomNhan = document.getElementById('tbNhomNhan');
+  var nguoiId = document.getElementById('tbTaiKhoanNhanId');
+  var nhomNguoi = document.getElementById('tbNguoiNhanGroup');
+  var oTimNguoi = document.getElementById('tbTimNguoi');
+  var ketQua = document.getElementById('tbKetQuaTim');
+  var daChon = document.getElementById('tbDaChon');
+  var loaiNguoi = 'KhachHang';
+
+  function doiDoiTuong() {
+    var v = doiTuong.value.split(':');
+    nhomNhan.value = v[0];
+    nguoiId.value = '';
+    daChon.textContent = '';
+    ketQua.innerHTML = '';
+    oTimNguoi.value = '';
+    if (v[0] === 'CaNhan') {
+      loaiNguoi = v[1];
+      nhomNguoi.style.display = '';
+      timNguoi();
+    } else {
+      nhomNguoi.style.display = 'none';
+    }
+  }
+  doiTuong.addEventListener('change', doiDoiTuong);
+
+  var hen;
+  function timNguoi() {
+    clearTimeout(hen);
+    hen = setTimeout(function () {
+      fetch('/cskh/thong-bao/nguoi-nhan?loai=' + loaiNguoi + '&q=' + encodeURIComponent(oTimNguoi.value.trim()))
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (ds) {
+          ketQua.innerHTML = '';
+          if (!ds.length) {
+            ketQua.textContent = 'Không tìm thấy người nào có tài khoản khớp từ khóa.';
+            return;
+          }
+          ds.forEach(function (n) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn btn-outline btn-sm';
+            b.style.justifyContent = 'flex-start';
+            b.textContent = n.ten + ' · ' + (n.soDienThoai || '');
+            b.addEventListener('click', function () {
+              nguoiId.value = n.taiKhoanId;
+              daChon.textContent = 'Gửi cho: ' + n.ten + (n.soDienThoai ? ' (' + n.soDienThoai + ')' : '');
+              ketQua.innerHTML = '';
+            });
+            ketQua.appendChild(b);
+          });
+        })
+        .catch(function () { ketQua.textContent = 'Không tải được danh sách. Thử lại sau.'; });
+    }, 250);
+  }
+  oTimNguoi.addEventListener('input', timNguoi);
+
+  // ---- Gửi: kiểm tra và khóa nút để không gửi hai lần ----
+  var form = document.getElementById('tbForm'), loi = document.getElementById('tbLoi'), nutGui = document.getElementById('tbGui');
+  form.addEventListener('submit', function (e) {
+    var thongBaoLoi = '';
+    if (nhomNhan.value === 'CaNhan' && !nguoiId.value) thongBaoLoi = 'Chọn người nhận trong danh sách tìm được.';
+    if (thongBaoLoi) {
+      e.preventDefault();
+      loi.textContent = thongBaoLoi;
+      loi.style.display = 'block';
+      return;
+    }
+    nutGui.disabled = true;
+    nutGui.textContent = 'Đang gửi…';
+  });
+
+  // ---- Xem chi tiết ----
+  document.addEventListener('click', function (e) {
+    var nut = e.target.closest ? e.target.closest('[data-xem]') : null;
+    if (!nut) return;
+    fetch('/cskh/thong-bao/' + nut.getAttribute('data-xem'), { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (tb) {
+        document.getElementById('xemTieuDe').textContent = tb.tieuDe;
+        document.getElementById('xemThongTin').textContent = tb.nguoiGui + ' gửi tới ' + tb.doiTuong + ' lúc ' + tb.thoiGianGui +
+          '. Đã đọc ' + tb.soDaDoc + ' / ' + tb.soNguoiNhan + '.';
+        document.getElementById('xemNoiDung').textContent = tb.noiDung;
+        ModalManager.open('viewNotifModal');
+      })
+      .catch(function () {
+        if (window.Toast && Toast.show) Toast.show('Không tải được thông báo. Có thể nó vừa bị xóa.', 'error');
+      });
+  });
+})();
+</script>
 </body>
 </html>

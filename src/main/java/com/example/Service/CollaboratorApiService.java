@@ -117,7 +117,8 @@ public class CollaboratorApiService {
     }
 
     public Map<String, Object> acceptAssignment(Integer phanCongId) {
-        PhanCongCTV pc = phanCongCTVRepository.findById(phanCongId)
+        // Khóa phân công: CTV bấm hai lần hoặc CSKH đổi phân công cùng lúc sẽ được xử lý lần lượt
+        PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
         pc.setTrangThai("DaXacNhan"); 
@@ -144,7 +145,7 @@ public class CollaboratorApiService {
         List<LichLamViec> existing = lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId());
         if (existing.isEmpty()) {
             LichLamViec llv = LichLamViec.builder()
-                    .maLichLamViec("LLV-" + (System.currentTimeMillis() % 1000000))
+                    .maLichLamViec(com.example.Service.MaSinh.tao("LLV-"))
                     .phanCong(pc)
                     .congTacVien(pc.getCongTacVien())
                     .ngayLam(don.getNgayThucHien())
@@ -215,7 +216,8 @@ public class CollaboratorApiService {
     }
 
     public Map<String, Object> rejectAssignment(Integer phanCongId, AssignmentActionRequest req) {
-        PhanCongCTV pc = phanCongCTVRepository.findById(phanCongId)
+        // Khóa phân công: CTV bấm hai lần hoặc CSKH đổi phân công cùng lúc sẽ được xử lý lần lượt
+        PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
         pc.setTrangThai("TuChoi");
@@ -271,7 +273,8 @@ public class CollaboratorApiService {
     }
 
     public Map<String, Object> completeAssignment(Integer phanCongId, AssignmentActionRequest req) {
-        PhanCongCTV pc = phanCongCTVRepository.findById(phanCongId)
+        // Khóa phân công: CTV bấm hai lần hoặc CSKH đổi phân công cùng lúc sẽ được xử lý lần lượt
+        PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
         pc.setTrangThai("HoanThanh");

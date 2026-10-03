@@ -39,6 +39,8 @@ public class CSKHController {
     private final KhieuNaiRepository khieuNaiRepository;
     private final DanhGiaRepository danhGiaRepository;
     private final ThongBaoRepository thongBaoRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.ThongBaoService thongBaoService;
     private final CongTacVienRepository congTacVienRepository;
     private final LichLamViecRepository lichLamViecRepository;
     private final PhanCongCTVRepository phanCongCTVRepository;
@@ -209,10 +211,10 @@ public class CSKHController {
             if (kv == null && ((tinhThanh != null && !tinhThanh.isBlank()) || !wardOrDistrict.isBlank())) {
                 String code = (maKhuVuc != null && !maKhuVuc.isBlank() && maKhuVuc.trim().length() <= 20)
                         ? maKhuVuc.trim()
-                        : ("KV-" + (System.currentTimeMillis() % 1000000));
+                        : (com.example.Service.MaSinh.tao("KV-"));
                 int retry = 0;
                 while (khuVucRepository.findByMaKhuVuc(code).isPresent() && retry < 20) {
-                    code = "KV-" + ((System.currentTimeMillis() + retry + 1) % 1000000);
+                    code = com.example.Service.MaSinh.tao("KV-");
                     retry++;
                 }
                 String areaName = !wardOrDistrict.isBlank() ? wardOrDistrict : (tinhThanh != null ? tinhThanh.trim() : "Khu vực");
@@ -227,10 +229,10 @@ public class CSKHController {
             }
 
             // 2. Tạo bản ghi KhachHang
-            String maKhachHang = "KH-" + (System.currentTimeMillis() % 1000000);
+            String maKhachHang = com.example.Service.MaSinh.tao("KH-");
             int retryKh = 0;
             while (khachHangRepository.findByMaKhachHang(maKhachHang).isPresent() && retryKh < 20) {
-                maKhachHang = "KH-" + ((System.currentTimeMillis() + retryKh + 1) % 1000000);
+                maKhachHang = com.example.Service.MaSinh.tao("KH-");
                 retryKh++;
             }
 
@@ -272,10 +274,10 @@ public class CSKHController {
                 fullAddress = "Chưa cập nhật";
             }
 
-            String maDiaChi = "DC-" + (System.currentTimeMillis() % 1000000);
+            String maDiaChi = com.example.Service.MaSinh.tao("DC-");
             int retryDc = 0;
             while (diaChiKhachHangRepository.findByMaDiaChi(maDiaChi).isPresent() && retryDc < 20) {
-                maDiaChi = "DC-" + ((System.currentTimeMillis() + retryDc + 1) % 1000000);
+                maDiaChi = com.example.Service.MaSinh.tao("DC-");
                 retryDc++;
             }
 
@@ -304,6 +306,8 @@ public class CSKHController {
             return "redirect:/cskh/khach-hang";
 
         } catch (Exception ex) {
+            // Hoàn tác phần đã lưu dở (khu vực, khách hàng...) khi có lỗi giữa chừng
+            org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             if (isAjax) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "success", false,
@@ -508,14 +512,29 @@ public class CSKHController {
             @RequestParam String gioKetThuc,
             @RequestParam(required = false) String ghiChu) {
         try {
-            CongTacVien ctv = congTacVienRepository.findById(ctvId)
+            // Khóa CTV và đơn trong lúc phân công: hai nhân viên CSKH phân công cùng lúc sẽ được xử lý lần lượt,
+            // người sau thấy kết quả của người trước nên không tạo phân công trùng hay xếp trùng giờ.
+            CongTacVien ctv = congTacVienRepository.findByIdForUpdate(ctvId)
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy CTV"));
-            DonDatDichVu dd = donDatDichVuRepository.findById(orderId)
+            DonDatDichVu dd = donDatDichVuRepository.findByIdForUpdate(orderId)
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Đơn đặt dịch vụ"));
 
             LocalDate date = LocalDate.parse(ngayLam);
             java.time.LocalTime start = java.time.LocalTime.parse(gioBatDau);
             java.time.LocalTime end = java.time.LocalTime.parse(gioKetThuc);
+
+            if ("DaHuy".equalsIgnoreCase(dd.getTrangThai()) || "HoanThanh".equalsIgnoreCase(dd.getTrangThai())) {
+                throw new IllegalArgumentException("Đơn này đã hủy hoặc đã hoàn thành, không thể phân công.");
+            }
+            if (phanCongCTVRepository.findByDonDat_IdAndCongTacVien_Id(orderId, ctvId).isPresent()) {
+                throw new IllegalArgumentException("Cộng tác viên này đã được phân công cho đơn này.");
+            }
+            if (!end.isAfter(start)) {
+                throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu.");
+            }
+            if (lichLamViecRepository.demLichTrungGio(ctvId, date, start, end) > 0) {
+                throw new IllegalArgumentException("Cộng tác viên đã có lịch làm việc trùng giờ trong ngày này.");
+            }
 
             LocalDate today = LocalDate.now();
             LocalDate tomorrow = today.plusDays(1);
@@ -523,7 +542,7 @@ public class CSKHController {
 
             // 1. Lưu Phân công CTV ở trạng thái ChoPhanCong để CTV xác nhận qua Mobile
             PhanCongCTV pc = PhanCongCTV.builder()
-                    .maPhanCong("PC-" + (System.currentTimeMillis() % 1000000))
+                    .maPhanCong(com.example.Service.MaSinh.tao("PC-"))
                     .donDat(dd)
                     .congTacVien(ctv)
                     .trangThai("ChoPhanCong")
@@ -531,7 +550,20 @@ public class CSKHController {
                     .build();
             phanCongCTVRepository.save(pc);
 
-            // 2. Tạo thông báo Đơn mới cho CTV với ngày giờ chi tiết
+            // 2. Tạo Lịch làm việc cho CTV
+            LichLamViec llv = LichLamViec.builder()
+                    .maLichLamViec(com.example.Service.MaSinh.tao("LLV-"))
+                    .phanCong(pc)
+                    .congTacVien(ctv)
+                    .ngayLam(date)
+                    .gioBatDau(start)
+                    .gioKetThuc(end)
+                    .trangThai("SapToi")
+                    .ketQuaThucHien(ghiChu)
+                    .build();
+            lichLamViecRepository.save(llv);
+
+            // 3. Tạo thông báo Đơn mới cho CTV với ngày giờ chi tiết
             if (ctv.getTaiKhoan() != null) {
                 String tenDv = (dd.getChiTietList() != null && !dd.getChiTietList().isEmpty() && dd.getChiTietList().get(0).getDichVu() != null)
                         ? dd.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ gia đình";
@@ -568,7 +600,10 @@ public class CSKHController {
 
             return ResponseEntity.ok(Map.of("success", true, "message", "Phân công và tạo lịch làm việc thành công!"));
         } catch (Exception ex) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", ex.getMessage()));
+            // Hoàn tác mọi thay đổi dở dang của giao dịch (nếu không, phần đã lưu trước khi lỗi vẫn được ghi)
+            org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ResponseEntity.badRequest().body(Map.of("success", false,
+                    "message", ex.getMessage() != null ? ex.getMessage() : "Không lưu được phân công."));
         }
     }
 
@@ -619,7 +654,8 @@ public class CSKHController {
     // ── UC-CSKH06 – Quản lý thông báo CSKH ─────────────────────────
     @GetMapping("/thong-bao")
     public String thongBao(Model model) {
-        model.addAttribute("thongBaos",      thongBaoRepository.findAll());
+        // Danh sách kèm số người nhận / đã đọc và ảnh; các thao tác gửi, xem, xóa nằm ở CskhThongBaoController
+        model.addAttribute("thongBaos",      thongBaoService.danhSach());
         model.addAttribute("donHangStats",   thongKeService.getDonHangStats());
         model.addAttribute("khieuNaiStats",  thongKeService.getKhieuNaiStats());
         return "cskh/thong-bao";

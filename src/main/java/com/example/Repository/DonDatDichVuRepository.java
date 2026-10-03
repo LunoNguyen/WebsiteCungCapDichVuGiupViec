@@ -44,4 +44,13 @@ public interface DonDatDichVuRepository extends JpaRepository<DonDatDichVu, Inte
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.data.jpa.repository.Query("UPDATE DonDatDichVu d SET d.trangThai = 'DaXacNhan' WHERE d.id = :id AND d.trangThai = 'ChoDuyet'")
     int atomicAcceptOrder(@org.springframework.data.repository.query.Param("id") Integer id);
-}
+
+    /**
+     * Lấy bản ghi và KHÓA dòng đó trong CSDL (SELECT ... FOR UPDATE) cho tới khi giao dịch kết thúc.
+     * Hai người cùng sửa một bản ghi sẽ lần lượt thực hiện: người sau thấy dữ liệu người trước đã lưu.
+     * Chỉ gọi bên trong phương thức có @Transactional.
+     */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM DonDatDichVu e WHERE e.id = :id")
+    Optional<DonDatDichVu> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Integer id);
+}

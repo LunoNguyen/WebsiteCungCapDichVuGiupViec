@@ -269,7 +269,7 @@ public String dashboard(
         
         ThongBao tb = new ThongBao();
         // Tạo mã thông báo ngẫu nhiên dựa trên thời gian
-        tb.setMaThongBao("TB-" + (System.currentTimeMillis() % 100000)); 
+        tb.setMaThongBao(com.example.Service.MaSinh.tao("TB-")); 
         tb.setTieuDe(tieuDe);
         tb.setNoiDung(noiDung);
         tb.setNhomNhan(nhomNhan);
@@ -353,7 +353,7 @@ public String dashboard(
         }
         
         com.example.Model.ChuongTrinhKhuyenMai ct = new com.example.Model.ChuongTrinhKhuyenMai();
-        ct.setMaChuongTrinh("CT-" + (System.currentTimeMillis() % 100000));
+        ct.setMaChuongTrinh(com.example.Service.MaSinh.tao("CT-"));
         ct.setTenChuongTrinh(tenChuongTrinhClean);
         ct.setLoaiGiam(loaiGiamGia);
         ct.setGiaTriGiam(mucGiam);
@@ -394,7 +394,7 @@ public String dashboard(
         
         chuongTrinhKhuyenMaiRepository.save(ct);
         
-        mk.setMaKhuyenMai("MKM-" + (System.currentTimeMillis() % 100000));
+        mk.setMaKhuyenMai(com.example.Service.MaSinh.tao("MKM-"));
         mk.setCodeKhuyenMai(maCoupon.trim().toUpperCase());
         mk.setSoLuotToiDa(gioiHanLuot); 
         mk.setSoLuotDaDung(0);

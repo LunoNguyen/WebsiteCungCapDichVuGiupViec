@@ -141,7 +141,7 @@ public class CustomerApiService {
             }
         }
 
-        long suffix = System.currentTimeMillis() % 1000000;
+        String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
         String maTaiKhoan = "TK-KH-" + suffix;
         String maKhachHang = "KH-" + suffix;
 
@@ -320,8 +320,8 @@ public class CustomerApiService {
                 .orElse(null);
 
         if (taiKhoan == null) {
-            long suffix = System.currentTimeMillis() % 1000000;
-            String soDienThoai = (req.getSoDienThoai() != null && !req.getSoDienThoai().isBlank()) ? req.getSoDienThoai().trim() : ("09" + suffix);
+            String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
+            String soDienThoai = (req.getSoDienThoai() != null && !req.getSoDienThoai().isBlank()) ? req.getSoDienThoai().trim() : String.format("09%08d", java.util.concurrent.ThreadLocalRandom.current().nextInt(100000000));
             taiKhoan = TaiKhoan.builder()
                     .maTaiKhoan("TK-SOC-" + suffix)
                     .tenDangNhap(tenDangNhap)
@@ -380,7 +380,7 @@ public class CustomerApiService {
             throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
         }
 
-        long suffix = System.currentTimeMillis() % 1000000;
+        String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
         String maTaiKhoan = "TK-CTV-" + suffix;
         String maCongTacVien = "CTV-" + suffix;
 
@@ -787,7 +787,7 @@ public class CustomerApiService {
         if (diaChi == null && req.getDiaChiChiTiet() != null && !req.getDiaChiChiTiet().isBlank()) {
             KhuVuc kv = req.getKhuVucId() != null ? khuVucRepository.findById(req.getKhuVucId()).orElse(null) : null;
             diaChi = DiaChiKhachHang.builder()
-                    .maDiaChi("DC-" + (System.currentTimeMillis() % 1000000))
+                    .maDiaChi(com.example.Service.MaSinh.tao("DC-"))
                     .khachHang(khachHang)
                     .khuVuc(kv)
                     .diaChiChiTiet(req.getDiaChiChiTiet().trim())
@@ -828,7 +828,7 @@ public class CustomerApiService {
             gioKetThuc = req.getGioBatDau().plusHours(2);
         }
 
-        long suffix = System.currentTimeMillis() % 1000000;
+        String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
         String maDonDat = "DD-" + suffix;
 
         DonDatDichVu donDat = DonDatDichVu.builder()
@@ -876,11 +876,13 @@ public class CustomerApiService {
 
         // Ghi nhận sử dụng khuyến mại
         if (mkm != null && priceResult.getSoTienGiam().compareTo(BigDecimal.ZERO) > 0) {
-            mkm.setSoLuotDaDung(mkm.getSoLuotDaDung() + 1);
-            if (mkm.getSoLuotDaDung() >= mkm.getSoLuotToiDa()) {
-                mkm.setTrangThai("HetLuot");
+            // Cập nhật nguyên tử trong CSDL: nếu người khác vừa dùng lượt cuối thì đơn này bị từ chối
+            // và toàn bộ giao dịch tạo đơn được hoàn tác (rollback).
+            Integer khuyenMaiId = mkm.getId();
+            if (maKhuyenMaiRepository.ghiNhanLuotDung(khuyenMaiId) == 0) {
+                throw new IllegalArgumentException("Mã khuyến mãi vừa hết lượt sử dụng. Vui lòng bỏ mã hoặc chọn mã khác.");
             }
-            maKhuyenMaiRepository.save(mkm);
+            mkm = maKhuyenMaiRepository.findById(khuyenMaiId).orElse(mkm);
 
             LichSuSuDungKhuyenMai lsKm = LichSuSuDungKhuyenMai.builder()
                     .khuyenMai(mkm)
@@ -1035,7 +1037,7 @@ public class CustomerApiService {
     }
 
     public Map<String, Object> cancelBooking(Integer donDatId, Integer khachHangId, String lyDo) {
-        DonDatDichVu d = donDatDichVuRepository.findById(donDatId)
+        DonDatDichVu d = donDatDichVuRepository.findByIdForUpdate(donDatId) // khóa đơn: tránh vừa hủy vừa được phân công
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt ID: " + donDatId));
 
         if (!"ChoDuyet".equalsIgnoreCase(d.getTrangThai())) {
@@ -1107,14 +1109,19 @@ public class CustomerApiService {
 
     public Map<String, Object> createReceipt(PaymentReceiptRequest req) {
         HoaDon hd = null;
+        // Khóa hóa đơn trong lúc ghi nhận thanh toán: hai yêu cầu thanh toán cùng lúc sẽ lần lượt xử lý,
+        // yêu cầu sau thấy hóa đơn đã thanh toán và bị từ chối (không tạo biên lai thứ hai).
         if (req.getHoaDonId() != null) {
-            hd = hoaDonRepository.findById(req.getHoaDonId()).orElse(null);
+            hd = hoaDonRepository.findByIdForUpdate(req.getHoaDonId()).orElse(null);
         }
         if (hd == null && req.getDonDatId() != null) {
-            hd = hoaDonRepository.findByDonDat_Id(req.getDonDatId()).orElse(null);
+            hd = hoaDonRepository.findByDonDatIdForUpdate(req.getDonDatId()).orElse(null);
         }
         if (hd == null) {
             throw new IllegalArgumentException("Không tìm thấy hóa đơn cần thanh toán.");
+        }
+        if ("DaThanhToan".equalsIgnoreCase(hd.getTrangThaiThanhToan())) {
+            throw new IllegalArgumentException("Hóa đơn này đã được thanh toán.");
         }
 
         hd.setTrangThaiThanhToan("DaThanhToan");
@@ -1130,7 +1137,7 @@ public class CustomerApiService {
         String nguoiThu = req.getNguoiThuTien() != null ? req.getNguoiThuTien() : "Hệ thống thanh toán tự động";
 
         BienLai bienLai = BienLai.builder()
-                .maBienLai("BL-" + (System.currentTimeMillis() % 1000000))
+                .maBienLai(com.example.Service.MaSinh.tao("BL-"))
                 .hoaDon(hd)
                 .ngayGioThuTien(LocalDateTime.now())
                 .soTienNhan(soTien)
@@ -1172,7 +1179,7 @@ public class CustomerApiService {
         CongTacVien ctv = pc.getCongTacVien();
 
         DanhGia danhGia = DanhGia.builder()
-                .maDanhGia("DG-" + (System.currentTimeMillis() % 1000000))
+                .maDanhGia(com.example.Service.MaSinh.tao("DG-"))
                 .donDat(donDat)
                 .khachHang(donDat.getKhachHang())
                 .congTacVien(ctv)
@@ -1218,7 +1225,7 @@ public class CustomerApiService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt ID: " + req.getDonDatId()));
 
         KhieuNai khieuNai = KhieuNai.builder()
-                .maKhieuNai("KN-" + (System.currentTimeMillis() % 1000000))
+                .maKhieuNai(com.example.Service.MaSinh.tao("KN-"))
                 .donDat(donDat)
                 .khachHang(donDat.getKhachHang())
                 .loaiVanDe(req.getLoaiVanDe())
