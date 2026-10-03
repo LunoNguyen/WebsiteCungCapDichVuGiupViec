@@ -705,7 +705,7 @@ public class CollaboratorApiService {
      * Lấy danh sách đơn đang tìm CTV (pool chung).
      */
     public List<Map<String, Object>> getAvailableOrders(Integer congTacVienId) {
-        List<DonDatDichVu> donList = donDatDichVuRepository.findByTrangThaiOrderByNgayTaoDesc("DangTimCTV");
+        List<DonDatDichVu> donList = donDatDichVuRepository.findByTrangThaiOrderByNgayTaoDesc("ChoDuyet");
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (DonDatDichVu don : donList) {
@@ -883,17 +883,20 @@ public class CollaboratorApiService {
         DonDatDichVu sampleOrder = donDatDichVuRepository.findAll().stream().findFirst().orElse(null);
         if (sampleOrder == null) throw new IllegalStateException("Chưa có đơn mẫu nào trong DB");
 
+        java.math.BigDecimal tien = thanhTien != null ? java.math.BigDecimal.valueOf(thanhTien) : java.math.BigDecimal.valueOf(320000);
         DonDatDichVu don = DonDatDichVu.builder()
                 .maDonDat(finalMaDon)
                 .khachHang(sampleOrder.getKhachHang())
                 .diaChi(sampleOrder.getDiaChi())
-                .trangThai("DangTimCTV")
+                .trangThai("ChoDuyet")
                 .ngayTao(LocalDateTime.now())
                 .ngayThucHien(LocalDate.now().plusDays(1))
                 .gioBatDau(LocalTime.of(9, 0))
                 .gioKetThuc(LocalTime.of(11, 0))
-                .loaiHinhDat("TheoGio")
-                .thanhTien(thanhTien != null ? java.math.BigDecimal.valueOf(thanhTien) : java.math.BigDecimal.valueOf(320000))
+                .loaiHinhDat(sampleOrder.getLoaiHinhDat() != null ? sampleOrder.getLoaiHinhDat() : "DinhKy")
+                .chiPhiGoc(tien)
+                .soTienGiam(java.math.BigDecimal.ZERO)
+                .thanhTien(tien)
                 .yeuCauDacBiet("Căn hộ 2 phòng ngủ - Test Pool đơn mới")
                 .build();
         don = donDatDichVuRepository.save(don);
