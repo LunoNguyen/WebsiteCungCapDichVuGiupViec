@@ -45,6 +45,7 @@ public class HCNSController {
     private final KhachHangRepository khachHangRepository;
     private final NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository;
     private final com.example.Service.MinioService minioService;
+    private final com.example.Service.CapTaiKhoanCtvService capTaiKhoanCtvService;
 
     public HCNSController(
             ThongKeService thongKeService,
@@ -58,7 +59,8 @@ public class HCNSController {
             ChucVuRepository chucVuRepository,
             KhachHangRepository khachHangRepository,
             NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository,
-            com.example.Service.MinioService minioService) {
+            com.example.Service.MinioService minioService,
+            com.example.Service.CapTaiKhoanCtvService capTaiKhoanCtvService) {
         this.thongKeService = thongKeService;
         this.nhanVienRepository = nhanVienRepository;
         this.congTacVienRepository = congTacVienRepository;
@@ -71,6 +73,7 @@ public class HCNSController {
         this.khachHangRepository = khachHangRepository;
         this.nhatKyTaiKhoanRepository = nhatKyTaiKhoanRepository;
         this.minioService = minioService;
+        this.capTaiKhoanCtvService = capTaiKhoanCtvService;
     }
 
     @GetMapping("/dashboard")
@@ -455,14 +458,23 @@ public class HCNSController {
         return "redirect:/hcns/cong-tac-vien";
     }
 
+    /**
+     * Duyệt hồ sơ ứng viên: HCNS đặt mật khẩu, hệ thống kích hoạt tài khoản
+     * và gửi tin nhắn tài khoản + mật khẩu tới số điện thoại ứng viên.
+     */
     @PostMapping("/cong-tac-vien/duyet")
-    public String duyetCongTacVien(@RequestParam Integer id, RedirectAttributes redirectAttributes) {
+    public String duyetCongTacVien(@RequestParam Integer id,
+                                   @RequestParam String matKhau,
+                                   HttpServletRequest request,
+                                   RedirectAttributes redirectAttributes) {
         try {
-            congTacVienRepository.findById(id).ifPresent(ctv -> {
-                ctv.setTrangThai("HoatDong");
-                congTacVienRepository.save(ctv);
-            });
-            redirectAttributes.addFlashAttribute("successMessage", "Đã phê duyệt hồ sơ cộng tác viên thành công!");
+            var kq = capTaiKhoanCtvService.duyetVaCapTaiKhoan(id, matKhau,
+                    request.getRemoteAddr(), request.getHeader("User-Agent"));
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đã duyệt hồ sơ " + kq.hoTen() + " và gửi tin nhắn tài khoản tới " + kq.soDienThoai() + ".");
+            redirectAttributes.addFlashAttribute("tinNhanDaGui", kq.noiDungTin());
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
@@ -487,10 +499,46 @@ public class HCNSController {
     public String doiTrangThaiCongTacVien(
             @RequestParam Integer id,
             @RequestParam String trangThai,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         try {
             congTacVienRepository.findById(id).ifPresent(ctv -> {
                 ctv.setTrangThai(trangThai);
+                TaiKhoan tk = ctv.getTaiKhoan();
+                if (tk == null && "HoatDong".equalsIgnoreCase(trangThai)) {
+                    // Nếu CTV chưa có tài khoản, tự tạo và kích hoạt tài khoản
+                    String suffix = com.example.Service.MaSinh.duoi();
+                    tk = new TaiKhoan();
+                    tk.setMaTaiKhoan("TK-CTV-" + suffix);
+                    tk.setTenDangNhap(ctv.getSoDienThoai());
+                    tk.setEmail(ctv.getSoDienThoai() + "@ctv.local");
+                    tk.setSoDienThoai(ctv.getSoDienThoai());
+                    tk.setLoaiTaiKhoan("CongTacVien");
+                    tk.setMatKhau(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("123456"));
+                    tk.setTrangThai("HoatDong");
+                    tk = taiKhoanRepository.save(tk);
+                    ctv.setTaiKhoan(tk);
+                } else if (tk != null) {
+                    if ("HoatDong".equalsIgnoreCase(trangThai)) {
+                        tk.setTrangThai("HoatDong");
+                    } else if ("DinhChi".equalsIgnoreCase(trangThai) || "BiKhoa".equalsIgnoreCase(trangThai) || "Khoa".equalsIgnoreCase(trangThai)) {
+                        tk.setTrangThai("BiKhoa");
+                    } else if ("ChoDuyet".equalsIgnoreCase(trangThai)) {
+                        tk.setTrangThai("ChoDuyet");
+                    }
+                    tk.setNgayCapNhat(LocalDateTime.now());
+                    taiKhoanRepository.save(tk);
+
+                    try {
+                        NhatKyTaiKhoan log = new NhatKyTaiKhoan();
+                        log.setTaiKhoan(tk);
+                        log.setHanhDong("HCNS đổi trạng thái CTV thành: " + trangThai);
+                        log.setDiaChiIP(request.getRemoteAddr());
+                        log.setThietBi(request.getHeader("User-Agent"));
+                        log.setKetQua("ThanhCong");
+                        nhatKyTaiKhoanRepository.save(log);
+                    } catch (Exception ignored) {}
+                }
                 congTacVienRepository.save(ctv);
             });
             redirectAttributes.addFlashAttribute("successMessage", "Đã thay đổi trạng thái cộng tác viên!");
@@ -961,6 +1009,7 @@ public class HCNSController {
         long countCTV = taiKhoans.stream().filter(t -> "CongTacVien".equalsIgnoreCase(t.getLoaiTaiKhoan())).count();
         long countKH = taiKhoans.stream().filter(t -> "KhachHang".equalsIgnoreCase(t.getLoaiTaiKhoan())).count();
         long countBiKhoa = taiKhoans.stream().filter(t -> "BiKhoa".equalsIgnoreCase(t.getTrangThai())).count();
+        long countChoDuyet = taiKhoans.stream().filter(t -> "ChoDuyet".equalsIgnoreCase(t.getTrangThai())).count();
 
         model.addAttribute("taiKhoans", taiKhoans);
         model.addAttribute("nhanViens", nhanViens);
@@ -974,6 +1023,7 @@ public class HCNSController {
         model.addAttribute("countCTV", countCTV);
         model.addAttribute("countKH", countKH);
         model.addAttribute("countBiKhoa", countBiKhoa);
+        model.addAttribute("countChoDuyet", countChoDuyet);
 
         return "hcns/tai-khoan";
     }
@@ -1126,6 +1176,7 @@ public class HCNSController {
             @RequestParam String email,
             @RequestParam String soDienThoai,
             @RequestParam String loaiTaiKhoan,
+            @RequestParam(required = false) String trangThai,
             @RequestParam(required = false) String matKhauMoi,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
@@ -1135,6 +1186,7 @@ public class HCNSController {
             email = email != null ? email.trim() : "";
             soDienThoai = soDienThoai != null ? soDienThoai.trim() : "";
             matKhauMoi = matKhauMoi != null ? matKhauMoi.trim() : "";
+            trangThai = trangThai != null ? trangThai.trim() : "";
 
             if (tenDangNhap.isEmpty() || email.isEmpty() || soDienThoai.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập, email và số điện thoại không được để trống!");
@@ -1181,6 +1233,9 @@ public class HCNSController {
             tk.setEmail(email);
             tk.setSoDienThoai(soDienThoai);
             tk.setLoaiTaiKhoan(loaiTaiKhoan);
+            if (!trangThai.isEmpty()) {
+                tk.setTrangThai(trangThai);
+            }
             tk.setNgayCapNhat(LocalDateTime.now());
 
             if (!matKhauMoi.isEmpty()) {
@@ -1197,6 +1252,20 @@ public class HCNSController {
             }
 
             taiKhoanRepository.save(tk);
+
+            // Đồng bộ trạng thái sang hồ sơ CTV nếu có
+            if ("CongTacVien".equalsIgnoreCase(tk.getLoaiTaiKhoan())) {
+                congTacVienRepository.findByTaiKhoan(tk).ifPresent(ctv -> {
+                    if ("HoatDong".equalsIgnoreCase(tk.getTrangThai())) {
+                        ctv.setTrangThai("HoatDong");
+                    } else if ("BiKhoa".equalsIgnoreCase(tk.getTrangThai()) || "Khoa".equalsIgnoreCase(tk.getTrangThai())) {
+                        ctv.setTrangThai("DinhChi");
+                    } else if ("ChoDuyet".equalsIgnoreCase(tk.getTrangThai())) {
+                        ctv.setTrangThai("ChoDuyet");
+                    }
+                    congTacVienRepository.save(ctv);
+                });
+            }
 
             // Ghi log
             try {
@@ -1231,6 +1300,20 @@ public class HCNSController {
                 tk.setNgayCapNhat(LocalDateTime.now());
                 taiKhoanRepository.save(tk);
 
+                // Đồng bộ sang bảng CongTacVien nếu là tài khoản CTV
+                if ("CongTacVien".equalsIgnoreCase(tk.getLoaiTaiKhoan())) {
+                    congTacVienRepository.findByTaiKhoan(tk).ifPresent(ctv -> {
+                        if ("HoatDong".equalsIgnoreCase(trangThai)) {
+                            ctv.setTrangThai("HoatDong");
+                        } else if ("BiKhoa".equalsIgnoreCase(trangThai) || "Khoa".equalsIgnoreCase(trangThai)) {
+                            ctv.setTrangThai("DinhChi");
+                        } else if ("ChoDuyet".equalsIgnoreCase(trangThai)) {
+                            ctv.setTrangThai("ChoDuyet");
+                        }
+                        congTacVienRepository.save(ctv);
+                    });
+                }
+
                 try {
                     NhatKyTaiKhoan log = new NhatKyTaiKhoan();
                     log.setTaiKhoan(tk);
@@ -1241,7 +1324,7 @@ public class HCNSController {
                     nhatKyTaiKhoanRepository.save(log);
                 } catch (Exception ignored) {}
 
-                String actionText = "HoatDong".equals(trangThai) ? "Mở khóa" : "Khóa";
+                String actionText = "HoatDong".equals(trangThai) ? "Mở khóa / Kích hoạt" : ("ChoDuyet".equals(trangThai) ? "Chuyển chờ duyệt" : "Khóa");
                 redirectAttributes.addFlashAttribute("successMessage", actionText + " tài khoản '" + tk.getTenDangNhap() + "' thành công!");
             } else {
                 redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy tài khoản!");

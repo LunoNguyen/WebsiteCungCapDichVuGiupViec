@@ -173,7 +173,7 @@
 
   function validate() {
     var bad = false;
-    ['hoTen', 'soDienThoai', 'email', 'diaChiChiTiet', 'matKhau'].forEach(function (id) {
+    ['hoTen', 'soDienThoai', 'email', 'diaChiChiTiet'].forEach(function (id) {
       var input = document.getElementById(id);
       if (mark(input.closest('.field'), !input.checkValidity())) bad = true;
     });
@@ -182,6 +182,27 @@
     });
     var ngaySinh = document.getElementById('ngaySinh');
     if (mark(ngaySinh.closest('.field'), !du18Tuoi(ngaySinh.value))) bad = true;
+
+    // Validate mật khẩu
+    var matKhauInput = document.getElementById('matKhau');
+    var xacNhanInput = document.getElementById('xacNhanMatKhau');
+    var xacNhanErr = document.getElementById('xacNhanMatKhauError');
+    if (matKhauInput) {
+      var mk = matKhauInput.value;
+      if (!mk || mk.length < 6) {
+        mark(matKhauInput.closest('.field'), true);
+        bad = true;
+      } else {
+        mark(matKhauInput.closest('.field'), false);
+      }
+      if (xacNhanInput) {
+        var xn = xacNhanInput.value;
+        var khongKhop = !xn || xn !== mk;
+        mark(xacNhanInput.closest('.field'), khongKhop);
+        if (xacNhanErr) xacNhanErr.style.display = khongKhop ? '' : 'none';
+        if (khongKhop) bad = true;
+      }
+    }
 
     var coDichVu = form.querySelectorAll('input[name="loaiDichVu"]:checked').length > 0;
     if (mark(document.getElementById('dichVuField'), !coDichVu)) bad = true;
@@ -247,7 +268,7 @@
           hoTen: document.getElementById('hoTen').value.trim(),
           soDienThoai: document.getElementById('soDienThoai').value.trim(),
           email: document.getElementById('email').value.trim() || null,
-          matKhau: document.getElementById('matKhau').value,
+          matKhau: document.getElementById('matKhau') ? document.getElementById('matKhau').value : null,
           ngaySinh: document.getElementById('ngaySinh').value,
           gioiTinh: document.getElementById('gioiTinh').value,
           // Địa chỉ đầy đủ để hiển thị; tỉnh/thành + phường/xã để máy chủ xếp khu vực
@@ -282,7 +303,7 @@
         show(okBox, 'Đã gửi hồ sơ' + (d.maCongTacVien ? ' ' + d.maCongTacVien : '') +
           '. Thời gian xét duyệt dự kiến ' + (d.thoiGianXetDuyetDuKien || '1-3 ngày làm việc') +
           (d.khuVuc ? '. Khu vực nhận việc: ' + d.khuVuc : '') +
-          '. Bạn có thể tra cứu kết quả bằng số điện thoại.');
+          '. Khi hồ sơ được duyệt, tài khoản và mật khẩu sẽ được gửi qua tin nhắn tới số điện thoại bạn đã đăng ký.');
       })
       .catch(function (err) { show(errorBox, err.message); })
       .then(function () {
@@ -296,7 +317,7 @@
   var ketQua = document.getElementById('traCuuKetQua');
   var TRANG_THAI = {
     ChoDuyet: 'Hồ sơ đang chờ xét duyệt.',
-    HoatDong: 'Hồ sơ đã được duyệt. Bạn có thể đăng nhập ứng dụng cộng tác viên.',
+    HoatDong: 'Hồ sơ đã được duyệt. Tài khoản và mật khẩu đã được gửi qua tin nhắn tới số điện thoại này.',
     TuChoi: 'Hồ sơ chưa đạt yêu cầu.',
     DinhChi: 'Tài khoản cộng tác viên đang bị đình chỉ.'
   };

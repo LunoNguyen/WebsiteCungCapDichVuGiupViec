@@ -17,7 +17,8 @@ public class CollaboratorRegisterRequest {
 
     private String email;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
+    // Không dùng nữa: ứng viên không tự đặt mật khẩu, HCNS đặt khi duyệt hồ sơ
+    // và gửi qua tin nhắn (CapTaiKhoanCtvService). Giữ trường để client cũ gửi kèm không bị lỗi.
     private String matKhau;
 
     private LocalDate ngaySinh;

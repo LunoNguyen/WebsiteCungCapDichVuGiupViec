@@ -10,14 +10,6 @@
 
 
     <main class="page-content">
-      <div class="page-header">
-        
-        <div class="page-actions">
-          <a class="btn btn-primary btn-sm" href="/hcns/cong-tac-vien">
-            <i class="ti ti-user-star"></i> Danh sách cộng tác viên (<span th:text="${tongCongTacVien}">0</span>)
-          </a>
-        </div>
-      </div>
 
       <!-- Stats -->
       <div class="stats-grid">
@@ -55,14 +47,14 @@
               <div class="card-title">Cộng tác viên hệ thống</div>
               <div class="card-subtitle" th:text="${tongCongTacVien + ' cộng tác viên đang quản lý'}">Danh sách cộng tác viên</div>
             </div>
-            <a href="/hcns/cong-tac-vien" class="btn btn-primary btn-sm">Xem tất cả cộng tác viên</a>
+            <a href="/hcns/cong-tac-vien" class="btn btn-outline btn-sm">Xem tất cả</a>
           </div>
           <div style="display:flex;flex-direction:column;gap:0.75rem">
             <div th:each="ctv : ${congTacViens}" style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
               <div class="avatar avatar-sm" th:text="${ctv.hoTen != null ? #strings.substring(ctv.hoTen, 0, 1) : 'C'}">C</div>
               <div style="flex:1">
                 <div style="font-weight:600;font-size:0.875rem" th:text="${ctv.hoTen}">Họ và tên cộng tác viên</div>
-                <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${(ctv.noiCuTru != null ? ctv.noiCuTru : 'Thành phố Hồ Chí Minh') + ' · Đánh giá: ' + (ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0') + ' sao · Cấp bậc: ' + (ctv.capDo != null ? ctv.capDo : 'Thường')}">Khu vực</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)"><th:block th:text="${(ctv.noiCuTru != null ? ctv.noiCuTru : 'Thành phố Hồ Chí Minh') + ' · Đánh giá: ' + (ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0') + ' sao · Cấp bậc: '}">Khu vực</th:block><th:block th:replace="~{layout/status :: tierLabel(${ctv.capDo})}"></th:block></div>
               </div>
               <div>
                 <span class="badge" th:classappend="${ctv.trangThai == 'HoatDong' ? 'badge-success' : 'badge-warning'}" th:text="${ctv.trangThai == 'HoatDong' ? 'Hoạt động' : ctv.trangThai}">Hoạt động</span>
@@ -95,9 +87,9 @@
             </div>
             <div style="display:flex;flex-direction:column;gap:0.45rem;max-height:220px;overflow-y:auto;padding-right:0.35rem;margin-top:0.75rem">
               <div th:each="dv : ${dichVus}" style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.6rem;background:var(--bg-main);border-radius:var(--radius-sm);font-size:0.825rem">
-                <div style="display:flex;align-items:center;gap:0.4rem;overflow:hidden">
-                  <span class="dot" style="width:6px;height:6px;background:var(--primary)"></span>
-                  <span th:text="${dv.tenDichVu}" style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px" th:title="${dv.tenDichVu}">Dịch vụ</span>
+                <div style="display:flex;align-items:baseline;gap:0.4rem;min-width:0">
+                  <span class="dot" style="width:6px;height:6px;flex-shrink:0;background:var(--primary);transform:translateY(-1px)"></span>
+                  <span th:text="${dv.tenDichVu}" style="font-weight:500;line-height:1.35;min-width:0" th:title="${dv.tenDichVu}">Dịch vụ</span>
                 </div>
                 <span class="badge" style="font-size:0.7rem;padding:0.15rem 0.45rem;white-space:nowrap"
                       th:classappend="${dv.trangThai == 'HoatDong' ? 'badge-success' : 'badge-secondary'}"
@@ -127,7 +119,7 @@
       data: {
         labels: ['Mới', 'Thường', 'Ưu tú'],
         datasets: [{ label: 'Số CTV', data: [ctvMoi, ctvThuong, ctvUuTu],
-          backgroundColor: ['rgba(13,155,163,0.85)','rgba(21,133,192,0.85)','rgba(245,158,11,0.85)'],
+          backgroundColor: ChartTones.series(3),
           borderRadius: 8, borderSkipped: false }]
       },
       options: { responsive:true, maintainAspectRatio:false,

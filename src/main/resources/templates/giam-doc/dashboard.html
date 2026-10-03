@@ -52,7 +52,7 @@
         <div class="stat-strip-item">
           <div class="stat-strip-head"><span class="stat-strip-icon"><i class="ti ti-coin"></i></span><span class="stat-strip-label">Doanh thu</span></div>
           <div class="stat-strip-value">
-            <span th:text="${doanhThuTrieuDong != null ? #numbers.formatDecimal(doanhThuTrieuDong, 1, 'POINT', 0, 'COMMA') : '0'}">1.390</span>
+            <span th:text="${doanhThuTrieuDong != null ? #numbers.formatDecimal(doanhThuTrieuDong, 1, 'POINT', 1, 'COMMA') : '0'}">1.390</span>
             <span class="stat-strip-unit">triệu đ</span>
           </div>
           <div class="stat-strip-delta"><span class="up"><i class="ti ti-trending-up"></i> 12,5%</span> so với năm trước</div>
@@ -69,7 +69,7 @@
         </div>
         <div class="stat-strip-item">
           <div class="stat-strip-head"><span class="stat-strip-icon"><i class="ti ti-star"></i></span><span class="stat-strip-label">Điểm đánh giá TB</span></div>
-          <div class="stat-strip-value"><span th:text="${diemDanhGiaTB != null ? diemDanhGiaTB : 0}">4,7</span> <span class="stat-strip-unit">/ 5</span></div>
+          <div class="stat-strip-value"><span th:text="${#numbers.formatDecimal(diemDanhGiaTB, 1, 'POINT', 1, 'COMMA')}">4,7</span> <span class="stat-strip-unit">/ 5</span></div>
           <div class="stat-strip-delta"><span class="up"><i class="ti ti-trending-up"></i> 0,2 điểm</span> so với năm trước</div>
         </div>
       </section>
@@ -150,12 +150,10 @@
                       </div>
                     </div>
                   </td>
-                  <td class="hide-sm nowrap tabular" style="color:var(--muted)" th:text="${order.ngayThucHien + ' ' + (order.gioBatDau != null ? order.gioBatDau : '')}">20/09/2026</td>
+                  <td class="hide-sm nowrap tabular" style="color:var(--muted)" th:text="${(order.ngayThucHien != null ? #temporals.format(order.ngayThucHien, 'dd/MM/yyyy') : '') + (order.gioBatDau != null ? ' ' + #temporals.format(order.gioBatDau, 'HH:mm') : '')}">20/09/2026</td>
                   <td class="num col-end" style="font-weight:500" th:text="${#numbers.formatDecimal(order.thanhTien != null ? order.thanhTien : 0, 0, 'POINT', 0, 'COMMA') + ' đ'}">240.000 đ</td>
                   <td class="col-sub">
-                    <span class="badge"
-                          th:classappend="${order.trangThai == 'HoanThanh' ? 'badge-success' : (order.trangThai == 'DangThucHien' ? 'badge-primary' : (order.trangThai == 'DaHuy' ? 'badge-danger' : 'badge-secondary'))}"
-                          th:text="${order.trangThai == 'HoanThanh' ? 'Hoàn thành' : (order.trangThai == 'DangThucHien' ? 'Đang thực hiện' : (order.trangThai == 'DaXacNhan' ? 'Đã xác nhận' : (order.trangThai == 'ChoDuyet' ? 'Chờ duyệt' : (order.trangThai == 'DaHuy' ? 'Đã huỷ' : order.trangThai))))}">Hoàn thành</span>
+                    <span th:replace="~{layout/status :: orderBadge(${order.trangThai})}"></span>
                   </td>
                 </tr>
                 <tr th:if="${recentOrders == null or recentOrders.isEmpty()}">
@@ -184,7 +182,7 @@
       <button class="modal-close" data-modal-close="approveModal" aria-label="Đóng"><i class="ti ti-x"></i></button>
     </div>
     <div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
+      <div class="grid-2" style="gap:1.25rem;margin-bottom:1.5rem">
         <div class="form-group">
           <label class="form-label">Mã khiếu nại</label>
           <div class="form-control" style="cursor:default">#KN-20260920-001</div>

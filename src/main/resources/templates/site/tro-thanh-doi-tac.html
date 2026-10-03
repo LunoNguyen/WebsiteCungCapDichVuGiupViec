@@ -27,7 +27,7 @@
       <div class="steps">
         <div class="step"><h3>Gửi hồ sơ</h3><p>Điền thông tin, chọn dịch vụ muốn làm, đính kèm ảnh chân dung, CCCD và chứng chỉ nếu có.</p></div>
         <div class="step"><h3>Xét duyệt</h3><p>Phòng Hành chính Nhân sự kiểm tra hồ sơ. Hồ sơ đạt sẽ được mời phỏng vấn.</p></div>
-        <div class="step"><h3>Kích hoạt tài khoản</h3><p>Sau khi được duyệt, bạn đăng nhập ứng dụng cộng tác viên bằng số điện thoại đã đăng ký.</p></div>
+        <div class="step"><h3>Kích hoạt tài khoản</h3><p>Hồ sơ được duyệt, bạn nhận tin nhắn chứa tài khoản và mật khẩu, đăng nhập ứng dụng rồi đổi mật khẩu của riêng mình.</p></div>
         <div class="step"><h3>Nhận việc</h3><p>Xem đơn được phân công, xác nhận hoặc từ chối, theo dõi thời gian biểu và báo cáo kết quả.</p></div>
       </div>
     </div>
@@ -53,12 +53,36 @@
             <div class="field">
               <label for="soDienThoai">Số điện thoại</label>
               <input type="tel" id="soDienThoai" name="soDienThoai" inputmode="numeric" autocomplete="tel" required pattern="0[0-9]{9}">
+              <div class="hint">Dùng làm tên đăng nhập. Tài khoản và mật khẩu được gửi về số này khi hồ sơ được duyệt.</div>
               <div class="error">Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.</div>
             </div>
             <div class="field">
               <label for="email">Email (không bắt buộc)</label>
               <input type="email" id="email" name="email" autocomplete="email">
               <div class="error">Email chưa đúng định dạng.</div>
+            </div>
+            <div class="field">
+              <label for="matKhau">Mật khẩu đăng nhập *</label>
+              <div style="position:relative">
+                <input type="password" id="matKhau" name="matKhau" autocomplete="new-password" required minlength="6" style="padding-right:2.8rem">
+                <button type="button" onclick="toggleCtvPass('matKhau','iconMatKhau')" tabindex="-1"
+                  style="position:absolute;right:0;top:0;bottom:0;background:none;border:none;cursor:pointer;padding:0 0.75rem;color:var(--color-muted,#888)">
+                  <span id="iconMatKhau">👁</span>
+                </button>
+              </div>
+              <div class="hint">Ít nhất 6 ký tự. Bạn có thể đổi mật khẩu sau khi đăng nhập ứng dụng.</div>
+              <div class="error">Mật khẩu cần ít nhất 6 ký tự.</div>
+            </div>
+            <div class="field">
+              <label for="xacNhanMatKhau">Xác nhận mật khẩu *</label>
+              <div style="position:relative">
+                <input type="password" id="xacNhanMatKhau" name="xacNhanMatKhau" autocomplete="new-password" required minlength="6" style="padding-right:2.8rem">
+                <button type="button" onclick="toggleCtvPass('xacNhanMatKhau','iconXacNhan')" tabindex="-1"
+                  style="position:absolute;right:0;top:0;bottom:0;background:none;border:none;cursor:pointer;padding:0 0.75rem;color:var(--color-muted,#888)">
+                  <span id="iconXacNhan">👁</span>
+                </button>
+              </div>
+              <div class="error" id="xacNhanMatKhauError">Mật khẩu không khớp.</div>
             </div>
             <div class="field">
               <label for="ngaySinh">Ngày sinh</label>
@@ -97,12 +121,6 @@
             <div class="alert alert-error full" id="diaChiLoi" role="alert" style="margin:0">
               Không tải được danh sách tỉnh, thành phố.
               <button type="button" class="btn btn-line btn-sm" id="diaChiTaiLai" style="margin-left:0.5rem">Tải lại</button>
-            </div>
-            <div class="field full">
-              <label for="matKhau">Mật khẩu đăng nhập ứng dụng</label>
-              <input type="password" id="matKhau" name="matKhau" autocomplete="new-password" required minlength="6">
-              <div class="hint">Ít nhất 6 ký tự. Dùng cùng số điện thoại để đăng nhập sau khi hồ sơ được duyệt.</div>
-              <div class="error">Mật khẩu cần ít nhất 6 ký tự.</div>
             </div>
           </div>
         </fieldset>
@@ -187,5 +205,19 @@
 <footer th:replace="~{layout/site-layout :: footer}"></footer>
 <div th:replace="~{layout/site-layout :: scripts}"></div>
 <script src="/js/dang-ky-ctv.js"></script>
+<script>
+  function toggleCtvPass(inputId, iconId) {
+    var input = document.getElementById(inputId);
+    var icon = document.getElementById(iconId);
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      if (icon) icon.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      if (icon) icon.textContent = '👁';
+    }
+  }
+</script>
 </body>
 </html>

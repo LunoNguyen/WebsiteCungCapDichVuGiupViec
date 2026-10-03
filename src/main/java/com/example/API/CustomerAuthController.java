@@ -2,6 +2,7 @@ package com.example.API;
 
 import com.example.DTO.request.*;
 import com.example.DTO.response.ApiResponse;
+import com.example.Service.AuthService;
 import com.example.Service.CustomerApiService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,11 @@ import java.util.Map;
 public class CustomerAuthController {
 
     private final CustomerApiService customerApiService;
+    private final AuthService authService;
 
-    public CustomerAuthController(CustomerApiService customerApiService) {
+    public CustomerAuthController(CustomerApiService customerApiService, AuthService authService) {
         this.customerApiService = customerApiService;
+        this.authService = authService;
     }
 
     /**
@@ -80,6 +83,21 @@ public class CustomerAuthController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi đăng nhập: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Đổi mật khẩu sau khi đăng nhập. Cộng tác viên dùng để đổi mật khẩu HCNS gửi qua tin nhắn.
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        try {
+            authService.doiMatKhau(request.getTaiKhoanId(), request.getMatKhauHienTai(), request.getMatKhauMoi());
+            return ResponseEntity.ok(ApiResponse.ok("Đổi mật khẩu thành công.", Map.of("taiKhoanId", request.getTaiKhoanId())));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi đổi mật khẩu: " + e.getMessage()));
         }
     }
 

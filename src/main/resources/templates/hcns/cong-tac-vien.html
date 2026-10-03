@@ -18,10 +18,16 @@
 
       <!-- Thông báo hệ thống -->
       <div th:if="${errorMessage}" style="padding:1rem;background:var(--error-bg);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
-      <div th:if="${successMessage}" style="padding:1rem;background:var(--success-bg);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
+      <div th:if="${successMessage}" style="padding:1rem;background:var(--success-bg);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600">
+        <div th:text="${successMessage}"></div>
+        <div th:if="${tinNhanDaGui}" style="margin-top:0.5rem;font-weight:400;color:var(--foreground)">
+          <span style="font-size:var(--text-xs);color:var(--muted)">Nội dung tin nhắn (SMS mô phỏng, chỉ hiện một lần):</span>
+          <div style="margin-top:0.25rem;padding:0.625rem 0.75rem;background:var(--surface);border-radius:var(--radius-sm);font-size:var(--text-sm)" th:text="${tinNhanDaGui}"></div>
+        </div>
+      </div>
 
       <!-- Stats Row -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
+      <div class="stats-grid stats-grid-5" style="margin-bottom:1.5rem">
         <div class="quick-stat">
           <div class="quick-stat-icon"><i class="ti ti-users" style="color:var(--primary)"></i></div>
           <div>
@@ -77,17 +83,15 @@
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.8rem;margin-bottom:1rem">
                 <div><span style="color:var(--text-muted)">Nơi cư trú: </span><strong th:text="${ctv.noiCuTru}">--</strong></div>
-                <div><span style="color:var(--text-muted)">Cấp độ: </span><strong th:text="${ctv.capDo}">Mới</strong></div>
+                <div><span style="color:var(--text-muted)">Cấp độ: </span><strong th:insert="~{layout/status :: tierLabel(${ctv.capDo})}">Mới</strong></div>
               </div>
             </div>
             <div style="padding:0.875rem 1.25rem;background:var(--primary-soft);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
               <!-- Xem ảnh chân dung, CCCD, chứng chỉ ứng viên đã tải lên MinIO -->
               <button type="button" class="btn btn-outline btn-sm" style="flex:1"
                       th:attr="data-files=@{/hcns/cong-tac-vien/{id}/tai-lieu(id=${ctv.id})}"><i class="ti ti-paperclip"></i> Hồ sơ</button>
-              <form th:action="@{/hcns/cong-tac-vien/duyet}" method="post" style="flex:1">
-                <input type="hidden" name="id" th:value="${ctv.id}">
-                <button type="submit" class="btn btn-success btn-sm" style="width:100%"><i class="ti ti-check"></i> Phê duyệt</button>
-              </form>
+              <button type="button" class="btn btn-success btn-sm" style="flex:1" onclick="openApproveModal(this)"
+                      th:attr="data-id=${ctv.id}, data-name=${ctv.hoTen}, data-phone=${ctv.soDienThoai}, data-username=${ctv.taiKhoan != null ? ctv.taiKhoan.tenDangNhap : ctv.soDienThoai}"><i class="ti ti-check"></i> Phê duyệt</button>
               <form th:action="@{/hcns/cong-tac-vien/tu-choi}" method="post" style="flex:1" onsubmit="return confirm('Bạn có chắc muốn từ chối hồ sơ này?');">
                 <input type="hidden" name="id" th:value="${ctv.id}">
                 <button type="submit" class="btn btn-danger btn-sm" style="width:100%"><i class="ti ti-x"></i> Từ chối</button>
@@ -154,7 +158,7 @@
                 <td style="font-size:0.875rem" th:text="${ctv.noiCuTru}">TP.HCM</td>
                 <td style="font-size:0.875rem" th:text="${ctv.ngayDangKy != null ? #temporals.format(ctv.ngayDangKy, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
                 <td>
-                  <span style="color:#F59E0B;font-weight:700" th:text="|&#9733; ${ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0'}|">&#9733; 5.0</span>
+                  <span class="nowrap" style="font-weight:600"><span style="color:#F59E0B" aria-hidden="true">&#9733;</span> <th:block th:text="${ctv.diemDanhGia != null ? #numbers.formatDecimal(ctv.diemDanhGia, 1, 'POINT', 2, 'COMMA') : '5,0'}">5,0</th:block></span>
                 </td>
                 <td>
                   <span class="badge badge-warning" th:if="${ctv.capDo == 'UuTu'}">Ưu tú</span>
@@ -188,10 +192,23 @@
                       <input type="hidden" name="trangThai" value="DinhChi">
                       <button type="submit" class="btn btn-danger btn-sm" title="Đình chỉ CTV"><i class="ti ti-ban"></i></button>
                     </form>
-                    <form th:if="${ctv.trangThai == 'DinhChi' or ctv.trangThai == 'ChoDuyet' or ctv.trangThai == 'TuChoi'}" th:action="@{/hcns/cong-tac-vien/doi-trang-thai}" method="post" style="display:inline">
+                    <button th:if="${ctv.trangThai == 'ChoDuyet'}" type="button" class="btn btn-primary btn-sm"
+                            th:data-id="${ctv.id}"
+                            th:data-name="${ctv.hoTen}"
+                            th:data-phone="${ctv.soDienThoai}"
+                            th:data-username="${ctv.taiKhoan != null ? ctv.taiKhoan.tenDangNhap : ctv.soDienThoai}"
+                            onclick="openApproveModal(this)"
+                            title="Duyệt hồ sơ và kích hoạt tài khoản">
+                      <i class="ti ti-check"></i> Duyệt
+                    </button>
+                    <form th:if="${ctv.trangThai == 'ChoDuyet'}" th:action="@{/hcns/cong-tac-vien/tu-choi}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn từ chối hồ sơ cộng tác viên này?');">
+                      <input type="hidden" name="id" th:value="${ctv.id}">
+                      <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger)" title="Từ chối hồ sơ"><i class="ti ti-x"></i> Từ chối</button>
+                    </form>
+                    <form th:if="${ctv.trangThai == 'DinhChi' or ctv.trangThai == 'TuChoi'}" th:action="@{/hcns/cong-tac-vien/doi-trang-thai}" method="post" style="display:inline">
                       <input type="hidden" name="id" th:value="${ctv.id}">
                       <input type="hidden" name="trangThai" value="HoatDong">
-                      <button type="submit" class="btn btn-success btn-sm" title="Kích hoạt hoạt động"><i class="ti ti-check"></i></button>
+                      <button type="submit" class="btn btn-success btn-sm" title="Kích hoạt lại hoạt động"><i class="ti ti-check"></i> Kích hoạt</button>
                     </form>
                     <form th:action="@{/hcns/cong-tac-vien/xoa}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn cộng tác viên này khỏi hệ thống?');">
                       <input type="hidden" name="id" th:value="${ctv.id}">
@@ -375,7 +392,92 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: DUYỆT HỒ SƠ, ĐẶT MẬT KHẨU VÀ GỬI TIN NHẮN
+     ============================================================ -->
+<div class="modal-overlay" id="approveCtvModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2 class="modal-title">Duyệt hồ sơ và cấp tài khoản</h2>
+      <button class="modal-close" data-modal-close="approveCtvModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
+    </div>
+    <form th:action="@{/hcns/cong-tac-vien/duyet}" method="post" id="approveCtvForm">
+      <input type="hidden" name="id" id="approveId">
+      <dl class="desc-list" style="margin-bottom:1.25rem">
+        <dt>Ứng viên</dt><dd id="approveName">—</dd>
+        <dt>Số điện thoại</dt><dd class="tabular" id="approvePhone">—</dd>
+        <dt>Tên đăng nhập</dt><dd class="tabular" id="approveUsername">—</dd>
+      </dl>
+      <div class="form-group">
+        <label class="form-label" for="approveMatKhau">Mật khẩu đăng nhập *</label>
+        <div style="display:flex;gap:0.5rem">
+          <input class="form-control tabular" id="approveMatKhau" name="matKhau" type="text" required minlength="6"
+                 autocomplete="off" spellcheck="false" style="flex:1;min-width:0">
+          <button type="button" class="btn btn-outline" onclick="fillRandomPassword()" title="Tạo mật khẩu ngẫu nhiên">
+            <i class="ti ti-refresh"></i> Tạo mới
+          </button>
+        </div>
+        <div class="form-hint">Ít nhất 6 ký tự. Cộng tác viên có thể đổi lại sau khi đăng nhập ứng dụng.</div>
+        <div class="form-error" id="approveMatKhauError" hidden>Mật khẩu cần ít nhất 6 ký tự.</div>
+      </div>
+      <div style="margin-top:1rem">
+        <div class="form-label">Tin nhắn sẽ gửi tới <span class="tabular" id="approvePhone2"></span></div>
+        <div id="approveSmsPreview" style="padding:0.75rem;background:var(--background);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--foreground-soft);line-height:1.5"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close="approveCtvModal">Hủy</button>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-send"></i> Duyệt và gửi tin nhắn</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+
+<script>
+  // Duyệt hồ sơ: HCNS đặt mật khẩu, server mã hoá và gửi tin nhắn cho ứng viên
+  const PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let approveUsername = '';
+
+  function randomPassword(length = 8) {
+    const bytes = new Uint32Array(length);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => PASSWORD_CHARS[b % PASSWORD_CHARS.length]).join('');
+  }
+
+  function updateSmsPreview() {
+    const pw = document.getElementById('approveMatKhau').value.trim();
+    // Cùng mẫu với CapTaiKhoanCtvService (SMS không dấu)
+    document.getElementById('approveSmsPreview').textContent =
+      'Neatify: Ho so cong tac vien cua ban da duoc duyet. Tai khoan: ' + approveUsername +
+      ', mat khau: ' + (pw || '…') + '. Vui long dang nhap ung dung Neatify va doi mat khau.';
+    document.getElementById('approveMatKhauError').hidden = pw.length === 0 || pw.length >= 6;
+  }
+
+  function fillRandomPassword() {
+    document.getElementById('approveMatKhau').value = randomPassword();
+    updateSmsPreview();
+  }
+
+  function openApproveModal(btn) {
+    approveUsername = btn.dataset.username || btn.dataset.phone || '';
+    document.getElementById('approveId').value = btn.dataset.id;
+    document.getElementById('approveName').textContent = btn.dataset.name || '—';
+    document.getElementById('approvePhone').textContent = btn.dataset.phone || '—';
+    document.getElementById('approvePhone2').textContent = btn.dataset.phone || '';
+    document.getElementById('approveUsername').textContent = approveUsername || '—';
+    fillRandomPassword();
+    ModalManager.open('approveCtvModal');
+  }
+
+  document.getElementById('approveMatKhau').addEventListener('input', updateSmsPreview);
+  document.getElementById('approveCtvForm').addEventListener('submit', e => {
+    if (document.getElementById('approveMatKhau').value.trim().length < 6) {
+      e.preventDefault();
+      document.getElementById('approveMatKhauError').hidden = false;
+    }
+  });
+</script>
 
 <script>
   function checkAgeValid(val, isRequired) {

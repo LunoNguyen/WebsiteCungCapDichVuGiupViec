@@ -13,7 +13,7 @@
       
 
       <!-- Stats -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
+      <div class="stats-grid stats-grid-5" style="margin-bottom:1.5rem">
         <div class="quick-stat">
           <div class="quick-stat-icon"><i class="ti ti-alert-circle" style="color:var(--danger)"></i></div>
           <div>
@@ -90,7 +90,7 @@
                   </div>
                 </td>
                 <td th:text="${kn.loaiVanDe}">Chất lượng dịch vụ</td>
-                <td style="font-size:0.85rem;font-weight:600" th:text="${kn.donDat != null ? kn.donDat.maDonDat : '--'}">#DD-001</td>
+                <td class="nowrap" style="font-size:0.85rem;font-weight:600" th:text="${kn.donDat != null ? kn.donDat.maDonDat : '--'}">#DD-001</td>
                 <td style="font-size:0.85rem" th:text="${kn.ngayGui != null ? #temporals.format(kn.ngayGui, 'dd/MM/yyyy HH:mm') : '--'}">20/09/2026</td>
                 <td>
                   <span class="badge badge-danger" th:if="${kn.trangThai == 'LeoThang'}">Leo thang Giám đốc</span>

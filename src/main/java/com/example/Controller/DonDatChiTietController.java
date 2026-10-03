@@ -33,6 +33,8 @@ public class DonDatChiTietController {
 
     private final DonDatDichVuRepository donDatDichVuRepository;
     private final PhanCongCTVRepository phanCongCTVRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.PhanCongService phanCongService;
 
     public DonDatChiTietController(DonDatDichVuRepository donDatDichVuRepository,
                                    PhanCongCTVRepository phanCongCTVRepository) {
@@ -92,6 +94,55 @@ public class DonDatChiTietController {
         body.put("yeuCauDacBiet", don.getYeuCauDacBiet() != null ? don.getYeuCauDacBiet() : "");
         body.put("ghiChu", don.getGhiChu() != null ? don.getGhiChu() : "");
         return ResponseEntity.ok(body);
+    }
+
+    // ── Phân công cộng tác viên ─────────────────────────────────────────
+
+    /** Gợi ý CTV cho đơn (đã xếp hạng) + danh sách không xếp được kèm lý do. Thuật toán: PhanCongService. */
+    @GetMapping("/cskh/don-dat-dich-vu/{id}/goi-y-phan-cong")
+    public ResponseEntity<Map<String, Object>> goiYPhanCong(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(phanCongService.goiY(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** CSKH phân công thủ công một CTV cho đơn. */
+    @org.springframework.web.bind.annotation.PostMapping("/cskh/don-dat-dich-vu/{id}/phan-cong")
+    public ResponseEntity<Map<String, Object>> phanCong(@PathVariable Integer id,
+                                                        @org.springframework.web.bind.annotation.RequestParam Integer ctvId,
+                                                        jakarta.servlet.http.HttpSession session) {
+        try {
+            phanCongService.phanCong(id, ctvId, nguoiDangNhap(session));
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đã phân công cộng tác viên."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(409).body(Map.of("success", false,
+                    "message", "Dữ liệu vừa được người khác thay đổi. Tải lại gợi ý rồi thử lại."));
+        }
+    }
+
+    /** Bỏ một phân công chưa thực hiện. */
+    @org.springframework.web.bind.annotation.PostMapping("/cskh/don-dat-dich-vu/{id}/bo-phan-cong")
+    public ResponseEntity<Map<String, Object>> boPhanCong(@PathVariable Integer id,
+                                                          @org.springframework.web.bind.annotation.RequestParam Integer phanCongId,
+                                                          jakarta.servlet.http.HttpSession session) {
+        try {
+            phanCongService.boPhanCong(id, phanCongId, nguoiDangNhap(session));
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đã bỏ phân công."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(409).body(Map.of("success", false,
+                    "message", "Dữ liệu vừa được người khác thay đổi. Tải lại rồi thử lại."));
+        }
+    }
+
+    private static String nguoiDangNhap(jakarta.servlet.http.HttpSession session) {
+        Object ten = session.getAttribute("authenticatedFullName");
+        return ten != null ? "CSKH: " + ten : "CSKH";
     }
 
     /** Ghép "số nhà, đường" với phường/xã và tỉnh/thành của khu vực (bỏ phần đã có sẵn trong địa chỉ). */

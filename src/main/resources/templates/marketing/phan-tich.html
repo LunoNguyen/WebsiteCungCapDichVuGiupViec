@@ -90,7 +90,7 @@
           <div class="stat-card">
             <div class="stat-icon"><i class="ti ti-coin"></i></div>
             <div class="stat-value"
-              th:text="${marketingStats != null ? marketingStats.doanhThuKhuyenMaiTrieuDong + ' triệu' : '0 triệu'}">0
+              th:text="${marketingStats != null ? #numbers.formatDecimal(marketingStats.doanhThuKhuyenMaiTrieuDong, 1, 'POINT', 1, 'COMMA') + ' triệu' : '0 triệu'}">0
               triệu</div>
             <div class="stat-label">Doanh thu hệ thống</div>
             <div class="kpi-compare"><span class="arrow-up">Thực nhận</span></div>
@@ -163,15 +163,15 @@
                   </td>
                   <td th:text="${km.loaiGiam == 'PhanTram' ? 'Phần trăm' : 'Số tiền cố định'}">Phần trăm</td>
                   <td style="font-weight:700;color:var(--accent)">
-  <span th:text="${km.loaiGiam == 'PhanTram' ? km.giaTriGiam + '%' : #numbers.formatDecimal(km.giaTriGiam, 0, 'COMMA', 0, 'POINT') + 'đ'}">20%</span>
+  <span th:text="${km.loaiGiam == 'PhanTram' ? km.giaTriGiam + '%' : #numbers.formatDecimal(km.giaTriGiam, 0, 'POINT', 0, 'COMMA') + 'đ'}">20%</span>
         <div style="font-size:0.72rem;color:var(--text-muted);font-weight:400;margin-top:2px"
           th:if="${km.soTienGiamToiDa != null}"
-          th:text="|(tối đa ${#numbers.formatDecimal(km.soTienGiamToiDa, 0, 'COMMA', 0, 'POINT')}đ)|">
+          th:text="|(tối đa ${#numbers.formatDecimal(km.soTienGiamToiDa, 0, 'POINT', 0, 'COMMA')}đ)|">
           (tối đa 100.000đ)
         </div>
 </td>
                   <td
-                    th:text="${km.dieuKienToiThieu != null ? #numbers.formatDecimal(km.dieuKienToiThieu, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">
+                    th:text="${km.dieuKienToiThieu != null ? #numbers.formatDecimal(km.dieuKienToiThieu, 0, 'POINT', 0, 'COMMA') + 'đ' : '0đ'}">
                     100.000đ</td>
                   <td style="font-size:0.85rem"
                     th:text="${#temporals.format(km.ngayBatDau, 'dd/MM/yyyy') + ' - ' + #temporals.format(km.ngayKetThuc, 'dd/MM/yyyy')}">
@@ -214,10 +214,7 @@
           datasets: [{
             label: 'Khách hàng mới',
             data: Object.values(rawDataChannel),
-            backgroundColor: [
-              'rgba(13,155,163,0.85)', 'rgba(21,133,192,0.85)',
-              'rgba(255,101,132,0.85)', 'rgba(245,158,11,0.85)', 'rgba(56,212,138,0.85)'
-            ],
+            backgroundColor: ChartTones.series(5),
             borderRadius: 8,
             borderSkipped: false
           }]
@@ -234,14 +231,15 @@
       });
 
       // 2. Coupon Revenue Horizontal Bar Chart
-      new Chart(document.getElementById('couponBarChart'), {
+      if (ChartEmpty.isEmpty(rawDataCoupon)) ChartEmpty.show('couponBarChart', 'Chưa có mã khuyến mãi nào được dùng trong kỳ này');
+      else new Chart(document.getElementById('couponBarChart'), {
         type: 'bar',
         data: {
           labels: Object.keys(rawDataCoupon),
           datasets: [{
             label: 'Doanh thu (triệu đồng)',
             data: Object.values(rawDataCoupon),
-            backgroundColor: 'rgba(255,101,132,0.85)',
+            backgroundColor: ChartTones.css('--primary'),
             borderRadius: 6,
             borderSkipped: false
           }]
@@ -252,7 +250,7 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} triệu VNĐ` } } },
           scales: {
-            x: { grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { callback: v => v + ' tr', font: { size: 11 } } },
+            x: { grid: { color: 'rgba(13,155,163,0.06)' }, ticks: { callback: v => Number(v).toLocaleString('vi-VN') + ' tr', font: { size: 11 } } },
             y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
           }
         }

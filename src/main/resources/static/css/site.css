@@ -11,7 +11,7 @@
 :root {
   --ink: #0E2A33;
   --ink-soft: #46626B;
-  --ink-faint: #7B939A;
+  --ink-faint: #587379;      /* 5.1:1 trên trắng, 4.7:1 trên --foam */
   --teal-900: #064B59;
   --teal-700: #08778C;
   --teal-600: #1197B0;
@@ -266,7 +266,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .cta-band { background: var(--teal-700); color: var(--white); }
 .cta-band .wrap { display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center; padding-block: clamp(2.25rem, 5vw, 3.5rem); }
 .cta-band h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 800; }
-.cta-band p { margin-top: 0.5rem; color: rgba(255,255,255,.88); max-width: 40rem; }
+.cta-band p { margin-top: 0.5rem; color: #fff; max-width: 40rem; }
 .cta-band .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 @media (max-width: 760px) { .cta-band .wrap { grid-template-columns: 1fr; } }
 
@@ -305,6 +305,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .price-table .name { font-weight: 600; }
 .price-table .desc { display: block; font-weight: 400; color: var(--ink-faint); font-size: 0.9rem; }
 .price-table .price { font-weight: 800; color: var(--teal-700); }
+/* Màn hẹp: mỗi dịch vụ một khối, tên và giá cùng hàng đầu, thông số ở hàng dưới. Không cuộn ngang để tìm giá */
+@media (max-width: 640px) {
+  .price-table { min-width: 0; }
+  .price-table thead { display: none; }
+  .price-table tr { display: flex; flex-wrap: wrap; align-items: baseline; padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); }
+  .price-table tr:last-child { border-bottom: 0; }
+  .price-table td { padding: 0; border: 0; }
+  .price-table td.name { flex: 1 1 calc(100% - 8rem); min-width: 0; padding-right: 0.75rem; }
+  .price-table td.price { flex: 0 0 8rem; }
+  .price-table td:not(.name):not(.price) { order: 2; margin-top: 0.35rem; font-size: 0.875rem; color: var(--ink-soft); }
+  .price-table td:not(.name):not(.price) + td:not(.name):not(.price)::before { content: "·"; margin: 0 0.4rem; color: var(--ink-faint); }
+}
 .empty { padding: 2rem; text-align: center; color: var(--ink-soft); background: var(--foam); border: 1px dashed var(--line); border-radius: var(--radius); }
 .note { margin-top: 0.9rem; color: var(--ink-faint); font-size: 0.9rem; }
 

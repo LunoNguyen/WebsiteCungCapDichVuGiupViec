@@ -53,4 +53,17 @@ public interface LichLamViecRepository extends JpaRepository<LichLamViec, Intege
                          @org.springframework.data.repository.query.Param("ngay") LocalDate ngay,
                          @org.springframework.data.repository.query.Param("batDau") java.time.LocalTime batDau,
                          @org.springframework.data.repository.query.Param("ketThuc") java.time.LocalTime ketThuc);
+
+    /** Lịch (chưa hủy) của mọi CTV trong một khoảng ngày, kèm đơn và khu vực – dùng cho thuật toán xếp lịch. */
+    @Query("SELECT DISTINCT l FROM LichLamViec l "
+         + "JOIN FETCH l.congTacVien "
+         + "LEFT JOIN FETCH l.phanCong pc "
+         + "LEFT JOIN FETCH pc.donDat dd "
+         + "LEFT JOIN FETCH dd.diaChi dc "
+         + "LEFT JOIN FETCH dc.khuVuc "
+         + "WHERE l.ngayLam BETWEEN :tuNgay AND :denNgay AND l.trangThai <> 'Huy'")
+    List<LichLamViec> findLichTrongKhoang(@org.springframework.data.repository.query.Param("tuNgay") LocalDate tuNgay,
+                                          @org.springframework.data.repository.query.Param("denNgay") LocalDate denNgay);
+
+    List<LichLamViec> findByPhanCong_Id(Integer phanCongId);
 }
