@@ -62,7 +62,25 @@ public class CollaboratorProfileController {
     /** Lấy thông tin hồ sơ */
     @GetMapping("/{id}")
     public ResponseEntity<?> getProfile(@PathVariable Integer id) {
-        return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.getCollaboratorProfile(id)));
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.getCollaboratorProfile(id)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** Lấy hồ sơ theo tài khoản, chưa có thì tạo hồ sơ rỗng (dùng sau khi CTV đăng nhập app) */
+    @PostMapping("/profile/ensure")
+    public ResponseEntity<?> ensureProfile(@RequestBody Map<String, Integer> req) {
+        Integer taiKhoanId = req.get("taiKhoanId");
+        if (taiKhoanId == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Thiếu taiKhoanId"));
+        }
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.ensureCollaboratorProfile(taiKhoanId)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     /** Cập nhật trạng thái Profile */

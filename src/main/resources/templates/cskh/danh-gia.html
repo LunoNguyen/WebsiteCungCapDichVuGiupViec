@@ -11,10 +11,7 @@
     <main class="page-content">
       <!-- Page Header -->
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Quản lý Đánh giá & Phản hồi</h1>
-          <p class="page-subtitle">Giám sát chất lượng dịch vụ, trả lời và quản lý toàn bộ đánh giá khách hàng</p>
-        </div>
+        
         <div class="page-actions">
           <button class="btn btn-outline btn-sm" id="toggleViewBtn" onclick="toggleReviewView()">
             <i class="ti ti-layout-grid"></i> Chế độ thẻ
@@ -28,25 +25,25 @@
       <!-- Stats Grid -->
       <div class="stats-grid" style="margin-bottom:1.5rem">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
+          <div class="stat-icon"><i class="ti ti-star"></i></div>
           <div class="stat-value" th:text="${diemDanhGiaTB != null ? diemDanhGiaTB : '5.0'}">5.0</div>
           <div class="stat-label">Điểm trung bình</div>
           <div class="kpi-compare"><span class="arrow-up">Thực tế hệ thống</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">👍</div>
+          <div class="stat-icon"><i class="ti ti-thumb-up"></i></div>
           <div class="stat-value" th:text="${danhGias != null ? #lists.size(danhGias) : 0}">0</div>
           <div class="stat-label">Tổng lượt đánh giá</div>
           <div class="kpi-compare"><span class="period">Từ khách hàng</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(0,180,216,0.15)">💬</div>
+          <div class="stat-icon"><i class="ti ti-message-circle"></i></div>
           <div class="stat-value" id="repliedCount">0</div>
           <div class="stat-label">Đã phản hồi</div>
           <div class="kpi-compare"><span style="color:var(--cskh-primary)">CSKH xử lý</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,107,107,0.15)">⚠️</div>
+          <div class="stat-icon"><i class="ti ti-alert-triangle"></i></div>
           <div class="stat-value" id="lowRatingCount">0</div>
           <div class="stat-label">Đánh giá dưới 3 sao</div>
           <div class="kpi-compare"><span style="color:var(--danger)">Cần chú ý</span></div>
@@ -71,9 +68,9 @@
         </div>
         <select class="filter-select" id="starFilter" onchange="filterReviews()">
           <option value="">Tất cả xếp hạng</option>
-          <option value="5">5 sao ⭐⭐⭐⭐⭐</option>
-          <option value="4">4 sao ⭐⭐⭐⭐</option>
-          <option value="3">3 sao ⭐⭐⭐</option>
+          <option value="5">5 sao</option>
+          <option value="4">4 sao</option>
+          <option value="3">3 sao</option>
           <option value="low">Dưới 3 sao</option>
         </select>
         <select class="filter-select" id="statusFilter" onchange="filterReviews()">
@@ -129,10 +126,10 @@
                   </td>
                   <td th:text="${dg.congTacVien != null ? dg.congTacVien.hoTen : '--'}">CTV</td>
                   <td>
-                    <span style="color:#FFC107;font-weight:700" th:text="${dg.diemChatLuong + ' ★'}">5 ★</span>
+                    <span style="color:#F59E0B;font-weight:700" th:text="${dg.diemChatLuong + ' ★'}">5 ★</span>
                   </td>
                   <td>
-                    <span style="color:#FFC107;font-weight:700" th:text="${dg.diemThaiDo + ' ★'}">5 ★</span>
+                    <span style="color:#F59E0B;font-weight:700" th:text="${dg.diemThaiDo + ' ★'}">5 ★</span>
                   </td>
                   <td style="max-width:220px">
                     <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
@@ -175,7 +172,7 @@
                         <i class="ti ti-eye-off"></i>
                       </button>
                       <button class="btn btn-outline btn-sm" title="Xóa"
-                              style="color:var(--danger);border-color:rgba(255,71,87,0.3)"
+                              style="color:var(--danger);border-color:color-mix(in srgb, var(--error-text) 25%, transparent)"
                               th:data-id="${dg.id}"
                               th:data-ma="${dg.maDanhGia}"
                               onclick="deleteReview(this)">
@@ -273,10 +270,10 @@
   <div class="modal" style="max-width:580px">
     <div class="modal-header">
       <h2 class="modal-title"><i class="ti ti-message-dots" style="color:var(--cskh-primary)"></i> Phản hồi Đánh giá</h2>
-      <button class="modal-close" data-modal-close="replyModal">✕</button>
+      <button class="modal-close" data-modal-close="replyModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <div>
-      <div style="background:rgba(0,180,216,0.06);border-radius:var(--radius-md);padding:1rem;margin-bottom:1rem">
+      <div style="background:var(--primary-soft);border-radius:var(--radius-md);padding:1rem;margin-bottom:1rem">
         <div style="display:flex;gap:0.75rem;align-items:flex-start">
           <div class="avatar avatar-sm" id="replyKHAvatar">K</div>
           <div>
@@ -322,7 +319,7 @@
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
       <h2 class="modal-title"><i class="ti ti-pencil" style="color:var(--cskh-primary)"></i> Chỉnh sửa Đánh giá</h2>
-      <button class="modal-close" data-modal-close="editReviewModal">✕</button>
+      <button class="modal-close" data-modal-close="editReviewModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
       <div class="form-group">
@@ -373,7 +370,7 @@
   <div class="modal" style="max-width:580px">
     <div class="modal-header">
       <h2 class="modal-title"><i class="ti ti-star-plus" style="color:var(--cskh-primary)"></i> Thêm Đánh giá mới</h2>
-      <button class="modal-close" data-modal-close="addReviewModal">✕</button>
+      <button class="modal-close" data-modal-close="addReviewModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
       <div class="form-group" style="grid-column:span 2">
@@ -417,7 +414,7 @@
 <div class="modal-overlay" id="deleteReviewModal">
   <div class="modal" style="max-width:400px;text-align:center">
     <div class="modal-header" style="justify-content:center;border:none;padding-bottom:0">
-      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,71,87,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--error-bg);display:flex;align-items:center;justify-content:center;margin:0 auto">
         <i class="ti ti-trash" style="font-size:1.5rem;color:var(--danger)"></i>
       </div>
     </div>
@@ -431,8 +428,6 @@
     </div>
   </div>
 </div>
-
-<div class="overlay" id="sidebarOverlay"></div>
 <div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
 <script>
   // ── View toggle ───────────────────────────────────────

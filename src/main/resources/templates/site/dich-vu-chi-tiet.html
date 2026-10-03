@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head(${danhMuc.tenLoaiDichVu}, ${danhMuc.moTa})}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dich-vu')}"></header>
+
+<main>
+  <section class="page-hero with-photo">
+    <div class="wrap">
+      <div>
+        <div class="crumbs"><a href="/dich-vu">Dịch vụ</a> / <span th:text="${danhMuc.tenLoaiDichVu}">Dọn dẹp</span></div>
+        <h1 th:text="${danhMuc.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</h1>
+        <p th:text="${danhMuc.moTa}">Mô tả nhóm dịch vụ</p>
+        <div class="hero-cta">
+          <a class="btn btn-sun" href="#bang-gia">Xem bảng giá</a>
+          <a class="btn btn-line" href="/#tai-ung-dung">Đặt lịch trên ứng dụng</a>
+        </div>
+      </div>
+      <div class="leaf"><img th:src="${danhMuc.hinhAnhUrl}" th:alt="${danhMuc.tenLoaiDichVu}"></div>
+    </div>
+  </section>
+
+  <!-- ===== BẢNG GIÁ (giá hiện tại từ DichVu.GiaHienTai) ===== -->
+  <section class="section" id="bang-gia">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Bảng giá</h2>
+        <p th:text="${danhMuc.soDichVu} + ' dịch vụ trong nhóm này. Giá là giá trọn gói cho mỗi dịch vụ.'">12 dịch vụ</p>
+      </div>
+
+      <div class="empty" th:if="${danhMuc.soDichVu == 0}">Nhóm này chưa có dịch vụ nào đang hoạt động.</div>
+
+      <th:block th:if="${danhMuc.soDichVu > 0}">
+        <div class="toolbar">
+          <div class="tabs" role="tablist" th:if="${!danhMuc.dichVuTheoLan.isEmpty() and !danhMuc.dichVuGoiThang.isEmpty()}">
+            <button class="tab" type="button" role="tab" data-tab="theo-lan" aria-selected="true">Theo lần</button>
+            <button class="tab" type="button" role="tab" data-tab="goi-thang" aria-selected="false">Gói tháng</button>
+          </div>
+          <label class="search">
+            <span class="sr-only">Tìm dịch vụ trong bảng giá</span>
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input type="search" placeholder="Tìm dịch vụ, ví dụ: sofa, 3 giờ" data-price-search>
+          </label>
+        </div>
+
+        <!-- Theo lần -->
+        <div data-panel="theo-lan" th:if="${!danhMuc.dichVuTheoLan.isEmpty()}">
+          <div class="price-table-wrap">
+            <table class="price-table">
+              <thead>
+                <tr><th>Dịch vụ</th><th>Thời gian</th><th>Số người</th><th>Đơn vị</th><th class="num">Giá</th></tr>
+              </thead>
+              <tbody>
+                <tr th:each="dv : ${danhMuc.dichVuTheoLan}">
+                  <td class="name"><span th:text="${dv.tenDichVu}">Dọn dẹp nhà 2 giờ</span><span class="desc" th:if="${dv.moTa != null}" th:text="${dv.moTa}">Mô tả</span></td>
+                  <td th:text="${dv.thoiGianText.isEmpty()} ? 'Theo khối lượng' : ${dv.thoiGianText}">2 giờ</td>
+                  <td th:text="${dv.soNguoiThucHien != null} ? ${dv.soNguoiThucHien} + ' người' : '1 người'">1 người</td>
+                  <td th:text="${dv.donViTinh}">Buổi</td>
+                  <td class="num price" th:text="${dv.giaText}">192.000đ</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty" data-no-match hidden>Không có dịch vụ nào khớp từ khóa. Thử từ ngắn hơn.</div>
+        </div>
+
+        <!-- Gói tháng -->
+        <div data-panel="goi-thang" th:if="${!danhMuc.dichVuGoiThang.isEmpty()}" th:hidden="${!danhMuc.dichVuTheoLan.isEmpty()}">
+          <div class="price-table-wrap">
+            <table class="price-table">
+              <thead>
+                <tr><th>Gói dịch vụ</th><th>Số buổi</th><th>Mỗi buổi</th><th>Đơn vị</th><th class="num">Giá gói</th></tr>
+              </thead>
+              <tbody>
+                <tr th:each="dv : ${danhMuc.dichVuGoiThang}">
+                  <td class="name"><span th:text="${dv.tenDichVu}">Gói 4 buổi</span><span class="desc" th:if="${dv.moTa != null}" th:text="${dv.moTa}">Mô tả</span></td>
+                  <td th:text="${dv.soBuoi != null} ? ${dv.soBuoi} + ' buổi' : 'Theo gói'">4 buổi</td>
+                  <td th:text="${dv.thoiGianText.isEmpty()} ? 'Theo khối lượng' : ${dv.thoiGianText}">2 giờ</td>
+                  <td th:text="${dv.donViTinh}">Gói</td>
+                  <td class="num price" th:text="${dv.giaText}">700.000đ</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty" data-no-match hidden>Không có gói nào khớp từ khóa. Thử từ ngắn hơn.</div>
+        </div>
+
+        <p class="note">Giá có thể thay đổi theo thời điểm. Số tiền chính xác hiển thị khi bạn đặt lịch, trước khi xác nhận đơn.</p>
+      </th:block>
+    </div>
+  </section>
+
+  <section class="section section-foam">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Một buổi làm diễn ra thế nào</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Đặt lịch</h3><p>Chọn dịch vụ, ngày giờ và địa chỉ trên ứng dụng. Nhập mã ưu đãi nếu có.</p></div>
+        <div class="step"><h3>Xác nhận</h3><p>Neatify phân công cộng tác viên theo khu vực và gửi thông tin người phụ trách cho bạn.</p></div>
+        <div class="step"><h3>Thực hiện</h3><p>Cộng tác viên ghi nhận hiện trạng tài sản, làm việc, rồi cùng bạn kiểm tra kết quả.</p></div>
+        <div class="step"><h3>Thanh toán, đánh giá</h3><p>Thanh toán tiền mặt hoặc chuyển khoản, nhận biên lai và chấm điểm buổi làm.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Nhóm dịch vụ khác</h2>
+      </div>
+      <div class="rail">
+        <a class="svc-card" th:each="dm : ${danhMucs}" th:unless="${dm.id == danhMuc.id}" th:href="@{/dich-vu/{id}(id=${dm.id})}">
+          <div class="leaf"><img th:src="${dm.hinhAnhUrl}" alt="" loading="lazy"></div>
+          <h3 th:text="${dm.tenLoaiDichVu}">Vệ sinh điện máy</h3>
+          <p th:text="${dm.giaTuText}">từ 150.000đ</p>
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

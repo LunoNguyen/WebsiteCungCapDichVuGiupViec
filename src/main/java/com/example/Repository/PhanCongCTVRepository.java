@@ -13,4 +13,15 @@ public interface PhanCongCTVRepository extends JpaRepository<PhanCongCTV, Intege
     List<PhanCongCTV> findByCongTacVien_IdAndTrangThaiOrderByThoiGianPhanCongDesc(Integer congTacVienId, String trangThai);
     Optional<PhanCongCTV> findByDonDat_IdAndCongTacVien_Id(Integer donDatId, Integer congTacVienId);
     Optional<PhanCongCTV> findByDonDat_Id(Integer donDatId);
+    /** Mọi phân công của một đơn (một đơn có thể cần nhiều cộng tác viên). */
+    List<PhanCongCTV> findAllByDonDat_Id(Integer donDatId);
+
+    /**
+     * Lấy bản ghi và KHÓA dòng đó trong CSDL (SELECT ... FOR UPDATE) cho tới khi giao dịch kết thúc.
+     * Hai người cùng sửa một bản ghi sẽ lần lượt thực hiện: người sau thấy dữ liệu người trước đã lưu.
+     * Chỉ gọi bên trong phương thức có @Transactional.
+     */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM PhanCongCTV e WHERE e.id = :id")
+    Optional<PhanCongCTV> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Integer id);
 }

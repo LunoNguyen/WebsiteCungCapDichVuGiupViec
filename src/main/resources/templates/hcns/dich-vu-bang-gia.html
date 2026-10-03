@@ -9,150 +9,268 @@
     <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Dịch vụ & Bảng giá')}"></header>
 
     <main class="page-content">
-      <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Dịch vụ &amp; Bảng giá</h1>
-          <p class="page-subtitle">Quản lý gói dịch vụ và cấu hình giá cước hệ thống</p>
+
+      <div class="alert alert-danger" th:if="${errorMessage}" role="alert"><i class="ti ti-alert-circle"></i><span th:text="${errorMessage}"></span></div>
+      <div class="alert alert-success" th:if="${successMessage}" role="status"><i class="ti ti-circle-check"></i><span th:text="${successMessage}"></span></div>
+
+      <!-- Hàng công cụ. Có dòng được chọn thì thanh hàng loạt thay chỗ, cùng chiều cao. -->
+      <div class="toolbar bulk-swap" id="priceToolbar">
+        <div class="bulk-default">
+          <nav class="tabs" aria-label="Lọc theo trạng thái">
+            <a class="tab-btn" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${filterQuery}" th:classappend="${fTrangThai == ''} ? 'active' : ''" th:attr="aria-current=${fTrangThai == '' ? 'page' : null}">Tất cả <span class="tab-count" th:text="${demTatCa}">0</span></a>
+            <a class="tab-btn" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${filterQuery} + 'trangThai=DangApDung'" th:classappend="${fTrangThai == 'DangApDung'} ? 'active' : ''" th:attr="aria-current=${fTrangThai == 'DangApDung' ? 'page' : null}">Đang áp dụng <span class="tab-count" th:text="${demDangApDung}">0</span></a>
+            <a class="tab-btn" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${filterQuery} + 'trangThai=HetHan'" th:classappend="${fTrangThai == 'HetHan'} ? 'active' : ''" th:attr="aria-current=${fTrangThai == 'HetHan' ? 'page' : null}">Hết hạn <span class="tab-count" th:text="${demHetHan}">0</span></a>
+          </nav>
+          <div class="toolbar-end">
+            <button type="button" class="btn btn-primary" data-modal-open="addPriceModal"><i class="ti ti-plus"></i>Thêm bảng giá</button>
+          </div>
         </div>
-        <div class="page-actions">
-          <button class="btn btn-primary btn-sm" data-modal-open="addPriceModal"><i class="ti ti-plus"></i> Thêm bảng giá mới</button>
+        <div class="bulk-active" hidden>
+          <span class="bulk-count"><strong id="bulkCount">0</strong> gói đã chọn</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="bulkClear">Bỏ chọn</button>
+          <div class="toolbar-end">
+            <button type="button" class="btn btn-primary" id="bulkEditBtn"><i class="ti ti-edit"></i><span>Sửa giá</span></button>
+          </div>
         </div>
       </div>
 
-      <!-- Thông báo hệ thống -->
-      <div th:if="${errorMessage}" style="padding:1rem;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
-      <div th:if="${successMessage}" style="padding:1rem;background:rgba(67,233,123,0.12);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
-
-      <div class="card" style="padding:0">
-        <div class="card-header" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="card-title">Bảng giá dịch vụ hiện hành (10 dòng / trang)</div>
-            <div class="card-subtitle">Giá cước niêm yết áp dụng trong hệ thống Neatify</div>
-          </div>
-          <span style="font-size:0.85rem;color:var(--text-muted)">Tổng số: <strong th:text="${totalItems != null ? totalItems : 0}">0</strong> gói giá</span>
+      <form class="filter-bar" method="get" th:action="@{/hcns/dich-vu-bang-gia}" id="priceFilterForm" role="search">
+        <input type="hidden" name="trangThai" th:value="${fTrangThai}" th:disabled="${fTrangThai == ''}">
+        <div class="search-box" style="flex:0 1 22rem">
+          <i class="ti ti-search search-icon"></i>
+          <input type="search" class="form-control" name="q" th:value="${fQ}" placeholder="Tìm tên dịch vụ, mã gói, mã dịch vụ" aria-label="Tìm gói giá">
         </div>
-        
-        <div class="table-container" style="border:none">
-          <table class="table" id="priceTable">
+
+        <div class="dropdown">
+          <button type="button" class="btn btn-outline" data-dropdown="advancedFilter" aria-haspopup="dialog">
+            <i class="ti ti-adjustments-horizontal"></i>Bộ lọc<span class="filter-count" id="advancedCount" hidden></span>
+          </button>
+          <div class="dropdown-menu filter-popover" id="advancedFilter" role="dialog" aria-label="Bộ lọc nâng cao">
+            <div class="filter-grid">
+              <div class="form-group">
+                <label class="form-label" for="fLoaiDichVu">Danh mục</label>
+                <select class="form-control" name="loaiDichVuId" id="fLoaiDichVu">
+                  <option value="">Mọi danh mục</option>
+                  <option th:each="ldv : ${loaiDichVus}" th:value="${ldv.id}" th:text="${ldv.tenLoaiDichVu}" th:selected="${fLoaiDichVuId != null and fLoaiDichVuId == ldv.id}">Danh mục</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="fDichVu">Dịch vụ</label>
+                <select class="form-control" name="dichVuId" id="fDichVu">
+                  <option value="">Mọi dịch vụ</option>
+                  <option th:each="dv : ${dichVus}" th:value="${dv.id}" th:text="${dv.tenDichVu}"
+                          th:attr="data-loai=${dv.loaiDichVu != null ? dv.loaiDichVu.id : ''}"
+                          th:selected="${fDichVuId != null and fDichVuId == dv.id}">Dịch vụ</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="fLoaiHinh">Loại hình đặt</label>
+                <select class="form-control" name="loaiHinhDat" id="fLoaiHinh">
+                  <option value="">Mọi loại hình</option>
+                  <option value="TheoLan" th:selected="${fLoaiHinhDat == 'TheoLan'}">Theo lần</option>
+                  <option value="GoiThang" th:selected="${fLoaiHinhDat == 'GoiThang'}">Gói tháng</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <span class="form-label">Đơn giá (đ)</span>
+                <div class="range-pair">
+                  <input type="number" class="form-control" name="giaTu" min="0" step="1000" placeholder="Từ" aria-label="Giá từ" th:value="${fGiaTu != null ? fGiaTu.toPlainString() : ''}">
+                  <span aria-hidden="true">–</span>
+                  <input type="number" class="form-control" name="giaDen" min="0" step="1000" placeholder="Đến" aria-label="Giá đến" th:value="${fGiaDen != null ? fGiaDen.toPlainString() : ''}">
+                </div>
+              </div>
+              <div class="form-group filter-span">
+                <span class="form-label">Ngày áp dụng</span>
+                <div class="range-pair">
+                  <input type="date" class="form-control" name="tuNgay" aria-label="Áp dụng từ ngày" th:value="${fTuNgay}">
+                  <span aria-hidden="true">–</span>
+                  <input type="date" class="form-control" name="denNgay" aria-label="Áp dụng đến ngày" th:value="${fDenNgay}">
+                </div>
+              </div>
+            </div>
+            <p class="form-error" id="rangeError" hidden></p>
+            <div class="filter-actions">
+              <a class="btn btn-ghost" th:href="@{/hcns/dich-vu-bang-gia} + ${fTrangThai != '' ? '?trangThai=' + fTrangThai : ''}">Xoá lọc</a>
+              <button type="submit" class="btn btn-primary">Áp dụng</button>
+            </div>
+          </div>
+        </div>
+
+        <select class="filter-select" name="sapXep" aria-label="Sắp xếp" onchange="this.form.submit()" style="width:12.5rem;margin-left:auto">
+          <option value="macDinh" th:selected="${fSapXep == 'macDinh'}">Sắp xếp: Mặc định</option>
+          <option value="tenDichVu" th:selected="${fSapXep == 'tenDichVu'}">Sắp xếp: Tên dịch vụ A–Z</option>
+          <option value="giaTang" th:selected="${fSapXep == 'giaTang'}">Sắp xếp: Giá thấp đến cao</option>
+          <option value="giaGiam" th:selected="${fSapXep == 'giaGiam'}">Sắp xếp: Giá cao đến thấp</option>
+          <option value="ngayMoi" th:selected="${fSapXep == 'ngayMoi'}">Sắp xếp: Áp dụng gần nhất</option>
+        </select>
+      </form>
+
+      <div class="chip-row" id="activeFilters" hidden></div>
+
+      <section class="card card-flush">
+        <div class="table-container" style="border:0;border-radius:0">
+          <table class="table table-stack" id="priceTable">
             <thead>
               <tr>
-                <th>Mã bảng giá</th>
+                <th style="width:1%"><input type="checkbox" id="selectAllPrices" aria-label="Chọn tất cả gói giá trên trang"></th>
                 <th>Dịch vụ</th>
-                <th>Loại hình đặt</th>
-                <th>Đơn vị tính</th>
-                <th>Đơn giá niêm yết</th>
-                <th>Ngày áp dụng</th>
-                <th>Trạng thái</th>
-                <th style="text-align:right">Thao tác</th>
+                <th class="hide-sm">Loại hình đặt</th>
+                <th class="hide-md">Đơn vị tính</th>
+                <th class="num">Đơn giá</th>
+                <th class="hide-md">Ngày áp dụng</th>
+                <th class="hide-sm">Trạng thái</th>
+                <th style="width:1%"><span class="sr-only">Thao tác</span></th>
               </tr>
             </thead>
             <tbody>
-              <tr th:each="bg : ${bangGias}">
-                <td style="font-weight:700;color:var(--primary-light)" th:text="${bg.maBangGia}">BG01</td>
-                <td style="font-weight:600" th:text="${bg.dichVu != null ? bg.dichVu.tenDichVu : '--'}">Dọn dẹp nhà</td>
+              <tr th:each="bg : ${bangGias}"
+                  th:attr="data-id=${bg.id},data-name=${bg.dichVu != null ? bg.dichVu.tenDichVu : bg.maBangGia},data-code=${bg.maBangGia},data-unit=${bg.donViTinh},data-price=${bg.donGia != null ? bg.donGia : 0}">
+                <td><input type="checkbox" class="price-check" th:attr="aria-label='Chọn ' + ${bg.maBangGia}"></td>
                 <td>
-                  <span class="badge badge-primary" th:if="${bg.loaiHinhDat == 'TheoLan'}">Theo lần</span>
-                  <span class="badge badge-info" th:if="${bg.loaiHinhDat == 'GoiThang'}">Gói tháng</span>
+                  <div style="font-weight:500" th:text="${bg.dichVu != null ? bg.dichVu.tenDichVu : '—'}">Dọn dẹp nhà</div>
+                  <span class="cell-sub tabular" th:text="${bg.maBangGia} + ' · ' + ${bg.donViTinh}">BG01 · Giờ</span>
                 </td>
-                <td th:text="${bg.donViTinh}">Giờ</td>
-                <td style="color:var(--accent);font-weight:700;font-size:0.95rem" th:text="${bg.donGia != null ? #numbers.formatDecimal(bg.donGia, 0, 'POINT', 0, 'COMMA') + 'đ' : '--'}">120.000đ</td>
-                <td style="font-size:0.85rem" th:text="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
-                <td>
-                  <span class="badge badge-success" th:if="${bg.trangThai == 'DangApDung'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Đang áp dụng</span>
+                <td class="hide-sm">
+                  <span class="badge badge-secondary" th:if="${bg.loaiHinhDat == 'TheoLan'}">Theo lần</span>
+                  <span class="badge badge-secondary" th:if="${bg.loaiHinhDat == 'GoiThang'}">Gói tháng</span>
+                </td>
+                <td class="hide-md" th:text="${bg.donViTinh}">Giờ</td>
+                <td class="num col-end nowrap" style="font-weight:500" th:text="${bg.donGia != null ? #numbers.formatDecimal(bg.donGia, 0, 'POINT', 0, 'COMMA') + ' đ' : '—'}">120.000 đ</td>
+                <td class="hide-md nowrap tabular cell-empty" th:text="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'dd/MM/yyyy') : '—'}">01/01/2026</td>
+                <td class="hide-sm nowrap">
+                  <span class="badge badge-success" th:if="${bg.trangThai == 'DangApDung'}">Đang áp dụng</span>
                   <span class="badge badge-secondary" th:unless="${bg.trangThai == 'DangApDung'}">Hết hạn</span>
                 </td>
-                <td style="text-align:right">
-                  <div class="table-actions" style="justify-content:flex-end">
-                    <button class="btn btn-outline btn-sm"
-                            th:data-id="${bg.id}"
-                            th:data-dichvuid="${bg.dichVu != null ? bg.dichVu.id : ''}"
-                            th:data-loaihinh="${bg.loaiHinhDat}"
-                            th:data-donvitinh="${bg.donViTinh}"
-                            th:data-dongia="${bg.donGia}"
-                            th:data-ngayapdung="${bg.ngayApDung}"
-                            th:data-ngayketthuc="${bg.ngayKetThuc}"
-                            th:data-trangthai="${bg.trangThai}"
-                            onclick="openEditPriceModal(this)">
-                      <i class="ti ti-edit"></i> Sửa
-                    </button>
-                    <form th:if="${bg.trangThai == 'DangApDung'}" th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post" style="display:inline">
-                      <input type="hidden" name="id" th:value="${bg.id}">
-                      <input type="hidden" name="dichVuId" th:value="${bg.dichVu != null ? bg.dichVu.id : ''}">
-                      <input type="hidden" name="loaiHinhDat" th:value="${bg.loaiHinhDat}">
-                      <input type="hidden" name="donViTinh" th:value="${bg.donViTinh}">
-                      <input type="hidden" name="donGia" th:value="${bg.donGia}">
-                      <input type="hidden" name="ngayApDung" th:value="${bg.ngayApDung}">
-                      <input type="hidden" name="trangThai" value="HetHan">
-                      <button type="submit" class="btn btn-warning btn-sm" title="Chuyển sang Hết hạn"><i class="ti ti-ban"></i></button>
-                    </form>
-                    <form th:if="${bg.trangThai != 'DangApDung'}" th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post" style="display:inline">
-                      <input type="hidden" name="id" th:value="${bg.id}">
-                      <input type="hidden" name="dichVuId" th:value="${bg.dichVu != null ? bg.dichVu.id : ''}">
-                      <input type="hidden" name="loaiHinhDat" th:value="${bg.loaiHinhDat}">
-                      <input type="hidden" name="donViTinh" th:value="${bg.donViTinh}">
-                      <input type="hidden" name="donGia" th:value="${bg.donGia}">
-                      <input type="hidden" name="ngayApDung" th:value="${bg.ngayApDung}">
-                      <input type="hidden" name="trangThai" value="DangApDung">
-                      <button type="submit" class="btn btn-success btn-sm" title="Áp dụng lại"><i class="ti ti-check"></i></button>
-                    </form>
-                    <form th:action="@{/hcns/dich-vu-bang-gia/xoa}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn gói giá này khỏi hệ thống?');">
-                      <input type="hidden" name="id" th:value="${bg.id}">
-                      <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger,#ef4444);border-color:rgba(239,68,68,0.3)" title="Xóa gói giá"><i class="ti ti-trash"></i></button>
-                    </form>
+                <td>
+                  <div class="dropdown" style="display:inline-block">
+                    <button type="button" class="icon-btn" th:attr="data-dropdown='priceMenu' + ${bg.id},aria-label='Thao tác với ' + ${bg.maBangGia}"><i class="ti ti-dots"></i></button>
+                    <div class="dropdown-menu dropdown-menu-fixed" th:id="'priceMenu' + ${bg.id}" style="min-width:12rem">
+                      <button type="button" class="dropdown-item menu-btn"
+                              th:data-id="${bg.id}"
+                              th:data-dichvuid="${bg.dichVu != null ? bg.dichVu.id : ''}"
+                              th:data-loaihinh="${bg.loaiHinhDat}"
+                              th:data-donvitinh="${bg.donViTinh}"
+                              th:data-dongia="${bg.donGia}"
+                              th:data-ngayapdung="${bg.ngayApDung}"
+                              th:data-ngayketthuc="${bg.ngayKetThuc}"
+                              th:data-trangthai="${bg.trangThai}"
+                              onclick="DropdownManager.closeAll(); openEditPriceModal(this)"><i class="ti ti-edit"></i>Sửa gói giá</button>
+                      <form th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post">
+                        <input type="hidden" name="id" th:value="${bg.id}">
+                        <input type="hidden" name="dichVuId" th:value="${bg.dichVu != null ? bg.dichVu.id : ''}">
+                        <input type="hidden" name="loaiHinhDat" th:value="${bg.loaiHinhDat}">
+                        <input type="hidden" name="donViTinh" th:value="${bg.donViTinh}">
+                        <input type="hidden" name="donGia" th:value="${bg.donGia}">
+                        <input type="hidden" name="ngayApDung" th:value="${bg.ngayApDung}">
+                        <input type="hidden" name="ngayKetThuc" th:value="${bg.ngayKetThuc}">
+                        <input type="hidden" name="trangThai" th:value="${bg.trangThai == 'DangApDung' ? 'HetHan' : 'DangApDung'}">
+                        <button type="submit" class="dropdown-item menu-btn" th:if="${bg.trangThai == 'DangApDung'}"><i class="ti ti-ban"></i>Ngừng áp dụng</button>
+                        <button type="submit" class="dropdown-item menu-btn" th:unless="${bg.trangThai == 'DangApDung'}"><i class="ti ti-check"></i>Áp dụng lại</button>
+                      </form>
+                      <div class="dropdown-divider"></div>
+                      <form th:action="@{/hcns/dich-vu-bang-gia/xoa}" method="post" onsubmit="return confirm('Xoá vĩnh viễn gói giá này? Không hoàn tác được.');">
+                        <input type="hidden" name="id" th:value="${bg.id}">
+                        <button type="submit" class="dropdown-item menu-btn danger"><i class="ti ti-trash"></i>Xoá gói giá</button>
+                      </form>
+                    </div>
                   </div>
                 </td>
               </tr>
-              <tr th:if="${bangGias == null or #lists.isEmpty(bangGias)}">
-                <td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có dữ liệu bảng giá</td>
+              <tr th:if="${#lists.isEmpty(bangGias) and (coBoLoc or fTrangThai != '')}">
+                <td colspan="8" class="table-empty">
+                  Không có gói giá nào khớp bộ lọc.
+                  <a class="link-action" style="margin:0" th:href="@{/hcns/dich-vu-bang-gia}">Xoá lọc</a>
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(bangGias) and !coBoLoc and fTrangThai == ''}">
+                <td colspan="8" class="table-empty">
+                  Chưa có gói giá nào.
+                  <div style="margin-top:0.75rem"><button type="button" class="btn btn-primary" data-modal-open="addPriceModal"><i class="ti ti-plus"></i>Thêm bảng giá</button></div>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- ============================================================
-             PHÂN TRANG 10 DÒNG (BẤM NÚT -> ĐỂ XEM TIẾP THEO YÊU CẦU)
-             ============================================================ -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-top:1px solid var(--border-light);background:var(--bg-card)">
-          <div style="font-size:0.875rem;color:var(--text-muted)">
-            Hiển thị trang <strong th:text="${currentPage + 1}">1</strong> / <strong th:text="${totalPages > 0 ? totalPages : 1}">1</strong>
-            (Tổng cộng <span th:text="${totalItems}">0</span> mục · 10 dòng/trang)
-          </div>
-
-          <div class="pagination" style="display:flex;gap:0.35rem;align-items:center">
-            <!-- Nút LÙI (<-) -->
-            <a th:href="@{/hcns/dich-vu-bang-gia(page=${currentPage - 1})}"
-               class="btn btn-outline btn-sm"
-               th:style="${currentPage == 0} ? 'pointer-events:none;opacity:0.4' : ''"
-               title="Trang trước">
-              <i class="ti ti-arrow-left"></i> Trước
-            </a>
-
-            <!-- Các nút số trang lân cận -->
-            <th:block th:if="${totalPages > 1}">
-              <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
-                <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
-                   th:href="@{/hcns/dich-vu-bang-gia(page=${i})}"
-                   class="page-btn"
-                   th:classappend="${i == currentPage} ? 'active' : ''"
-                   th:text="${i + 1}"
-                   style="min-width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);text-decoration:none;font-size:0.85rem;font-weight:600">
-                  1
-                </a>
-              </th:block>
+        <div class="table-footer" th:if="${totalItems != null and totalItems > 0}">
+          <span class="table-footer-count">
+            <span class="long" th:if="${totalPages > 1}" th:text="${currentPage * 10 + 1} + ' tới ' + ${currentPage * 10 + #lists.size(bangGias)} + ' trong '">1 tới 10 trong </span><span th:text="${totalItems} + ' gói giá'">24 gói giá</span>
+          </span>
+          <nav class="pagination" aria-label="Phân trang" th:if="${totalPages > 1}">
+            <a th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${tabQuery} + 'page=' + ${currentPage - 1}" class="page-btn" aria-label="Trang trước"
+               th:classappend="${currentPage == 0} ? 'is-disabled' : ''"><i class="ti ti-chevron-left"></i></a>
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+              <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${tabQuery} + 'page=' + ${i}"
+                 class="page-btn" th:classappend="${i == currentPage} ? 'active' : ''"
+                 th:attr="aria-current=${i == currentPage ? 'page' : null}" th:text="${i + 1}">1</a>
             </th:block>
+            <a th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${tabQuery} + 'page=' + ${currentPage + 1}" class="page-btn" aria-label="Trang sau"
+               th:classappend="${currentPage >= totalPages - 1} ? 'is-disabled' : ''"><i class="ti ti-chevron-right"></i></a>
+          </nav>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
 
-            <!-- Nút TIẾP (->) ĐẶC TẢ: BẤM -> ĐỂ XEM TIẾP -->
-            <a th:href="@{/hcns/dich-vu-bang-gia(page=${currentPage + 1})}"
-               class="btn btn-primary btn-sm"
-               th:style="${currentPage >= totalPages - 1} ? 'pointer-events:none;opacity:0.4' : ''"
-               title="Xem tiếp các dòng tiếp theo">
-              Tiếp <i class="ti ti-arrow-right"></i>
-            </a>
+<!-- ============================================================
+     MODAL: SỬA GIÁ NHIỀU GÓI CÙNG LÚC
+     ============================================================ -->
+<div class="modal-overlay" id="bulkPriceModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <h2 class="modal-title">Sửa giá <span id="bulkModalCount">0</span> gói</h2>
+      <button type="button" class="modal-close" data-modal-close="bulkPriceModal" aria-label="Đóng"><i class="ti ti-x"></i></button>
+    </div>
+    <form th:action="@{/hcns/dich-vu-bang-gia/sua-hang-loat}" method="post" id="bulkPriceForm">
+      <input type="hidden" name="page" th:value="${currentPage}">
+      <input type="hidden" name="returnQuery" th:value="${tabQuery}">
+
+      <div class="form-group">
+        <span class="form-label">Cách đổi giá</span>
+        <div class="segmented" role="radiogroup" aria-label="Cách đổi giá">
+          <label><input type="radio" name="bulkMode" value="percent" checked><span>Theo %</span></label>
+          <label><input type="radio" name="bulkMode" value="amount"><span>Theo số tiền</span></label>
+          <label><input type="radio" name="bulkMode" value="set"><span>Cùng một giá</span></label>
+        </div>
+      </div>
+
+      <div class="bulk-rule">
+        <div class="form-group" id="bulkDirectionGroup">
+          <span class="form-label">Tăng hay giảm</span>
+          <div class="segmented" role="radiogroup" aria-label="Tăng hay giảm">
+            <label><input type="radio" name="bulkDirection" value="up" checked><span>Tăng</span></label>
+            <label><input type="radio" name="bulkDirection" value="down"><span>Giảm</span></label>
           </div>
         </div>
-
+        <div class="form-group">
+          <label class="form-label" for="bulkValue" id="bulkValueLabel">Mức đổi (%)</label>
+          <div class="input-suffix">
+            <input type="number" class="form-control" id="bulkValue" min="0" step="any" inputmode="decimal" placeholder="VD: 10">
+            <span id="bulkValueSuffix">%</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="bulkNgayApDung">Ngày áp dụng mới</label>
+          <input type="date" class="form-control" name="ngayApDung" id="bulkNgayApDung">
+        </div>
       </div>
-    </main>
+      <label class="check-row"><input type="checkbox" id="bulkRound" checked> Làm tròn đến 1.000 đ</label>
+
+      <div class="bulk-preview">
+        <div class="bulk-preview-head">
+          <span>Gói giá</span><span class="num">Giá hiện tại</span><span class="num">Giá mới</span>
+        </div>
+        <div id="bulkPreviewRows"></div>
+      </div>
+      <p class="form-hint">Mỗi gói một giá: gõ thẳng vào ô "Giá mới" của từng dòng. Ô đã gõ tay giữ nguyên khi đổi cách tính ở trên. Để trống ngày áp dụng thì giữ ngày cũ của từng gói.</p>
+      <p class="form-error" id="bulkError" hidden></p>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-modal-close="bulkPriceModal">Huỷ</button>
+        <button type="submit" class="btn btn-primary" id="bulkSubmit">Lưu giá mới</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -162,11 +280,11 @@
 <div class="modal-overlay" id="addPriceModal">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
-      <h2 class="modal-title"><i class="ti ti-receipt"></i> Thêm Gói Bảng giá Mới</h2>
-      <button class="modal-close" data-modal-close="addPriceModal">✕</button>
+      <h2 class="modal-title">Thêm bảng giá</h2>
+      <button class="modal-close" data-modal-close="addPriceModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <form th:action="@{/hcns/dich-vu-bang-gia/them}" method="post">
-      <div style="padding:1.5rem">
+      <div>
         <div class="form-group" style="margin-bottom:1rem">
           <label class="form-label">Chọn Dịch vụ áp dụng *</label>
           <select class="form-control" name="dichVuId" required>
@@ -203,8 +321,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-modal-close="addPriceModal">Hủy</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Lưu bảng giá</button>
+        <button type="button" class="btn btn-outline" data-modal-close="addPriceModal">Huỷ</button>
+        <button type="submit" class="btn btn-primary">Lưu bảng giá</button>
       </div>
     </form>
   </div>
@@ -216,12 +334,12 @@
 <div class="modal-overlay" id="editPriceModal">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
-      <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Bảng giá Dịch vụ</h2>
-      <button class="modal-close" data-modal-close="editPriceModal">✕</button>
+      <h2 class="modal-title">Sửa gói giá</h2>
+      <button class="modal-close" data-modal-close="editPriceModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <form th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post">
       <input type="hidden" name="id" id="editBgId">
-      <div style="padding:1.5rem">
+      <div>
         <div class="form-group" style="margin-bottom:1rem">
           <label class="form-label">Dịch vụ áp dụng *</label>
           <select class="form-control" name="dichVuId" id="editBgDichVuId" required>
@@ -266,8 +384,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-modal-close="editPriceModal">Hủy</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy"></i> Cập nhật bảng giá</button>
+        <button type="button" class="btn btn-outline" data-modal-close="editPriceModal">Huỷ</button>
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
       </div>
     </form>
   </div>
@@ -293,6 +411,211 @@
     }
     ModalManager.open('editPriceModal');
   }
+
+  // ===================== BỘ LỌC =====================
+  (function () {
+    const form = document.getElementById('priceFilterForm');
+    if (!form) return;
+    const params = new URLSearchParams(location.search);
+    const optText = (name, value) => {
+      const opt = form.querySelector(`select[name="${name}"] option[value="${CSS.escape(value)}"]`);
+      return opt ? opt.textContent.trim() : value;
+    };
+    const money = (v) => Number(v).toLocaleString('vi-VN') + ' đ';
+    const date = (v) => v.split('-').reverse().join('/');
+    const chips = [];
+    if (params.get('q')) chips.push({ keys: ['q'], label: 'Từ khoá: "' + params.get('q') + '"' });
+    if (params.get('loaiDichVuId')) chips.push({ keys: ['loaiDichVuId'], label: 'Danh mục: ' + optText('loaiDichVuId', params.get('loaiDichVuId')) });
+    if (params.get('dichVuId')) chips.push({ keys: ['dichVuId'], label: 'Dịch vụ: ' + optText('dichVuId', params.get('dichVuId')) });
+    if (params.get('loaiHinhDat')) chips.push({ keys: ['loaiHinhDat'], label: optText('loaiHinhDat', params.get('loaiHinhDat')) });
+    if (params.get('giaTu') || params.get('giaDen')) {
+      const a = params.get('giaTu'), b = params.get('giaDen');
+      chips.push({ keys: ['giaTu', 'giaDen'], label: 'Giá: ' + (a && b ? money(a) + ' – ' + money(b) : a ? 'từ ' + money(a) : 'đến ' + money(b)) });
+    }
+    if (params.get('tuNgay') || params.get('denNgay')) {
+      const a = params.get('tuNgay'), b = params.get('denNgay');
+      chips.push({ keys: ['tuNgay', 'denNgay'], label: 'Áp dụng: ' + (a && b ? date(a) + ' – ' + date(b) : a ? 'từ ' + date(a) : 'đến ' + date(b)) });
+    }
+    const advanced = chips.filter(c => c.keys[0] !== 'q').length;
+    const countEl = document.getElementById('advancedCount');
+    if (advanced) { countEl.textContent = advanced; countEl.hidden = false; }
+
+    const row = document.getElementById('activeFilters');
+    if (chips.length) {
+      chips.forEach(c => {
+        const next = new URLSearchParams(params);
+        c.keys.forEach(k => next.delete(k));
+        next.delete('page');
+        const a = document.createElement('a');
+        a.className = 'chip-active';
+        a.href = location.pathname + (next.toString() ? '?' + next : '');
+        a.setAttribute('aria-label', 'Bỏ lọc ' + c.label);
+        a.innerHTML = '<span></span><i class="ti ti-x" aria-hidden="true"></i>';
+        a.firstChild.textContent = c.label;
+        row.appendChild(a);
+      });
+      const clear = document.createElement('a');
+      clear.className = 'link-action';
+      clear.style.margin = '0';
+      clear.textContent = 'Xoá lọc';
+      clear.href = location.pathname + (params.get('trangThai') ? '?trangThai=' + params.get('trangThai') : '');
+      row.appendChild(clear);
+      row.hidden = false;
+    }
+
+    // Chọn danh mục thì danh sách dịch vụ chỉ còn dịch vụ thuộc danh mục đó
+    const loai = document.getElementById('fLoaiDichVu');
+    const dv = document.getElementById('fDichVu');
+    function narrowServices() {
+      [...dv.options].forEach(o => { o.hidden = !!(o.value && loai.value && o.dataset.loai !== loai.value); });
+      if (dv.selectedOptions[0] && dv.selectedOptions[0].hidden) dv.value = '';
+    }
+    loai.addEventListener('change', narrowServices);
+    narrowServices();
+
+    // Khoảng ngược ("từ" lớn hơn "đến") thì chặn, nói rõ ô nào
+    form.addEventListener('submit', (e) => {
+      const err = document.getElementById('rangeError');
+      const gt = parseFloat(form.giaTu.value), gd = parseFloat(form.giaDen.value);
+      let msg = '';
+      if (!isNaN(gt) && !isNaN(gd) && gt > gd) msg = 'Giá "Từ" đang lớn hơn giá "Đến".';
+      else if (form.tuNgay.value && form.denNgay.value && form.tuNgay.value > form.denNgay.value) msg = 'Ngày "từ" đang sau ngày "đến".';
+      err.textContent = msg;
+      err.hidden = !msg;
+      if (msg) { e.preventDefault(); return; }
+      // Bỏ tham số trống cho URL gọn
+      form.querySelectorAll('input[name], select[name]').forEach(el => { if (!el.value || (el.name === 'sapXep' && el.value === 'macDinh')) el.disabled = true; });
+    });
+  })();
+
+  // ===================== SỬA GIÁ HÀNG LOẠT =====================
+  (function () {
+    const table = document.getElementById('priceTable');
+    const toolbar = document.getElementById('priceToolbar');
+    if (!table || !toolbar) return;
+    const master = document.getElementById('selectAllPrices');
+    const checks = () => [...table.querySelectorAll('.price-check')];
+    const selectedRows = () => checks().filter(c => c.checked).map(c => c.closest('tr'));
+    const fmt = (n) => Math.round(n).toLocaleString('vi-VN') + ' đ';
+
+    function refreshSelection() {
+      const all = checks();
+      const n = all.filter(c => c.checked).length;
+      master.checked = n > 0 && n === all.length;
+      master.indeterminate = n > 0 && n < all.length;
+      master.hidden = all.length === 0;
+      toolbar.querySelector('.bulk-default').hidden = n > 0;
+      toolbar.querySelector('.bulk-active').hidden = n === 0;
+      document.getElementById('bulkCount').textContent = n;
+      document.querySelector('#bulkEditBtn span').textContent = 'Sửa giá ' + n + ' gói';
+      all.forEach(c => c.closest('tr').classList.toggle('is-selected', c.checked));
+    }
+    master.addEventListener('change', () => { checks().forEach(c => { c.checked = master.checked; }); refreshSelection(); });
+    table.addEventListener('change', (e) => { if (e.target.classList.contains('price-check')) refreshSelection(); });
+    document.getElementById('bulkClear').addEventListener('click', () => { checks().forEach(c => { c.checked = false; }); refreshSelection(); });
+    refreshSelection();
+
+    // ---- Modal ----
+    const form = document.getElementById('bulkPriceForm');
+    const rowsBox = document.getElementById('bulkPreviewRows');
+    const valueInput = document.getElementById('bulkValue');
+    const errorEl = document.getElementById('bulkError');
+    const mode = () => form.querySelector('input[name="bulkMode"]:checked').value;
+    const direction = () => form.querySelector('input[name="bulkDirection"]:checked').value;
+
+    function computeNew(base) {
+      const v = parseFloat(valueInput.value);
+      if (isNaN(v)) return null;
+      let next;
+      if (mode() === 'set') next = v;
+      else if (mode() === 'percent') next = base * (1 + (direction() === 'down' ? -v : v) / 100);
+      else next = base + (direction() === 'down' ? -v : v);
+      if (document.getElementById('bulkRound').checked) next = Math.round(next / 1000) * 1000;
+      return Math.round(next);
+    }
+
+    function deltaText(base, next) {
+      if (next === null || isNaN(next)) return '';
+      const d = next - base;
+      if (d === 0) return 'Không đổi';
+      const pct = base > 0 ? ' (' + (d > 0 ? '+' : '') + (d / base * 100).toFixed(1).replace('.', ',') + '%)' : '';
+      return (d > 0 ? '+' : '−') + Math.abs(d).toLocaleString('vi-VN') + ' đ' + pct;
+    }
+
+    function recalc() {
+      const isSet = mode() === 'set';
+      document.getElementById('bulkDirectionGroup').hidden = isSet;
+      document.getElementById('bulkValueLabel').textContent = isSet ? 'Giá mới (đ)' : (mode() === 'percent' ? 'Mức đổi (%)' : 'Số tiền đổi (đ)');
+      document.getElementById('bulkValueSuffix').textContent = mode() === 'percent' ? '%' : 'đ';
+      valueInput.placeholder = isSet ? 'VD: 150000' : (mode() === 'percent' ? 'VD: 10' : 'VD: 20000');
+      rowsBox.querySelectorAll('.bulk-row').forEach(row => {
+        const input = row.querySelector('input[name="donGia"]');
+        const base = parseFloat(row.dataset.base);
+        if (!input.dataset.manual) {
+          // Chưa nhập mức đổi thì giữ giá hiện tại, để sửa tay từng gói cũng được
+          const next = computeNew(base);
+          input.value = next === null ? Math.round(base) : next;
+        }
+        const val = input.value === '' ? null : parseFloat(input.value);
+        const delta = row.querySelector('.bulk-delta');
+        delta.textContent = val === null ? '' : deltaText(base, val);
+        delta.classList.toggle('is-down', val !== null && val < base);
+        input.classList.toggle('error', val !== null && val < 0);
+      });
+      errorEl.hidden = true;
+    }
+
+    document.getElementById('bulkEditBtn').addEventListener('click', () => {
+      const rows = selectedRows();
+      if (!rows.length) return;
+      document.getElementById('bulkModalCount').textContent = rows.length;
+      document.getElementById('bulkSubmit').textContent = 'Lưu giá mới cho ' + rows.length + ' gói';
+      rowsBox.innerHTML = '';
+      rows.forEach(tr => {
+        const base = parseFloat(tr.dataset.price) || 0;
+        const row = document.createElement('div');
+        row.className = 'bulk-row';
+        row.dataset.base = base;
+        row.innerHTML = `
+          <div class="bulk-row-name"><span class="bulk-name"></span><span class="cell-sub bulk-meta"></span></div>
+          <div class="num tabular bulk-old"></div>
+          <div class="bulk-new">
+            <input type="hidden" name="ids">
+            <input type="number" name="donGia" class="form-control num" min="0" step="1000" required>
+            <span class="bulk-delta"></span>
+          </div>`;
+        row.querySelector('.bulk-name').textContent = tr.dataset.name;
+        row.querySelector('.bulk-meta').textContent = tr.dataset.code + ' · ' + tr.dataset.unit;
+        row.querySelector('.bulk-old').textContent = fmt(base);
+        row.querySelector('input[name="ids"]').value = tr.dataset.id;
+        const priceInput = row.querySelector('input[name="donGia"]');
+        priceInput.setAttribute('aria-label', 'Giá mới của ' + tr.dataset.name);
+        priceInput.addEventListener('input', () => { priceInput.dataset.manual = '1'; recalc(); });
+        rowsBox.appendChild(row);
+      });
+      valueInput.value = '';
+      document.getElementById('bulkNgayApDung').value = '';
+      recalc();
+      ModalManager.open('bulkPriceModal');
+      setTimeout(() => valueInput.focus(), 50);
+    });
+
+    form.addEventListener('change', (e) => { if (e.target.name === 'bulkMode' || e.target.name === 'bulkDirection' || e.target.id === 'bulkRound') recalc(); });
+    valueInput.addEventListener('input', recalc);
+
+    form.addEventListener('submit', (e) => {
+      const inputs = [...rowsBox.querySelectorAll('input[name="donGia"]')];
+      let msg = '';
+      if (inputs.some(i => i.value === '')) msg = 'Còn gói chưa có giá mới. Điền giá cho gói đó.';
+      else if (inputs.some(i => parseFloat(i.value) < 0)) msg = 'Có gói bị giảm xuống dưới 0 đ. Giảm ít hơn hoặc sửa tay giá của gói đó.';
+      else if (inputs.every(i => parseFloat(i.value) === parseFloat(i.closest('.bulk-row').dataset.base)) && !document.getElementById('bulkNgayApDung').value) msg = 'Giá mới đang giống hệt giá hiện tại.';
+      if (msg) {
+        e.preventDefault();
+        errorEl.textContent = msg;
+        errorEl.hidden = false;
+      }
+    });
+  })();
 </script>
 </body>
 </html>

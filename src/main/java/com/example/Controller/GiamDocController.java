@@ -264,7 +264,7 @@ public String baoCao(
         }
         
         ThongBao tb = new ThongBao();
-        tb.setMaThongBao("TB-" + System.currentTimeMillis()); 
+        tb.setMaThongBao(com.example.Service.MaSinh.tao("TB-")); 
         tb.setTieuDe(tieuDe);
         tb.setNoiDung(noiDung);
         tb.setNhomNhan(nhomNhan);
@@ -428,7 +428,7 @@ public String baoCao(
         }
 
         TaiKhoan tk = new TaiKhoan();
-        tk.setMaTaiKhoan("TK-" + System.currentTimeMillis());
+        tk.setMaTaiKhoan(com.example.Service.MaSinh.tao("TK-"));
         tk.setTenDangNhap(tenDangNhap);
         tk.setMatKhau(matKhau); 
         tk.setEmail(email);

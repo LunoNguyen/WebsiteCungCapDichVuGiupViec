@@ -10,16 +10,13 @@
 
     <main class="page-content">
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Thống kê & Báo cáo</h1>
-          <p class="page-subtitle">Phân tích hoạt động kinh doanh · UC-GD02</p>
-        </div>
+        
         <div class="page-actions" style="display:flex;gap:0.5rem;align-items:center">
 
   <!-- Dropdown chọn Tháng -->
   <div class="dropdown">
     <button class="btn btn-outline btn-sm" data-dropdown="thangMenu"
-            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+            style="gap:0.4rem;font-weight:600;border-color:var(--line-strong);color:var(--text-primary)">
       <i class="ti ti-calendar" style="color:var(--accent)"></i>
       <span th:text="${thangDangChon != null ? ('Tháng ' + thangDangChon) : 'Cả năm'}">Cả năm</span>
       <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
@@ -44,7 +41,7 @@
   <!-- Dropdown chọn Năm -->
   <div class="dropdown">
     <button class="btn btn-outline btn-sm" data-dropdown="namMenu"
-            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+            style="gap:0.4rem;font-weight:600;border-color:var(--line-strong);color:var(--text-primary)">
       <i class="ti ti-calendar" style="color:var(--accent)"></i>
       <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
       <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
@@ -75,25 +72,25 @@
       <!-- Summary KPI -->
       <div class="stats-grid" style="margin-bottom:1.5rem">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">💰</div>
+          <div class="stat-icon"><i class="ti ti-coin"></i></div>
           <div class="stat-value" th:attr="data-count=${doanhThuTrieuDong != null ? doanhThuTrieuDong : 0}" th:text="${doanhThuTrieuDong != null ? #numbers.formatDecimal(doanhThuTrieuDong, 0, 'POINT', 0, 'COMMA') : '0'}">0</div>
           <div class="stat-label">Doanh thu (triệu đồng)</div>
           <div class="kpi-compare"><span class="arrow-up">↑ 12.5%</span><span class="period">so với tháng trước</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📋</div>
+          <div class="stat-icon"><i class="ti ti-clipboard-list"></i></div>
           <div class="stat-value" th:attr="data-count=${tongDonHang != null ? tongDonHang : 0}" th:text="${tongDonHang != null ? tongDonHang : 0}">0</div>
           <div class="stat-label">Tổng đơn dịch vụ</div>
           <div class="kpi-compare"><span class="arrow-up">↑ 8.3%</span><span class="period">so với tháng trước</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">👥</div>
+          <div class="stat-icon"><i class="ti ti-users"></i></div>
           <div class="stat-value" th:attr="data-count=${tongKhachHang != null ? tongKhachHang : 0}" th:text="${tongKhachHang != null ? tongKhachHang : 0}">0</div>
           <div class="stat-label">Tổng khách hàng</div>
           <div class="kpi-compare"><span class="arrow-up">↑ 15.2%</span><span class="period">so với tháng trước</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">📊</div>
+          <div class="stat-icon"><i class="ti ti-chart-bar"></i></div>
           <div class="stat-value" th:attr="data-count=${tongCongTacVien != null ? tongCongTacVien : 0}" th:text="${tongCongTacVien != null ? tongCongTacVien : 0}">0</div>
           <div class="stat-label">Tổng cộng tác viên</div>
           <div class="kpi-compare"><span class="arrow-up">↑ 100%</span><span class="period">đang hoạt động</span></div>
@@ -216,22 +213,22 @@
                 <div style="font-weight:700;margin-bottom:1rem">Top 5 Cộng tác viên xuất sắc</div>
                 <div style="display:flex;flex-direction:column;gap:0.75rem">
                   <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
-                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FFD700,#FFA500);display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0">1</div>
+                    <div style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0">1</div>
                     <div class="avatar avatar-sm">N</div>
                     <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Nguyễn Thị Ngọc</div><div style="font-size:0.72rem;color:var(--text-muted)">Cộng tác viên Ưu tú</div></div>
-                    <span style="color:#FFC107;font-weight:700">★ 4.98</span>
+                    <span style="color:#F59E0B;font-weight:700">★ 4.98</span>
                   </div>
                   <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
-                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#C0C0C0,#A9A9A9);display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0">2</div>
-                    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF6584,#FF8FA3)">T</div>
+                    <div style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;flex-shrink:0">2</div>
+                    <div class="avatar avatar-sm" style="background:var(--primary-soft)">T</div>
                     <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Trần Thị Hoa</div><div style="font-size:0.72rem;color:var(--text-muted)">Cộng tác viên Ưu tú</div></div>
-                    <span style="color:#FFC107;font-weight:700">★ 4.96</span>
+                    <span style="color:#F59E0B;font-weight:700">★ 4.96</span>
                   </div>
                   <div style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md)">
-                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#CD7F32,#A0522D);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0">3</div>
-                    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#43E97B,#38D46A)">L</div>
+                    <div style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0">3</div>
+                    <div class="avatar avatar-sm" style="background:var(--primary-soft)">L</div>
                     <div style="flex:1"><div style="font-weight:700;font-size:0.875rem">Lê Thị Mai</div><div style="font-size:0.72rem;color:var(--text-muted)">Cộng tác viên Ưu tú</div></div>
-                    <span style="color:#FFC107;font-weight:700">★ 4.95</span>
+                    <span style="color:#F59E0B;font-weight:700">★ 4.95</span>
                   </div>
                 </div>
               </div>
@@ -288,7 +285,7 @@
                 </div>
 
                 <!-- Khối Thời gian xử lý trung bình -->
-                <div style="padding:1rem;background:rgba(67,233,123,0.06);border:1px solid rgba(67,233,123,0.2);border-radius:var(--radius-md)">
+                <div style="padding:1rem;background:var(--success-bg);border:1px solid color-mix(in srgb, var(--success) 25%, transparent);border-radius:var(--radius-md)">
                   <div style="font-weight:700;margin-bottom:0.5rem;color:var(--accent)">✓ Thời gian xử lý trung bình</div>
                   <div style="font-size:2rem;font-weight:800">1.5 ngày</div>
                   <div style="font-size:0.8rem;color:var(--text-muted)">Đạt mục tiêu chỉ số cam kết chất lượng</div>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Về Neatify', 'Neatify là nền tảng đặt dịch vụ giúp việc nhà theo giờ: câu chuyện, khu vực phục vụ, tầm nhìn, sứ mệnh và giá trị cốt lõi.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('gioi-thieu')}"></header>
+
+<main>
+  <!-- ===== MỞ ĐẦU ===== -->
+  <section class="page-hero with-photo">
+    <div class="wrap">
+      <div>
+        <h1>Việc nhà là việc cần người đáng tin</h1>
+        <p>Neatify kết nối gia đình với cộng tác viên giúp việc theo giờ đã được xét duyệt, với giá công khai và quy trình rõ ràng từ lúc đặt lịch đến khi thanh toán.</p>
+      </div>
+      <div class="leaf"><img src="/images/services/cham-soc-nguoi-cao-tuoi.png" alt="Cộng tác viên Neatify trò chuyện cùng người cao tuổi"></div>
+    </div>
+  </section>
+
+  <!-- ===== CÂU CHUYỆN ===== -->
+  <section class="section">
+    <div class="wrap split">
+      <div>
+        <h2>Khi tìm người giúp việc vẫn dựa vào may rủi</h2>
+        <p>Nhiều gia đình tìm người giúp việc qua lời giới thiệu: không biết trước giá, không rõ người đến nhà là ai, và khi có sự cố thì không biết hỏi ai.</p>
+        <p>Người làm nghề giúp việc cũng gặp khó: việc không đều, thu nhập phụ thuộc vào người môi giới.</p>
+        <blockquote>Dịch vụ gia đình tốt phải bắt đầu từ một quy trình đáng tin, không phải từ sự may mắn.</blockquote>
+      </div>
+      <div class="leaf"><img src="/images/services/don-dep-nha-cua.png" alt="Cộng tác viên Neatify lau sàn phòng khách" loading="lazy"></div>
+    </div>
+  </section>
+
+  <section class="section section-foam">
+    <div class="wrap split reverse">
+      <div>
+        <h2>Neatify, gọn gàng trong từng việc nhỏ</h2>
+        <p>Tên Neatify ghép từ “neat”, nghĩa là gọn gàng, ngăn nắp. Đó cũng là cách chúng tôi tổ chức công việc: mỗi đơn đặt có người tiếp nhận, mỗi buổi làm có lịch, mỗi khoản thu có hóa đơn và biên lai.</p>
+        <p>Khách hàng đặt lịch trên ứng dụng. Cộng tác viên nhận phân công, xem thời gian biểu và báo cáo kết quả trên ứng dụng của mình. Nhân viên Neatify điều phối và hỗ trợ trên website quản trị.</p>
+      </div>
+      <div class="leaf"><img src="/images/services/ve-sinh-van-phong.png" alt="Cộng tác viên Neatify lau sàn văn phòng" loading="lazy"></div>
+    </div>
+  </section>
+
+  <!-- ===== SỐ LIỆU THẬT TỪ CSDL ===== -->
+  <section class="stats" th:if="${soLieu != null and soLieu['dichVu'] > 0}">
+    <div class="wrap">
+      <div class="stat"><b th:text="${soLieu['dichVu']}">143</b><span>dịch vụ đang cung cấp</span></div>
+      <div class="stat" th:if="${danhMucs != null and !danhMucs.isEmpty()}"><b th:text="${danhMucs.size()}">5</b><span>nhóm dịch vụ</span></div>
+      <div class="stat" th:if="${soLieu['congTacVien'] > 0}"><b th:text="${soLieu['congTacVien']}">0</b><span>cộng tác viên đang hoạt động</span></div>
+      <div class="stat" th:if="${soLieu['khachHang'] > 0}"><b th:text="${soLieu['khachHang']}">0</b><span>khách hàng thành viên</span></div>
+    </div>
+  </section>
+
+  <!-- ===== KHU VỰC HOẠT ĐỘNG (từ bảng KhuVuc) ===== -->
+  <section class="section" th:if="${khuVucs != null and !khuVucs.isEmpty()}">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Khu vực hoạt động</h2>
+        <p>Neatify đang nhận đơn tại các tỉnh, thành phố dưới đây.</p>
+      </div>
+      <div class="areas">
+        <div class="area" th:each="kv : ${khuVucs}">
+          <h3><svg class="ic"><use href="#i-pin"/></svg><span th:text="${kv.key}">TP. Hồ Chí Minh</span></h3>
+          <p th:text="${#strings.listJoin(kv.value, ', ')}">Quận 1, Quận 3, Bình Thạnh</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TẦM NHÌN & SỨ MỆNH ===== -->
+  <section class="section section-foam">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Không chỉ là một ứng dụng, mà là một lời cam kết</h2>
+      </div>
+      <div class="grid-3">
+        <div class="value">
+          <h3>Tầm nhìn</h3>
+          <p>Trở thành nơi các gia đình nghĩ đến đầu tiên khi cần người giúp việc theo giờ, với đủ dịch vụ cho nhà ở và văn phòng trong một ứng dụng.</p>
+        </div>
+        <div class="value">
+          <h3>Sứ mệnh với khách hàng</h3>
+          <p>Giảm gánh nặng việc nhà: đặt lịch nhanh, biết giá trước, có người chịu trách nhiệm khi buổi làm chưa đạt.</p>
+        </div>
+        <div class="value">
+          <h3>Sứ mệnh với cộng tác viên</h3>
+          <p>Mang lại nguồn việc đều và minh bạch: tự chọn dịch vụ, khu vực, xem lịch làm việc và kết quả đánh giá của mình.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== GIÁ TRỊ CỐT LÕI ===== -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Giá trị cốt lõi</h2>
+      </div>
+      <div class="grid-4">
+        <div class="value">
+          <div class="badge-ic"><svg class="ic"><use href="#i-shield"/></svg></div>
+          <h3>Chất lượng</h3>
+          <p>Cộng tác viên được xét duyệt hồ sơ, phỏng vấn và được đánh giá sau mỗi đơn.</p>
+        </div>
+        <div class="value">
+          <div class="badge-ic"><svg class="ic"><use href="#i-chat"/></svg></div>
+          <h3>Tận tâm</h3>
+          <p>Mọi phản hồi và khiếu nại đều có nhân viên tiếp nhận, xử lý và trả lời.</p>
+        </div>
+        <div class="value">
+          <div class="badge-ic"><svg class="ic"><use href="#i-clock"/></svg></div>
+          <h3>Tiện lợi</h3>
+          <p>Đặt theo lần hoặc theo gói tháng, chọn ngày giờ phù hợp với lịch của gia đình.</p>
+        </div>
+        <div class="value">
+          <div class="badge-ic"><svg class="ic"><use href="#i-tag"/></svg></div>
+          <h3>Minh bạch</h3>
+          <p>Bảng giá công khai, hóa đơn chi tiết, lịch sử cập nhật giá được lưu lại.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div class="wrap">
+      <div>
+        <h2>Bắt đầu với một buổi dọn nhà</h2>
+        <p>Xem bảng giá từng nhóm dịch vụ, hoặc gửi hồ sơ nếu bạn muốn nhận việc cùng Neatify.</p>
+      </div>
+      <div class="actions">
+        <a class="btn btn-sun" href="/dich-vu">Xem dịch vụ và bảng giá</a>
+        <a class="btn btn-ghost-light" href="/tro-thanh-doi-tac">Trở thành đối tác</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

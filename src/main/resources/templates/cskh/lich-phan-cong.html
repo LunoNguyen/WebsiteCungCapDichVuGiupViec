@@ -13,10 +13,7 @@
       <main class="page-content">
         <!-- Page Header -->
         <div class="page-header">
-          <div class="page-title-group">
-            <h1 class="page-title">Lịch Làm việc Cộng tác viên</h1>
-            <p class="page-subtitle">Chọn một cộng tác viên để xem lịch thực hiện dịch vụ của họ dưới dạng calendar</p>
-          </div>
+          
           <div class="page-actions">
             <div class="chart-period-tabs">
               <button class="chart-period-btn active" id="viewTabCalendar" onclick="switchView('calendar')">
@@ -32,25 +29,25 @@
         <!-- Stats -->
         <div class="stats-grid" style="margin-bottom:1.5rem">
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(0,180,216,0.15)">👩‍🔧</div>
+            <div class="stat-icon"><i class="ti ti-user-cog"></i></div>
             <div class="stat-value" th:text="${congTacVienStats != null ? congTacVienStats.hoatDongCount : 0}">0</div>
             <div class="stat-label">CTV hoạt động</div>
             <div class="kpi-compare"><span class="arrow-up">Thực tế hệ thống</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(67,233,123,0.15)">✅</div>
+            <div class="stat-icon"><i class="ti ti-circle-check"></i></div>
             <div class="stat-value" th:text="${donHangStats != null ? donHangStats.hoanThanhCount : 0}">0</div>
             <div class="stat-label">Đơn hoàn thành</div>
             <div class="kpi-compare"><span class="arrow-up">Đã phục vụ</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
+            <div class="stat-icon">⏳</div>
             <div class="stat-value" th:text="${donHangStats != null ? donHangStats.choDuyetCount : 0}">0</div>
             <div class="stat-label">Đơn cần phân công</div>
             <div class="kpi-compare"><span style="color:var(--warning)">Cần xử lý</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🔄</div>
+            <div class="stat-icon"><i class="ti ti-refresh"></i></div>
             <div class="stat-value" th:text="${donHangStats != null ? donHangStats.dangThucHienCount : 0}">0</div>
             <div class="stat-label">Đang thực hiện</div>
             <div class="kpi-compare"><span class="period">Đang phục vụ</span></div>
@@ -63,11 +60,7 @@
             <!-- Left: CTV List -->
             <div>
               <div class="card" style="padding:1rem">
-                <div
-                  style="font-weight:700;font-size:0.9rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem">
-                  <i class="ti ti-users" style="color:var(--cskh-primary)"></i>
-                  Danh sách Cộng tác viên
-                </div>
+                <h2 class="card-title" style="margin-bottom:0.75rem">Cộng tác viên</h2>
                 <div style="margin-bottom:0.75rem">
                   <div style="position:relative">
                     <i class="ti ti-search"
@@ -80,7 +73,7 @@
                 <div class="ctv-list-sidebar" id="ctvListSidebar">
                   <!-- "Tất cả" option -->
                   <div class="ctv-list-item active" id="ctv-item-all" onclick="selectCTV('all', 'Tất cả CTV', this)">
-                    <div class="ctv-list-avatar" style="background:linear-gradient(135deg,#6C63FF,#FF6584)">
+                    <div class="ctv-list-avatar" style="background:var(--primary-soft)">
                       <i class="ti ti-users" style="font-size:1rem"></i>
                     </div>
                     <div class="ctv-list-info">
@@ -95,7 +88,7 @@
                       th:data-rating="${ctv.diemDanhGia != null ? ctv.diemDanhGia : 5.0}"
                       th:data-area="${ctv.noiCuTru != null ? ctv.noiCuTru : 'HCM'}" onclick="selectCTVFromCard(this)">
                       <div class="ctv-list-avatar"
-                        th:style="'background:' + (${iterStat.index % 4 == 0} ? 'linear-gradient(135deg,#00B4D8,#0096B7)' : (${iterStat.index % 4 == 1} ? 'linear-gradient(135deg,#43E97B,#38D46A)' : (${iterStat.index % 4 == 2} ? 'linear-gradient(135deg,#FF6584,#FF8FA3)' : 'linear-gradient(135deg,#FFB347,#FF9422)')))"
+                        
                         th:text="${ctv.hoTen != null and #strings.length(ctv.hoTen) > 0 ? #strings.substring(ctv.hoTen,0,1) : 'C'}">
                         C</div>
                       <div class="ctv-list-info">
@@ -120,18 +113,15 @@
             <!-- Right: Calendar -->
             <div>
               <!-- Selected CTV Info Banner -->
-              <div id="selectedCTVBanner"
-                style="display:none;background:var(--cskh-gradient);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;color:#fff;display:flex;align-items:center;gap:0.75rem">
-                <div id="bannerAvatar"
-                  style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem">
-                  C</div>
-                <div style="flex:1">
-                  <div id="bannerName" style="font-weight:700;font-size:0.95rem">Tất cả CTV</div>
-                  <div id="bannerSub" style="font-size:0.78rem;opacity:0.85">Đang xem lịch tổng hợp</div>
+              <div id="selectedCTVBanner" class="ctv-banner" style="display:none">
+                <span id="bannerAvatar" class="avatar"><i class="ti ti-users"></i></span>
+                <div style="flex:1;min-width:0">
+                  <div id="bannerName" class="ctv-banner-name">Tất cả CTV</div>
+                  <div id="bannerSub" class="ctv-banner-sub">Đang xem lịch tổng hợp</div>
                 </div>
-                <div id="bannerStats" style="text-align:right;font-size:0.8rem;opacity:0.9">
-                  <div id="bannerOrderCount" style="font-weight:700;font-size:1.1rem">-</div>
-                  <div>Lịch trong tháng</div>
+                <div class="ctv-banner-stat">
+                  <div id="bannerOrderCount" class="ctv-banner-count">-</div>
+                  <div class="ctv-banner-sub">lịch trong tháng</div>
                 </div>
               </div>
 
@@ -255,14 +245,14 @@
       <div class="modal-header">
         <h2 class="modal-title"><i class="ti ti-user-check" style="color:var(--cskh-primary)"></i> Phân công Đơn dịch vụ
         </h2>
-        <button class="modal-close" data-modal-close="assignModal">✕</button>
+        <button class="modal-close" data-modal-close="assignModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
       </div>
       <div>
         <input type="hidden" id="assignCTVId">
         <div class="form-group" style="margin-bottom:1rem">
           <label class="form-label">CTV phụ trách</label>
           <input type="text" class="form-control" id="assignCTVName" readonly
-            style="opacity:0.85;background:rgba(0,0,0,0.03)">
+            style="opacity:0.85;background:var(--primary-soft)">
         </div>
         <div class="form-group" style="margin-bottom:1rem">
           <label class="form-label">Chọn đơn hàng cần ghép <span style="color:var(--danger)">*</span></label>
@@ -310,7 +300,7 @@
       <div class="modal-header">
         <h2 class="modal-title"><i class="ti ti-calendar-event" style="color:var(--cskh-primary)"></i> Chi tiết lịch làm
           việc</h2>
-        <button class="modal-close" data-modal-close="eventDetailModal">✕</button>
+        <button class="modal-close" data-modal-close="eventDetailModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
       </div>
       <div>
         <div class="info-row"><span class="info-label">Mã đơn</span><span class="info-value" id="ev-order"
@@ -338,8 +328,6 @@
       </div>
     </div>
   </div>
-
-  <div class="overlay" id="sidebarOverlay"></div>
   <div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
 
   <!-- Thymeleaf → JS data bridge -->
@@ -372,9 +360,14 @@
       const banner = document.getElementById('selectedCTVBanner');
       banner.style.display = 'flex';
       const initial = name ? name.trim().charAt(0).toUpperCase() : '★';
-      document.getElementById('bannerAvatar').textContent = initial;
+      const av = document.getElementById('bannerAvatar');
+      av.textContent = id === 'all' ? '' : initial;
+      av.innerHTML = id === 'all' ? '<i class="ti ti-users"></i>' : av.innerHTML;
+      av.removeAttribute('data-tone');
+      av.dataset.name = name || '';
+      if (id !== 'all' && typeof initAvatarTones === 'function') initAvatarTones(av.parentNode);
       document.getElementById('bannerName').textContent = name || 'Tất cả CTV';
-      document.getElementById('bannerSub').textContent = id === 'all' ? 'Đang xem lịch tổng hợp tất cả CTV từ CSDL' : 'Đang xem lịch cá nhân từ CSDL';
+      document.getElementById('bannerSub').textContent = id === 'all' ? 'Lịch tổng hợp của tất cả cộng tác viên' : 'Lịch làm việc cá nhân';
 
       // Rebuild calendar events
       loadCalendarEvents(id);
@@ -397,7 +390,22 @@
     }
 
     // ── Calendar Events from Database ──────────────────────────────
-    const COLOR_PALETTE = ['#08778C', '#1197B0', '#22BED0', '#43E97B', '#FFB347', '#FF6584', '#6C63FF', '#00B4D8'];
+    const COLOR_PALETTE = [
+      { bg: '#E6F4F6', bar: '#08778C', text: '#065766' }, // xanh ngọc
+      { bg: '#EEF2FF', bar: '#4F39F6', text: '#3A23B8' }, // chàm
+      { bg: '#F5F3FF', bar: '#8E51FF', text: '#5D0EC0' }, // tím
+      { bg: '#F0F9FF', bar: '#0084D1', text: '#00598A' }, // xanh trời
+      { bg: '#FDF2F8', bar: '#E60076', text: '#A3004C' }, // hồng
+      { bg: '#F1F5F9', bar: '#62748E', text: '#314158' }  // xám xanh
+    ];
+    const DARK_PALETTE = [
+      { bg: 'rgba(34,190,208,0.16)', bar: '#22BED0', text: '#A2F4FD' },
+      { bg: 'rgba(97,95,255,0.18)', bar: '#7C86FF', text: '#C6D2FF' },
+      { bg: 'rgba(142,81,255,0.18)', bar: '#A684FF', text: '#DDD6FF' },
+      { bg: 'rgba(0,166,244,0.16)', bar: '#00BCFF', text: '#B8E6FE' },
+      { bg: 'rgba(246,51,154,0.16)', bar: '#F6339A', text: '#FCCEE8' },
+      { bg: 'rgba(144,161,185,0.16)', bar: '#90A1B9', text: '#E2E8F0' }
+    ];
 
     function generateEvents(ctvIdFilter) {
       const events = [];
@@ -411,7 +419,9 @@
 
       filtered.forEach((item, idx) => {
         if (!item.ngayLam) return;
-        const color = COLOR_PALETTE[(item.congTacVienId || idx) % COLOR_PALETTE.length];
+        const pal = document.documentElement.getAttribute('data-theme') === 'dark' ? DARK_PALETTE : COLOR_PALETTE;
+        const color = pal[(item.congTacVienId || idx) % pal.length];
+        const cancelled = item.trangThai === 'DaHuy' || item.trangThai === 'Huy';
         const ctvName = item.ctvTen || 'CTV';
         const serviceName = item.dichVuTen || 'Dịch vụ';
         const customerName = item.khachHangTen || 'Khách hàng';
@@ -422,9 +432,10 @@
           title: (ctvIdFilter === 'all' ? (ctvName + ': ') : '') + serviceName + ' · ' + customerName,
           start: item.ngayLam + (item.gioBatDau ? 'T' + item.gioBatDau : ''),
           end: item.ngayLam + (item.gioKetThuc ? 'T' + item.gioKetThuc : ''),
-          backgroundColor: color,
-          borderColor: color,
-          textColor: '#fff',
+          backgroundColor: color.bg,
+          borderColor: color.bar,
+          textColor: color.text,
+          classNames: cancelled ? ['is-cancelled'] : [],
           extendedProps: {
             ctv: ctvName,
             dv: serviceName,
@@ -487,8 +498,14 @@
           document.getElementById('ev-note').textContent = ep.note || '---';
           ModalManager.open('eventDetailModal');
         },
+        eventDisplay: 'block',
+        dayMaxEvents: 3,
+        moreLinkText: (n) => '+' + n + ' lịch',
         eventDidMount: function (info) {
           info.el.title = info.event.title;
+          info.el.style.setProperty('--ev-bg', info.event.backgroundColor);
+          info.el.style.setProperty('--ev-bar', info.event.borderColor);
+          info.el.style.setProperty('--ev-text', info.event.textColor);
         }
       });
       calendarInstance.render();

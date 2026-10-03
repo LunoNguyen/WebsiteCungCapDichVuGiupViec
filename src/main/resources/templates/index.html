@@ -1,689 +1,214 @@
 <!DOCTYPE html>
-<html lang="vi">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description"
-    content="Neatify - Nền tảng đặt dịch vụ chăm sóc nhà cửa đáng tin cậy, minh bạch và chuyên nghiệp.">
-  <title>Neatify – Nhà sạch, lòng thảnh thơi</title>
-
-  <!-- Anti-flicker Theme Script -->
-  <script>
-    (function () {
-      try {
-        var saved = localStorage.getItem('neatify_theme') || 'system';
-        var isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        document.documentElement.setAttribute('data-theme-mode', saved);
-      } catch (e) { }
-    })();
-  </script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/landing.css">
-
-</head>
-
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Giúp việc nhà theo giờ', 'Neatify – đặt dịch vụ dọn dẹp, vệ sinh điện máy, chăm sóc gia đình theo giờ. Giá hiển thị trước khi đặt.')}"></head>
 <body>
+<header th:replace="~{layout/site-layout :: header('trang-chu')}"></header>
 
-  <!-- ===== NAVIGATION ===== -->
-  <nav class="landing-nav" id="mainNav">
-    <div class="nav-container">
-      <a href="/" class="nav-logo">
-        <img src="/images/Logo.png" alt="Neatify" class="brand-logo">
-        <span class="nav-logo-text">Neatify</span>
-      </a>
-
-      <div class="nav-links">
-        <a href="#services" class="nav-link">Dịch vụ</a>
-        <a href="#how-it-works" class="nav-link">Cách hoạt động</a>
-        <a href="#pricing" class="nav-link">Bảng giá</a>
-        <a href="#testimonials" class="nav-link">Đánh giá</a>
-        <a href="#contact" class="nav-link">Liên hệ</a>
-      </div>
-
-      <div class="nav-actions">
-        <!-- Theme Toggle (💡) -->
-        <div class="dropdown">
-          <button class="theme-toggle-btn" data-dropdown="landingThemeMenu" id="landingThemeBtn"
-            title="Chế độ giao diện (Sáng / Tối / Hệ thống)" aria-label="Đổi giao diện">
-            <i class="ti ti-bulb" id="landingThemeIcon"></i>
-          </button>
-          <div class="dropdown-menu theme-dropdown-menu" id="landingThemeMenu" style="right:0;left:auto">
-            <button class="theme-menu-item" data-theme-set="light">
-              <i class="ti ti-sun theme-item-icon" style="color:#F59E0B"></i>
-              <span>Chế độ Sáng</span>
-              <i class="ti ti-check item-check"></i>
-            </button>
-            <button class="theme-menu-item" data-theme-set="dark">
-              <i class="ti ti-moon theme-item-icon" style="color:var(--brand-500)"></i>
-              <span>Chế độ Tối</span>
-              <i class="ti ti-check item-check"></i>
-            </button>
-            <button class="theme-menu-item" data-theme-set="system">
-              <i class="ti ti-device-desktop theme-item-icon" style="color:var(--brand-600)"></i>
-              <span>Theo Hệ thống</span>
-              <i class="ti ti-check item-check"></i>
-            </button>
-          </div>
-        </div>
-
-        <a href="#services" class="btn btn-primary btn-sm">Đặt ngay</a>
-        <button class="hamburger" id="hamburger" aria-label="Menu">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Mobile Menu -->
-  <div class="mobile-menu" id="mobileMenu">
-    <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Đóng menu"><i class="ti ti-x"></i></button>
-    <a href="#services" class="nav-link">Dịch vụ</a>
-    <a href="#how-it-works" class="nav-link">Cách hoạt động</a>
-    <a href="#pricing" class="nav-link">Bảng giá</a>
-    <a href="#testimonials" class="nav-link">Đánh giá</a>
-    <div style="display:flex;gap:0.5rem;justify-content:center;margin:1rem 0">
-      <button class="theme-menu-item" data-theme-set="light" style="width:auto;border:1px solid var(--landing-border)"><i
-          class="ti ti-sun" style="color:#F59E0B"></i> Sáng</button>
-      <button class="theme-menu-item" data-theme-set="dark" style="width:auto;border:1px solid var(--landing-border)"><i
-          class="ti ti-moon" style="color:var(--brand-500)"></i> Tối</button>
-      <button class="theme-menu-item" data-theme-set="system" style="width:auto;border:1px solid var(--landing-border)"><i
-          class="ti ti-device-desktop" style="color:var(--brand-600)"></i> Tự động</button>
-    </div>
-    <a href="#services" class="btn btn-primary btn-lg">Xem dịch vụ</a>
-  </div>
-
-
+<main>
   <!-- ===== HERO ===== -->
-  <section class="hero" id="home">
-    <div class="hero-bg"></div>
-    <div class="hero-grid"></div>
-
-    <div class="hero-container">
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span class="dot"></span>
-          Hơn 10.000+ đơn dịch vụ hoàn thành mỗi tháng
-        </div>
-
-        <h1 class="hero-title">
-          Nhà sạch tinh tươm,<br><span class="gradient-text">lòng thảnh thơi</span>
-        </h1>
-
-        <p class="hero-desc">
-          Kết nối với đội ngũ cộng tác viên được đào tạo bài bản, đã kiểm tra lý lịch và xét duyệt kỹ càng.
-          Đặt lịch nhanh chóng, thanh toán an toàn, cam kết chất lượng 100%.
-        </p>
-
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Việc nhà có người lo, bạn có thêm thời gian cho gia đình</h1>
+        <p class="hero-lead">Đặt người giúp việc theo giờ, vệ sinh máy lạnh, nấu ăn, trông trẻ hay dọn văn phòng. Chọn dịch vụ, chọn giờ, biết giá trước khi đặt.</p>
         <div class="hero-cta">
-          <a href="#services" class="btn btn-primary btn-xl">
-            <i class="ti ti-calendar-plus"></i>
-            Đặt dịch vụ ngay
-          </a>
-          <a href="#how-it-works" class="btn btn-secondary btn-xl">
-            <i class="ti ti-play-circle"></i>
-            Xem cách hoạt động
-          </a>
+          <a class="btn btn-sun" href="/dich-vu">Xem dịch vụ và bảng giá</a>
+          <a class="btn btn-line" href="#tai-ung-dung">Tải ứng dụng để đặt lịch</a>
         </div>
-
-        <div class="trust-badges">
-          <span class="trust-badge"><i class="ti ti-shield-check" style="color:var(--brand-600)"></i> Đã kiểm tra lý lịch</span>
-          <span class="trust-badge"><i class="ti ti-award" style="color:var(--brand-500)"></i> Bảo hành dịch vụ</span>
-          <span class="trust-badge"><i class="ti ti-headset" style="color:var(--brand-700)"></i> Hỗ trợ 24/7</span>
-        </div>
-
-        <div class="hero-stats">
-          <div>
-            <div class="hero-stat-value" data-count="50000">0</div>
-            <div class="hero-stat-label">Khách hàng tin dùng</div>
-          </div>
-          <div>
-            <div class="hero-stat-value" data-count="3000">0</div>
-            <div class="hero-stat-label">Cộng tác viên ưu tú</div>
-          </div>
-          <div>
-            <div class="hero-stat-value" data-count="4.9">0</div>
-            <div class="hero-stat-label">Điểm đánh giá TB</div>
-          </div>
-        </div>
+        <ul class="hero-points">
+          <li><svg class="ic"><use href="#i-check"/></svg>Cộng tác viên được xét duyệt hồ sơ và phỏng vấn trước khi nhận việc</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Ghi nhận hiện trạng tài sản trước và sau mỗi buổi làm</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Thanh toán tiền mặt hoặc chuyển khoản, có hóa đơn và biên lai</li>
+        </ul>
       </div>
-
-      <div class="hero-visual">
-        <div class="hero-illustration animate-float hero-brand-panel">
-          <img src="/images/Logo.png" alt="Neatify chăm sóc nhà cửa">
-        </div>
-
-        <!-- Floating cards -->
-        <div class="hero-card-float hero-card-1">
-          <i class="ti ti-circle-check hero-float-icon"></i>
-          <div>
-            <div style="font-weight:700;font-size:0.875rem">Đơn mới xác nhận</div>
-            <div style="font-size:0.75rem;color:var(--landing-text-muted)">Dọn dẹp nhà - Q1, TP.HCM</div>
-          </div>
-        </div>
-
-        <div class="hero-card-float hero-card-2">
-          <div style="display:flex;gap:2px;color:#FFC107">★★★★★</div>
-          <div>
-            <div style="font-weight:700;font-size:0.875rem">Đánh giá 5 sao</div>
-            <div style="font-size:0.75rem;color:var(--landing-text-muted)">Nguyễn T. Hoa · Vừa xong</div>
-          </div>
-        </div>
-
-        <div class="hero-card-float hero-card-3" style="top:45%;left:-15%">
-          <i class="ti ti-user-check hero-float-icon"></i>
-          <div>
-            <div style="font-weight:700;font-size:0.875rem">Chị Lan đã nhận đơn</div>
-            <div style="font-size:0.75rem;color:var(--brand-600);font-weight:600">● Đang trên đường</div>
-          </div>
-        </div>
+      <div class="hero-photos" aria-hidden="true">
+        <div class="leaf"><img src="/images/services/don-dep-nha-cua.png" alt=""></div>
+        <div class="leaf"><img src="/images/services/nau-an-gia-dinh.jpg" alt=""></div>
+        <div class="leaf"><img src="/images/services/trong-tre.jpg" alt=""></div>
       </div>
     </div>
   </section>
 
-  <!-- ===== SERVICES ===== -->
-  <section class="section" id="services">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-badge">Dịch vụ của chúng tôi</div>
-        <h2 class="section-title">Đa dạng dịch vụ,<br><span class="gradient-text">đáp ứng mọi nhu cầu</span></h2>
-        <p class="section-desc">Từ dọn dẹp hàng ngày đến vệ sinh tổng thể, chúng tôi có đầy đủ giải pháp phù hợp với
-          lịch trình bận rộn của bạn.</p>
+  <!-- ===== DỊCH VỤ PHỔ BIẾN (giá lấy từ CSDL) ===== -->
+  <section class="section" th:if="${dichVuNoiBat != null and !dichVuNoiBat.isEmpty()}">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Dịch vụ được đặt nhiều</h2>
       </div>
-
-      <div class="services-grid" id="servicesGrid">
-        <!-- Render động 100% từ Database MySQL (Thymeleaf Model) -->
-        <th:block th:if="${featuredServices != null and !featuredServices.isEmpty()}">
-          <div th:each="sv, iter : ${featuredServices}" class="service-card"
-            th:style="'--card-gradient:' + (${iter.index % 6 == 0} ? 'linear-gradient(90deg,#08778C,#1197B0)' : (${iter.index % 6 == 1} ? 'linear-gradient(90deg,#1197B0,#22BED0)' : (${iter.index % 6 == 2} ? 'linear-gradient(90deg,#22BED0,#58D9C6)' : (${iter.index % 6 == 3} ? 'linear-gradient(90deg,#08778C,#22BED0)' : (${iter.index % 6 == 4} ? 'linear-gradient(90deg,#1197B0,#58D9C6)' : 'linear-gradient(90deg,#08778C,#58D9C6)')))))">
-            <div class="service-icon">
-              <img th:src="${sv.maDichVu == 'DV-001' ? '/images/services/don-dep-nha-cua.png' :
-                             (sv.maDichVu == 'DV-051' ? '/images/services/nau-an-gia-dinh.jpg' :
-                             (sv.maDichVu == 'DV-123' ? '/images/services/nau-an-gia-dinh.jpg' :
-                             (sv.maDichVu == 'DV-072' ? '/images/services/trong-tre.jpg' :
-                             (sv.maDichVu == 'DV-079' ? '/images/services/don-dep-nha-cua.png' :
-                             (sv.maDichVu == 'DV-129' ? '/images/services/don-dep-nha-cua.png' :
-                             (sv.hinhAnh != null ? sv.hinhAnh : '/images/services/don-dep-nha-cua.png'))))))}"
-                th:alt="${sv.tenDichVu}" onerror="this.style.display='none'">
-            </div>
-            <div class="service-name" th:text="${sv.tenDichVu}">Tên dịch vụ</div>
-            <div class="service-desc" th:text="${sv.moTaChiTiet}">Mô tả chi tiết từ CSDL</div>
-            <div class="service-price"
-              th:text="${sv.donGiaThamKhao != null ? #numbers.formatDecimal(sv.donGiaThamKhao, 0, 'POINT', 0, 'COMMA') + 'đ' : 'Liên hệ'}">
-              0đ</div>
-            <span class="service-arrow">→</span>
-          </div>
-        </th:block>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== HOW IT WORKS ===== -->
-  <section class="section section-alt" id="how-it-works">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-badge">Quy trình đơn giản</div>
-        <h2 class="section-title">Chỉ <span class="gradient-text">3 bước</span> để có<br>ngôi nhà sạch sẽ</h2>
-        <p class="section-desc">Đặt dịch vụ nhanh chóng trong vài phút, cộng tác viên đến đúng giờ, kết quả vượt mong
-          đợi.</p>
-      </div>
-
-      <div class="steps-container">
-        <div class="step-card">
-          <div class="step-number">
-            <span><i class="ti ti-calendar-plus"></i></span>
-            <div class="step-num-badge">1</div>
-          </div>
-          <h3 class="step-title">Chọn dịch vụ & đặt lịch</h3>
-          <p class="step-desc">Chọn loại dịch vụ phù hợp, thời gian và địa chỉ. Hệ thống hiển thị giá ngay lập tức,
-            không phí ẩn.</p>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">
-            <span><i class="ti ti-users-group"></i></span>
-            <div class="step-num-badge">2</div>
-          </div>
-          <h3 class="step-title">Hệ thống ghép cặp CTV</h3>
-          <p class="step-desc">Chúng tôi tự động tìm cộng tác viên phù hợp gần bạn nhất, được đánh giá cao và đã kiểm
-            tra lý lịch.</p>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">
-            <span><i class="ti ti-home-check"></i></span>
-            <div class="step-num-badge">3</div>
-          </div>
-          <h3 class="step-title">Tận hưởng kết quả</h3>
-          <p class="step-desc">CTV đến đúng hẹn, hoàn thành công việc tận tâm. Bạn đánh giá dịch vụ sau khi hoàn tất
-            cùng chính sách hỗ trợ làm lại nếu chưa hài lòng.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== WHY CHOOSE US ===== -->
-  <section class="section" id="why-us">
-    <div class="section-container">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center">
-        <div>
-          <div class="section-badge">Tại sao chọn chúng tôi</div>
-          <h2 class="section-title" style="text-align:left">Cam kết chất lượng<br><span class="gradient-text">vượt
-              trội</span></h2>
-          <p class="section-desc" style="text-align:left;margin:0 0 2rem">Chúng tôi không chỉ cung cấp dịch vụ, chúng
-            tôi mang đến sự an tâm và niềm tin tuyệt đối cho từng khách hàng.</p>
-
-          <div class="why-grid" style="gap:1rem">
-            <div class="why-card">
-              <div class="why-icon" style="background:rgba(8,119,140,0.12);color:var(--brand-700)">🔍</div>
-              <div>
-                <div class="why-title">Kiểm tra lý lịch nghiêm ngặt</div>
-                <div class="why-desc">100% CTV được xác minh CMND, lý lịch tư pháp trước khi gia nhập.</div>
-              </div>
-            </div>
-            <div class="why-card">
-              <div class="why-icon" style="background:rgba(17,151,176,0.12);color:var(--brand-600)">🛡️</div>
-              <div>
-                <div class="why-title">Bảo hiểm tài sản</div>
-                <div class="why-desc">Mọi đơn đặt dịch vụ đều được bảo hiểm tài sản lên đến 20 triệu đồng.</div>
-              </div>
-            </div>
-            <div class="why-card">
-              <div class="why-icon" style="background:rgba(34,190,208,0.14);color:var(--brand-500)">⭐</div>
-              <div>
-                <div class="why-title">Đánh giá minh bạch</div>
-                <div class="why-desc">Hệ thống đánh giá công khai từ khách hàng thực, không chỉnh sửa.</div>
-              </div>
-            </div>
-            <div class="why-card">
-              <div class="why-icon" style="background:rgba(88,217,198,0.18);color:var(--brand-700)">🔄</div>
-              <div>
-                <div class="why-title">Hỗ trợ làm lại miễn phí</div>
-                <div class="why-desc">Sẵn sàng cử người hỗ trợ làm lại hoặc đổi CTV nhanh chóng nếu công việc chưa đạt
-                  yêu cầu.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style="position:relative">
-          <div
-            style="background:radial-gradient(ellipse at center, rgba(34,190,208,0.16) 0%, transparent 70%);border-radius:24px;padding:2.5rem;border:1px solid var(--landing-border)">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
-              <div class="stat-card" style="text-align:center;padding:1.5rem">
-                <div class="stat-value" style="font-size:2rem" data-count="50000">0</div>
-                <div class="stat-label">Khách hàng</div>
-              </div>
-              <div class="stat-card" style="text-align:center;padding:1.5rem">
-                <div class="stat-value" style="font-size:2rem" data-count="3000">0</div>
-                <div class="stat-label">Cộng tác viên</div>
-              </div>
-              <div class="stat-card" style="text-align:center;padding:1.5rem">
-                <div class="stat-value" style="font-size:2rem" data-count="200000">0</div>
-                <div class="stat-label">Đơn hoàn thành</div>
-              </div>
-              <div class="stat-card" style="text-align:center;padding:1.5rem">
-                <div class="stat-value" style="font-size:2rem">98%</div>
-                <div class="stat-label">Hài lòng</div>
-              </div>
-            </div>
-
-            <div
-              style="margin-top:1.5rem;padding:1.25rem;background:rgba(34,190,208,0.08);border-radius:14px;border:1px solid rgba(17,151,176,0.2)">
-              <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
-                <span style="font-size:1.5rem">🏆</span>
-                <div>
-                  <div style="font-weight:700">Top 1 nền tảng giúp việc</div>
-                  <div style="font-size:0.8rem;color:var(--landing-text-muted)">tại TP.HCM 2026</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:4px">
-                <span style="color:#FFC107">★★★★★</span>
-                <span style="font-size:0.8rem;color:var(--landing-text-muted);margin-left:0.5rem">4.9/5 trên Google Play</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== TESTIMONIALS ===== -->
-  <section class="section section-alt" id="testimonials">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-badge">Khách hàng nói gì</div>
-        <h2 class="section-title">Hơn <span class="gradient-text">50.000 khách hàng</span><br>đã tin tưởng chúng tôi
-        </h2>
-      </div>
-
-      <div class="testimonials-grid">
-        <div class="testimonial-card">
-          <div class="testimonial-quote">"</div>
-          <div class="testimonial-stars">★★★★★</div>
-          <p class="testimonial-text">Tôi đã dùng dịch vụ được 3 tháng rồi và thực sự rất hài lòng. Chị cộng tác viên
-            làm việc cẩn thận, tận tâm và luôn đúng giờ. Nhà tôi sạch sẽ hơn hẳn!</p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--brand-700),var(--brand-600))">H</div>
-            <div>
-              <div class="testimonial-name">Nguyễn Thị Hương</div>
-              <div class="testimonial-location">Quận 3, TP.HCM</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card">
-          <div class="testimonial-quote">"</div>
-          <div class="testimonial-stars">★★★★★</div>
-          <p class="testimonial-text">Đặt dịch vụ nấu ăn cho gia đình, chất lượng xuất sắc. Cô giúp việc nấu ngon, giữ
-            vệ sinh bếp sạch sẽ. Sẽ tiếp tục sử dụng lâu dài.</p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--brand-600),var(--brand-500))">M</div>
-            <div>
-              <div class="testimonial-name">Trần Văn Minh</div>
-              <div class="testimonial-location">Tân Bình, TP.HCM</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card">
-          <div class="testimonial-quote">"</div>
-          <div class="testimonial-stars">★★★★★</div>
-          <p class="testimonial-text">Tôi thuê bảo mẫu cho bé 8 tháng. Các chị rất tận tình, có kinh nghiệm chăm trẻ sơ
-            sinh. Bé được chăm sóc tốt, tôi yên tâm đi làm hơn nhiều.</p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--brand-500),var(--brand-300))">L</div>
-            <div>
-              <div class="testimonial-name">Phạm Thị Lan</div>
-              <div class="testimonial-location">Bình Thạnh, TP.HCM</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== PRICING ===== -->
-  <section class="section" id="pricing">
-    <div class="section-container">
-      <div class="section-header">
-        <div class="section-badge">Bảng giá</div>
-        <h2 class="section-title">Giá cả <span class="gradient-text">minh bạch</span>,<br>không phí ẩn</h2>
-        <p class="section-desc">Chọn gói phù hợp với nhu cầu của bạn. Thanh toán sau khi hoàn thành dịch vụ.</p>
-      </div>
-
-      <div class="pricing-grid">
-        <!-- Basic -->
-        <div class="pricing-card">
-          <div class="pricing-name">Theo Buổi</div>
-          <div class="pricing-price"><sup>₫</sup>120K<sub>/buổi</sub></div>
-          <div class="pricing-desc">Phù hợp cho nhu cầu linh hoạt</div>
-          <div class="pricing-features">
-            <div class="pricing-feature"><span class="check">✓</span> Dọn dẹp nhà 3-4 tiếng</div>
-            <div class="pricing-feature"><span class="check">✓</span> Cộng tác viên xét duyệt</div>
-            <div class="pricing-feature"><span class="check">✓</span> Bảo hiểm tài sản</div>
-            <div class="pricing-feature"><span class="check">✓</span> Đánh giá sau dịch vụ</div>
-            <div class="pricing-feature"><span class="cross" style="color:var(--text-muted)">–</span> <span
-                style="color:var(--text-muted)">CTV cố định</span></div>
-            <div class="pricing-feature"><span class="cross" style="color:var(--text-muted)">–</span> <span
-                style="color:var(--text-muted)">Ưu tiên ghép CTV</span></div>
-          </div>
-          <a href="#" class="btn btn-outline w-full" style="justify-content:center">Đặt ngay</a>
-        </div>
-
-        <!-- Popular -->
-        <div class="pricing-card popular">
-          <div class="popular-badge">🔥 Phổ biến nhất</div>
-          <div class="pricing-name">Gói Tháng</div>
-          <div class="pricing-price"><sup>₫</sup>1.8M<sub>/tháng</sub></div>
-          <div class="pricing-desc">8 buổi/tháng · Tiết kiệm 25%</div>
-          <div class="pricing-features">
-            <div class="pricing-feature"><span class="check">✓</span> 8 buổi dọn dẹp/tháng</div>
-            <div class="pricing-feature"><span class="check">✓</span> CTV cố định quen việc</div>
-            <div class="pricing-feature"><span class="check">✓</span> Bảo hiểm tài sản 20M</div>
-            <div class="pricing-feature"><span class="check">✓</span> Đánh giá & phản hồi</div>
-            <div class="pricing-feature"><span class="check">✓</span> Ưu tiên ghép nhanh</div>
-            <div class="pricing-feature"><span class="check">✓</span> Hỗ trợ ưu tiên 24/7</div>
-          </div>
-          <a href="#" class="btn btn-primary w-full" style="justify-content:center">Đăng ký gói tháng</a>
-        </div>
-
-        <!-- Premium -->
-        <div class="pricing-card">
-          <div class="pricing-name">Gói Cao Cấp</div>
-          <div class="pricing-price"><sup>₫</sup>3.5M<sub>/tháng</sub></div>
-          <div class="pricing-desc">Dịch vụ toàn diện · Không giới hạn</div>
-          <div class="pricing-features">
-            <div class="pricing-feature"><span class="check">✓</span> Dịch vụ không giới hạn</div>
-            <div class="pricing-feature"><span class="check">✓</span> CTV ưu tú chuyên biệt</div>
-            <div class="pricing-feature"><span class="check">✓</span> Bảo hiểm tài sản 50M</div>
-            <div class="pricing-feature"><span class="check">✓</span> Bao gồm nấu ăn/giặt ủi</div>
-            <div class="pricing-feature"><span class="check">✓</span> Quản lý tài khoản riêng</div>
-            <div class="pricing-feature"><span class="check">✓</span> Hotline ưu tiên 24/7</div>
-          </div>
-          <a href="#" class="btn btn-secondary w-full" style="justify-content:center">Liên hệ tư vấn</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== APP DOWNLOAD ===== -->
-  <section class="app-banner" id="app">
-    <div class="section-container">
-      <div class="app-banner-grid">
-        <div>
-          <div class="section-badge">Ứng dụng di động</div>
-          <h2 class="section-title" style="text-align:left;margin-bottom:1rem">Đặt dịch vụ ngay<br>trên <span
-              class="gradient-text">điện thoại</span></h2>
-          <p style="color:var(--text-secondary);margin-bottom:1.5rem;line-height:1.7">Quản lý đặt lịch, theo dõi tiến độ
-            và thanh toán dễ dàng mọi lúc mọi nơi với ứng dụng Neatify.</p>
-          <div class="app-stores">
-            <a href="#" class="app-store-btn"
-              style="display:inline-flex;align-items:center;gap:0.85rem;padding:0.75rem 1.5rem">
-              <svg class="store-icon" viewBox="0 0 24 24" width="30" height="30" fill="none" style="flex-shrink:0">
-                <path d="M3.609 1.814L13.792 12 3.61 22.186a2.02 2.02 0 0 1-.22-.916V2.73c0-.336.078-.65.22-.916z"
-                  fill="#4285F4" />
-                <path d="M17.155 8.637l-3.363 3.363L3.61 1.814c.404-.26 1.015-.224 1.637.135l11.908 6.688z"
-                  fill="#EA4335" />
-                <path d="M17.155 15.363L5.247 22.051c-.622.36-1.233.395-1.637.135l10.182-10.186 3.363 3.363z"
-                  fill="#34A853" />
-                <path d="M21.134 10.874l-3.979-2.237-3.363 3.363 3.363 3.363 3.979-2.237c1.155-.65 1.155-1.71 0-2.252z"
-                  fill="#FBBC04" />
-              </svg>
-              <div>
-                <div class="store-text">TẢI VỀ TRÊN</div>
-                <div class="store-name" style="font-size:1.15rem;font-weight:700">Google Play</div>
-              </div>
-            </a>
-          </div>
-        </div>
-        <div style="text-align:center;position:relative">
-          <!-- TODO: Thay bằng ảnh mockup điện thoại: /images/app-mockup.png -->
-          <img src="/images/app-mockup.png" alt="Neatify App Mockup"
-            onerror="this.onerror=null;this.src='/images/Logo.png';this.style.maxWidth='200px';"
-            style="max-width:280px;width:100%;filter:drop-shadow(0 20px 40px rgba(8,119,140,0.22))">
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== CTA ===== -->
-  <section class="cta-section" id="contact">
-    <div class="section-container">
-      <div class="section-badge">Bắt đầu ngay hôm nay</div>
-      <h2 class="cta-title">Ngôi nhà sạch đẹp<br>chỉ cách bạn <span class="gradient-text">một cú click</span></h2>
-      <p class="cta-desc">Đăng ký ngay hôm nay và nhận ưu đãi giảm 20% cho buổi đầu tiên. Không cần thẻ tín dụng.</p>
-      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
-        <a href="#services" class="btn btn-primary btn-xl">
-          <i class="ti ti-calendar-plus"></i>
-          Đặt dịch vụ ngay
+      <div class="rail">
+        <a class="svc-card" th:each="dv : ${dichVuNoiBat}" th:href="@{/dich-vu/{id}(id=${dv.danhMucId})}">
+          <div class="leaf"><img th:src="${dv.hinhAnhUrl}" th:alt="${dv.ten}" loading="lazy"></div>
+          <h3 th:text="${dv.ten}">Dọn dẹp nhà theo giờ</h3>
+          <p th:text="${dv.giaTuText}">từ 192.000đ</p>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- ===== FOOTER ===== -->
-  <footer class="footer" id="footer">
-    <div class="section-container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <a href="/" class="nav-logo" style="margin-bottom:1rem;display:inline-flex">
-            <img src="/images/Logo.png" alt="Neatify" class="brand-logo">
-            <span class="nav-logo-text" style="font-size:1.2rem">Neatify</span>
+  <!-- ===== NHÓM DỊCH VỤ ===== -->
+  <section class="section section-foam" id="dich-vu">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Tất cả nhóm dịch vụ</h2>
+        <p>Mỗi nhóm có bảng giá riêng theo lần hoặc theo gói tháng.</p>
+      </div>
+
+      <div class="cat-list" th:if="${danhMucs != null and !danhMucs.isEmpty()}">
+        <article class="cat-row" th:each="dm : ${danhMucs}">
+          <a class="leaf" th:href="@{/dich-vu/{id}(id=${dm.id})}" tabindex="-1" aria-hidden="true">
+            <img th:src="${dm.hinhAnhUrl}" alt="" loading="lazy">
           </a>
-          <p class="footer-brand-desc">Nền tảng kết nối dịch vụ giúp việc nhà uy tín hàng đầu Việt Nam. Hoạt động tại
-            TP.HCM, Hà Nội và 20+ tỉnh thành.</p>
-          <div class="footer-socials">
-            <a href="#" class="social-btn" title="Facebook">f</a>
-            <a href="#" class="social-btn" title="Zalo">Z</a>
-            <a href="#" class="social-btn" title="YouTube">▶</a>
-            <a href="#" class="social-btn" title="TikTok">♪</a>
-          </div>
-        </div>
-
-        <div>
-          <div class="footer-col-title">Dịch vụ</div>
-          <div class="footer-links">
-            <a href="#" class="footer-link">Dọn dẹp nhà cửa</a>
-            <a href="#" class="footer-link">Giặt ủi quần áo</a>
-            <a href="#" class="footer-link">Nấu ăn theo yêu cầu</a>
-            <a href="#" class="footer-link">Chăm sóc người cao tuổi</a>
-            <a href="#" class="footer-link">Trông giữ trẻ</a>
-            <a href="#" class="footer-link">Vệ sinh tổng thể</a>
-          </div>
-        </div>
-
-        <div>
-          <div class="footer-col-title">Công ty</div>
-          <div class="footer-links">
-            <a href="#" class="footer-link">Về chúng tôi</a>
-            <a href="#" class="footer-link">Trở thành Cộng tác viên</a>
-            <a href="#" class="footer-link">Tin tức & Blog</a>
-            <a href="#" class="footer-link">Chính sách bảo mật</a>
-            <a href="#" class="footer-link">Điều khoản dịch vụ</a>
-          </div>
-        </div>
-
-        <div>
-          <div class="footer-col-title">Liên hệ</div>
-          <div class="footer-links">
-            <span class="footer-link" style="cursor:default">📞 1900 1234 (24/7)</span>
-            <span class="footer-link" style="cursor:default">✉ hotro@neatify.vn</span>
-            <span class="footer-link" style="cursor:default">📍 123 Nguyễn Huệ, Q1, TP.HCM</span>
-          </div>
-          <div style="margin-top:1.25rem">
-            <div class="footer-col-title" style="margin-bottom:0.75rem">Nhận ưu đãi</div>
-            <div style="display:flex;gap:0.5rem">
-              <input type="email" class="form-control" placeholder="Email của bạn"
-                style="flex:1;padding:0.5rem 0.75rem">
-              <button class="btn btn-primary btn-sm">Gửi</button>
+          <div>
+            <h3><a th:href="@{/dich-vu/{id}(id=${dm.id})}" th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</a></h3>
+            <p th:text="${dm.moTa}">Mô tả nhóm dịch vụ</p>
+            <div class="chips">
+              <span class="chip" th:each="ten : ${dm.tieuBieu}" th:text="${ten}">Tổng vệ sinh</span>
             </div>
           </div>
-        </div>
+          <div class="cat-side">
+            <div class="price" th:text="${dm.giaTuText}">từ 192.000đ</div>
+            <div class="count" th:text="${dm.soDichVu} + ' dịch vụ'">12 dịch vụ</div>
+            <a class="btn btn-line btn-sm" th:href="@{/dich-vu/{id}(id=${dm.id})}">Xem bảng giá</a>
+          </div>
+        </article>
       </div>
-
-      <div class="footer-bottom">
-        <span>© 2026 Neatify – Mọi quyền được bảo lưu</span>
-        <span>Giấy phép ĐKKD: 0123456789 – Sở KH&ĐT TP.HCM</span>
+      <div class="empty" th:if="${danhMucs == null or danhMucs.isEmpty()}">
+        Chưa có nhóm dịch vụ nào đang hiển thị. Nhân viên HCNS có thể thêm tại mục Danh mục dịch vụ.
       </div>
     </div>
-  </footer>
+  </section>
 
-  <!-- Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
+  <!-- ===== SỐ LIỆU THẬT TỪ CSDL (ẩn mục bằng 0) ===== -->
+  <section class="stats" th:if="${soLieu != null and soLieu['dichVu'] > 0}">
+    <div class="wrap">
+      <div class="stat"><b th:text="${soLieu['dichVu']}">143</b><span>dịch vụ đang cung cấp</span></div>
+      <div class="stat" th:if="${danhMucs != null and !danhMucs.isEmpty()}"><b th:text="${danhMucs.size()}">5</b><span>nhóm dịch vụ</span></div>
+      <div class="stat" th:if="${soLieu['congTacVien'] > 0}"><b th:text="${soLieu['congTacVien']}">0</b><span>cộng tác viên đang hoạt động</span></div>
+      <div class="stat" th:if="${soLieu['khachHang'] > 0}"><b th:text="${soLieu['khachHang']}">0</b><span>khách hàng thành viên</span></div>
+      <div class="stat" th:if="${soLieu['tinhThanh'] > 0}"><b th:text="${soLieu['tinhThanh']}">0</b><span>tỉnh, thành phố phục vụ</span></div>
+    </div>
+  </section>
 
-  <script src="/js/main.js"></script>
+  <!-- ===== CÁCH ĐẶT DỊCH VỤ ===== -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Đặt dịch vụ trong bốn bước</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Chọn dịch vụ</h3><p>Chọn đặt theo lần hoặc theo gói tháng, kèm ngày giờ, địa chỉ và yêu cầu riêng.</p></div>
+        <div class="step"><h3>Xem giá và mã ưu đãi</h3><p>Chi phí hiện ngay khi chọn. Nhập mã khuyến mãi nếu có để thấy số tiền sau giảm.</p></div>
+        <div class="step"><h3>Nhận cộng tác viên</h3><p>Neatify phân công người phù hợp theo khu vực và khung giờ, rồi gửi xác nhận cho bạn.</p></div>
+        <div class="step"><h3>Thanh toán và đánh giá</h3><p>Thanh toán tiền mặt hoặc chuyển khoản. Sau buổi làm, bạn chấm điểm chất lượng và thái độ.</p></div>
+      </div>
+    </div>
+  </section>
 
-  <!-- ĐỒNG BỘ DỮ LIỆU DỊCH VỤ TRỰC TIẾP TỪ DATABASE (API /v1/services) -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var grid = document.getElementById('servicesGrid');
-      if (!grid) return;
+  <!-- ===== CAM KẾT ===== -->
+  <section class="section section-foam">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Neatify giữ lời với từng buổi làm</h2>
+      </div>
+      <div class="grid-4">
+        <div class="value">
+          <div class="badge-ic"><svg class="ic"><use href="#i-users"/></svg></div>
+          <h3>Người làm được xét duyệt</h3>
+          <p>Ứng viên nộp CCCD, chứng chỉ và qua phỏng vấn trước khi trở thành cộng tác viên.</p>
+        </div>
+        <div class="value">
+          <div class="badge-ic"><svg class="ic"><use href="#i-tag"/></svg></div>
+          <h3>Giá rõ từ đầu</h3>
+          <p>Bảng giá công khai theo từng dịch vụ. Hóa đơn ghi đủ tiền dịch vụ và khoản giảm.</p>
+        </div>
+        <div class="value">
+          <div class="badge-ic"><svg class="ic"><use href="#i-clipboard"/></svg></div>
+          <h3>Tài sản được ghi nhận</h3>
+          <p>Cộng tác viên lập biểu mẫu hiện trạng tài sản trước và sau dịch vụ để bạn xác nhận.</p>
+        </div>
+        <div class="value">
+          <div class="badge-ic"><svg class="ic"><use href="#i-chat"/></svg></div>
+          <h3>Khiếu nại có người xử lý</h3>
+          <p>Bộ phận chăm sóc khách hàng tiếp nhận, xác minh và đưa ra phương án bồi thường khi có lỗi.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-      fetch('/v1/services')
-        .then(function (res) { return res.json(); })
-        .then(function (response) {
-          if (response && response.data && response.data.length > 0) {
-            var all = response.data;
+  <!-- ===== KHUYẾN MÃI ĐANG CHẠY (từ CSDL) ===== -->
+  <section class="section" th:if="${khuyenMais != null and !khuyenMais.isEmpty()}">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Ưu đãi đang áp dụng</h2>
+      </div>
+      <div class="grid-3">
+        <div class="promo" th:each="km : ${khuyenMais}">
+          <div class="promo-amount" th:text="${km.mucGiamText}">Giảm 20%</div>
+          <div>
+            <h3 th:text="${km.tenChuongTrinh}">Tên chương trình</h3>
+            <p><span th:if="${!km.dieuKienText.isEmpty()}" th:text="${km.dieuKienText} + ', '">Đơn từ 300.000đ, </span><span th:text="${km.hanText}">đến hết 31/12/2026</span></p>
+            <span class="promo-code" th:if="${km.code != null}">
+              <span th:text="${km.code}">NEATIFY20</span>
+              <button type="button" th:attr="data-copy=${km.code}">Sao chép</button>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-            // 6 dịch vụ đại diện cho 6 mảng hoàn toàn khác nhau để trực quan, cực kỳ dễ lấy ảnh minh họa:
-            // 1. Dọn dẹp nhà cửa (Ảnh minh họa: chổi lau, hút bụi, phòng khách)
-            // 2. Vệ sinh máy lạnh (Ảnh minh họa: máy lạnh, bảo dưỡng điều hòa)
-            // 3. Nấu ăn gia đình (Ảnh minh họa: món ăn, mâm cơm, làm bếp)
-            // 4. Trông giữ trẻ tại nhà (Ảnh minh họa: em bé, đồ chơi, bảo mẫu)
-            // 5. Chăm sóc người cao tuổi (Ảnh minh họa: người lớn tuổi, chăm sóc sức khỏe)
-            // 6. Vệ sinh văn phòng (Ảnh minh họa: bàn ghế văn phòng, nơi làm việc)
-            var config = [
-              { code: 'DV-001', imgGuide: '/images/services/don-dep-nha-cua.png', fallbackName: 'Dọn dẹp nhà cửa' },
-              { code: 'DV-051', imgGuide: '/images/services/ve-sinh-may-lanh.png', fallbackName: 'Vệ sinh máy lạnh' },
-              { code: 'DV-123', imgGuide: '/images/services/nau-an-gia-dinh.jpg', fallbackName: 'Nấu ăn gia đình' },
-              { code: 'DV-072', imgGuide: '/images/services/trong-tre.jpg', fallbackName: 'Trông trẻ tại nhà' },
-              { code: 'DV-079', imgGuide: '/images/services/cham-soc-nguoi-cao-tuoi.png', fallbackName: 'Chăm sóc người cao tuổi' },
-              { code: 'DV-129', imgGuide: '/images/services/ve-sinh-van-phong.png', fallbackName: 'Vệ sinh văn phòng' }
-            ];
+  <!-- ===== ĐÁNH GIÁ ĐÃ DUYỆT (từ CSDL) ===== -->
+  <section class="section section-foam" th:if="${danhGias != null and !danhGias.isEmpty()}">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Khách hàng nói gì sau buổi làm</h2>
+      </div>
+      <div class="grid-3">
+        <figure class="review" th:each="dg : ${danhGias}" style="margin:0">
+          <div class="stars" th:attr="aria-label=${dg.soSao} + ' trên 5 sao'">
+            <span th:each="i : ${#numbers.sequence(1, dg.soSao)}">★</span>
+          </div>
+          <p th:text="${dg.nhanXet}">Nhận xét của khách hàng</p>
+          <figcaption class="review-by">
+            <span class="avatar" th:text="${dg.chuCaiDau}">K</span>
+            <span><b th:text="${dg.tenKhachHang}">Khách hàng</b><small th:text="${dg.ngayText}">01/01/2026</small></span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
 
-            var selected = [];
-            config.forEach(function (cfg) {
-              var found = all.find(function (s) {
-                return s.maDichVu && s.maDichVu.toUpperCase() === cfg.code;
-              });
-              if (found) {
-                found.imgGuide = cfg.imgGuide;
-                selected.push(found);
-              }
-            });
+  <!-- ===== TRỞ THÀNH ĐỐI TÁC ===== -->
+  <section class="section">
+    <div class="wrap split">
+      <div class="leaf"><img src="/images/services/ve-sinh-may-lanh.png" alt="Cộng tác viên Neatify vệ sinh máy lạnh" loading="lazy"></div>
+      <div>
+        <h2>Bạn muốn nhận việc cùng Neatify?</h2>
+        <p>Đăng ký làm cộng tác viên, chọn dịch vụ và khu vực bạn muốn nhận. Phòng Hành chính Nhân sự xét duyệt hồ sơ trong 1 đến 3 ngày làm việc.</p>
+        <div class="hero-cta">
+          <a class="btn btn-teal" href="/tro-thanh-doi-tac">Gửi hồ sơ ứng tuyển</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-            // Nếu DB thiếu mã nào thì lấy bổ sung từ các loại dịch vụ khác
-            if (selected.length < 6) {
-              all.forEach(function (s) {
-                if (selected.length < 6 && !selected.some(function (x) { return x.id === s.id; })) {
-                  s.imgGuide = '/images/services/service-' + s.id + '.png';
-                  selected.push(s);
-                }
-              });
-            }
+  <!-- ===== TẢI ỨNG DỤNG ===== -->
+  <section class="cta-band" id="tai-ung-dung">
+    <div class="wrap">
+      <div>
+        <h2>Đặt lịch và theo dõi buổi làm trên ứng dụng Neatify</h2>
+        <p>Ứng dụng Android dành cho khách hàng và cộng tác viên: đặt dịch vụ, thanh toán, xem lịch làm việc, đánh giá và gửi khiếu nại.</p>
+      </div>
+      <div class="actions">
+        <a class="btn btn-sun" th:if="${appDownloadUrl != null and !appDownloadUrl.isEmpty()}" th:href="${appDownloadUrl}" rel="noopener"><svg class="ic"><use href="#i-phone-app"/></svg>Tải ứng dụng Android</a>
+        <a class="btn btn-sun" th:if="${appDownloadUrl == null or appDownloadUrl.isEmpty()}" href="/dich-vu">Xem dịch vụ và bảng giá</a>
+        <a class="btn btn-ghost-light" href="/tro-thanh-doi-tac">Dành cho cộng tác viên</a>
+      </div>
+    </div>
+  </section>
+</main>
 
-            var gradients = [
-              'linear-gradient(90deg,#08778C,#1197B0)',
-              'linear-gradient(90deg,#1197B0,#22BED0)',
-              'linear-gradient(90deg,#22BED0,#58D9C6)',
-              'linear-gradient(90deg,#08778C,#22BED0)',
-              'linear-gradient(90deg,#1197B0,#58D9C6)',
-              'linear-gradient(90deg,#08778C,#58D9C6)'
-            ];
-
-            var html = selected.map(function (sv, idx) {
-              var priceFormatted = sv.donGiaThamKhao ? new Intl.NumberFormat('vi-VN').format(sv.donGiaThamKhao) + 'đ' : 'Liên hệ';
-              var grad = gradients[idx % gradients.length];
-              var noteImg = sv.imgGuide || '/images/services/dich-vu.png';
-
-              return '' +
-                '<div class="service-card" style="--card-gradient:' + grad + '">' +
-                '  <div class="service-icon">' +
-                '    <img src="' + noteImg + '" alt="' + (sv.tenDichVu || '') + '" onerror="this.style.display=\'none\'">' +
-                '  </div>' +
-                '  <div class="service-name">' + (sv.tenDichVu || '') + '</div>' +
-                '  <div class="service-desc">' + (sv.moTaChiTiet || 'Dịch vụ chất lượng cao được đảm bảo 100% từ đội ngũ chuyên nghiệp.') + '</div>' +
-                '  <div class="service-price">' + priceFormatted + '</div>' +
-                '  <span class="service-arrow">→</span>' +
-                '</div>';
-            }).join('');
-
-            grid.innerHTML = html;
-          }
-        })
-        .catch(function (err) {
-          console.warn('Lỗi kết nối API /v1/services:', err);
-        });
-    });
-  </script>
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
 </body>
-
 </html>

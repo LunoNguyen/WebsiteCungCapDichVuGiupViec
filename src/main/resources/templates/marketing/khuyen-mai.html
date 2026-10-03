@@ -12,10 +12,7 @@
 
       <main class="page-content">
         <div class="page-header">
-          <div class="page-title-group">
-            <h1 class="page-title">Chương trình Khuyến mãi & Coupon</h1>
-            <p class="page-subtitle">Quản lý chiến dịch ưu đãi, mã giảm giá, giới hạn lượt dùng và theo dõi ROI</p>
-          </div>
+          
           <div class="page-actions">
             <button class="btn btn-primary btn-sm" data-modal-open="createPromoModal"><i class="ti ti-plus"></i> Tạo
               khuyến mãi mới</button>
@@ -25,27 +22,27 @@
         <!-- Stats Grid -->
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🏷️</div>
+            <div class="stat-icon"><i class="ti ti-tag"></i></div>
             <div class="stat-value" th:text="${marketingStats != null ? marketingStats.khuyenMaiDangChayCount : 0}">0
             </div>
             <div class="stat-label">Chiến dịch đang chạy</div>
             <div class="kpi-compare"><span class="arrow-up">Đang áp dụng</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(13,155,163,0.15)">🎟️</div>
+            <div class="stat-icon"><i class="ti ti-ticket"></i></div>
             <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongCoupons : 0}">0</div>
             <div class="stat-label">Tổng mã ưu đãi</div>
             <div class="kpi-compare"><span class="arrow-up">Trong hệ thống</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(67,233,123,0.15)">📈</div>
+            <div class="stat-icon"><i class="ti ti-trending-up"></i></div>
             <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongLuotSuDungCoupon : 0}">0
             </div>
             <div class="stat-label">Lượt đã sử dụng mã</div>
             <div class="kpi-compare"><span class="arrow-up">Đã quy đổi</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(255,193,7,0.15)">🎁</div>
+            <div class="stat-icon"><i class="ti ti-gift"></i></div>
             <div class="stat-value" th:text="${marketingStats != null ? marketingStats.tongKhuyenMai : 0}">0</div>
             <div class="stat-label">Tổng chương trình khuyến mãi</div>
             <div class="kpi-compare"><span class="period">Tất cả thời gian</span></div>
@@ -185,7 +182,7 @@
     <div class="modal" style="max-width:550px">
       <div class="modal-header">
         <h2 class="modal-title">Tạo mã khuyến mãi / Coupon mới</h2>
-        <button class="modal-close" data-modal-close="createPromoModal">✕</button>
+        <button class="modal-close" data-modal-close="createPromoModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
       </div>
       <!-- BỌC FORM VÀO ĐÂY ĐỂ POST DỮ LIỆU -->
       <form th:action="@{/marketing/khuyen-mai/tao-moi}" method="post">
@@ -256,7 +253,7 @@
     <div class="modal" style="max-width:550px">
       <div class="modal-header">
         <h2 class="modal-title">Cập nhật mã khuyến mãi</h2>
-        <button class="modal-close" data-modal-close="editPromoModal">✕</button>
+        <button class="modal-close" data-modal-close="editPromoModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
       </div>
       <form th:action="@{/marketing/khuyen-mai/cap-nhat}" method="post">
         <div style="padding: 1.5rem;">

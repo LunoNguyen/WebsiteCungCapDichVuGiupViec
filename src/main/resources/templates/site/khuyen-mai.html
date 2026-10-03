@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Khuyến mãi', 'Các chương trình khuyến mãi và mã ưu đãi đang áp dụng tại Neatify.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('khuyen-mai')}"></header>
+
+<main>
+  <section class="page-hero">
+    <div class="wrap">
+      <h1>Khuyến mãi đang áp dụng</h1>
+      <p>Sao chép mã và nhập ở bước xem giá khi đặt dịch vụ. Mỗi mã có số lượt dùng giới hạn.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="grid-3" th:if="${khuyenMais != null and !khuyenMais.isEmpty()}">
+        <div class="promo" th:each="km : ${khuyenMais}">
+          <div class="promo-amount" th:text="${km.mucGiamText}">Giảm 20%</div>
+          <div>
+            <h3 th:text="${km.tenChuongTrinh}">Tên chương trình</h3>
+            <p th:if="${km.moTa != null}" th:text="${km.moTa}">Mô tả chương trình</p>
+            <p><span th:if="${!km.dieuKienText.isEmpty()}" th:text="${km.dieuKienText} + ', '">Đơn từ 300.000đ, </span><span th:text="${km.hanText}">đến hết 31/12/2026</span></p>
+            <span class="promo-code" th:if="${km.code != null}">
+              <span th:text="${km.code}">NEATIFY20</span>
+              <button type="button" th:attr="data-copy=${km.code}">Sao chép</button>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="empty" th:if="${khuyenMais == null or khuyenMais.isEmpty()}">
+        Hiện chưa có chương trình khuyến mãi nào. Bạn vẫn có thể <a href="/dich-vu">xem bảng giá dịch vụ</a>.
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

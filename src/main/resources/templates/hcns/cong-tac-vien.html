@@ -10,51 +10,48 @@
 
     <main class="page-content">
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Quản lý Cộng tác viên</h1>
-          <p class="page-subtitle">Xét duyệt hồ sơ, quản lý thông tin cộng tác viên</p>
-        </div>
+        
         <div class="page-actions">
           <button class="btn btn-primary btn-sm" data-modal-open="addCtvModal"><i class="ti ti-plus"></i> Thêm Cộng tác viên</button>
         </div>
       </div>
 
       <!-- Thông báo hệ thống -->
-      <div th:if="${errorMessage}" style="padding:1rem;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
-      <div th:if="${successMessage}" style="padding:1rem;background:rgba(67,233,123,0.12);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
+      <div th:if="${errorMessage}" style="padding:1rem;background:var(--error-bg);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${errorMessage}"></div>
+      <div th:if="${successMessage}" style="padding:1rem;background:var(--success-bg);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600" th:text="${successMessage}"></div>
 
       <!-- Stats Row -->
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(108,99,255,0.15)"><i class="ti ti-users" style="color:var(--primary)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-users" style="color:var(--primary)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.tongCongTacVien : 0}">0</div>
             <div class="quick-stat-lbl">Tổng cộng tác viên</div>
           </div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(67,233,123,0.15)"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-user-check" style="color:var(--accent)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.hoatDongCount : 0}">0</div>
             <div class="quick-stat-lbl">Hoạt động</div>
           </div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-clock" style="color:var(--warning)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-clock" style="color:var(--warning)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.choDuyetCount : 0}">0</div>
             <div class="quick-stat-lbl">Chờ duyệt</div>
           </div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(255,71,87,0.15)"><i class="ti ti-user-x" style="color:var(--danger)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-user-x" style="color:var(--danger)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.dinhChiCount : 0}">0</div>
             <div class="quick-stat-lbl">Đình chỉ</div>
           </div>
         </div>
         <div class="quick-stat">
-          <div class="quick-stat-icon" style="background:rgba(255,193,7,0.15)"><i class="ti ti-award" style="color:var(--warning)"></i></div>
+          <div class="quick-stat-icon"><i class="ti ti-award" style="color:var(--warning)"></i></div>
           <div>
             <div class="quick-stat-val" th:text="${congTacVienStats != null ? congTacVienStats.uuTuCount : 0}">0</div>
             <div class="quick-stat-lbl">Ưu tú</div>
@@ -83,7 +80,10 @@
                 <div><span style="color:var(--text-muted)">Cấp độ: </span><strong th:text="${ctv.capDo}">Mới</strong></div>
               </div>
             </div>
-            <div style="padding:0.875rem 1.25rem;background:rgba(255,255,255,0.02);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
+            <div style="padding:0.875rem 1.25rem;background:var(--primary-soft);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
+              <!-- Xem ảnh chân dung, CCCD, chứng chỉ ứng viên đã tải lên MinIO -->
+              <button type="button" class="btn btn-outline btn-sm" style="flex:1"
+                      th:attr="data-files=@{/hcns/cong-tac-vien/{id}/tai-lieu(id=${ctv.id})}"><i class="ti ti-paperclip"></i> Hồ sơ</button>
               <form th:action="@{/hcns/cong-tac-vien/duyet}" method="post" style="flex:1">
                 <input type="hidden" name="id" th:value="${ctv.id}">
                 <button type="submit" class="btn btn-success btn-sm" style="width:100%"><i class="ti ti-check"></i> Phê duyệt</button>
@@ -154,7 +154,7 @@
                 <td style="font-size:0.875rem" th:text="${ctv.noiCuTru}">TP.HCM</td>
                 <td style="font-size:0.875rem" th:text="${ctv.ngayDangKy != null ? #temporals.format(ctv.ngayDangKy, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
                 <td>
-                  <span style="color:#FFC107;font-weight:700" th:text="|&#9733; ${ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0'}|">&#9733; 5.0</span>
+                  <span style="color:#F59E0B;font-weight:700" th:text="|&#9733; ${ctv.diemDanhGia != null ? ctv.diemDanhGia : '5.0'}|">&#9733; 5.0</span>
                 </td>
                 <td>
                   <span class="badge badge-warning" th:if="${ctv.capDo == 'UuTu'}">Ưu tú</span>
@@ -169,6 +169,8 @@
                 </td>
                 <td style="text-align:right">
                   <div class="table-actions" style="justify-content:flex-end">
+                    <button type="button" class="btn btn-outline btn-sm" title="Xem hồ sơ, chứng chỉ đã tải lên"
+                            th:attr="data-files=@{/hcns/cong-tac-vien/{id}/tai-lieu(id=${ctv.id})}"><i class="ti ti-paperclip"></i></button>
                     <button class="btn btn-outline btn-sm"
                             th:data-id="${ctv.id}"
                             th:data-hoten="${ctv.hoTen}"
@@ -193,7 +195,7 @@
                     </form>
                     <form th:action="@{/hcns/cong-tac-vien/xoa}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn cộng tác viên này khỏi hệ thống?');">
                       <input type="hidden" name="id" th:value="${ctv.id}">
-                      <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger,#ef4444);border-color:rgba(239,68,68,0.3)" title="Xóa cộng tác viên"><i class="ti ti-trash"></i></button>
+                      <button type="submit" class="btn btn-outline btn-sm" style="color:var(--danger,var(--danger));border-color:color-mix(in srgb, var(--error-text) 25%, transparent)" title="Xóa cộng tác viên"><i class="ti ti-trash"></i></button>
                     </form>
                   </div>
                 </td>
@@ -219,7 +221,7 @@
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
       <h2 class="modal-title"><i class="ti ti-user-plus"></i> Thêm Cộng tác viên mới</h2>
-      <button class="modal-close" data-modal-close="addCtvModal">✕</button>
+      <button class="modal-close" data-modal-close="addCtvModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <form th:action="@{/hcns/cong-tac-vien/them}" method="post" id="addCtvForm"
           onsubmit="return validateCtvSubmit(event, 'addCtvNgaySinh', 'addCtvNgaySinhError', true)">
@@ -264,7 +266,7 @@
                 <i class="ti ti-calendar" style="font-size:1.15rem"></i>
               </button>
             </div>
-            <div id="addCtvNgaySinhError" style="display:none;color:#ef4444;font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
+            <div id="addCtvNgaySinhError" style="display:none;color:var(--danger);font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
           </div>
           <div class="form-group">
             <label class="form-label">Cấp độ ban đầu</label>
@@ -298,7 +300,7 @@
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
       <h2 class="modal-title"><i class="ti ti-edit"></i> Chỉnh sửa Hồ sơ Cộng tác viên</h2>
-      <button class="modal-close" data-modal-close="editCtvModal">✕</button>
+      <button class="modal-close" data-modal-close="editCtvModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <form th:action="@{/hcns/cong-tac-vien/sua}" method="post" id="editCtvForm"
           onsubmit="return validateCtvSubmit(event, 'editCtvNgaySinh', 'editCtvNgaySinhError', false)">
@@ -338,7 +340,7 @@
                 <i class="ti ti-calendar" style="font-size:1.15rem"></i>
               </button>
             </div>
-            <div id="editCtvNgaySinhError" style="display:none;color:#ef4444;font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
+            <div id="editCtvNgaySinhError" style="display:none;color:var(--danger);font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
           </div>
         </div>
         <div class="form-group" style="margin-bottom:1rem">

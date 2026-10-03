@@ -38,15 +38,184 @@ const SidebarManager = {
       });
     }
 
-    // Close on overlay click
-    if (overlay) {
-      overlay.addEventListener('click', () => {
-        sidebar.classList.remove('mobile-open');
-        overlay.classList.remove('active');
-      });
-    }
+    // Đóng menu trượt: bấm lớp phủ, Esc, hoặc bấm một mục
+    const closeMobile = () => {
+      sidebar.classList.remove('mobile-open');
+      if (overlay) overlay.classList.remove('active');
+    };
+    if (overlay) overlay.addEventListener('click', closeMobile);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMobile(); });
+    sidebar.querySelectorAll('.sidebar-item').forEach(a => a.addEventListener('click', closeMobile));
   }
 };
+
+// ============================================================
+// AVATAR: cùng một tên luôn ra cùng một tông pastel
+// ============================================================
+function initAvatarTones(root = document) {
+  root.querySelectorAll('.avatar:not([data-tone])').forEach(el => {
+    const inline = el.getAttribute('style') || '';
+    if (/background/i.test(inline)) return; // avatar có ảnh hay màu riêng thì giữ
+    const seed = (el.dataset.name || el.getAttribute('title') || el.textContent || '').trim();
+    if (!seed) return;
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+    el.dataset.tone = String(Math.abs(hash) % 6);
+  });
+}
+
+// ============================================================
+// SELECT: dựng lại danh sách chọn. <select> gốc vẫn giữ giá trị,
+// required, name và sự kiện change/onchange như cũ.
+// Thêm data-native vào <select> nào muốn giữ bản gốc.
+// ============================================================
+const SelectEnhancer = {
+  openMenu: null,
+  init(root = document) {
+    root.querySelectorAll('select.filter-select, select.form-control').forEach(sel => this.enhance(sel));
+    if (this.bound) return;
+    this.bound = true;
+    document.addEventListener('click', (e) => {
+      if (this.openMenu && !this.openMenu.menu.contains(e.target) && !this.openMenu.trigger.contains(e.target)) this.close();
+    });
+    document.addEventListener('scroll', (e) => {
+      if (this.openMenu && !this.openMenu.menu.contains(e.target)) this.close();
+    }, true);
+    window.addEventListener('resize', () => this.close());
+  },
+  enhance(select) {
+    if (select.multiple || select.size > 1 || select.hasAttribute('data-native') || select.closest('.ui-select')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'ui-select' + (select.classList.contains('form-control') ? ' is-block' : '');
+    // Giữ bề rộng, flex của select gốc; bỏ phần tô màu cũ
+    const inline = select.getAttribute('style');
+    if (inline) {
+      const keep = inline.split(';').filter(rule => /^\s*(width|min-width|max-width|flex|flex-[a-z]+|margin[a-z-]*)\s*:/i.test(rule));
+      if (keep.length) wrap.setAttribute('style', keep.join(';'));
+    }
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'ui-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    const label = select.id ? document.querySelector(`label[for="${select.id}"]`) : null;
+    if (label) {
+      label.addEventListener('click', (e) => { e.preventDefault(); trigger.focus(); });
+      trigger.setAttribute('aria-label', label.textContent.trim());
+    } else if (select.getAttribute('aria-label')) {
+      trigger.setAttribute('aria-label', select.getAttribute('aria-label'));
+    }
+    trigger.innerHTML = '<span class="ui-select-value"></span><i class="ti ti-chevron-down" aria-hidden="true"></i>';
+    wrap.appendChild(trigger);
+
+    const menu = document.createElement('div');
+    menu.className = 'ui-select-menu';
+    menu.setAttribute('role', 'listbox');
+    document.body.appendChild(menu);
+
+    const state = { select, trigger, menu };
+    const sync = () => {
+      const opt = select.options[select.selectedIndex];
+      const valueEl = trigger.querySelector('.ui-select-value');
+      valueEl.textContent = opt ? opt.textContent.trim() : '';
+      valueEl.classList.toggle('is-placeholder', !!opt && opt.value === '' && opt.disabled);
+      trigger.disabled = select.disabled;
+    };
+    state.sync = sync;
+
+    // Gán giá trị bằng JS (mở form sửa, reset) cũng cập nhật nhãn
+    const proto = HTMLSelectElement.prototype;
+    ['value', 'selectedIndex'].forEach(prop => {
+      const desc = Object.getOwnPropertyDescriptor(proto, prop);
+      Object.defineProperty(select, prop, {
+        configurable: true,
+        get() { return desc.get.call(this); },
+        set(v) { desc.set.call(this, v); sync(); }
+      });
+    });
+    new MutationObserver(sync).observe(select, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'selected'] });
+    select.addEventListener('change', sync);
+    if (select.form) select.form.addEventListener('reset', () => setTimeout(sync));
+
+    trigger.addEventListener('click', () => (this.openMenu === state ? this.close() : this.open(state)));
+    trigger.addEventListener('keydown', (e) => {
+      if (this.openMenu !== state) {
+        if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); this.open(state); }
+        return;
+      }
+      const opts = [...menu.querySelectorAll('.ui-select-option:not(:disabled)')];
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const cur = opts.findIndex(o => o.classList.contains('is-active'));
+        const next = e.key === 'ArrowDown' ? Math.min(cur + 1, opts.length - 1) : Math.max(cur - 1, 0);
+        opts.forEach(o => o.classList.remove('is-active'));
+        if (opts[next]) { opts[next].classList.add('is-active'); opts[next].scrollIntoView({ block: 'nearest' }); }
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const act = menu.querySelector('.ui-select-option.is-active');
+        if (act) act.click();
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
+        this.close();
+      }
+    });
+    sync();
+  },
+  open(state) {
+    this.close();
+    const { select, trigger, menu } = state;
+    menu.innerHTML = '';
+    [...select.options].forEach((opt, i) => {
+      if (opt.hidden) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ui-select-option';
+      b.setAttribute('role', 'option');
+      b.setAttribute('aria-selected', String(i === select.selectedIndex));
+      b.disabled = opt.disabled;
+      const text = document.createElement('span');
+      text.textContent = opt.textContent.trim();
+      b.appendChild(text);
+      if (i === select.selectedIndex) b.classList.add('is-active');
+      b.addEventListener('click', () => {
+        Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex').set.call(select, i);
+        state.sync();
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        this.close();
+        trigger.focus();
+      });
+      menu.appendChild(b);
+    });
+    const r = trigger.getBoundingClientRect();
+    menu.style.minWidth = r.width + 'px';
+    menu.style.left = '0px';
+    menu.style.top = '0px';
+    menu.classList.add('open');
+    const mw = menu.offsetWidth;
+    const mh = menu.offsetHeight;
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - mw - 8));
+    const below = window.innerHeight - r.bottom;
+    const top = below < mh + 12 && r.top > mh + 12 ? r.top - mh - 4 : r.bottom + 4;
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+    trigger.setAttribute('aria-expanded', 'true');
+    const act = menu.querySelector('.is-active');
+    if (act) act.scrollIntoView({ block: 'nearest' });
+    this.openMenu = state;
+  },
+  close() {
+    if (!this.openMenu) return;
+    this.openMenu.menu.classList.remove('open');
+    this.openMenu.trigger.setAttribute('aria-expanded', 'false');
+    this.openMenu = null;
+  }
+};
+
 
 // ============================================================
 // DROPDOWN
@@ -66,6 +235,15 @@ const DropdownManager = {
           if (!isOpen) {
             menu.classList.add('active');
             menu.classList.add('show');
+            // Menu trong bảng (khung cuộn) đặt fixed theo nút, để không bị khung cắt
+            if (menu.classList.contains('dropdown-menu-fixed')) {
+              const r = trigger.getBoundingClientRect();
+              menu.style.position = 'fixed';
+              menu.style.right = 'auto';
+              const mw = menu.offsetWidth, mh = menu.offsetHeight;
+              menu.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + 'px';
+              menu.style.top = (window.innerHeight - r.bottom < mh + 12 && r.top > mh + 12 ? r.top - mh - 4 : r.bottom + 4) + 'px';
+            }
             const parent = menu.closest('.dropdown') || trigger.closest('.dropdown');
             if (parent) {
               parent.classList.add('open');
@@ -77,6 +255,7 @@ const DropdownManager = {
       }
 
       // If clicking inside menu, don't close unless an action item (e.g. data-theme-set or link) was clicked
+      if (e.target.closest('.ui-select-menu')) return;
       const insideMenu = e.target.closest('.dropdown-menu');
       if (insideMenu && !e.target.closest('[data-theme-set]') && !e.target.closest('a')) {
         return;
@@ -85,6 +264,11 @@ const DropdownManager = {
       // Close all if clicking elsewhere
       this.closeAll();
     });
+    document.addEventListener('scroll', (e) => {
+      const open = document.querySelector('.dropdown-menu-fixed.active');
+      if (open && !open.contains(e.target)) this.closeAll();
+    }, true);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.closeAll(); });
   },
   closeAll() {
     document.querySelectorAll('.dropdown-menu.active, .dropdown-menu.show').forEach(m => {
@@ -201,13 +385,14 @@ const Toast = {
     }
   },
   show(message, type = 'success', duration = 3500) {
-    const icons = { success: '✓', error: '✕', warning: '⚠' };
+    const icons = { success: 'circle-check', error: 'alert-circle', warning: 'alert-triangle', info: 'info-circle' };
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
     toast.innerHTML = `
-      <span style="font-size:1.1rem">${icons[type] || '●'}</span>
+      <span style="display:inline-flex;font-size:1.125rem"><i class="ti ti-${icons[type] || 'info-circle'}"></i></span>
       <span style="flex:1;font-size:0.875rem">${message}</span>
-      <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">✕</button>
+      <button type="button" class="icon-btn" aria-label="Đóng" onclick="this.parentElement.remove()" style="width:28px;height:28px;font-size:1rem"><i class="ti ti-x"></i></button>
     `;
     this.container.appendChild(toast);
     setTimeout(() => {
@@ -433,7 +618,7 @@ const ThemeManager = {
   STORAGE_KEY: 'neatify_theme',
 
   init() {
-    const saved = localStorage.getItem(this.STORAGE_KEY) || 'system';
+    const saved = localStorage.getItem(this.STORAGE_KEY) || 'light';
     this.apply(saved);
 
     try {
@@ -479,7 +664,7 @@ const ThemeManager = {
   },
 
   getCurrentMode() {
-    return localStorage.getItem(this.STORAGE_KEY) || 'system';
+    return localStorage.getItem(this.STORAGE_KEY) || 'light';
   },
 
   set(mode) {
@@ -498,13 +683,6 @@ const ThemeManager = {
       el.classList.toggle('active', el.getAttribute('data-theme-set') === mode);
     });
 
-    document.querySelectorAll('.theme-toggle-btn i').forEach(icon => {
-      if (isDark) {
-        icon.className = 'ti ti-bulb theme-bulb-icon';
-      } else {
-        icon.className = 'ti ti-bulb-filled theme-bulb-icon';
-      }
-    });
   }
 };
 
@@ -524,6 +702,8 @@ document.addEventListener('DOMContentLoaded', () => {
   LandingPage.init();
   initCounters();
   initChartPeriodTabs();
+  initAvatarTones();
+  SelectEnhancer.init();
 
   // Show forbidden toast if redirected due to unauthorized role access
   const urlParams = new URLSearchParams(window.location.search);

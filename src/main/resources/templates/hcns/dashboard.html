@@ -6,15 +6,12 @@
   <aside th:replace="~{layout/admin-layout :: adminSidebar('hcns', 'dashboard')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Dashboard')}"></header>
+    <header th:replace="~{layout/admin-layout :: adminTopbar('HCNS - Kế toán', '/hcns/dashboard', 'Tổng quan')}"></header>
 
 
     <main class="page-content">
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Dashboard HCNS - Kế toán</h1>
-          <p class="page-subtitle">Quản lý nhân sự, CTV, dịch vụ · Tháng 9/2026</p>
-        </div>
+        
         <div class="page-actions">
           <a class="btn btn-primary btn-sm" href="/hcns/cong-tac-vien">
             <i class="ti ti-user-star"></i> Danh sách cộng tác viên (<span th:text="${tongCongTacVien}">0</span>)
@@ -25,25 +22,25 @@
       <!-- Stats -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">👥</div>
+          <div class="stat-icon"><i class="ti ti-users"></i></div>
           <div class="stat-value" th:attr="data-count=${tongNhanVien}" th:text="${tongNhanVien}">0</div>
           <div class="stat-label">Tổng nhân viên</div>
           <div class="kpi-compare"><span class="arrow-up" th:text="${tongNhanVien + ' nhân sự'}">0 nhân sự</span><span class="period">· Đang làm việc</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">🤝</div>
+          <div class="stat-icon"><i class="ti ti-heart-handshake"></i></div>
           <div class="stat-value" th:attr="data-count=${tongCongTacVien}" th:text="${tongCongTacVien}">0</div>
           <div class="stat-label">Cộng tác viên</div>
           <div class="kpi-compare"><span class="arrow-up" th:text="${ctvUuTuCount + ' cộng tác viên ưu tú'}">0</span><span class="period">toàn hệ thống</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
+          <div class="stat-icon">⏳</div>
           <div class="stat-value" th:attr="data-count=${ctvChoDuyetCount}" th:text="${ctvChoDuyetCount}">0</div>
           <div class="stat-label">Hồ sơ chờ xét duyệt</div>
-          <div class="kpi-compare"><span style="color:var(--warning)" th:text="${ctvChoDuyetCount > 0 ? '● Cần xử lý' : '✓ Đã xét duyệt hết'}">● Cần xử lý</span></div>
+          <div class="kpi-compare"><span style="color:var(--warning)" th:text="${ctvChoDuyetCount > 0 ? 'Cần xét duyệt' : 'Đã xét duyệt hết'}">Cần xét duyệt</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🛎</div>
+          <div class="stat-icon"><i class="ti ti-bell-ringing"></i></div>
           <div class="stat-value" th:attr="data-count=${tongDichVu}" th:text="${tongDichVu}">0</div>
           <div class="stat-label">Dịch vụ đang hoạt động</div>
           <div class="kpi-compare"><span class="arrow-up" th:text="${tongDichVu + ' dịch vụ'}">0 dịch vụ</span></div>
@@ -99,7 +96,7 @@
             <div style="display:flex;flex-direction:column;gap:0.45rem;max-height:220px;overflow-y:auto;padding-right:0.35rem;margin-top:0.75rem">
               <div th:each="dv : ${dichVus}" style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.6rem;background:var(--bg-main);border-radius:var(--radius-sm);font-size:0.825rem">
                 <div style="display:flex;align-items:center;gap:0.4rem;overflow:hidden">
-                  <span style="color:var(--primary);font-size:0.9rem">🔹</span>
+                  <span class="dot" style="width:6px;height:6px;background:var(--primary)"></span>
                   <span th:text="${dv.tenDichVu}" style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px" th:title="${dv.tenDichVu}">Dịch vụ</span>
                 </div>
                 <span class="badge" style="font-size:0.7rem;padding:0.15rem 0.45rem;white-space:nowrap"

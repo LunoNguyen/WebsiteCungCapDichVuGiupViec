@@ -1,20 +1,17 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/cskh-layout :: cskhHead('Dashboard')}"></head>
+<head th:replace="~{layout/cskh-layout :: cskhHead('Tổng quan')}"></head>
 <body>
 <div class="app-shell">
   <aside th:replace="~{layout/cskh-layout :: cskhSidebar('dashboard')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Dashboard')}"></header>
+    <header th:replace="~{layout/cskh-layout :: cskhTopbar('Tổng quan')}"></header>
 
 
     <main class="page-content">
       <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Dashboard Chăm sóc Khách hàng</h1>
-          <p class="page-subtitle">Theo dõi đơn hàng, khiếu nại, và chất lượng dịch vụ · Hôm nay 20/09/2026</p>
-        </div>
+        
         <div class="page-actions">
           <button class="btn btn-primary btn-sm" onclick="window.location.href='/cskh/don-dat-dich-vu'">
             <i class="ti ti-plus"></i> Tạo đơn mới
@@ -25,31 +22,31 @@
       <!-- Stats -->
       <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">📋</div>
+          <div class="stat-icon"><i class="ti ti-clipboard-list"></i></div>
           <div class="stat-value" th:attr="data-count=${tongDonHang}" th:text="${tongDonHang}">0</div>
           <div class="stat-label">Tổng đơn dịch vụ</div>
           <div class="kpi-compare"><span class="arrow-up" th:text="${donHoanThanhCount + ' hoàn thành'}">0</span><span class="period">· Đã hoàn tất</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⏳</div>
+          <div class="stat-icon">⏳</div>
           <div class="stat-value" th:attr="data-count=${donChoDuyetCount}" th:text="${donChoDuyetCount}">0</div>
           <div class="stat-label">Chờ duyệt và phân công</div>
-          <div class="kpi-compare"><span style="color:var(--warning)" th:text="${donChoDuyetCount > 0 ? '● Cần xử lý' : '✓ Đã phân công'}">● Cần phân công</span></div>
+          <div class="kpi-compare"><span style="color:var(--warning)" th:text="${donChoDuyetCount > 0 ? 'Cần phân công' : 'Đã phân công hết'}">Cần phân công</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">⚠️</div>
+          <div class="stat-icon"><i class="ti ti-alert-triangle"></i></div>
           <div class="stat-value" th:attr="data-count=${khieuNaiChuaXuLyCount}" th:text="${khieuNaiChuaXuLyCount}">0</div>
           <div class="stat-label">Khiếu nại đang xử lý</div>
           <div class="kpi-compare"><span style="color:var(--danger)" th:text="${'Tổng cộng: ' + tongKhieuNai + ' khiếu nại'}">● Đang xử lý</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">⭐</div>
+          <div class="stat-icon"><i class="ti ti-star"></i></div>
           <div class="stat-value" th:text="${diemDanhGiaTB}">4.8</div>
           <div class="stat-label">Đánh giá trung bình</div>
           <div class="kpi-compare"><span class="arrow-up">Mức độ hài lòng cao</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(0,180,216,0.15)">👥</div>
+          <div class="stat-icon"><i class="ti ti-users"></i></div>
           <div class="stat-value" th:attr="data-count=${tongKhachHang}" th:text="${tongKhachHang}">0</div>
           <div class="stat-label">Tổng khách hàng</div>
           <div class="kpi-compare"><span class="arrow-up" th:text="${tongKhachHang + ' người'}">0</span><span class="period">thành viên đăng ký</span></div>
@@ -67,7 +64,7 @@
             <a href="/cskh/don-dat-dich-vu" class="btn btn-primary btn-sm">Quản lý tất cả</a>
           </div>
           <div style="display:flex;flex-direction:column;gap:0.75rem">
-            <div th:each="d : ${recentOrders}" th:if="${d.trangThai == 'ChoDuyet' || d.trangThai == 'DangThucHien'}" style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.2);border-radius:var(--radius-md)">
+            <div th:each="d : ${recentOrders}" th:if="${d.trangThai == 'ChoDuyet' || d.trangThai == 'DangThucHien'}" style="display:flex;align-items:center;gap:0.875rem;padding:0.875rem;background:var(--warning-bg);border:1px solid color-mix(in srgb, var(--warning) 25%, transparent);border-radius:var(--radius-md)">
               <div class="avatar avatar-sm" th:text="${d.khachHang != null ? #strings.substring(d.khachHang.hoTen, 0, 1) : 'K'}">K</div>
               <div style="flex:1">
                 <div style="font-weight:600;font-size:0.875rem" th:text="${'#' + d.maDonDat + ' · ' + (d.khachHang != null ? d.khachHang.hoTen : 'Khách hàng')}">Mã đơn</div>
@@ -153,8 +150,6 @@
     </main>
   </div>
 </div>
-
-<div class="overlay" id="sidebarOverlay"></div>
 <script src="/js/main.js"></script>
 <script th:inline="javascript">
   document.addEventListener('DOMContentLoaded', () => {

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Dịch vụ và bảng giá', 'Tất cả nhóm dịch vụ giúp việc của Neatify kèm mức giá hiện tại.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dich-vu')}"></header>
+
+<main>
+  <section class="page-hero">
+    <div class="wrap">
+      <h1>Dịch vụ và bảng giá</h1>
+      <p>Chọn một nhóm để xem từng dịch vụ, thời gian thực hiện và giá hiện tại.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="cat-list" th:if="${danhMucs != null and !danhMucs.isEmpty()}">
+        <article class="cat-row" th:each="dm : ${danhMucs}">
+          <a class="leaf" th:href="@{/dich-vu/{id}(id=${dm.id})}" tabindex="-1" aria-hidden="true">
+            <img th:src="${dm.hinhAnhUrl}" alt="" loading="lazy">
+          </a>
+          <div>
+            <h3><a th:href="@{/dich-vu/{id}(id=${dm.id})}" th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</a></h3>
+            <p th:text="${dm.moTa}">Mô tả nhóm dịch vụ</p>
+            <div class="chips">
+              <span class="chip" th:each="ten : ${dm.tieuBieu}" th:text="${ten}">Tổng vệ sinh</span>
+            </div>
+          </div>
+          <div class="cat-side">
+            <div class="price" th:text="${dm.giaTuText}">từ 192.000đ</div>
+            <div class="count" th:text="${dm.soDichVu} + ' dịch vụ'">12 dịch vụ</div>
+            <a class="btn btn-teal btn-sm" th:href="@{/dich-vu/{id}(id=${dm.id})}">Xem bảng giá</a>
+          </div>
+        </article>
+      </div>
+      <div class="empty" th:if="${danhMucs == null or danhMucs.isEmpty()}">
+        Chưa có nhóm dịch vụ nào đang hiển thị.
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

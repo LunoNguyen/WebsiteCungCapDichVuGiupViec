@@ -6,45 +6,40 @@
   <aside th:replace="~{layout/marketing-layout :: marketingSidebar('dashboard')}"></aside>
 
   <div class="main-area">
-    <header th:replace="~{layout/marketing-layout :: marketingTopbar('Dashboard')}"></header>
+    <header th:replace="~{layout/marketing-layout :: marketingTopbar('Tổng quan')}"></header>
 
 
     <main class="page-content">
-      <div class="page-header">
-        <div class="page-title-group">
-          <h1 class="page-title">Dashboard Marketing</h1>
-          <p class="page-subtitle">Tổng quan chiến dịch, khuyến mãi và đánh giá · Tháng 9/2026</p>
-        </div>
-      </div>
+      
 
       <!-- Stats -->
       <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,101,132,0.15)">📣</div>
+          <div class="stat-icon"><i class="ti ti-speakerphone"></i></div>
           <div class="stat-value" th:attr="data-count=${tongKhuyenMai}" th:text="${tongKhuyenMai}">0</div>
           <div class="stat-label">Chiến dịch khuyến mãi</div>
           <div class="kpi-compare"><span style="color:var(--accent)">● Đang triển khai</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(108,99,255,0.15)">🎁</div>
+          <div class="stat-icon"><i class="ti ti-gift"></i></div>
           <div class="stat-value" th:attr="data-count=${tongCoupons}" th:text="${tongCoupons}">0</div>
           <div class="stat-label">Mã coupon phát hành</div>
           <div class="kpi-compare"><span class="arrow-up" th:text="${tongCoupons + ' mã đang quản lý'}">0</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(67,233,123,0.15)">👥</div>
+          <div class="stat-icon"><i class="ti ti-users"></i></div>
           <div class="stat-value" th:attr="data-count=${tongKhachHang}" th:text="${tongKhachHang}">0</div>
           <div class="stat-label">Tổng khách hàng</div>
           <div class="kpi-compare"><span class="arrow-up" th:text="${tongKhachHang + ' thành viên'}">0</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
+          <div class="stat-icon"><i class="ti ti-star"></i></div>
           <div class="stat-value" th:text="${diemDanhGiaTB}">4.8</div>
           <div class="stat-label">Đánh giá trung bình</div>
           <div class="kpi-compare"><span class="arrow-up">Hài lòng dịch vụ</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(0,180,216,0.15)">💰</div>
+          <div class="stat-icon"><i class="ti ti-coin"></i></div>
           <div class="stat-value" th:text="${#numbers.formatDecimal(tongDoanhThuTrieu, 0, 'POINT', 0, 'COMMA') + ' triệu'}">0 triệu</div>
           <div class="stat-label">Doanh thu ghi nhận</div>
           <div class="kpi-compare"><span class="arrow-up">Tích lũy hoàn thành</span></div>
@@ -62,7 +57,7 @@
 
   <div class="dropdown">
     <button class="btn btn-outline btn-sm" data-dropdown="namMenu" 
-            style="gap:0.4rem;font-weight:600;border-color:rgba(255,101,132,0.3);color:var(--text-primary)">
+            style="gap:0.4rem;font-weight:600;border-color:var(--line-strong);color:var(--text-primary)">
       <i class="ti ti-calendar" style="color:var(--accent)"></i>
       <span th:text="'Năm ' + ${namDangChon}">Năm 2026</span>
       <i class="ti ti-chevron-down" style="font-size:0.75rem;color:var(--text-muted)"></i>
@@ -89,7 +84,7 @@
             <a href="/marketing/khuyen-mai" class="btn btn-outline btn-sm">Quản lý</a>
           </div>
           <div style="display:flex;flex-direction:column;gap:0.875rem">
-            <div th:each="km : ${khuyenMais}" style="padding:0.875rem;background:rgba(255,101,132,0.06);border:1px solid rgba(255,101,132,0.2);border-radius:var(--radius-md)">
+            <div th:each="km : ${khuyenMais}" style="padding:0.875rem;background:var(--primary-soft);border:1px solid var(--line-strong);border-radius:var(--radius-md)">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
                 <span style="font-weight:700;font-size:0.875rem" th:text="${km.tenChuongTrinh}">Tên chiến dịch</span>
                 <span class="badge" th:classappend="${km.trangThai == 'DangHoatDong' ? 'badge-success' : 'badge-warning'}" th:text="${km.trangThai == 'DangHoatDong' ? 'Đang hoạt động' : km.trangThai}">Đang hoạt động</span>
@@ -126,7 +121,7 @@
             <div th:each="dg : ${recentReviews}" style="border-bottom:1px solid var(--border-light);padding-bottom:0.625rem">
               <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem">
                 <span style="font-weight:600;font-size:0.8rem" th:text="${dg.khachHang != null ? dg.khachHang.hoTen : 'Khách hàng'}">Khách hàng</span>
-                <span style="color:#FFC107;font-size:0.8rem" th:text="${(dg.diemChatLuong != null ? dg.diemChatLuong : 5) + ' sao'}">★★★★★</span>
+                <span style="color:#F59E0B;font-size:0.8rem" th:text="${(dg.diemChatLuong != null ? dg.diemChatLuong : 5) + ' sao'}">★★★★★</span>
               </div>
               <div style="font-size:0.75rem;color:var(--text-secondary)" th:text="${dg.nhanXet != null ? dg.nhanXet : 'Dịch vụ tốt'}">Nhận xét</div>
             </div>

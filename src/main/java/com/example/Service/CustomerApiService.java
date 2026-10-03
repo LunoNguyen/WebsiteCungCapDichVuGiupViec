@@ -5,6 +5,9 @@ import com.example.DTO.response.ApiResponse;
 import com.example.DTO.response.PriceCalculationResult;
 import com.example.Model.*;
 import com.example.Repository.*;
+import com.example.Config.CacheNames;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +50,10 @@ public class CustomerApiService {
     private final PhanCongCTVRepository phanCongCTVRepository;
     private final LichLamViecRepository lichLamViecRepository;
     private final AuthService authService;
+
+    /** Chuẩn hóa đường dẫn file MinIO (lưu object key vào CSDL). */
+    @Autowired
+    private MinioService minioService;
 
     public CustomerApiService(
             TaiKhoanRepository taiKhoanRepository,
@@ -134,7 +141,7 @@ public class CustomerApiService {
             }
         }
 
-        long suffix = System.currentTimeMillis() % 1000000;
+        String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
         String maTaiKhoan = "TK-KH-" + suffix;
         String maKhachHang = "KH-" + suffix;
 
@@ -313,8 +320,8 @@ public class CustomerApiService {
                 .orElse(null);
 
         if (taiKhoan == null) {
-            long suffix = System.currentTimeMillis() % 1000000;
-            String soDienThoai = (req.getSoDienThoai() != null && !req.getSoDienThoai().isBlank()) ? req.getSoDienThoai().trim() : ("09" + suffix);
+            String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
+            String soDienThoai = (req.getSoDienThoai() != null && !req.getSoDienThoai().isBlank()) ? req.getSoDienThoai().trim() : String.format("09%08d", java.util.concurrent.ThreadLocalRandom.current().nextInt(100000000));
             taiKhoan = TaiKhoan.builder()
                     .maTaiKhoan("TK-SOC-" + suffix)
                     .tenDangNhap(tenDangNhap)
@@ -373,7 +380,7 @@ public class CustomerApiService {
             throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
         }
 
-        long suffix = System.currentTimeMillis() % 1000000;
+        String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
         String maTaiKhoan = "TK-CTV-" + suffix;
         String maCongTacVien = "CTV-" + suffix;
 
@@ -410,7 +417,7 @@ public class CustomerApiService {
             for (Integer dvId : req.getDanhSachDichVuId()) {
                 dichVuRepository.findById(dvId).ifPresent(dv -> {
                     DichVuCTV dvCtv = DichVuCTV.builder()
-                            .maDichVuCTV("DVCTV-" + (System.currentTimeMillis() % 1000000))
+                            .maDichVuCTV(maNgauNhien("DVCTV-"))
                             .congTacVien(savedCtv)
                             .dichVu(dv)
                             .trangThai("HoatDong")
@@ -422,31 +429,30 @@ public class CustomerApiService {
         }
 
         // 4. Liên kết Khu vực
+        //    - Ưu tiên khu vực suy ra từ địa chỉ cư trú (tỉnh/thành + phường/xã) mà ứng viên cung cấp
+        //    - Vẫn nhận danhSachKhuVucId nếu client (ứng dụng di động) gửi kèm
+        Set<Integer> khuVucDaGan = new HashSet<>();
         if (req.getDanhSachKhuVucId() != null) {
             for (Integer kvId : req.getDanhSachKhuVucId()) {
-                khuVucRepository.findById(kvId).ifPresent(kv -> {
-                    KhuVucCTV kvCtv = KhuVucCTV.builder()
-                            .maKhuVucCTV("KVCTV-" + (System.currentTimeMillis() % 1000000))
-                            .congTacVien(savedCtv)
-                            .khuVuc(kv)
-                            .trangThai("HoatDong")
-                            .build();
-                    khuVucCTVRepository.save(kvCtv);
-                });
+                khuVucRepository.findById(kvId).ifPresent(kv -> ganKhuVucChoCtv(savedCtv, kv, khuVucDaGan));
             }
+        }
+        KhuVuc khuVucTheoDiaChi = timHoacTaoKhuVuc(req.getPhuongXa(), req.getTinhThanh());
+        if (khuVucTheoDiaChi != null) {
+            ganKhuVucChoCtv(savedCtv, khuVucTheoDiaChi, khuVucDaGan);
         }
 
         // 5. Lưu bằng cấp / chứng chỉ (URL MinIO)
         if (req.getDanhSachChungChi() != null) {
             for (CollaboratorRegisterRequest.ChungChiItem item : req.getDanhSachChungChi()) {
                 ChungChiCTV cc = ChungChiCTV.builder()
-                        .maChungChi("CC-" + (System.currentTimeMillis() % 1000000))
+                        .maChungChi(maNgauNhien("CC-"))
                         .congTacVien(savedCtv)
                         .loaiChungChi(item.getLoaiChungChi() != null ? item.getLoaiChungChi() : "ChungChi")
                         .tenChungChi(item.getTenChungChi())
                         .noiCap(item.getNoiCap())
                         .ngayCap(item.getNgayCap())
-                        .duongDanFile(item.getDuongDanFile()) // Lưu URL MinIO
+                        .duongDanFile(minioService.toStoredValue(item.getDuongDanFile())) // Lưu object key MinIO
                         .build();
                 chungChiCTVRepository.save(cc);
             }
@@ -455,11 +461,14 @@ public class CustomerApiService {
         // 6. Lưu hồ sơ tài liệu (CCCD trước/sau, ảnh chân dung - URL MinIO)
         if (req.getDanhSachHoSo() != null) {
             for (CollaboratorRegisterRequest.HoSoItem item : req.getDanhSachHoSo()) {
+                if (item.getDuongDanFile() == null || item.getDuongDanFile().isBlank()) {
+                    continue; // cột DuongDanFile bắt buộc có giá trị
+                }
                 HoSoCTV hs = HoSoCTV.builder()
-                        .maHoSo("HS-" + (System.currentTimeMillis() % 1000000))
+                        .maHoSo(maNgauNhien("HS-"))
                         .congTacVien(savedCtv)
                         .loaiTaiLieu(item.getLoaiTaiLieu() != null ? item.getLoaiTaiLieu() : "TaiLieuKhac")
-                        .duongDanFile(item.getDuongDanFile()) // Lưu URL MinIO
+                        .duongDanFile(minioService.toStoredValue(item.getDuongDanFile())) // Lưu object key MinIO
                         .ngayTai(LocalDateTime.now())
                         .build();
                 hoSoCTVRepository.save(hs);
@@ -471,9 +480,67 @@ public class CustomerApiService {
         result.put("maCongTacVien", savedCtv.getMaCongTacVien());
         result.put("hoTen", savedCtv.getHoTen());
         result.put("trangThai", savedCtv.getTrangThai());
+        result.put("khuVuc", khuVucTheoDiaChi != null
+                ? khuVucTheoDiaChi.getTenKhuVuc() + ", " + khuVucTheoDiaChi.getTinhThanh() : null);
         result.put("thoiGianXetDuyetDuKien", "1-3 ngày làm việc");
         result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt.");
         return result;
+    }
+
+    /** Gán một khu vực cho CTV, bỏ qua nếu đã gán (cặp congTacVienId - khuVucId là duy nhất). */
+    private void ganKhuVucChoCtv(CongTacVien ctv, KhuVuc kv, Set<Integer> daGan) {
+        if (!daGan.add(kv.getId())) {
+            return;
+        }
+        khuVucCTVRepository.save(KhuVucCTV.builder()
+                .maKhuVucCTV(maNgauNhien("KVCTV-"))
+                .congTacVien(ctv)
+                .khuVuc(kv)
+                .trangThai("HoatDong")
+                .build());
+    }
+
+    /**
+     * Xác định khu vực từ địa chỉ: tìm khu vực trùng phường/xã + tỉnh/thành, chưa có thì tạo mới
+     * (cùng cách CSKH đang làm khi thêm địa chỉ khách hàng).
+     *
+     * @return null nếu không có tỉnh/thành
+     */
+    private KhuVuc timHoacTaoKhuVuc(String phuongXa, String tinhThanh) {
+        if (tinhThanh == null || tinhThanh.isBlank()) {
+            return null;
+        }
+        String tinh = tinhThanh.trim();
+        String phuong = phuongXa != null ? phuongXa.trim() : "";
+
+        if (!phuong.isEmpty()) {
+            Optional<KhuVuc> coSan = khuVucRepository.findFirstByQuanHuyenAndTinhThanh(phuong, tinh)
+                    .or(() -> khuVucRepository.findFirstByTenKhuVucAndTinhThanh(phuong, tinh));
+            if (coSan.isPresent()) {
+                return coSan.get();
+            }
+        } else {
+            List<KhuVuc> trongTinh = khuVucRepository.findByTinhThanh(tinh);
+            if (!trongTinh.isEmpty()) {
+                return trongTinh.get(0);
+            }
+        }
+
+        return khuVucRepository.save(KhuVuc.builder()
+                .maKhuVuc(maNgauNhien("KV-"))
+                .tenKhuVuc(!phuong.isEmpty() ? phuong : tinh)
+                .quanHuyen(!phuong.isEmpty() ? phuong : "Chưa xác định")
+                .tinhThanh(tinh)
+                .trangThai("HoatDong")
+                .build());
+    }
+
+    /**
+     * Sinh mã duy nhất cho các bản ghi tạo liên tiếp trong vòng lặp (hồ sơ, chứng chỉ, dịch vụ, khu vực).
+     * Mã theo mili-giây bị trùng khi lưu nhiều bản ghi cùng lúc và vi phạm ràng buộc UNIQUE.
+     */
+    private static String maNgauNhien(String tienTo) {
+        return tienTo + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
     }
 
     public Map<String, Object> getCollaboratorApplicationStatus(String soDienThoai) {
@@ -494,6 +561,8 @@ public class CustomerApiService {
     // ==========================================
     // UC-KH03: XEM THÔNG TIN DỊCH VỤ, BẢNG GIÁ
     // ==========================================
+    // Cache theo bộ lọc; không cache khi có từ khóa tìm kiếm tự do (#p3 = tuKhoa)
+    @Cacheable(value = CacheNames.DICH_VU, condition = "#p3 == null or #p3.isEmpty()")
     public List<Map<String, Object>> getServices(Integer loaiDichVuId, Integer khuVucId, String loaiHinhDat, String tuKhoa, BigDecimal minPrice, BigDecimal maxPrice) {
         List<DichVu> allServices = dichVuRepository.findByTrangThai("HoatDong");
 
@@ -508,9 +577,12 @@ public class CustomerApiService {
                 if (!matchName && !matchDesc) continue;
             }
 
-            // Tìm giá dịch vụ
-            List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
-            BigDecimal donGia = bangGias.isEmpty() ? BigDecimal.ZERO : bangGias.get(0).getDonGia();
+            // Giá hiện tại nằm ở DichVu.GiaHienTai; chỉ tra lịch sử bảng giá khi cột này chưa có giá
+            BigDecimal donGia = dv.getGiaHienTai();
+            if (donGia == null || donGia.signum() <= 0) {
+                List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
+                donGia = bangGias.isEmpty() ? BigDecimal.ZERO : bangGias.get(0).getDonGia();
+            }
 
             if (minPrice != null && donGia.compareTo(minPrice) < 0) continue;
             if (maxPrice != null && donGia.compareTo(maxPrice) > 0) continue;
@@ -580,10 +652,12 @@ public class CustomerApiService {
         return result;
     }
 
+    @Cacheable(value = CacheNames.LOAI_DICH_VU, key = "'tatCa'")
     public List<LoaiDichVu> getServiceTypes() {
         return loaiDichVuRepository.findAll();
     }
 
+    @Cacheable(value = CacheNames.KHU_VUC, key = "'tatCa'")
     public List<KhuVuc> getAreas() {
         return khuVucRepository.findAll();
     }
@@ -713,7 +787,7 @@ public class CustomerApiService {
         if (diaChi == null && req.getDiaChiChiTiet() != null && !req.getDiaChiChiTiet().isBlank()) {
             KhuVuc kv = req.getKhuVucId() != null ? khuVucRepository.findById(req.getKhuVucId()).orElse(null) : null;
             diaChi = DiaChiKhachHang.builder()
-                    .maDiaChi("DC-" + (System.currentTimeMillis() % 1000000))
+                    .maDiaChi(com.example.Service.MaSinh.tao("DC-"))
                     .khachHang(khachHang)
                     .khuVuc(kv)
                     .diaChiChiTiet(req.getDiaChiChiTiet().trim())
@@ -754,7 +828,7 @@ public class CustomerApiService {
             gioKetThuc = req.getGioBatDau().plusHours(2);
         }
 
-        long suffix = System.currentTimeMillis() % 1000000;
+        String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
         String maDonDat = "DD-" + suffix;
 
         DonDatDichVu donDat = DonDatDichVu.builder()
@@ -802,11 +876,13 @@ public class CustomerApiService {
 
         // Ghi nhận sử dụng khuyến mại
         if (mkm != null && priceResult.getSoTienGiam().compareTo(BigDecimal.ZERO) > 0) {
-            mkm.setSoLuotDaDung(mkm.getSoLuotDaDung() + 1);
-            if (mkm.getSoLuotDaDung() >= mkm.getSoLuotToiDa()) {
-                mkm.setTrangThai("HetLuot");
+            // Cập nhật nguyên tử trong CSDL: nếu người khác vừa dùng lượt cuối thì đơn này bị từ chối
+            // và toàn bộ giao dịch tạo đơn được hoàn tác (rollback).
+            Integer khuyenMaiId = mkm.getId();
+            if (maKhuyenMaiRepository.ghiNhanLuotDung(khuyenMaiId) == 0) {
+                throw new IllegalArgumentException("Mã khuyến mãi vừa hết lượt sử dụng. Vui lòng bỏ mã hoặc chọn mã khác.");
             }
-            maKhuyenMaiRepository.save(mkm);
+            mkm = maKhuyenMaiRepository.findById(khuyenMaiId).orElse(mkm);
 
             LichSuSuDungKhuyenMai lsKm = LichSuSuDungKhuyenMai.builder()
                     .khuyenMai(mkm)
@@ -961,7 +1037,7 @@ public class CustomerApiService {
     }
 
     public Map<String, Object> cancelBooking(Integer donDatId, Integer khachHangId, String lyDo) {
-        DonDatDichVu d = donDatDichVuRepository.findById(donDatId)
+        DonDatDichVu d = donDatDichVuRepository.findByIdForUpdate(donDatId) // khóa đơn: tránh vừa hủy vừa được phân công
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt ID: " + donDatId));
 
         if (!"ChoDuyet".equalsIgnoreCase(d.getTrangThai())) {
@@ -1033,14 +1109,19 @@ public class CustomerApiService {
 
     public Map<String, Object> createReceipt(PaymentReceiptRequest req) {
         HoaDon hd = null;
+        // Khóa hóa đơn trong lúc ghi nhận thanh toán: hai yêu cầu thanh toán cùng lúc sẽ lần lượt xử lý,
+        // yêu cầu sau thấy hóa đơn đã thanh toán và bị từ chối (không tạo biên lai thứ hai).
         if (req.getHoaDonId() != null) {
-            hd = hoaDonRepository.findById(req.getHoaDonId()).orElse(null);
+            hd = hoaDonRepository.findByIdForUpdate(req.getHoaDonId()).orElse(null);
         }
         if (hd == null && req.getDonDatId() != null) {
-            hd = hoaDonRepository.findByDonDat_Id(req.getDonDatId()).orElse(null);
+            hd = hoaDonRepository.findByDonDatIdForUpdate(req.getDonDatId()).orElse(null);
         }
         if (hd == null) {
             throw new IllegalArgumentException("Không tìm thấy hóa đơn cần thanh toán.");
+        }
+        if ("DaThanhToan".equalsIgnoreCase(hd.getTrangThaiThanhToan())) {
+            throw new IllegalArgumentException("Hóa đơn này đã được thanh toán.");
         }
 
         hd.setTrangThaiThanhToan("DaThanhToan");
@@ -1056,7 +1137,7 @@ public class CustomerApiService {
         String nguoiThu = req.getNguoiThuTien() != null ? req.getNguoiThuTien() : "Hệ thống thanh toán tự động";
 
         BienLai bienLai = BienLai.builder()
-                .maBienLai("BL-" + (System.currentTimeMillis() % 1000000))
+                .maBienLai(com.example.Service.MaSinh.tao("BL-"))
                 .hoaDon(hd)
                 .ngayGioThuTien(LocalDateTime.now())
                 .soTienNhan(soTien)
@@ -1098,7 +1179,7 @@ public class CustomerApiService {
         CongTacVien ctv = pc.getCongTacVien();
 
         DanhGia danhGia = DanhGia.builder()
-                .maDanhGia("DG-" + (System.currentTimeMillis() % 1000000))
+                .maDanhGia(com.example.Service.MaSinh.tao("DG-"))
                 .donDat(donDat)
                 .khachHang(donDat.getKhachHang())
                 .congTacVien(ctv)
@@ -1144,7 +1225,7 @@ public class CustomerApiService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt ID: " + req.getDonDatId()));
 
         KhieuNai khieuNai = KhieuNai.builder()
-                .maKhieuNai("KN-" + (System.currentTimeMillis() % 1000000))
+                .maKhieuNai(com.example.Service.MaSinh.tao("KN-"))
                 .donDat(donDat)
                 .khachHang(donDat.getKhachHang())
                 .loaiVanDe(req.getLoaiVanDe())
@@ -1160,8 +1241,8 @@ public class CustomerApiService {
                 if (fileUrl != null && !fileUrl.isBlank()) {
                     TaiLieuKhieuNai tl = TaiLieuKhieuNai.builder()
                             .khieuNai(khieuNai)
-                            .loaiFile("HinhAnhBoiThuong")
-                            .duongDanFile(fileUrl.trim()) // Lưu URL MinIO
+                            .loaiFile(minioService.phanLoaiFile(fileUrl)) // HinhAnh | Video | TaiLieuKhac
+                            .duongDanFile(minioService.toStoredValue(fileUrl)) // Lưu object key MinIO
                             .ngayTai(LocalDateTime.now())
                             .build();
                     taiLieuKhieuNaiRepository.save(tl);

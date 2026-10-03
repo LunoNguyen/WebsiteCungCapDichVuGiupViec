@@ -12,11 +12,7 @@
 
       <main class="page-content">
         <div class="page-header">
-          <div class="page-title-group">
-            <h1 class="page-title">Quản trị Đánh giá & Chỉ số Hài lòng (CSAT / NPS)</h1>
-            <p class="page-subtitle">Phân tích tiếng nói khách hàng (VoC), trích xuất phản hồi 5 sao truyền thông thương
-              hiệu</p>
-          </div>
+          
           <div class="page-actions">
             <button class="btn btn-primary btn-sm"
               onclick="Toast.show('Đã xuất bản đánh giá nổi bật lên trang chủ!')"><i class="ti ti-pin"></i> Xuất bản
@@ -27,7 +23,7 @@
         <!-- Stats Grid (Dữ liệu động) -->
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(255,193,7,0.15)">⭐</div>
+            <div class="stat-icon"><i class="ti ti-star"></i></div>
             <div class="stat-value" th:text="${diemDanhGiaTB} + ' / 5'">4.85 / 5</div>
             <div class="stat-label">Điểm đánh giá trung bình</div>
             <div class="kpi-compare"><span class="arrow-up"
@@ -35,7 +31,7 @@
                 giá</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(67,233,123,0.15)">❤️</div>
+            <div class="stat-icon"><i class="ti ti-heart"></i></div>
             <div class="stat-value" th:text="'+' + ${chiSoNPS}">+64</div>
             <div class="stat-label">Chỉ số NPS (Net Promoter)</div>
             <div class="kpi-compare">
@@ -44,13 +40,13 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(13,155,163,0.15)">💬</div>
+            <div class="stat-icon"><i class="ti ti-message-circle"></i></div>
             <div class="stat-value" th:text="${tyLeCSAT} + '%'">94.6%</div>
             <div class="stat-label">Tỷ lệ CSAT thỏa mãn</div>
             <div class="kpi-compare"><span class="period">Khảo sát sau dịch vụ</span></div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(255,101,132,0.15)">🌟</div>
+            <div class="stat-icon"><i class="ti ti-sparkles"></i></div>
             <div class="stat-value" th:text="${tongTestimonial}">125</div>
             <div class="stat-label">Đánh giá nổi bật (Testimonial)</div>
             <div class="kpi-compare"><span class="period">Đã chọn lọc làm truyền thông</span></div>
@@ -112,7 +108,7 @@
                     Dọn dẹp</td>
                   <td>
                     <!-- Vẽ số sao tương ứng với điểm -->
-                    <span style="color:#FFC107;font-weight:700"
+                    <span style="color:#F59E0B;font-weight:700"
                       th:utext="${'★'.repeat(dg.diemChatLuong) + '☆'.repeat(5 - dg.diemChatLuong)}">★★★★★</span>
                   </td>
                   <td style="max-width:340px;line-height:1.4"
