@@ -40,8 +40,8 @@ public interface DonDatDichVuRepository extends JpaRepository<DonDatDichVu, Inte
     /** Lấy tất cả đơn đang tìm CTV (pool) */
     List<DonDatDichVu> findByTrangThaiOrderByNgayTaoDesc(String trangThai);
 
-    /** Atomic accept - update status from ChoDuyet to DaPhanCong, returns rows affected */
+    /** Atomic accept - update status from ChoDuyet to DaXacNhan, returns rows affected */
     @org.springframework.data.jpa.repository.Modifying
-    @org.springframework.data.jpa.repository.Query("UPDATE DonDatDichVu d SET d.trangThai = 'DaPhanCong' WHERE d.id = :id AND d.trangThai = 'ChoDuyet'")
+    @org.springframework.data.jpa.repository.Query("UPDATE DonDatDichVu d SET d.trangThai = 'DaXacNhan' WHERE d.id = :id AND d.trangThai = 'ChoDuyet'")
     int atomicAcceptOrder(@org.springframework.data.repository.query.Param("id") Integer id);
 }
