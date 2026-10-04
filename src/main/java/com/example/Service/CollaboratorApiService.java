@@ -139,6 +139,7 @@ public class CollaboratorApiService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
         DonDatDichVu don = pc.getDonDat();
+        PhanCongService.kiemTraKhongTuPhucVu(pc.getCongTacVien(), don);
 
         // CTV tự nhận đơn cũng phải theo quy tắc xếp lịch: không trùng giờ, cách việc khác ít nhất 1 tiếng,
         // không quá tải trong ngày. Khóa CTV để hai lần nhận đơn cùng lúc được kiểm tra lần lượt.

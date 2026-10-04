@@ -4,6 +4,7 @@ import com.example.Model.ChiTietDonDat;
 import com.example.Model.CongTacVien;
 import com.example.Model.DichVuCTV;
 import com.example.Model.DonDatDichVu;
+import com.example.Model.KhachHang;
 import com.example.Model.KhuVuc;
 import com.example.Model.KhuVucCTV;
 import com.example.Model.LichLamViec;
@@ -382,7 +383,9 @@ public class PhanCongService {
             PhanCongCTV daCo = phanCongCuaDon.get(ctv.getId());
             String lyDoLoai = null;
             KiemTra kq = null;
-            if (daCo != null) {
+            if (laChinhKhachDatDon(ctv, don)) {
+                lyDoLoai = "Là chính khách hàng đặt đơn này";
+            } else if (daCo != null) {
                 lyDoLoai = "TuChoi".equalsIgnoreCase(daCo.getTrangThai())
                         ? "Đã từ chối đơn này" : "Đã được phân công cho đơn này";
             } else {
@@ -477,6 +480,41 @@ public class PhanCongService {
     // PHÂN CÔNG THỦ CÔNG
     // =========================================================================
 
+    /** Thông báo khi phân công CTV cho đơn do chính họ đặt. */
+    public static final String LOI_TU_PHUC_VU = "Cộng tác viên không được thực hiện đơn do chính mình đặt.";
+
+    /**
+     * CTV không được làm đơn của chính mình: cùng tài khoản (một SĐT vừa là khách hàng vừa là CTV)
+     * hoặc số điện thoại CTV trùng số điện thoại khách đặt đơn.
+     */
+    public static boolean laChinhKhachDatDon(CongTacVien ctv, DonDatDichVu don) {
+        if (ctv == null || don == null || don.getKhachHang() == null) {
+            return false;
+        }
+        KhachHang kh = don.getKhachHang();
+        if (ctv.getTaiKhoan() != null && kh.getTaiKhoan() != null
+                && ctv.getTaiKhoan().getId().equals(kh.getTaiKhoan().getId())) {
+            return true;
+        }
+        String sdtCtv = chuanHoaSdt(ctv.getSoDienThoai());
+        return !sdtCtv.isEmpty() && (sdtCtv.equals(chuanHoaSdt(kh.getSoDienThoai()))
+                || (kh.getTaiKhoan() != null && sdtCtv.equals(chuanHoaSdt(kh.getTaiKhoan().getSoDienThoai()))));
+    }
+
+    public static void kiemTraKhongTuPhucVu(CongTacVien ctv, DonDatDichVu don) {
+        if (laChinhKhachDatDon(ctv, don)) {
+            throw new IllegalArgumentException(LOI_TU_PHUC_VU);
+        }
+    }
+
+    /** "+84 912-345-678", "84912345678", "0912345678" → "0912345678". */
+    private static String chuanHoaSdt(String sdt) {
+        if (sdt == null) return "";
+        String s = sdt.replaceAll("[^0-9]", "");
+        if (s.startsWith("84") && s.length() == 11) s = "0" + s.substring(2);
+        return s;
+    }
+
     /** CSKH phân công một CTV cho đơn (giờ làm lấy theo đơn). Kiểm tra lại mọi ràng buộc cứng trước khi lưu. */
     @Transactional
     public PhanCongCTV phanCong(Integer donDatId, Integer ctvId, String nguoiThucHien) {
@@ -489,6 +527,7 @@ public class PhanCongService {
         if (!"HoatDong".equalsIgnoreCase(ctv.getTrangThai())) {
             throw new IllegalArgumentException("Cộng tác viên này chưa được duyệt hoặc đang bị đình chỉ.");
         }
+        kiemTraKhongTuPhucVu(ctv, don);
         if (!"ChoDuyet".equalsIgnoreCase(don.getTrangThai()) && !"DaXacNhan".equalsIgnoreCase(don.getTrangThai())) {
             throw new IllegalArgumentException("Chỉ phân công được cho đơn đang chờ duyệt hoặc đã xác nhận.");
         }
