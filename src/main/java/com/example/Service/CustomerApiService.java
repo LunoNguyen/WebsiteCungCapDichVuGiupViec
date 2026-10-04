@@ -1066,7 +1066,16 @@ public class CustomerApiService {
         });
 
         // Đánh giá nếu có
-        danhGiaRepository.findByDonDat_Id(d.getId()).ifPresent(dg -> result.put("danhGia", dg));
+        danhGiaRepository.findByDonDat_Id(d.getId()).ifPresent(dg -> {
+            Map<String, Object> dgMap = new LinkedHashMap<>();
+            dgMap.put("id", dg.getId());
+            dgMap.put("maDanhGia", dg.getMaDanhGia());
+            dgMap.put("diemChatLuong", dg.getDiemChatLuong());
+            dgMap.put("diemThaiDo", dg.getDiemThaiDo());
+            dgMap.put("nhanXet", dg.getNhanXet());
+            dgMap.put("ngayDanhGia", dg.getNgayDanhGia());
+            result.put("danhGia", dgMap);
+        });
 
         return result;
     }
