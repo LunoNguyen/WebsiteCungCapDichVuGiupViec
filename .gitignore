@@ -32,6 +32,5 @@ build/
 ### VS Code ###
 .vscode/
 
-### Application Config ###
-application.properties
-src/main/resources/application.properties
+### Khoá bí mật (eSMS...) - application.properties vẫn được commit ###
+secrets.properties
