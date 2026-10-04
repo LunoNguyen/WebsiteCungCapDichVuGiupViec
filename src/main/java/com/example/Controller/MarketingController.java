@@ -1,12 +1,15 @@
 package com.example.Controller;
 import com.example.Model.DanhGia;
 import com.example.Model.LichSuSuDungKhuyenMai;
+import com.example.Model.MaKhuyenMai;
 import java.util.List;
 import com.example.DTO.*;
 import com.example.Model.ThongBao;
 import com.example.Repository.*;
 import com.example.Service.ThongKeService;
+import com.example.Service.ThongBaoPhatService;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +29,8 @@ public class MarketingController {
     private final ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository;
     private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final ThongBaoRepository thongBaoRepository;
+    private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
+    private final ThongBaoPhatService thongBaoPhatService;
     private final DanhGiaRepository danhGiaRepository;
     private final LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository;
 
@@ -34,12 +39,16 @@ public class MarketingController {
             ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository,
             MaKhuyenMaiRepository maKhuyenMaiRepository,
             ThongBaoRepository thongBaoRepository,
+            ThongBaoNguoiDungRepository thongBaoNguoiDungRepository,
+            ThongBaoPhatService thongBaoPhatService,
             DanhGiaRepository danhGiaRepository,
             LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository) {
         this.thongKeService = thongKeService;
         this.chuongTrinhKhuyenMaiRepository = chuongTrinhKhuyenMaiRepository;
         this.maKhuyenMaiRepository = maKhuyenMaiRepository;
         this.thongBaoRepository = thongBaoRepository;
+        this.thongBaoNguoiDungRepository = thongBaoNguoiDungRepository;
+        this.thongBaoPhatService = thongBaoPhatService;
         this.danhGiaRepository = danhGiaRepository;
         this.lichSuSuDungKhuyenMaiRepository = lichSuSuDungKhuyenMaiRepository;
     }
@@ -170,6 +179,52 @@ public String dashboard(
         coupons = new java.util.ArrayList<>(coupons);
         coupons.sort((a, b) -> Integer.compare(b.getId(), a.getId()));
         
+        // Tra cứu trạng thái thông báo và thời gian tạo cho từng coupon
+        List<ThongBao> allTB = thongBaoRepository.findAll();
+        java.util.Map<String, ThongBao> couponNotifMap = new java.util.HashMap<>();
+        for (ThongBao tb : allTB) {
+            if (tb.getTieuDe() != null && tb.getTieuDe().contains("Ưu đãi mới: Tặng bạn mã giảm giá ")) {
+                String code = tb.getTieuDe().replace("Ưu đãi mới: Tặng bạn mã giảm giá ", "").trim().toUpperCase();
+                couponNotifMap.put(code, tb);
+            }
+        }
+
+        java.util.Map<Integer, Boolean> notifiedCoupons = new java.util.HashMap<>();
+        java.util.Map<Integer, String> createdTimeCoupons = new java.util.HashMap<>();
+
+        for (MaKhuyenMai cp : coupons) {
+            boolean isNotified = false;
+            String timeStr = "";
+
+            String code = cp.getCodeKhuyenMai() != null ? cp.getCodeKhuyenMai().toUpperCase() : "";
+            if (couponNotifMap.containsKey(code)) {
+                isNotified = true;
+                ThongBao tb = couponNotifMap.get(code);
+                if (tb.getThoiGianGui() != null) {
+                    timeStr = tb.getThoiGianGui().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm · dd/MM/yyyy"));
+                }
+            }
+
+            if (cp.getChuongTrinhKhuyenMai() != null && cp.getChuongTrinhKhuyenMai().getMoTa() != null) {
+                String moTa = cp.getChuongTrinhKhuyenMai().getMoTa();
+                if (moTa.contains("[DA_THONG_BAO]")) {
+                    isNotified = true;
+                }
+                if (moTa.startsWith("Tạo lúc ")) {
+                    timeStr = moTa.replace("Tạo lúc ", "").replace(" [DA_THONG_BAO]", "").trim();
+                }
+            }
+
+            if (timeStr.isEmpty() && cp.getChuongTrinhKhuyenMai() != null && cp.getChuongTrinhKhuyenMai().getNgayBatDau() != null) {
+                timeStr = cp.getChuongTrinhKhuyenMai().getNgayBatDau().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            }
+
+            notifiedCoupons.put(cp.getId(), isNotified);
+            createdTimeCoupons.put(cp.getId(), timeStr);
+        }
+
+        model.addAttribute("notifiedCoupons", notifiedCoupons);
+        model.addAttribute("createdTimeCoupons", createdTimeCoupons);
         model.addAttribute("coupons", coupons);
         return "marketing/khuyen-mai";
     }
@@ -177,7 +232,17 @@ public String dashboard(
     // UC-MKT02 – Quản lý thông báo (gửi đến KH/CTV)
     @GetMapping("/thong-bao")
     public String thongBao(Model model) {
-        model.addAttribute("thongBaos", thongBaoRepository.findAll());
+        List<ThongBao> allThongBao = new java.util.ArrayList<>(thongBaoRepository.findAll());
+        // Sắp xếp thời gian gửi mới nhất lên đầu, nếu null thì theo ID mới nhất lên đầu
+        allThongBao.sort((a, b) -> {
+            if (b.getThoiGianGui() != null && a.getThoiGianGui() != null) {
+                return b.getThoiGianGui().compareTo(a.getThoiGianGui());
+            }
+            if (b.getThoiGianGui() != null) return 1;
+            if (a.getThoiGianGui() != null) return -1;
+            return Integer.compare(b.getId() != null ? b.getId() : 0, a.getId() != null ? a.getId() : 0);
+        });
+        model.addAttribute("thongBaos", allThongBao);
         
         // Add dynamic stats for the Stats Grid
         model.addAttribute("tongChienDich", thongKeService.getTongChiengDich());
@@ -265,7 +330,8 @@ public String dashboard(
     public String taoMoiChienDich(
             @RequestParam String tieuDe,
             @RequestParam String nhomNhan,
-            @RequestParam String noiDung) {
+            @RequestParam String noiDung,
+            RedirectAttributes redirectAttributes) {
         
         ThongBao tb = new ThongBao();
         // Tạo mã thông báo ngẫu nhiên dựa trên thời gian
@@ -281,6 +347,7 @@ public String dashboard(
         
         thongBaoRepository.save(tb);
         
+        redirectAttributes.addFlashAttribute("success", "Đã tạo chiến dịch thành công! Vui lòng đợi Giám đốc duyệt.");
         return "redirect:/marketing/thong-bao";
     }
 @PostMapping("/khuyen-mai/tao-moi")
@@ -290,6 +357,7 @@ public String dashboard(
             @RequestParam java.math.BigDecimal dieuKienToiThieu, @RequestParam Integer gioiHanLuot,
             @RequestParam(required = false) java.math.BigDecimal soTienGiamToiDa,
             @RequestParam String ngayBatDau, @RequestParam String ngayKetThuc,
+            @RequestParam(required = false, defaultValue = "false") Boolean guiThongBao,
             RedirectAttributes redirectAttributes) {
             
         // 1. Kiểm tra trùng Mã Coupon
@@ -359,6 +427,8 @@ public String dashboard(
         ct.setGiaTriGiam(mucGiam);
         ct.setDieuKienToiThieu(dieuKienToiThieu);
         ct.setSoTienGiamToiDa(soTienGiamToiDa);
+        String thoiGianTaoStr = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm · dd/MM/yyyy"));
+        ct.setMoTa("Tạo lúc " + thoiGianTaoStr + (Boolean.TRUE.equals(guiThongBao) ? " [DA_THONG_BAO]" : ""));
         
         try {
             java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -401,34 +471,42 @@ public String dashboard(
         mk.setChuongTrinhKhuyenMai(ct); 
         maKhuyenMaiRepository.save(mk);
         
-        // Tự động phát thông báo khuyến mãi gửi tới toàn thể Khách hàng
-        try {
-            String giamStr = "PhanTram".equals(loaiGiamGia)
-                    ? (mucGiam.stripTrailingZeros().toPlainString() + "%")
-                    : (String.format("%,d", mucGiam.longValue()) + "đ");
-            String dieuKienStr = (dieuKienToiThieu != null && dieuKienToiThieu.compareTo(java.math.BigDecimal.ZERO) > 0)
-                    ? (" cho đơn từ " + String.format("%,d", dieuKienToiThieu.longValue()) + "đ") : "";
-            String hanDungStr = (ct.getNgayKetThuc() != null)
-                    ? (" đến hết ngày " + ct.getNgayKetThuc().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))) : "";
+        // Tự động phát thông báo khuyến mãi gửi tới toàn thể Khách hàng nếu MKT tích chọn
+        if (Boolean.TRUE.equals(guiThongBao)) {
+            try {
+                String giamStr = "PhanTram".equals(loaiGiamGia)
+                        ? (mucGiam.stripTrailingZeros().toPlainString() + "%")
+                        : (String.format("%,d", mucGiam.longValue()) + "đ");
+                String dieuKienStr = (dieuKienToiThieu != null && dieuKienToiThieu.compareTo(java.math.BigDecimal.ZERO) > 0)
+                        ? (" cho đơn từ " + String.format("%,d", dieuKienToiThieu.longValue()) + "đ") : "";
+                String hanDungStr = (ct.getNgayKetThuc() != null)
+                        ? (" đến hết ngày " + ct.getNgayKetThuc().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))) : "";
 
-            ThongBao tbKM = ThongBao.builder()
-                    .maThongBao(com.example.Service.MaSinh.tao("TB-KM-"))
-                    .tieuDe("Ưu đãi mới: Tặng bạn mã giảm giá " + maCoupon.trim().toUpperCase())
-                    .noiDung("Neatify gửi tặng bạn mã ưu đãi " + maCoupon.trim().toUpperCase() + " giảm ngay " + giamStr + dieuKienStr + ". Áp dụng" + hanDungStr + ". Nhập mã ngay khi đặt dịch vụ để nhận ưu đãi!")
-                    .nguoiGui("Phòng Marketing")
-                    .nhomNhan("KhachHang")
-                    .thoiGianGui(java.time.LocalDateTime.now())
-                    .trangThai("DaGui")
-                    .build();
-            thongBaoRepository.save(tbKM);
-        } catch (Exception ignored) {}
+                ThongBao tbKM = ThongBao.builder()
+                        .maThongBao(com.example.Service.MaSinh.tao("TB-KM-"))
+                        .tieuDe("Ưu đãi mới: Tặng bạn mã giảm giá " + maCoupon.trim().toUpperCase())
+                        .noiDung("Neatify gửi tặng bạn mã ưu đãi " + maCoupon.trim().toUpperCase() + " giảm ngay " + giamStr + dieuKienStr + ". Áp dụng" + hanDungStr + ". Nhập mã ngay khi đặt dịch vụ để nhận ưu đãi!")
+                        .nguoiGui("Phòng Marketing")
+                        .nhomNhan("KhachHang")
+                        .thoiGianGui(java.time.LocalDateTime.now())
+                        .trangThai("DaGui")
+                        .build();
+                tbKM = thongBaoRepository.save(tbKM);
+                thongBaoPhatService.phatChoNhom(tbKM.getId(), "KhachHang");
+            } catch (Exception ignored) {}
+        }
 
-        redirectAttributes.addFlashAttribute("success", "Đã phát hành thành công mã " + maCoupon.toUpperCase());
+        if (Boolean.TRUE.equals(guiThongBao)) {
+            redirectAttributes.addFlashAttribute("success", "Tạo mã " + maCoupon.trim().toUpperCase() + " thành công, đã gửi thông báo cho khách hàng!");
+        } else {
+            redirectAttributes.addFlashAttribute("success", "Tạo mã " + maCoupon.trim().toUpperCase() + " thành công!");
+        }
         return "redirect:/marketing/khuyen-mai";
     }
     // ==========================================
-    // 2. XÓA (CÓ KIỂM TRA RÀNG BUỘC ĐÃ SỬ DỤNG)
+    // 2. XÓA (CÓ KIỂM TRA RÀNG BUỘC ĐÃ SỬ DỤNG VÀ THU HỒI THÔNG BÁO)
     // ==========================================
+    @Transactional
     @PostMapping("/khuyen-mai/xoa")
     public String xoaKhuyenMai(@RequestParam Integer id, RedirectAttributes redirectAttributes) {
         try {
@@ -436,14 +514,45 @@ public String dashboard(
                 if (mk.getSoLuotDaDung() != null && mk.getSoLuotDaDung() > 0) {
                     throw new RuntimeException("IN_USE"); // Bắn lỗi ra catch để xử lý
                 }
-                // Nếu chưa ai dùng, cho phép xóa hoàn toàn
-                Integer ctId = mk.getChuongTrinhKhuyenMai().getId();
+
+                String code = (mk.getCodeKhuyenMai() != null) ? mk.getCodeKhuyenMai().trim().toUpperCase() : "";
+
+                // 1. Tự động tìm và xóa toàn bộ thông báo đã gửi cho khách hàng liên quan đến mã này
+                if (!code.isEmpty()) {
+                    List<ThongBao> allTB = thongBaoRepository.findAll();
+                    for (ThongBao tb : allTB) {
+                        boolean matchCode = false;
+                        if (tb.getTieuDe() != null && (
+                                tb.getTieuDe().equalsIgnoreCase("Ưu đãi mới: Tặng bạn mã giảm giá " + code) ||
+                                tb.getTieuDe().toUpperCase().contains("MÃ GIẢM GIÁ " + code) ||
+                                tb.getTieuDe().toUpperCase().contains(" " + code) ||
+                                tb.getTieuDe().toUpperCase().endsWith(code)
+                        )) {
+                            matchCode = true;
+                        }
+
+                        if (matchCode) {
+                            // Xóa các bản ghi thông báo trong hộp thư người dùng trước (tránh khóa ngoại)
+                            List<com.example.Model.ThongBaoNguoiDung> tbndList = thongBaoNguoiDungRepository.findByThongBao_Id(tb.getId());
+                            if (tbndList != null && !tbndList.isEmpty()) {
+                                thongBaoNguoiDungRepository.deleteAll(tbndList);
+                            }
+                            // Xóa bản ghi thông báo chiến dịch
+                            thongBaoRepository.delete(tb);
+                        }
+                    }
+                }
+
+                // 2. Nếu chưa ai dùng, cho phép xóa hoàn toàn mã & chương trình
+                Integer ctId = (mk.getChuongTrinhKhuyenMai() != null) ? mk.getChuongTrinhKhuyenMai().getId() : null;
                 maKhuyenMaiRepository.delete(mk);
-                chuongTrinhKhuyenMaiRepository.deleteById(ctId);
+                if (ctId != null) {
+                    chuongTrinhKhuyenMaiRepository.deleteById(ctId);
+                }
             });
-            redirectAttributes.addFlashAttribute("success", "Đã xóa mã khuyến mãi thành công!");
+            redirectAttributes.addFlashAttribute("success", "Đã xóa mã khuyến mãi và thu hồi thông báo thành công!");
         } catch (Exception e) {
-            if (e.getMessage().equals("IN_USE")) {
+            if ("IN_USE".equals(e.getMessage())) {
                 redirectAttributes.addFlashAttribute("error", "Lỗi: Không thể xóa! Đã có khách hàng sử dụng mã này.");
             } else {
                 redirectAttributes.addFlashAttribute("error", "Lỗi ràng buộc hệ thống. Hãy đổi trạng thái thành Hết hạn thay vì xóa.");
