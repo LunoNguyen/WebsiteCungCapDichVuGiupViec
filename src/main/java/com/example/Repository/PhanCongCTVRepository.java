@@ -28,5 +28,13 @@ public interface PhanCongCTVRepository extends JpaRepository<PhanCongCTV, Intege
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("SELECT e FROM PhanCongCTV e WHERE e.id = :id")
     Optional<PhanCongCTV> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Integer id);
+
+    /** Phân công đang chờ CTV xác nhận (chưa có lịch làm việc) của các đơn trong một khoảng ngày. */
+    @org.springframework.data.jpa.repository.Query("SELECT pc FROM PhanCongCTV pc "
+         + "JOIN FETCH pc.congTacVien JOIN FETCH pc.donDat dd "
+         + "LEFT JOIN FETCH dd.diaChi dc LEFT JOIN FETCH dc.khuVuc "
+         + "WHERE pc.trangThai = 'ChoPhanCong' AND dd.ngayThucHien BETWEEN :tuNgay AND :denNgay")
+    List<PhanCongCTV> findDangChoTrongKhoang(@org.springframework.data.repository.query.Param("tuNgay") java.time.LocalDate tuNgay,
+                                             @org.springframework.data.repository.query.Param("denNgay") java.time.LocalDate denNgay);
 }
 

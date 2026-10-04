@@ -450,7 +450,7 @@ function initComparisonChart(canvasId) {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
         y: {
           grid: { color: ChartTheme.line },
-          ticks: { callback: v => v + ' tr', font: { size: 11 } }
+          ticks: { callback: v => Number(v).toLocaleString('vi-VN') + ' tr', font: { size: 11 } }
         }
       }
     }

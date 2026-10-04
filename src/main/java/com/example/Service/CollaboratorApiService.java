@@ -16,6 +16,9 @@ import java.util.*;
 @Transactional
 public class CollaboratorApiService {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private PhanCongService phanCongService;
+
     private final PhanCongCTVRepository phanCongCTVRepository;
     private final DonDatDichVuRepository donDatDichVuRepository;
     private final LichLamViecRepository lichLamViecRepository;
@@ -124,11 +127,21 @@ public class CollaboratorApiService {
         PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
+        DonDatDichVu don = pc.getDonDat();
+
+        // CTV tự nhận đơn cũng phải theo quy tắc xếp lịch: không trùng giờ, cách việc khác ít nhất 1 tiếng,
+        // không quá tải trong ngày. Khóa CTV để hai lần nhận đơn cùng lúc được kiểm tra lần lượt.
+        if (!"DaXacNhan".equalsIgnoreCase(pc.getTrangThai())) {
+            congTacVienRepository.findByIdForUpdate(pc.getCongTacVien().getId());
+            phanCongService.kiemTraLichHoacBaoLoi(pc.getCongTacVien().getId(), don.getNgayThucHien(),
+                    don.getGioBatDau(), don.getGioKetThuc(),
+                    don.getDiaChi() != null ? don.getDiaChi().getKhuVuc() : null, pc.getId(), false);
+        }
+
         pc.setTrangThai("DaXacNhan"); 
         pc.setThoiGianXacNhan(LocalDateTime.now());
         phanCongCTVRepository.save(pc);
 
-        DonDatDichVu don = pc.getDonDat();
         String oldStatus = don.getTrangThai();
         don.setTrangThai("DaXacNhan");
         donDatDichVuRepository.save(don);

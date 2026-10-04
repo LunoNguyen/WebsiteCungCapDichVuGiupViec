@@ -116,6 +116,34 @@ public class AuthService {
         return AuthenticationResult.success(taiKhoan, role, fullName, avatar, redirectUrl);
     }
 
+    /**
+     * Người dùng tự đổi mật khẩu (CTV đổi mật khẩu HCNS gửi qua tin nhắn).
+     * Kiểm tra mật khẩu hiện tại, lưu mật khẩu mới dạng BCrypt.
+     */
+    @Transactional
+    public void doiMatKhau(Integer taiKhoanId, String matKhauHienTai, String matKhauMoi) {
+        if (taiKhoanId == null || isBlank(matKhauHienTai) || isBlank(matKhauMoi)) {
+            throw new IllegalArgumentException("Vui lòng nhập đủ mật khẩu hiện tại và mật khẩu mới.");
+        }
+        String moi = matKhauMoi.trim();
+        if (moi.length() < CapTaiKhoanCtvService.DO_DAI_TOI_THIEU) {
+            throw new IllegalArgumentException("Mật khẩu mới cần ít nhất " + CapTaiKhoanCtvService.DO_DAI_TOI_THIEU + " ký tự.");
+        }
+        TaiKhoan taiKhoan = taiKhoanRepository.findById(taiKhoanId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+        if (!"HoatDong".equalsIgnoreCase(taiKhoan.getTrangThai())) {
+            throw new IllegalArgumentException("Tài khoản chưa được kích hoạt hoặc đã bị khóa.");
+        }
+        if (!passwordMatches(matKhauHienTai, taiKhoan.getMatKhau())) {
+            throw new IllegalArgumentException("Mật khẩu hiện tại không đúng.");
+        }
+        if (passwordMatches(moi, taiKhoan.getMatKhau())) {
+            throw new IllegalArgumentException("Mật khẩu mới phải khác mật khẩu hiện tại.");
+        }
+        taiKhoan.setMatKhau(passwordEncoder.encode(moi));
+        taiKhoanRepository.save(taiKhoan);
+    }
+
     private boolean passwordMatches(String input, String storedPassword) {
         if (storedPassword == null || input == null) {
             return false;

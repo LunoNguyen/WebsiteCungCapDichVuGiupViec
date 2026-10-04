@@ -51,6 +51,7 @@ public class CustomerApiService {
     private final PhanCongCTVRepository phanCongCTVRepository;
     private final LichLamViecRepository lichLamViecRepository;
     private final AuthService authService;
+    private final SmsSender smsSender;
 
     /** Chuẩn hóa đường dẫn file MinIO (lưu object key vào CSDL). */
     @Autowired
@@ -85,7 +86,8 @@ public class CustomerApiService {
             ThongBaoRepository thongBaoRepository,
             PhanCongCTVRepository phanCongCTVRepository,
             LichLamViecRepository lichLamViecRepository,
-            AuthService authService) {
+            AuthService authService,
+            SmsSender smsSender) {
         this.taiKhoanRepository = taiKhoanRepository;
         this.khachHangRepository = khachHangRepository;
         this.diaChiKhachHangRepository = diaChiKhachHangRepository;
@@ -115,6 +117,7 @@ public class CustomerApiService {
         this.phanCongCTVRepository = phanCongCTVRepository;
         this.lichLamViecRepository = lichLamViecRepository;
         this.authService = authService;
+        this.smsSender = smsSender;
     }
 
     // ==========================================
@@ -149,10 +152,13 @@ public class CustomerApiService {
         String maKhachHang = "KH-" + suffix;
 
         // 1. Tạo tài khoản (ở trạng thái ChoDuyet cho đến khi xác thực OTP)
+        //    Mật khẩu được mã hoá BCrypt ngay tại đây
+        String encodedPassword = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
+                .encode(req.getMatKhau().trim());
         TaiKhoan taiKhoan = TaiKhoan.builder()
                 .maTaiKhoan(maTaiKhoan)
                 .tenDangNhap(tenDangNhap)
-                .matKhau(req.getMatKhau().trim())
+                .matKhau(encodedPassword)
                 .email(email)
                 .soDienThoai(soDienThoai)
                 .loaiTaiKhoan("KhachHang")
@@ -191,7 +197,7 @@ public class CustomerApiService {
             diaChiKhachHangRepository.save(diaChi);
         }
 
-        // 4. Tạo mã OTP xác thực
+        // 4. Tạo mã OTP xác thực (6 chữ số, hết hạn sau 5 phút)
         String otpCode = String.format("%06d", new Random().nextInt(1000000));
         OTPXacThuc otp = OTPXacThuc.builder()
                 .taiKhoan(taiKhoan)
@@ -203,14 +209,24 @@ public class CustomerApiService {
                 .build();
         otpXacThucRepository.save(otp);
 
+        // 5. Gửi OTP qua SMS (eSMS thật hoặc mock tuỳ cấu hình)
+        String noiDungOtp = "Neatify: Ma xac thuc OTP cua ban la " + otpCode + ". Ma co hieu luc trong 5 phut. Khong cung cap cho bat ky ai.";
+        try {
+            smsSender.send(soDienThoai, noiDungOtp);
+        } catch (Exception ex) {
+            // Không để lỗi SMS làm thất bại đăng ký; ghi log và tiếp tục
+            org.slf4j.LoggerFactory.getLogger(CustomerApiService.class)
+                    .warn("[OTP] Gửi SMS thất bại cho {}: {}", soDienThoai, ex.getMessage());
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("taiKhoanId", taiKhoan.getId());
         result.put("khachHangId", khachHang.getId());
         result.put("soDienThoai", soDienThoai);
         result.put("email", email);
-        result.put("otpCode", otpCode); // Phục vụ môi trường test/demo mobile
+        result.put("otpCode", otpCode); // Chỉ giữ lại để test/demo trên môi trường dev
         result.put("thoiGianHetHanPhut", 5);
-        result.put("message", "Đăng ký thành công! Vui lòng nhập mã OTP để kích hoạt tài khoản.");
+        result.put("message", "Đăng ký thành công! Mã OTP đã được gửi tới số " + soDienThoai + ". Vui lòng nhập mã OTP để kích hoạt tài khoản.");
         return result;
     }
 
@@ -269,11 +285,20 @@ public class CustomerApiService {
                 .build();
         otpXacThucRepository.save(otp);
 
+        // Gửi OTP qua SMS
+        String noiDungOtp = "Neatify: Ma xac thuc OTP cua ban la " + otpCode + ". Ma co hieu luc trong 5 phut. Khong cung cap cho bat ky ai.";
+        try {
+            smsSender.send(taiKhoan.getSoDienThoai(), noiDungOtp);
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(CustomerApiService.class)
+                    .warn("[OTP] Gửi SMS thất bại cho {}: {}", taiKhoan.getSoDienThoai(), ex.getMessage());
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("taiKhoanId", taiKhoan.getId());
         result.put("otpCode", otpCode);
         result.put("thoiGianHetHanPhut", 5);
-        result.put("message", "Mã OTP mới đã được gửi thành công.");
+        result.put("message", "Mã OTP mới đã được gửi tới số " + taiKhoan.getSoDienThoai() + ".");
         return result;
     }
 
@@ -387,11 +412,17 @@ public class CustomerApiService {
         String maTaiKhoan = "TK-CTV-" + suffix;
         String maCongTacVien = "CTV-" + suffix;
 
-        // 1. Tạo tài khoản CTV ở trạng thái ChoDuyet
+        // 1. Tạo tài khoản CTV ở trạng thái ChoDuyet.
+        //    Nếu ứng viên tự đặt mật khẩu qua form web, mã hoá và lưu.
+        //    Khi HCNS duyệt hồ sơ, HCNS có thể đặt lại mật khẩu mới qua CapTaiKhoanCtvService.
+        String rawPassword = (req.getMatKhau() != null && !req.getMatKhau().isBlank())
+                ? req.getMatKhau().trim()
+                : UUID.randomUUID().toString(); // fallback nếu client không gửi mật khẩu
         TaiKhoan taiKhoan = TaiKhoan.builder()
                 .maTaiKhoan(maTaiKhoan)
                 .tenDangNhap(tenDangNhap)
-                .matKhau(req.getMatKhau().trim())
+                .matKhau(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
+                        .encode(rawPassword))
                 .email(email)
                 .soDienThoai(soDienThoai)
                 .loaiTaiKhoan("CongTacVien")
@@ -486,7 +517,8 @@ public class CustomerApiService {
         result.put("khuVuc", khuVucTheoDiaChi != null
                 ? khuVucTheoDiaChi.getTenKhuVuc() + ", " + khuVucTheoDiaChi.getTinhThanh() : null);
         result.put("thoiGianXetDuyetDuKien", "1-3 ngày làm việc");
-        result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt.");
+        result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt, "
+                + "tài khoản và mật khẩu sẽ được gửi qua tin nhắn tới số " + soDienThoai + ".");
         return result;
     }
 

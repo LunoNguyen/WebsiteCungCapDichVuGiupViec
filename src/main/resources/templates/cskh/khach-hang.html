@@ -50,7 +50,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-star"></i></div>
-          <div class="stat-value" th:text="${khachHangStats != null ? khachHangStats.diemDanhGiaTrungBinh + ' ★' : '5.0 ★'}">5.0 ★</div>
+          <div class="stat-value" th:text="${khachHangStats != null ? #numbers.formatDecimal(khachHangStats.diemDanhGiaTrungBinh, 1, 'POINT', 1, 'COMMA') + ' ★' : '– ★'}">5,0 ★</div>
           <div class="stat-label">Đánh giá trung bình</div>
           <div class="kpi-compare"><span style="color:var(--accent)">Hài lòng cao</span></div>
         </div>
@@ -79,12 +79,10 @@
           <table class="table" id="customerTable">
             <thead>
               <tr>
-                <th>Mã KH</th>
                 <th>Khách hàng</th>
-                <th>Số điện thoại</th>
+                <th>Liên hệ</th>
                 <th>Địa chỉ chính & Khu vực</th>
-                <th>Email</th>
-                <th>Giới tính</th>
+                <th class="hide-md">Giới tính</th>
                 <th>Ngày đăng ký</th>
                 <th>Trạng thái</th>
                 <th style="text-align:right">Thao tác</th>
@@ -93,17 +91,19 @@
             <tbody>
               <tr th:each="kh : ${khachHangs}"
                   th:attr="data-status=${kh.trangThai}, data-search=|${kh.maKhachHang} ${kh.hoTen} ${kh.soDienThoai} ${kh.email != null ? kh.email : ''} ${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id) ? defaultAddressMap.get(kh.id).diaChiChiTiet : ''}|">
-                <td style="font-weight:700;color:var(--primary-light)" th:text="${kh.maKhachHang}">KH001</td>
                 <td>
                   <div class="user-cell">
                     <div class="avatar avatar-sm" th:text="${kh.hoTen != null and #strings.length(kh.hoTen) > 0 ? #strings.substring(kh.hoTen, 0, 1) : 'K'}">K</div>
                     <div class="user-cell-info">
                       <div class="name" th:text="${kh.hoTen}">Tên KH</div>
-                      <div class="sub" th:text="|Mã số: ${kh.maKhachHang}|">Mã số</div>
+                      <div class="sub cell-code" th:text="${kh.maKhachHang}">KH001</div>
                     </div>
                   </div>
                 </td>
-                <td style="font-weight:600" th:text="${kh.soDienThoai}">0900000000</td>
+                <td>
+                  <div class="nowrap tabular" style="font-weight:500" th:text="${kh.soDienThoai}">0900000000</div>
+                  <span class="cell-sub" th:if="${kh.email != null}" th:text="${kh.email}">email@domain.com</span>
+                </td>
                 <td>
                   <div th:if="${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id)}">
                     <div style="font-weight:500;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
@@ -115,9 +115,8 @@
                   </div>
                   <span th:unless="${defaultAddressMap != null && defaultAddressMap.containsKey(kh.id)}" style="color:var(--text-muted);font-style:italic">Chưa có địa chỉ</span>
                 </td>
-                <td th:text="${kh.email != null ? kh.email : '--'}">email@domain.com</td>
-                <td th:text="${kh.gioiTinh != null ? kh.gioiTinh : '--'}">--</td>
-                <td th:text="${kh.ngayDangKy != null ? #temporals.format(kh.ngayDangKy, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
+                <td class="hide-md" th:insert="~{layout/status :: genderLabel(${kh.gioiTinh})}">--</td>
+                <td class="nowrap tabular" th:text="${kh.ngayDangKy != null ? #temporals.format(kh.ngayDangKy, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
                 <td>
                   <span class="badge badge-success" th:if="${kh.trangThai == 'HoatDong'}"><span class="dot dot-green" style="width:6px;height:6px"></span>Hoạt động</span>
                   <span class="badge badge-danger" th:if="${kh.trangThai != 'HoatDong'}">Bị khóa</span>
@@ -143,7 +142,7 @@
                 </td>
               </tr>
               <tr id="emptyTableRow" th:if="${khachHangs == null or #lists.isEmpty(khachHangs)}">
-                <td colspan="9" style="text-align:center;padding:2.5rem;color:var(--text-muted)">
+                <td colspan="7" style="text-align:center;padding:2.5rem;color:var(--text-muted)">
                   <i class="ti ti-users-minus" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.5"></i>
                   Chưa có dữ liệu khách hàng. Bấm "Thêm khách hàng" để tạo hồ sơ mới.
                 </td>

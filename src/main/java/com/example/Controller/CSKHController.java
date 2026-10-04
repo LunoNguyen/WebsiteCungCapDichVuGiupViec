@@ -41,6 +41,8 @@ public class CSKHController {
     private final ThongBaoRepository thongBaoRepository;
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Service.ThongBaoService thongBaoService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.PhanCongService phanCongService;
     private final CongTacVienRepository congTacVienRepository;
     private final LichLamViecRepository lichLamViecRepository;
     private final PhanCongCTVRepository phanCongCTVRepository;
@@ -532,9 +534,9 @@ public class CSKHController {
             if (!end.isAfter(start)) {
                 throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu.");
             }
-            if (lichLamViecRepository.demLichTrungGio(ctvId, date, start, end) > 0) {
-                throw new IllegalArgumentException("Cộng tác viên đã có lịch làm việc trùng giờ trong ngày này.");
-            }
+            // Trùng giờ, khoảng nghỉ 1 tiếng giữa hai việc, quá tải trong ngày, di chuyển khác tỉnh/thành
+            phanCongService.kiemTraLichHoacBaoLoi(ctvId, date, start, end,
+                    dd.getDiaChi() != null ? dd.getDiaChi().getKhuVuc() : null, null);
 
             LocalDate today = LocalDate.now();
             LocalDate tomorrow = today.plusDays(1);

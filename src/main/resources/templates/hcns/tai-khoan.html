@@ -45,7 +45,7 @@
       </div>
 
       <!-- Stats Grid -->
-      <div class="stats-grid">
+      <div class="stats-grid stats-grid-5" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-users"></i></div>
           <div class="stat-value" th:text="${tongTaiKhoan != null ? tongTaiKhoan : 0}">0</div>
@@ -63,6 +63,12 @@
           <div class="stat-value" th:text="${countCTV != null ? countCTV : 0}">0</div>
           <div class="stat-label">Tài khoản Cộng tác viên</div>
           <div class="kpi-compare"><span class="arrow-up">Đội ngũ giúp việc</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="ti ti-clock" style="color:var(--warning)"></i></div>
+          <div class="stat-value" th:text="${countChoDuyet != null ? countChoDuyet : 0}">0</div>
+          <div class="stat-label">Tài khoản chờ duyệt</div>
+          <div class="kpi-compare"><span style="color:var(--warning)">Chờ kích hoạt</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-lock"></i></div>
@@ -87,6 +93,7 @@
         <select class="filter-select" id="statusFilter">
           <option value="">Tất cả trạng thái</option>
           <option value="HoatDong">Đang hoạt động</option>
+          <option value="ChoDuyet">Đang chờ duyệt</option>
           <option value="BiKhoa">Đang bị khóa</option>
         </select>
       </div>
@@ -111,7 +118,6 @@
                 <th>Họ và tên sở hữu</th>
                 <th>Phân quyền / Loại</th>
                 <th>Email / SĐT</th>
-                <th>Bảo mật Mật khẩu</th>
                 <th>Ngày tạo</th>
                 <th>Trạng thái</th>
                 <th style="text-align:right">Thao tác</th>
@@ -129,7 +135,7 @@
                 </td>
                 <td>
                   <div class="user-cell">
-                    <div class="avatar avatar-sm" style="background:var(--primary-soft);color:#fff;font-weight:700" 
+                    <div class="avatar avatar-sm" style="background:var(--primary-soft);color:var(--primary);font-weight:600" 
                          th:text="${ownerNames != null and ownerNames.containsKey(tk.id) ? #strings.substring(ownerNames.get(tk.id), 0, 1) : (#strings.toUpperCase(#strings.substring(tk.tenDangNhap, 0, 1)))}">U</div>
                     <div class="user-cell-info">
                       <div class="name" style="font-weight:600" th:text="${ownerNames != null and ownerNames.containsKey(tk.id) ? ownerNames.get(tk.id) : '(Chưa liên kết hồ sơ)'}">Nguyễn Văn A</div>
@@ -150,27 +156,23 @@
                   <div style="font-weight:500;font-size:0.875rem" th:text="${tk.email != null ? tk.email : '---'}">user@neatify.vn</div>
                   <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${tk.soDienThoai != null ? tk.soDienThoai : ''}">0900000000</div>
                 </td>
-                <td>
-                  <span class="badge" style="background:var(--primary-soft);color:var(--primary-dark);font-family:monospace;font-size:0.75rem;padding:4px 8px;border-radius:4px;border:1px solid var(--line-strong)">
-                    <i class="ti ti-lock"></i> BCrypt Encrypted
-                  </span>
-                </td>
                 <td style="font-size:0.8rem;color:var(--text-muted)" th:text="${tk.ngayTao != null ? #temporals.format(tk.ngayTao, 'dd/MM/yyyy HH:mm') : '---'}">01/01/2026</td>
                 <td>
                   <span th:if="${tk.trangThai == 'HoatDong'}" class="badge badge-success"><i class="ti ti-check"></i> Hoạt động</span>
                   <span th:if="${tk.trangThai == 'BiKhoa'}" class="badge badge-danger"><i class="ti ti-lock"></i> Đã khóa</span>
-                  <span th:if="${tk.trangThai != 'HoatDong' and tk.trangThai != 'BiKhoa'}" class="badge badge-warning" th:text="${tk.trangThai}">Khác</span>
+                  <span th:if="${tk.trangThai == 'ChoDuyet'}" class="badge badge-warning"><i class="ti ti-clock"></i> Chờ duyệt</span>
+                  <span th:if="${tk.trangThai != 'HoatDong' and tk.trangThai != 'BiKhoa' and tk.trangThai != 'ChoDuyet'}" class="badge badge-secondary" th:text="${tk.trangThai}">Khác</span>
                 </td>
                 <td>
                   <div class="table-actions" style="justify-content:flex-end">
                     <!-- Sửa tài khoản -->
                     <button class="btn btn-outline btn-sm" title="Chỉnh sửa thông tin & Đổi mật khẩu"
-                            th:attr="data-id=${tk.id},data-username=${tk.tenDangNhap},data-email=${tk.email},data-phone=${tk.soDienThoai},data-role=${tk.loaiTaiKhoan},data-owner=${ownerNames != null and ownerNames.containsKey(tk.id) ? ownerNames.get(tk.id) : tk.tenDangNhap}"
+                            th:attr="data-id=${tk.id},data-username=${tk.tenDangNhap},data-email=${tk.email},data-phone=${tk.soDienThoai},data-role=${tk.loaiTaiKhoan},data-status=${tk.trangThai},data-owner=${ownerNames != null and ownerNames.containsKey(tk.id) ? ownerNames.get(tk.id) : tk.tenDangNhap}"
                             onclick="openEditAccountModal(this)">
                       <i class="ti ti-edit"></i>
                     </button>
 
-                    <!-- Khóa / Mở khóa -->
+                    <!-- Khóa / Mở khóa / Kích hoạt -->
                     <form th:if="${tk.trangThai == 'HoatDong'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn KHÓA tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
                       <input type="hidden" name="id" th:value="${tk.id}">
                       <input type="hidden" name="trangThai" value="BiKhoa">
@@ -178,11 +180,18 @@
                         <i class="ti ti-lock"></i>
                       </button>
                     </form>
-                    <form th:if="${tk.trangThai == 'BiKhoa'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn MỞ KHÓA tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
+                    <form th:if="${tk.trangThai == 'BiKhoa' or tk.trangThai == 'Khoa' or tk.trangThai == 'DinhChi'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn MỞ KHÓA tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
                       <input type="hidden" name="id" th:value="${tk.id}">
                       <input type="hidden" name="trangThai" value="HoatDong">
                       <button type="submit" class="btn btn-success btn-sm" title="Mở khóa tài khoản">
                         <i class="ti ti-lock-open"></i>
+                      </button>
+                    </form>
+                    <form th:if="${tk.trangThai == 'ChoDuyet'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Kích hoạt tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
+                      <input type="hidden" name="id" th:value="${tk.id}">
+                      <input type="hidden" name="trangThai" value="HoatDong">
+                      <button type="submit" class="btn btn-primary btn-sm" title="Kích hoạt tài khoản chờ duyệt">
+                        <i class="ti ti-check"></i>
                       </button>
                     </form>
 
@@ -197,7 +206,7 @@
                 </td>
               </tr>
               <tr th:if="${taiKhoans == null or #lists.isEmpty(taiKhoans)}">
-                <td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem">Chưa có tài khoản nào trong hệ thống</td>
+                <td colspan="8" style="text-align:center;color:var(--text-muted);padding:2rem">Chưa có tài khoản nào trong hệ thống</td>
               </tr>
             </tbody>
           </table>
@@ -408,6 +417,17 @@
             <input type="text" name="tenDangNhap" id="editUsername" class="form-control" required style="font-weight:600">
           </div>
           <div class="form-group">
+            <label class="form-label">Trạng thái tài khoản *</label>
+            <select name="trangThai" id="editStatus" class="form-control" required>
+              <option value="HoatDong">Đang hoạt động</option>
+              <option value="BiKhoa">Đã khóa</option>
+              <option value="ChoDuyet">Chờ duyệt</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
             <label class="form-label">Loại tài khoản *</label>
             <select name="loaiTaiKhoan" id="editRole" class="form-control" required>
               <option value="NhanVien">Nhân viên nội bộ</option>
@@ -415,17 +435,15 @@
               <option value="KhachHang">Khách hàng</option>
             </select>
           </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Email *</label>
-            <input type="email" name="email" id="editEmail" class="form-control" required>
-          </div>
           <div class="form-group">
             <label class="form-label">Số điện thoại *</label>
             <input type="tel" name="soDienThoai" id="editPhone" class="form-control" required>
           </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" name="email" id="editEmail" class="form-control" required>
         </div>
 
         <div class="form-group" style="margin-bottom:0.5rem;border-top:1px solid var(--border-color);padding-top:0.75rem">
@@ -624,6 +642,7 @@
     const email = btn.getAttribute('data-email');
     const phone = btn.getAttribute('data-phone');
     const role = btn.getAttribute('data-role');
+    const status = btn.getAttribute('data-status');
     const owner = btn.getAttribute('data-owner');
 
     document.getElementById('editAccountId').value = id;
@@ -631,6 +650,7 @@
     document.getElementById('editEmail').value = email || '';
     document.getElementById('editPhone').value = phone || '';
     document.getElementById('editRole').value = role || 'NhanVien';
+    document.getElementById('editStatus').value = status || 'HoatDong';
     document.getElementById('editOwnerName').value = owner || username;
     document.getElementById('editPasswordNew').value = '';
 

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Nhãn và màu dùng chung cho mã trạng thái lưu trong DB.
+  Mọi trang gọi fragment ở đây thay vì tự map, để cùng một trạng thái
+  luôn cùng chữ và cùng màu ở mọi phân hệ.
+  Ví dụ: <span th:replace="~{layout/status :: orderBadge(${order.trangThai})}"></span>
+-->
+<body>
+
+<!-- Đơn đặt dịch vụ -->
+<th:block th:fragment="orderBadge(code)" th:switch="${code}">
+  <span th:case="'ChoDuyet'" class="badge badge-warning">Chờ duyệt</span>
+  <span th:case="'DaXacNhan'" class="badge badge-info">Đã xác nhận</span>
+  <span th:case="'DangThucHien'" class="badge badge-primary">Đang thực hiện</span>
+  <span th:case="'HoanThanh'" class="badge badge-success">Hoàn thành</span>
+  <span th:case="'DaHuy'" class="badge badge-danger">Đã huỷ</span>
+  <span th:case="*" class="badge badge-secondary" th:text="${code != null ? code : '--'}">Khác</span>
+</th:block>
+
+<!-- Khiếu nại -->
+<th:block th:fragment="complaintBadge(code)" th:switch="${code}">
+  <span th:case="'LeoThang'" class="badge badge-danger">Leo thang Giám đốc</span>
+  <span th:case="'LeoCao'" class="badge badge-danger">Leo thang Giám đốc</span>
+  <span th:case="'DangXuLy'" class="badge badge-warning">Đang xử lý</span>
+  <span th:case="'Moi'" class="badge badge-secondary">Chưa xử lý</span>
+  <span th:case="'ChuaXuLy'" class="badge badge-secondary">Chưa xử lý</span>
+  <span th:case="'DaGiaiQuyet'" class="badge badge-success">Đã giải quyết</span>
+  <span th:case="*" class="badge badge-secondary" th:text="${code != null ? code : '--'}">Khác</span>
+</th:block>
+
+<!-- Thông báo chờ duyệt / đã gửi -->
+<th:block th:fragment="notifBadge(code)" th:switch="${code}">
+  <span th:case="'ChoDuyet'" class="badge badge-warning">Chờ duyệt</span>
+  <span th:case="'DaGui'" class="badge badge-success">Đã gửi</span>
+  <span th:case="'TuChoi'" class="badge badge-danger">Từ chối</span>
+  <span th:case="*" class="badge badge-secondary" th:text="${code != null ? code : '--'}">Khác</span>
+</th:block>
+
+<!-- Nhóm nhận thông báo (chữ thường, không badge) -->
+<th:block th:fragment="recipientLabel(code)" th:switch="${code}">
+  <th:block th:case="'KhachHang'">Tất cả khách hàng</th:block>
+  <th:block th:case="'CongTacVien'">Tất cả cộng tác viên</th:block>
+  <th:block th:case="'TatCa'">Khách hàng và cộng tác viên</th:block>
+  <th:block th:case="'CaNhan'">Cá nhân</th:block>
+  <th:block th:case="'NhanVien'">Nhân viên nội bộ</th:block>
+  <th:block th:case="*" th:text="${code != null ? code : '--'}">Khác</th:block>
+</th:block>
+
+<!-- Cấp độ cộng tác viên (chữ thường) -->
+<th:block th:fragment="tierLabel(code)" th:switch="${code}">
+  <th:block th:case="'UuTu'">Ưu tú</th:block>
+  <th:block th:case="'Thuong'">Thường</th:block>
+  <th:block th:case="'Moi'">Mới</th:block>
+  <th:block th:case="*" th:text="${code != null ? code : 'Thường'}">Thường</th:block>
+</th:block>
+
+<!-- Giới tính -->
+<th:block th:fragment="genderLabel(code)" th:switch="${code}">
+  <th:block th:case="'Nam'">Nam</th:block>
+  <th:block th:case="'Nu'">Nữ</th:block>
+  <th:block th:case="'Nữ'">Nữ</th:block>
+  <th:block th:case="'Khac'">Khác</th:block>
+  <th:block th:case="*" th:text="${code != null ? code : '--'}">--</th:block>
+</th:block>
+
+</body>
+</html>
