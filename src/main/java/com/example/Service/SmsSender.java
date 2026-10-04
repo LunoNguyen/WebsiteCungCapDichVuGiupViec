@@ -10,6 +10,12 @@ public interface SmsSender {
 
     /**
      * @return mã tham chiếu của tin đã gửi (để ghi nhật ký)
+     * @throws SmsSendException khi nhà cung cấp không gửi được tin
      */
     String send(String soDienThoai, String noiDung);
+
+    /** true nếu chỉ mô phỏng (không gửi thật): khi đó API được trả mã OTP để demo/test. */
+    default boolean laMoPhong() {
+        return false;
+    }
 }

@@ -46,11 +46,10 @@ public class EsmsSmsSender implements SmsSender {
     private String brandName;
 
     /**
-     * Loại tin nhắn eSMS:
-     *   2 = SMS quảng cáo (cần đăng ký brandname)
-     *   4 = SMS chăm sóc khách hàng / OTP (không cần brandname, đầu số cố định)
-     *   8 = SMS đầu số ngẫu nhiên
-     * Dùng loại 4 cho OTP vì phù hợp nhất và không cần đăng ký brandname trước.
+     * Loại tin nhắn eSMS (xem tài liệu eSMS, tuỳ gói tài khoản):
+     *   2 = Brandname CSKH (cần brandname đã đăng ký, gửi kèm tham số Brandname)
+     *   các loại đầu số cố định (4 / 8) không cần brandname.
+     * Chỉnh bằng app.esms.sms-type cho đúng gói đã mua.
      */
     @Value("${app.esms.sms-type:4}")
     private int smsType;
@@ -59,42 +58,43 @@ public class EsmsSmsSender implements SmsSender {
 
     @Override
     public String send(String soDienThoai, String noiDung) {
-        try {
-            // Chuẩn hoá số điện thoại: eSMS yêu cầu dạng 84xxxxxxxxx
-            String phone = chuanHoaSoDienThoai(soDienThoai);
+        // Chuẩn hoá số điện thoại: eSMS yêu cầu dạng 84xxxxxxxxx
+        String phone = chuanHoaSoDienThoai(soDienThoai);
+        java.nio.charset.Charset utf8 = java.nio.charset.StandardCharsets.UTF_8;
 
-            // Build URL GET với query params
-            String url = ESMS_API_URL
-                    + "?ApiKey=" + apiKey
-                    + "&SecretKey=" + secretKey
-                    + "&Phone=" + phone
-                    + "&Content=" + java.net.URLEncoder.encode(noiDung, java.nio.charset.StandardCharsets.UTF_8)
-                    + "&SmsType=" + smsType
-                    + "&Brandname=" + java.net.URLEncoder.encode(brandName, java.nio.charset.StandardCharsets.UTF_8);
-
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                Map<?, ?> body = response.getBody();
-                Object codeObj = body.get("CodeResult");
-                String code = codeObj != null ? codeObj.toString() : "";
-                if ("100".equals(code)) {
-                    Object ref = body.get("SMSID");
-                    String maTin = ref != null ? "ESMS-" + ref : "ESMS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-                    log.info("[eSMS {}] Gửi thành công tới {}", maTin, soDienThoai);
-                    return maTin;
-                } else {
-                    log.warn("[eSMS] Lỗi gửi SMS tới {}: code={}, message={}", soDienThoai, code, body.get("ErrorMessage"));
-                }
-            }
-        } catch (Exception e) {
-            log.error("[eSMS] Ngoại lệ khi gửi SMS tới {}: {}", soDienThoai, e.getMessage(), e);
+        // Build URL GET với query params
+        String url = ESMS_API_URL
+                + "?ApiKey=" + java.net.URLEncoder.encode(apiKey, utf8)
+                + "&SecretKey=" + java.net.URLEncoder.encode(secretKey, utf8)
+                + "&Phone=" + phone
+                + "&Content=" + java.net.URLEncoder.encode(noiDung, utf8)
+                + "&SmsType=" + smsType;
+        // Brandname chỉ áp dụng cho tin Brandname (SmsType=2); gửi kèm ở loại khác eSMS có thể từ chối
+        if (smsType == 2 && brandName != null && !brandName.isBlank()) {
+            url += "&Brandname=" + java.net.URLEncoder.encode(brandName, utf8);
         }
 
-        // Fallback: log nội dung ra console nếu gửi thất bại (tránh crash nghiệp vụ)
-        String fallbackId = "ESMS-FAIL-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        log.warn("[eSMS Fallback {}] Không gửi được SMS tới {}. Nội dung: {}", fallbackId, soDienThoai, noiDung);
-        return fallbackId;
+        Map<?, ?> body;
+        try {
+            ResponseEntity<Map> response = restTemplate.getForEntity(java.net.URI.create(url), Map.class); // URI: tránh RestTemplate mã hoá lần 2
+            body = response.getBody();
+        } catch (Exception e) {
+            log.error("[eSMS] Ngoại lệ khi gửi SMS tới {}: {}", soDienThoai, e.getMessage());
+            throw new SmsSendException("Không kết nối được tới dịch vụ SMS. Vui lòng thử lại sau.", e);
+        }
+
+        String code = body != null && body.get("CodeResult") != null ? body.get("CodeResult").toString() : "";
+        if (!"100".equals(code)) {
+            Object loi = body != null ? body.get("ErrorMessage") : null;
+            log.warn("[eSMS] Lỗi gửi SMS tới {}: code={}, message={}", soDienThoai, code, loi);
+            throw new SmsSendException("Không gửi được tin nhắn tới số " + soDienThoai
+                    + (loi != null ? " (" + loi + ")" : "") + ". Vui lòng thử lại sau.", null);
+        }
+
+        Object ref = body.get("SMSID");
+        String maTin = "ESMS-" + (ref != null ? ref : UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        log.info("[eSMS {}] Gửi thành công tới {}", maTin, soDienThoai);
+        return maTin;
     }
 
     /**

@@ -125,7 +125,7 @@
             </thead>
             <tbody>
               <tr th:each="tk, iter : ${taiKhoans}" class="account-row"
-                  th:attr="data-username=${tk.tenDangNhap},data-role=${tk.loaiTaiKhoan},data-status=${tk.trangThai},data-owner=${ownerNames != null and ownerNames.containsKey(tk.id) ? ownerNames.get(tk.id) : ''},data-email=${tk.email},data-phone=${tk.soDienThoai}">
+                  th:attr="data-username=${tk.tenDangNhap},data-role=${tk.loaiTaiKhoan},data-roles=${tk.loaiTaiKhoan + (taiKhoanLaCtv.contains(tk.id) ? ' CongTacVien' : '') + (taiKhoanLaKh.contains(tk.id) ? ' KhachHang' : '')},data-status=${tk.trangThai},data-owner=${ownerNames != null and ownerNames.containsKey(tk.id) ? ownerNames.get(tk.id) : ''},data-email=${tk.email},data-phone=${tk.soDienThoai}">
                 <td style="font-weight:600;color:var(--text-muted)" th:text="${iter.count}">1</td>
                 <td style="font-weight:700;color:var(--primary-dark)">
                   <div style="display:flex;align-items:center;gap:0.4rem">
@@ -148,8 +148,8 @@
                 </td>
                 <td>
                   <span th:if="${tk.loaiTaiKhoan == 'NhanVien'}" class="badge badge-primary"><i class="ti ti-id-badge-2"></i> Nhân viên</span>
-                  <span th:if="${tk.loaiTaiKhoan == 'CongTacVien'}" class="badge badge-success"><i class="ti ti-users"></i> Cộng tác viên</span>
-                  <span th:if="${tk.loaiTaiKhoan == 'KhachHang'}" class="badge badge-secondary"><i class="ti ti-user-star"></i> Khách hàng</span>
+                  <span th:if="${tk.loaiTaiKhoan == 'CongTacVien' or taiKhoanLaCtv.contains(tk.id)}" class="badge badge-success"><i class="ti ti-users"></i> Cộng tác viên</span>
+                  <span th:if="${tk.loaiTaiKhoan == 'KhachHang' or taiKhoanLaKh.contains(tk.id)}" class="badge badge-secondary"><i class="ti ti-user-star"></i> Khách hàng</span>
                   <span th:if="${tk.loaiTaiKhoan != 'NhanVien' and tk.loaiTaiKhoan != 'CongTacVien' and tk.loaiTaiKhoan != 'KhachHang'}" class="badge badge-info" th:text="${tk.loaiTaiKhoan}">Khác</span>
                 </td>
                 <td>
@@ -172,27 +172,18 @@
                       <i class="ti ti-edit"></i>
                     </button>
 
-                    <!-- Khóa / Mở khóa / Kích hoạt -->
-                    <form th:if="${tk.trangThai == 'HoatDong'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn KHÓA tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
+                    <!-- Đổi trạng thái: Hoạt động / Chờ duyệt / Bị khóa -->
+                    <form th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" class="status-form">
                       <input type="hidden" name="id" th:value="${tk.id}">
-                      <input type="hidden" name="trangThai" value="BiKhoa">
-                      <button type="submit" class="btn btn-outline btn-sm" title="Khóa tài khoản" style="color:var(--warning);border-color:var(--warning)">
-                        <i class="ti ti-lock"></i>
-                      </button>
-                    </form>
-                    <form th:if="${tk.trangThai == 'BiKhoa' or tk.trangThai == 'Khoa' or tk.trangThai == 'DinhChi'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn MỞ KHÓA tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
-                      <input type="hidden" name="id" th:value="${tk.id}">
-                      <input type="hidden" name="trangThai" value="HoatDong">
-                      <button type="submit" class="btn btn-success btn-sm" title="Mở khóa tài khoản">
-                        <i class="ti ti-lock-open"></i>
-                      </button>
-                    </form>
-                    <form th:if="${tk.trangThai == 'ChoDuyet'}" th:action="@{/hcns/tai-khoan/doi-trang-thai}" method="post" style="display:inline" onsubmit="return confirm('Kích hoạt tài khoản ' + /*[[${tk.tenDangNhap}]]*/ '' + '?');">
-                      <input type="hidden" name="id" th:value="${tk.id}">
-                      <input type="hidden" name="trangThai" value="HoatDong">
-                      <button type="submit" class="btn btn-primary btn-sm" title="Kích hoạt tài khoản chờ duyệt">
-                        <i class="ti ti-check"></i>
-                      </button>
+                      <select name="trangThai" class="filter-select status-select" aria-label="Trạng thái tài khoản"
+                              th:attr="data-username=${tk.tenDangNhap},data-current=${tk.trangThai}"
+                              th:disabled="${currentTaiKhoanId != null and currentTaiKhoanId == tk.id}"
+                              th:title="${currentTaiKhoanId != null and currentTaiKhoanId == tk.id} ? 'Không thể tự đổi trạng thái tài khoản đang đăng nhập' : 'Đổi trạng thái tài khoản'"
+                              onchange="changeAccountStatus(this)">
+                        <option value="HoatDong" th:selected="${tk.trangThai == 'HoatDong'}">Hoạt động</option>
+                        <option value="ChoDuyet" th:selected="${tk.trangThai == 'ChoDuyet'}">Chờ duyệt</option>
+                        <option value="BiKhoa" th:selected="${tk.trangThai == 'BiKhoa' or tk.trangThai == 'Khoa' or tk.trangThai == 'DinhChi'}">Bị khóa</option>
+                      </select>
                     </form>
 
                     <!-- Xóa tài khoản -->
@@ -699,11 +690,12 @@
       const owner = (row.getAttribute('data-owner') || '').toLowerCase();
       const email = (row.getAttribute('data-email') || '').toLowerCase();
       const phone = (row.getAttribute('data-phone') || '').toLowerCase();
-      const role = row.getAttribute('data-role') || '';
+      // Một tài khoản có thể có nhiều vai trò (vd. vừa khách hàng vừa CTV)
+      const roles = (row.getAttribute('data-roles') || row.getAttribute('data-role') || '').split(' ');
       const status = row.getAttribute('data-status') || '';
 
       const matchSearch = !q || username.includes(q) || owner.includes(q) || email.includes(q) || phone.includes(q);
-      const matchRole = !r || role === r;
+      const matchRole = !r || roles.includes(r);
       const matchStatus = !s || status === s;
 
       if (matchSearch && matchRole && matchStatus) {
@@ -717,6 +709,20 @@
   searchInput.addEventListener('input', filterAccountTable);
   roleFilter.addEventListener('change', filterAccountTable);
   statusFilter.addEventListener('change', filterAccountTable);
+
+  // Đổi trạng thái tài khoản từ ô chọn trên từng dòng
+  function changeAccountStatus(select) {
+    const labels = { HoatDong: 'Hoạt động', ChoDuyet: 'Chờ duyệt', BiKhoa: 'Bị khóa' };
+    const username = select.dataset.username;
+    const next = select.value;
+    let msg = 'Chuyển tài khoản ' + username + ' sang trạng thái "' + labels[next] + '"?';
+    if (next === 'BiKhoa') msg += ' Người dùng sẽ không đăng nhập được nữa.';
+    if (confirm(msg)) {
+      select.form.submit();
+    } else {
+      select.value = select.dataset.current === 'Khoa' || select.dataset.current === 'DinhChi' ? 'BiKhoa' : select.dataset.current;
+    }
+  }
 </script>
 </body>
 </html>

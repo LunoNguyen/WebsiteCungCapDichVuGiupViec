@@ -218,6 +218,16 @@
         <a id="pd-map-route" class="btn btn-outline btn-sm" target="_blank" rel="noopener"><i class="ti ti-route"></i> Chỉ đường</a>
       </div>
     </div>
+    <!-- Theo dõi đơn đang thực hiện: vị trí khách chọn + vị trí CTV (Redis, cập nhật 5 giây) -->
+    <div id="pd-track-wrap" style="margin:0.75rem 0 1rem;display:none">
+      <div id="pd-track-map" role="region" aria-label="Bản đồ theo dõi đơn đang thực hiện"
+           style="height:300px;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden"></div>
+      <div id="pd-track-info" style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);line-height:1.6"></div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.25rem;font-size:0.75rem;color:var(--text-secondary)">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:4px"></span>Địa chỉ thực hiện</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2563eb;margin-right:4px"></span>Cộng tác viên</span>
+      </div>
+    </div>
     <div class="info-row"><span class="info-label">Ngày thực hiện</span><span class="info-value" id="pd-ngay">---</span></div>
     <div class="info-row"><span class="info-label">Giờ</span><span class="info-value" id="pd-gio">---</span></div>
     <div class="info-row"><span class="info-label">CTV phụ trách</span><span class="info-value" id="pd-ctv" style="color:var(--cskh-accent)">---</span></div>
@@ -439,6 +449,8 @@
 </div>
 
 <div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
   // ── State ──────────────────────────────────────────
   let currentEditId = null;
@@ -668,6 +680,122 @@
     wrap.style.display = 'block';
   }
 
+  // ── Theo dõi đơn đang thực hiện ───────────────────
+  // Bản đồ OpenStreetMap (Leaflet): điểm đỏ = địa chỉ khách chọn, điểm xanh = CTV.
+  // Gọi GET /cskh/don-dat-dich-vu/{id}/theo-doi mỗi 5 giây (vị trí CTV lấy từ Redis).
+  var CHU_KY_THEO_DOI = 5000;
+  var trackMap = null, trackLayer = null, trackTimer = null, trackOrderId = null, trackFitted = false;
+
+  function chamTron(mau) {
+    return { radius: 9, color: '#fff', weight: 2, fillColor: mau, fillOpacity: 1 };
+  }
+
+  function khoangCachKm(a, b) {
+    var R = 6371, rad = Math.PI / 180;
+    var dLat = (b[0] - a[0]) * rad, dLng = (b[1] - a[1]) * rad;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  var KY_TU_HTML = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return KY_TU_HTML[c]; });
+  }
+
+  function startTracking(orderId) {
+    stopTracking();
+    if (typeof L === 'undefined') {
+      document.getElementById('pd-track-wrap').style.display = 'block';
+      setTrackInfo('Không tải được thư viện bản đồ.');
+      return;
+    }
+    trackOrderId = orderId;
+    trackFitted = false;
+    document.getElementById('pd-track-wrap').style.display = 'block';
+    if (!trackMap) {
+      trackMap = L.map('pd-track-map').setView([16.0, 106.0], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(trackMap);
+      trackLayer = L.layerGroup().addTo(trackMap);
+    }
+    trackLayer.clearLayers();
+    // Khung chi tiết vừa trượt ra: tính lại kích thước để bản đồ không bị xám
+    setTimeout(function () { trackMap.invalidateSize(); }, 350);
+    setTrackInfo('Đang lấy vị trí…');
+    taiViTri();
+    trackTimer = setInterval(taiViTri, CHU_KY_THEO_DOI);
+  }
+
+  function stopTracking() {
+    if (trackTimer) clearInterval(trackTimer);
+    trackTimer = null;
+    trackOrderId = null;
+    document.getElementById('pd-track-wrap').style.display = 'none';
+  }
+
+  function setTrackInfo(html) {
+    document.getElementById('pd-track-info').innerHTML = html;
+  }
+
+  function taiViTri() {
+    var id = trackOrderId;
+    if (!id) return;
+    fetch('/cskh/don-dat-dich-vu/' + id + '/theo-doi', { headers: { 'Accept': 'application/json' } })
+      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then(function (d) {
+        if (id !== trackOrderId) return; // đã đóng hoặc mở đơn khác
+        veViTri(d);
+        if (d.trangThai !== 'DangThucHien') {
+          if (trackTimer) clearInterval(trackTimer);
+          trackTimer = null;
+        }
+      })
+      .catch(function () {
+        if (id === trackOrderId) setTrackInfo('Không tải được vị trí, đang thử lại…');
+      });
+  }
+
+  function veViTri(d) {
+    trackLayer.clearLayers();
+    var diem = [], dong = [];
+    var kh = d.khachHang || {};
+    var viTriKhach = (kh.viDo != null && kh.kinhDo != null) ? [Number(kh.viDo), Number(kh.kinhDo)] : null;
+    if (viTriKhach) {
+      L.circleMarker(viTriKhach, chamTron('#ef4444')).addTo(trackLayer)
+        .bindTooltip('Địa chỉ thực hiện: ' + escapeHtml(kh.diaChi));
+      diem.push(viTriKhach);
+    } else {
+      dong.push('Không xác định được vị trí trên bản đồ cho địa chỉ: ' + escapeHtml(kh.diaChi || '—'));
+    }
+
+    var ctvs = d.congTacVien || [];
+    ctvs.forEach(function (c) {
+      if (c.viDo == null || c.kinhDo == null) {
+        dong.push('<b>' + escapeHtml(c.hoTen) + '</b>: chưa có vị trí (CTV chưa mở ứng dụng hoặc chưa bật GPS).');
+        return;
+      }
+      var p = [Number(c.viDo), Number(c.kinhDo)];
+      L.circleMarker(p, chamTron('#2563eb')).addTo(trackLayer)
+        .bindTooltip('CTV ' + escapeHtml(c.hoTen) + ' · ' + escapeHtml(c.capNhatLuc));
+      diem.push(p);
+      var kc = viTriKhach ? ' · cách địa chỉ thực hiện ' + khoangCachKm(p, viTriKhach).toFixed(2) + ' km' : '';
+      dong.push('<b>' + escapeHtml(c.hoTen) + '</b> (' + escapeHtml(c.soDienThoai) + '): cập nhật lúc '
+        + escapeHtml(c.capNhatLuc) + kc);
+    });
+    if (!ctvs.length) dong.push('Đơn chưa có CTV phụ trách.');
+
+    // Chỉ căn khung lần đầu để CSKH tự kéo/zoom không bị nhảy mỗi 5 giây
+    if (!trackFitted && diem.length) {
+      if (diem.length === 1) trackMap.setView(diem[0], 16);
+      else trackMap.fitBounds(diem, { padding: [30, 30], maxZoom: 17 });
+      trackFitted = true;
+    }
+    setTrackInfo(dong.join('<br>'));
+  }
+
   // Mở khung chi tiết và tải dữ liệu thật của đơn: GET /cskh/don-dat-dich-vu/{id}/chi-tiet
   function openDetailPanel(id) {
     currentOrderId = id;
@@ -678,6 +806,7 @@
     ['pd-ma', 'pd-kh', 'pd-sdt', 'pd-dv', 'pd-dc', 'pd-ngay', 'pd-gio', 'pd-ctv', 'pd-tien', 'pd-tt', 'pd-ghichu']
       .forEach(function (el) { setText(el, ''); });
     showOrderMap('');
+    stopTracking();
 
     fetch('/cskh/don-dat-dich-vu/' + id + '/chi-tiet', { headers: { 'Accept': 'application/json' } })
       .then(function (res) {
@@ -697,7 +826,12 @@
         setText('pd-tien', d.thanhTien);
         setText('pd-tt', TRANG_THAI_DON[d.trangThai] || d.trangThai);
         setText('pd-ghichu', [d.yeuCauDacBiet, d.luuYDiaChi, d.ghiChu].filter(Boolean).join(' · '));
-        showOrderMap(d.diaChi);
+        // Đơn đang thực hiện: bản đồ theo dõi trực tiếp CTV; đơn khác: bản đồ tĩnh theo địa chỉ
+        if (d.trangThai === 'DangThucHien') {
+          startTracking(id);
+        } else {
+          showOrderMap(d.diaChi);
+        }
       })
       .catch(function () {
         document.getElementById('panelOrderCode').textContent = 'Không tải được chi tiết đơn';
@@ -706,6 +840,7 @@
   }
 
   function closePanels() {
+    stopTracking();
     document.getElementById('panelOverlay').classList.remove('active');
     document.getElementById('orderDetailPanel').classList.remove('active', 'open');
   }

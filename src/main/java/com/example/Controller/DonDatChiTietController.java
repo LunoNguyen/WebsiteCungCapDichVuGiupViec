@@ -35,6 +35,10 @@ public class DonDatChiTietController {
     private final PhanCongCTVRepository phanCongCTVRepository;
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Service.PhanCongService phanCongService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.ViTriCtvStore viTriCtvStore;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.GeocodingService geocodingService;
 
     public DonDatChiTietController(DonDatDichVuRepository donDatDichVuRepository,
                                    PhanCongCTVRepository phanCongCTVRepository) {
@@ -93,6 +97,53 @@ public class DonDatChiTietController {
         body.put("trangThai", don.getTrangThai());
         body.put("yeuCauDacBiet", don.getYeuCauDacBiet() != null ? don.getYeuCauDacBiet() : "");
         body.put("ghiChu", don.getGhiChu() != null ? don.getGhiChu() : "");
+        return ResponseEntity.ok(body);
+    }
+
+    // ── Theo dõi đơn đang thực hiện trên bản đồ ─────────────────────────
+
+    /**
+     * Vị trí địa chỉ khách chọn thực hiện dịch vụ (tra từ địa chỉ, cache Redis) và vị trí mới nhất
+     * của các CTV phụ trách (app CTV gửi lên Redis mỗi 5 giây). Trang CSKH gọi lại mỗi 5 giây.
+     *
+     * GET /cskh/don-dat-dich-vu/{id}/theo-doi
+     */
+    @GetMapping("/cskh/don-dat-dich-vu/{id}/theo-doi")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> theoDoi(@PathVariable Integer id) {
+        DonDatDichVu don = donDatDichVuRepository.findById(id).orElse(null);
+        if (don == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("trangThai", don.getTrangThai());
+
+        String diaChi = diaChiDayDu(don.getDiaChi());
+        Map<String, Object> khach = new LinkedHashMap<>();
+        khach.put("diaChi", diaChi);
+        geocodingService.timToaDo(diaChi).ifPresent(td -> {
+            khach.put("viDo", td.viDo());
+            khach.put("kinhDo", td.kinhDo());
+        });
+        body.put("khachHang", khach);
+
+        List<Map<String, Object>> ctvs = new ArrayList<>();
+        for (PhanCongCTV pc : phanCongCTVRepository.findAllByDonDat_Id(id)) {
+            if (pc.getCongTacVien() == null || "TuChoi".equalsIgnoreCase(pc.getTrangThai())) {
+                continue;
+            }
+            Map<String, Object> c = new LinkedHashMap<>();
+            c.put("id", pc.getCongTacVien().getId());
+            c.put("hoTen", pc.getCongTacVien().getHoTen());
+            c.put("soDienThoai", pc.getCongTacVien().getSoDienThoai());
+            viTriCtvStore.get(pc.getCongTacVien().getId()).ifPresent(vt -> {
+                c.put("viDo", vt.viDo());
+                c.put("kinhDo", vt.kinhDo());
+                c.put("capNhatLuc", vt.thoiGian().format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM")));
+            });
+            ctvs.add(c);
+        }
+        body.put("congTacVien", ctvs);
         return ResponseEntity.ok(body);
     }
 

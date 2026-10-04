@@ -63,11 +63,27 @@ public class CustomerAuthController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> sendOtp(@Valid @RequestBody OtpSendRequest request) {
         try {
             Map<String, Object> data = customerApiService.sendOtp(request);
-            return ResponseEntity.ok(ApiResponse.ok("Mã OTP đã được gửi.", data));
+            return ResponseEntity.ok(ApiResponse.ok("Mã OTP đã được gửi qua tin nhắn SMS.", data));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi gửi OTP: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Quên mật khẩu: gọi /otp/send với mucDich=DatLaiMatKhau để nhận OTP qua SMS,
+     * sau đó gửi OTP + mật khẩu mới vào đây.
+     */
+    @PostMapping("/password/reset")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            Map<String, Object> data = customerApiService.resetPassword(request);
+            return ResponseEntity.ok(ApiResponse.ok("Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.", data));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi đặt lại mật khẩu: " + e.getMessage()));
         }
     }
 

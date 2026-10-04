@@ -416,6 +416,7 @@ public class HCNSController {
             @RequestParam(required = false) String ngaySinh,
             @RequestParam String capDo,
             @RequestParam String trangThai,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         try {
             var ctvOpt = congTacVienRepository.findById(id);
@@ -448,31 +449,72 @@ public class HCNSController {
             ctv.setSoDienThoai(soDienThoai.trim());
             ctv.setNoiCuTru(noiCuTru.trim());
             ctv.setCapDo(capDo);
-            ctv.setTrangThai(trangThai);
 
+            // Chờ duyệt -> Hoạt động = duyệt hồ sơ: kích hoạt tài khoản và gửi tin nhắn như nút "Duyệt"
+            if ("ChoDuyet".equals(ctv.getTrangThai()) && "HoatDong".equals(trangThai)) {
+                congTacVienRepository.save(ctv);
+                var kq = capTaiKhoanCtvService.duyetVaCapTaiKhoan(id, null,
+                        request.getRemoteAddr(), request.getHeader("User-Agent"));
+                baoKetQuaDuyet(kq, redirectAttributes);
+                return "redirect:/hcns/cong-tac-vien";
+            }
+
+            ctv.setTrangThai(trangThai);
             congTacVienRepository.save(ctv);
+
+            // Trạng thái tài khoản đăng nhập đi theo trạng thái hồ sơ CTV
+            TaiKhoan tk = ctv.getTaiKhoan();
+            // Tài khoản dùng chung với vai trò khách hàng: chỉ mở (không khóa) tài khoản theo hồ sơ CTV
+            boolean dungChung = tk != null && khachHangRepository.findByTaiKhoan(tk).isPresent();
+            if (tk != null && (!dungChung || "HoatDong".equals(trangThai))) {
+                String trangThaiTk = switch (trangThai) {
+                    case "HoatDong" -> "HoatDong";
+                    case "DinhChi" -> "BiKhoa";
+                    default -> "ChoDuyet"; // ChoDuyet | TuChoi
+                };
+                if (!trangThaiTk.equals(tk.getTrangThai())) {
+                    tk.setTrangThai(trangThaiTk);
+                    tk.setNgayCapNhat(LocalDateTime.now());
+                    taiKhoanRepository.save(tk);
+                }
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ CTV thành công!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật CTV: " + e.getMessage());
         }
         return "redirect:/hcns/cong-tac-vien";
     }
 
+    private void baoKetQuaDuyet(com.example.Service.CapTaiKhoanCtvService.KetQua kq, RedirectAttributes redirectAttributes) {
+        if (kq.daGuiTin()) {
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đã duyệt hồ sơ " + kq.hoTen() + ", kích hoạt tài khoản " + kq.tenDangNhap()
+                            + " và gửi tin nhắn tới " + kq.soDienThoai() + ".");
+            redirectAttributes.addFlashAttribute("tinNhanDaGui", kq.noiDungTin());
+        } else {
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đã duyệt hồ sơ " + kq.hoTen() + " và kích hoạt tài khoản " + kq.tenDangNhap() + ".");
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Không gửi được tin nhắn tới " + kq.soDienThoai() + " (" + kq.maTin().replaceFirst("^loi: ", "")
+                            + "). Vui lòng báo ứng viên nội dung: " + kq.noiDungTin());
+        }
+    }
+
     /**
-     * Duyệt hồ sơ ứng viên: HCNS đặt mật khẩu, hệ thống kích hoạt tài khoản
-     * và gửi tin nhắn tài khoản + mật khẩu tới số điện thoại ứng viên.
+     * Duyệt hồ sơ ứng viên: kích hoạt hồ sơ CTV và tài khoản đăng nhập (giữ mật khẩu ứng viên tự đặt),
+     * gửi tin nhắn báo kết quả. HCNS có thể nhập mật khẩu mới nếu muốn đặt lại.
      */
     @PostMapping("/cong-tac-vien/duyet")
     public String duyetCongTacVien(@RequestParam Integer id,
-                                   @RequestParam String matKhau,
+                                   @RequestParam(required = false) String matKhau,
                                    HttpServletRequest request,
                                    RedirectAttributes redirectAttributes) {
         try {
             var kq = capTaiKhoanCtvService.duyetVaCapTaiKhoan(id, matKhau,
                     request.getRemoteAddr(), request.getHeader("User-Agent"));
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Đã duyệt hồ sơ " + kq.hoTen() + " và gửi tin nhắn tài khoản tới " + kq.soDienThoai() + ".");
-            redirectAttributes.addFlashAttribute("tinNhanDaGui", kq.noiDungTin());
+            baoKetQuaDuyet(kq, redirectAttributes);
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
@@ -519,8 +561,12 @@ public class HCNSController {
                     tk = taiKhoanRepository.save(tk);
                     ctv.setTaiKhoan(tk);
                 } else if (tk != null) {
+                    // Tài khoản dùng chung với vai trò khách hàng: chỉ đổi hồ sơ CTV, không khóa tài khoản
+                    boolean dungChung = khachHangRepository.findByTaiKhoan(tk).isPresent();
                     if ("HoatDong".equalsIgnoreCase(trangThai)) {
                         tk.setTrangThai("HoatDong");
+                    } else if (dungChung) {
+                        // giữ nguyên trạng thái tài khoản
                     } else if ("DinhChi".equalsIgnoreCase(trangThai) || "BiKhoa".equalsIgnoreCase(trangThai) || "Khoa".equalsIgnoreCase(trangThai)) {
                         tk.setTrangThai("BiKhoa");
                     } else if ("ChoDuyet".equalsIgnoreCase(trangThai)) {
@@ -975,11 +1021,20 @@ public class HCNSController {
     // 5. UC-HCNS05 – Quản lý tài khoản (CRUD + Phân quyền + Mã hóa BCrypt)
     // =========================================================================
     @GetMapping("/tai-khoan")
-    public String taiKhoan(Model model) {
+    public String taiKhoan(Model model, jakarta.servlet.http.HttpSession session) {
+        model.addAttribute("currentTaiKhoanId", session.getAttribute("authenticatedUserId"));
         List<TaiKhoan> taiKhoans = taiKhoanRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
         List<NhanVien> nhanViens = nhanVienRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
         List<CongTacVien> congTacViens = congTacVienRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
         List<KhachHang> khachHangs = khachHangRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+
+        // Một tài khoản có thể vừa là khách hàng vừa là CTV (dùng chung SĐT): hiện đủ các vai trò
+        java.util.Set<Integer> taiKhoanLaCtv = new java.util.HashSet<>();
+        congTacViens.forEach(c -> { if (c.getTaiKhoan() != null) taiKhoanLaCtv.add(c.getTaiKhoan().getId()); });
+        java.util.Set<Integer> taiKhoanLaKh = new java.util.HashSet<>();
+        khachHangs.forEach(k -> { if (k.getTaiKhoan() != null) taiKhoanLaKh.add(k.getTaiKhoan().getId()); });
+        model.addAttribute("taiKhoanLaCtv", taiKhoanLaCtv);
+        model.addAttribute("taiKhoanLaKh", taiKhoanLaKh);
 
         // Tạo map ownerNames và ownerCodes: id tài khoản -> Tên & Mã hiển thị
         Map<Integer, String> ownerNames = new HashMap<>();
@@ -1285,6 +1340,15 @@ public class HCNSController {
         return "redirect:/hcns/tai-khoan";
     }
 
+    /** Trạng thái tài khoản HCNS được phép đặt. */
+    private static final List<String> TRANG_THAI_TAI_KHOAN = List.of("HoatDong", "ChoDuyet", "BiKhoa");
+
+    /**
+     * HCNS đổi trạng thái tài khoản: Hoạt động / Chờ duyệt / Bị khóa.
+     * - Không tự đổi trạng thái tài khoản đang đăng nhập.
+     * - Tài khoản CTV có hồ sơ đang chờ duyệt: kích hoạt = duyệt hồ sơ (cùng luồng trang Cộng tác viên).
+     * - Trạng thái hồ sơ CTV đi theo trạng thái tài khoản (Bị khóa -> Đình chỉ).
+     */
     @PostMapping("/tai-khoan/doi-trang-thai")
     public String doiTrangThaiTaiKhoan(
             @RequestParam Integer id,
@@ -1293,42 +1357,69 @@ public class HCNSController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            var opt = taiKhoanRepository.findById(id);
-            if (opt.isPresent()) {
-                TaiKhoan tk = opt.get();
-                tk.setTrangThai(trangThai);
-                tk.setNgayCapNhat(LocalDateTime.now());
-                taiKhoanRepository.save(tk);
-
-                // Đồng bộ sang bảng CongTacVien nếu là tài khoản CTV
-                if ("CongTacVien".equalsIgnoreCase(tk.getLoaiTaiKhoan())) {
-                    congTacVienRepository.findByTaiKhoan(tk).ifPresent(ctv -> {
-                        if ("HoatDong".equalsIgnoreCase(trangThai)) {
-                            ctv.setTrangThai("HoatDong");
-                        } else if ("BiKhoa".equalsIgnoreCase(trangThai) || "Khoa".equalsIgnoreCase(trangThai)) {
-                            ctv.setTrangThai("DinhChi");
-                        } else if ("ChoDuyet".equalsIgnoreCase(trangThai)) {
-                            ctv.setTrangThai("ChoDuyet");
-                        }
-                        congTacVienRepository.save(ctv);
-                    });
-                }
-
-                try {
-                    NhatKyTaiKhoan log = new NhatKyTaiKhoan();
-                    log.setTaiKhoan(tk);
-                    log.setHanhDong("Đổi trạng thái: " + trangThai);
-                    log.setDiaChiIP(request.getRemoteAddr());
-                    log.setThietBi(request.getHeader("User-Agent"));
-                    log.setKetQua("ThanhCong");
-                    nhatKyTaiKhoanRepository.save(log);
-                } catch (Exception ignored) {}
-
-                String actionText = "HoatDong".equals(trangThai) ? "Mở khóa / Kích hoạt" : ("ChoDuyet".equals(trangThai) ? "Chuyển chờ duyệt" : "Khóa");
-                redirectAttributes.addFlashAttribute("successMessage", actionText + " tài khoản '" + tk.getTenDangNhap() + "' thành công!");
-            } else {
-                redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy tài khoản!");
+            if (!TRANG_THAI_TAI_KHOAN.contains(trangThai)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Trạng thái không hợp lệ: " + trangThai);
+                return "redirect:/hcns/tai-khoan";
             }
+            Object dangDangNhap = request.getSession().getAttribute("authenticatedUserId");
+            if (dangDangNhap != null && id.equals(dangDangNhap)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Không thể tự đổi trạng thái tài khoản đang đăng nhập.");
+                return "redirect:/hcns/tai-khoan";
+            }
+
+            var opt = taiKhoanRepository.findById(id);
+            if (opt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy tài khoản!");
+                return "redirect:/hcns/tai-khoan";
+            }
+            TaiKhoan tk = opt.get();
+            if (trangThai.equals(tk.getTrangThai())) {
+                return "redirect:/hcns/tai-khoan";
+            }
+
+            CongTacVien ctv = "CongTacVien".equalsIgnoreCase(tk.getLoaiTaiKhoan())
+                    ? congTacVienRepository.findByTaiKhoan(tk).orElse(null) : null;
+
+            if (ctv != null && "ChoDuyet".equals(ctv.getTrangThai()) && "HoatDong".equals(trangThai)) {
+                // Kích hoạt tài khoản CTV chờ duyệt = duyệt hồ sơ, giữ mật khẩu ứng viên đã đặt
+                var kq = capTaiKhoanCtvService.duyetVaCapTaiKhoan(ctv.getId(), null,
+                        request.getRemoteAddr(), request.getHeader("User-Agent"));
+                baoKetQuaDuyet(kq, redirectAttributes);
+                return "redirect:/hcns/tai-khoan";
+            }
+
+            String trangThaiCu = tk.getTrangThai();
+            tk.setTrangThai(trangThai);
+            tk.setNgayCapNhat(LocalDateTime.now());
+            taiKhoanRepository.save(tk);
+
+            if (ctv != null) {
+                ctv.setTrangThai(switch (trangThai) {
+                    case "HoatDong" -> "HoatDong";
+                    case "BiKhoa" -> "DinhChi";
+                    default -> "ChoDuyet";
+                });
+                congTacVienRepository.save(ctv);
+            }
+
+            try {
+                NhatKyTaiKhoan log = new NhatKyTaiKhoan();
+                log.setTaiKhoan(tk);
+                log.setHanhDong("HCNS đổi trạng thái tài khoản: " + trangThaiCu + " -> " + trangThai);
+                log.setDiaChiIP(request.getRemoteAddr());
+                log.setThietBi(request.getHeader("User-Agent"));
+                log.setKetQua("ThanhCong");
+                nhatKyTaiKhoanRepository.save(log);
+            } catch (Exception ignored) {}
+
+            String actionText = switch (trangThai) {
+                case "HoatDong" -> "BiKhoa".equals(trangThaiCu) ? "Mở khóa" : "Kích hoạt";
+                case "ChoDuyet" -> "Chuyển chờ duyệt";
+                default -> "Khóa";
+            };
+            redirectAttributes.addFlashAttribute("successMessage", actionText + " tài khoản '" + tk.getTenDangNhap() + "' thành công!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi đổi trạng thái: " + e.getMessage());
         }

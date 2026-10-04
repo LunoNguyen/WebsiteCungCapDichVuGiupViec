@@ -91,7 +91,7 @@
               <button type="button" class="btn btn-outline btn-sm" style="flex:1"
                       th:attr="data-files=@{/hcns/cong-tac-vien/{id}/tai-lieu(id=${ctv.id})}"><i class="ti ti-paperclip"></i> Hồ sơ</button>
               <button type="button" class="btn btn-success btn-sm" style="flex:1" onclick="openApproveModal(this)"
-                      th:attr="data-id=${ctv.id}, data-name=${ctv.hoTen}, data-phone=${ctv.soDienThoai}, data-username=${ctv.taiKhoan != null ? ctv.taiKhoan.tenDangNhap : ctv.soDienThoai}"><i class="ti ti-check"></i> Phê duyệt</button>
+                      th:attr="data-id=${ctv.id}, data-name=${ctv.hoTen}, data-phone=${ctv.soDienThoai}, data-username=${ctv.taiKhoan != null ? ctv.taiKhoan.tenDangNhap : ctv.soDienThoai}, data-hasaccount=${ctv.taiKhoan != null}"><i class="ti ti-check"></i> Phê duyệt</button>
               <form th:action="@{/hcns/cong-tac-vien/tu-choi}" method="post" style="flex:1" onsubmit="return confirm('Bạn có chắc muốn từ chối hồ sơ này?');">
                 <input type="hidden" name="id" th:value="${ctv.id}">
                 <button type="submit" class="btn btn-danger btn-sm" style="width:100%"><i class="ti ti-x"></i> Từ chối</button>
@@ -197,6 +197,7 @@
                             th:data-name="${ctv.hoTen}"
                             th:data-phone="${ctv.soDienThoai}"
                             th:data-username="${ctv.taiKhoan != null ? ctv.taiKhoan.tenDangNhap : ctv.soDienThoai}"
+                            th:data-hasaccount="${ctv.taiKhoan != null}"
                             onclick="openApproveModal(this)"
                             title="Duyệt hồ sơ và kích hoạt tài khoản">
                       <i class="ti ti-check"></i> Duyệt
@@ -393,12 +394,12 @@
 </div>
 
 <!-- ============================================================
-     MODAL: DUYỆT HỒ SƠ, ĐẶT MẬT KHẨU VÀ GỬI TIN NHẮN
+     MODAL: DUYỆT HỒ SƠ, KÍCH HOẠT TÀI KHOẢN VÀ GỬI TIN NHẮN
      ============================================================ -->
 <div class="modal-overlay" id="approveCtvModal">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <h2 class="modal-title">Duyệt hồ sơ và cấp tài khoản</h2>
+      <h2 class="modal-title">Duyệt hồ sơ và kích hoạt tài khoản</h2>
       <button class="modal-close" data-modal-close="approveCtvModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <form th:action="@{/hcns/cong-tac-vien/duyet}" method="post" id="approveCtvForm">
@@ -409,15 +410,15 @@
         <dt>Tên đăng nhập</dt><dd class="tabular" id="approveUsername">—</dd>
       </dl>
       <div class="form-group">
-        <label class="form-label" for="approveMatKhau">Mật khẩu đăng nhập *</label>
+        <label class="form-label" for="approveMatKhau">Đặt lại mật khẩu <span id="approveMatKhauTuyChon">(không bắt buộc)</span></label>
         <div style="display:flex;gap:0.5rem">
-          <input class="form-control tabular" id="approveMatKhau" name="matKhau" type="text" required minlength="6"
+          <input class="form-control tabular" id="approveMatKhau" name="matKhau" type="text" minlength="6"
                  autocomplete="off" spellcheck="false" style="flex:1;min-width:0">
           <button type="button" class="btn btn-outline" onclick="fillRandomPassword()" title="Tạo mật khẩu ngẫu nhiên">
             <i class="ti ti-refresh"></i> Tạo mới
           </button>
         </div>
-        <div class="form-hint">Ít nhất 6 ký tự. Cộng tác viên có thể đổi lại sau khi đăng nhập ứng dụng.</div>
+        <div class="form-hint" id="approveMatKhauHint">Bỏ trống để giữ mật khẩu ứng viên đã tự đặt khi đăng ký.</div>
         <div class="form-error" id="approveMatKhauError" hidden>Mật khẩu cần ít nhất 6 ký tự.</div>
       </div>
       <div style="margin-top:1rem">
@@ -426,7 +427,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-modal-close="approveCtvModal">Hủy</button>
-        <button type="submit" class="btn btn-primary"><i class="ti ti-send"></i> Duyệt và gửi tin nhắn</button>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-check"></i> Duyệt và kích hoạt</button>
       </div>
     </form>
   </div>
@@ -435,9 +436,10 @@
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 
 <script>
-  // Duyệt hồ sơ: HCNS đặt mật khẩu, server mã hoá và gửi tin nhắn cho ứng viên
+  // Duyệt hồ sơ: kích hoạt tài khoản, giữ mật khẩu ứng viên tự đặt (HCNS có thể đặt lại)
   const PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
   let approveUsername = '';
+  let approveHasAccount = true;
 
   function randomPassword(length = 8) {
     const bytes = new Uint32Array(length);
@@ -448,9 +450,12 @@
   function updateSmsPreview() {
     const pw = document.getElementById('approveMatKhau').value.trim();
     // Cùng mẫu với CapTaiKhoanCtvService (SMS không dấu)
-    document.getElementById('approveSmsPreview').textContent =
-      'Neatify: Ho so cong tac vien cua ban da duoc duyet. Tai khoan: ' + approveUsername +
-      ', mat khau: ' + (pw || '…') + '. Vui long dang nhap ung dung Neatify va doi mat khau.';
+    const sendsPassword = pw.length > 0 || !approveHasAccount;
+    document.getElementById('approveSmsPreview').textContent = sendsPassword
+      ? 'Neatify: Ho so cong tac vien cua ban da duoc duyet. Tai khoan: ' + approveUsername +
+        ', mat khau: ' + (pw || '(tu sinh)') + '. Vui long dang nhap ung dung Neatify va doi mat khau.'
+      : 'Neatify: Ho so cong tac vien cua ban da duoc duyet va tai khoan da duoc kich hoat. ' +
+        'Dang nhap ung dung Neatify bang tai khoan ' + approveUsername + ' va mat khau ban da dat khi dang ky.';
     document.getElementById('approveMatKhauError').hidden = pw.length === 0 || pw.length >= 6;
   }
 
@@ -461,18 +466,24 @@
 
   function openApproveModal(btn) {
     approveUsername = btn.dataset.username || btn.dataset.phone || '';
+    approveHasAccount = btn.dataset.hasaccount !== 'false';
     document.getElementById('approveId').value = btn.dataset.id;
     document.getElementById('approveName').textContent = btn.dataset.name || '—';
     document.getElementById('approvePhone').textContent = btn.dataset.phone || '—';
     document.getElementById('approvePhone2').textContent = btn.dataset.phone || '';
     document.getElementById('approveUsername').textContent = approveUsername || '—';
-    fillRandomPassword();
+    document.getElementById('approveMatKhauHint').textContent = approveHasAccount
+      ? 'Bỏ trống để giữ mật khẩu ứng viên đã tự đặt khi đăng ký.'
+      : 'Hồ sơ chưa có tài khoản. Bỏ trống thì hệ thống tự sinh mật khẩu và gửi qua tin nhắn.';
+    document.getElementById('approveMatKhau').value = '';
+    updateSmsPreview();
     ModalManager.open('approveCtvModal');
   }
 
   document.getElementById('approveMatKhau').addEventListener('input', updateSmsPreview);
   document.getElementById('approveCtvForm').addEventListener('submit', e => {
-    if (document.getElementById('approveMatKhau').value.trim().length < 6) {
+    const len = document.getElementById('approveMatKhau').value.trim().length;
+    if (len > 0 && len < 6) {
       e.preventDefault();
       document.getElementById('approveMatKhauError').hidden = false;
     }

@@ -25,6 +25,9 @@ public class CollaboratorApiService {
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
     private final TaiKhoanRepository taiKhoanRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private ViTriCtvStore viTriCtvStore;
+
     public CollaboratorApiService(
             PhanCongCTVRepository phanCongCTVRepository,
             DonDatDichVuRepository donDatDichVuRepository,
@@ -76,6 +79,22 @@ public class CollaboratorApiService {
             item.put("thanhTien", don.getThanhTien());
             result.add(item);
         }
+        return result;
+    }
+
+    /** CTV gửi vị trí hiện tại (GPS) từ ứng dụng. Lưu trên Redis, không thêm cột vào CSDL. */
+    @Transactional(readOnly = true)
+    public Map<String, Object> updateLocation(Integer congTacVienId, java.math.BigDecimal viDo, java.math.BigDecimal kinhDo) {
+        if (!congTacVienRepository.existsById(congTacVienId)) {
+            throw new IllegalArgumentException("Không tìm thấy cộng tác viên.");
+        }
+        ViTriCtvStore.ViTri vt = viTriCtvStore.update(congTacVienId, viDo, kinhDo);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("congTacVienId", congTacVienId);
+        result.put("viDo", vt.viDo());
+        result.put("kinhDo", vt.kinhDo());
+        result.put("thoiGianCapNhatViTri", vt.thoiGian());
         return result;
     }
 

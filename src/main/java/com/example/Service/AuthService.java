@@ -141,6 +141,11 @@ public class AuthService {
         taiKhoanRepository.save(taiKhoan);
     }
 
+    /** Mật khẩu nhập vào có đúng mật khẩu của tài khoản không (BCrypt hoặc dữ liệu cũ). */
+    public boolean kiemTraMatKhau(TaiKhoan taiKhoan, String matKhau) {
+        return taiKhoan != null && passwordMatches(matKhau, taiKhoan.getMatKhau());
+    }
+
     private boolean passwordMatches(String input, String storedPassword) {
         if (storedPassword == null || input == null) {
             return false;

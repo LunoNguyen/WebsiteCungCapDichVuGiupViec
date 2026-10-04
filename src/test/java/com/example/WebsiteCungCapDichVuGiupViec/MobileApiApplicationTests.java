@@ -16,7 +16,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.sms.provider=mock") // test không gửi SMS thật, API trả otpCode
 class MobileApiApplicationTests {
 
     @Autowired

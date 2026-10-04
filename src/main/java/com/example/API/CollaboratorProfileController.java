@@ -1,5 +1,6 @@
 package com.example.API;
 
+import com.example.DTO.request.AssignmentActionRequest;
 import com.example.Model.CongTacVien;
 import com.example.Service.CollaboratorApiService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,24 +37,25 @@ public class CollaboratorProfileController {
         }
     }
 
-    /** Từ chối đơn (Hàm này bạn đang thiếu nè) */
+    /** Từ chối đơn, body tuỳ chọn: { "lyDoTuChoi": "..." } */
     @PutMapping("/assignments/{id}/reject")
-    public ResponseEntity<?> rejectAssignment(@PathVariable Integer id) {
+    public ResponseEntity<?> rejectAssignment(@PathVariable Integer id,
+                                              @RequestBody(required = false) AssignmentActionRequest req) {
         try {
-            // Truyền Object rỗng thay vì null để tránh lỗi server
-            return ResponseEntity.ok(Map.of("success", true, "data", 
-                collaboratorApiService.rejectAssignment(id, new com.example.DTO.request.AssignmentActionRequest())));
+            AssignmentActionRequest body = req != null ? req : new AssignmentActionRequest();
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.rejectAssignment(id, body)));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
-    /** Hoàn thành đơn */
+    /** Hoàn thành đơn, body tuỳ chọn: { "ketQuaThucHien": "..." } */
     @PutMapping("/assignments/{id}/complete")
-    public ResponseEntity<?> completeAssignment(@PathVariable Integer id) {
+    public ResponseEntity<?> completeAssignment(@PathVariable Integer id,
+                                                @RequestBody(required = false) AssignmentActionRequest req) {
         try {
-            return ResponseEntity.ok(Map.of("success", true, "data", 
-                collaboratorApiService.completeAssignment(id, new com.example.DTO.request.AssignmentActionRequest())));
+            AssignmentActionRequest body = req != null ? req : new AssignmentActionRequest();
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.completeAssignment(id, body)));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
@@ -87,5 +89,18 @@ public class CollaboratorProfileController {
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Integer id, @RequestBody Map<String, String> req) {
         return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.updateCollaboratorStatus(id, req.get("trangThai"))));
+    }
+
+    /** GPS: app CTV gửi vị trí hiện tại mỗi 5 giây, lưu trên Redis (ViTriCtvStore) */
+    @PutMapping("/{id}/location")
+    public ResponseEntity<?> updateLocation(@PathVariable Integer id, @jakarta.validation.Valid @RequestBody com.example.DTO.request.LocationRequest req) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đã cập nhật vị trí.",
+                    "data", collaboratorApiService.updateLocation(id, req.getViDo(), req.getKinhDo())));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(503).body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 }
