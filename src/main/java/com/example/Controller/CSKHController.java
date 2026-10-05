@@ -617,12 +617,5 @@ public class CSKHController {
     }
 
     // ── UC-CSKH06 – Quản lý thông báo CSKH ─────────────────────────
-    @GetMapping("/thong-bao")
-    public String thongBao(Model model) {
-        // Danh sách kèm số người nhận / đã đọc và ảnh; các thao tác gửi, xem, xóa nằm ở CskhThongBaoController
-        model.addAttribute("thongBaos",      thongBaoService.danhSach());
-        model.addAttribute("donHangStats",   thongKeService.getDonHangStats());
-        model.addAttribute("khieuNaiStats",  thongKeService.getKhieuNaiStats());
-        return "cskh/thong-bao";
-    }
+
 }
