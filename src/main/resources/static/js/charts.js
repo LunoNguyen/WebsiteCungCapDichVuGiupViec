@@ -1,6 +1,6 @@
 /* ==========================================================
    CHARTS.JS – Chart.js Configurations
-   Neatify – Home Cleaning & Tasks
+   bTaskee – Home Cleaning & Tasks
    ========================================================== */
 
 'use strict';
@@ -17,7 +17,7 @@ function withAlpha(color, alpha) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 const ChartTheme = {
-  get primary() { return cssVar('--primary', '#08778C'); },
+  get primary() { return cssVar('--primary', '#C24E08'); },
   get muted() { return cssVar('--muted', '#707070'); },
   get foreground() { return cssVar('--foreground', '#262626'); },
   get line() { return cssVar('--line', '#F0F0F2'); },

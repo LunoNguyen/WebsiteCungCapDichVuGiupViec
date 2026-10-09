@@ -7,8 +7,8 @@
 <head th:fragment="marketingHead(pageTitle)">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/images/Logo.png">
-  <title th:text="${pageTitle != null ? pageTitle + ' – Neatify Marketing' : 'Neatify – Marketing'}">Neatify – Marketing</title>
+  <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+  <title th:text="${pageTitle != null ? pageTitle + ' – bTaskee Marketing' : 'bTaskee – Marketing'}">bTaskee – Marketing</title>
   
   <!-- Anti-flicker Theme Script (Instant Execution) -->
   <script>
@@ -45,8 +45,7 @@
 <aside class="sidebar" id="sidebar" th:fragment="marketingSidebar(activeMenu)">
   <div class="sidebar-header">
     <a href="/marketing/dashboard" class="sidebar-logo-link">
-      <img src="/images/Logo.png" class="sidebar-logo-img" alt="">
-      <span class="sidebar-logo-text">Neatify</span>
+      <img src="/images/logo-btaskee.svg" class="sidebar-logo-svg" alt="bTaskee" width="109" height="28">
     </a>
     <button type="button" class="sidebar-toggle" id="sidebarToggle" title="Thu gọn menu" aria-label="Thu gọn menu"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
   </div>

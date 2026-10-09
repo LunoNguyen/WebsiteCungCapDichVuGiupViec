@@ -1,95 +1,55 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng nhập | Neatify</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <style>
-    :root { --ink:#173342; --muted:#5e6b75; --line:#d9e5e7; --teal:#08778c; --teal-dark:#066173; --soft:#f4faf9; }
-    * { box-sizing:border-box; }
-    body { min-height:100vh; margin:0; display:grid; place-items:center; padding:24px; font-family:Inter,Arial,sans-serif; color:var(--ink); background:linear-gradient(135deg,#edf9f8 0%,#f8fcfc 55%,#e5f4f3 100%); }
-    .login-shell { width:min(100%,420px); background:#fff; border:1px solid var(--line); border-radius:20px; padding:38px; box-shadow:0 20px 55px rgba(23,51,66,.12); }
-    .brand { display:flex; align-items:center; justify-content:center; margin-bottom:28px; text-decoration:none; }
-    .brand-mark { width:58px; height:58px; display:grid; place-items:center; overflow:hidden; border-radius:16px; background:#fff; box-shadow:0 5px 16px rgba(13,155,163,.15); }
-    .brand-mark img { width:100%; height:100%; object-fit:contain; mix-blend-mode:multiply; }
-    .brand-name { margin-left:11px; font-size:23px; font-weight:800; letter-spacing:-.04em; color:var(--teal-dark); }
-    h1 { margin:0 0 8px; font-size:25px; text-align:center; letter-spacing:-.03em; }
-    .subtitle { margin:0 0 28px; color:var(--muted); font-size:14px; text-align:center; line-height:1.55; }
-    .alert { display:flex; gap:9px; align-items:flex-start; margin:0 0 20px; padding:12px 14px; border:1px solid #f3c6c6; border-radius:10px; color:#a52b2b; background:#fff5f5; font-size:13px; line-height:1.45; }
-    .field { margin-bottom:18px; }
-    label { display:block; margin-bottom:8px; font-size:13px; font-weight:700; }
-    .input-wrap { position:relative; }
-    .input-wrap > i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#7b929a; font-size:18px; }
-    input { width:100%; height:48px; padding:0 44px; border:1px solid var(--line); border-radius:10px; outline:none; color:var(--ink); font:inherit; font-size:14px; transition:border-color .2s, box-shadow .2s; }
-    input:focus { border-color:var(--teal); box-shadow:0 0 0 4px rgba(8,119,140,.14); }
-    .toggle-password { position:absolute; right:8px; top:6px; width:36px; height:36px; border:0; background:transparent; color:#7b929a; cursor:pointer; border-radius:8px; }
-    .toggle-password:hover { color:var(--teal-dark); background:var(--soft); }
-    .options { display:flex; justify-content:space-between; align-items:center; margin:2px 0 24px; font-size:13px; }
-    .remember { display:flex; align-items:center; gap:8px; min-height:32px; color:var(--muted); cursor:pointer; }
-    .remember input { width:16px; height:16px; padding:0; accent-color:var(--teal); }
-    .help { display:inline-flex; align-items:center; min-height:32px; color:var(--teal-dark); text-decoration:none; font-weight:600; }
-    .submit { width:100%; height:50px; border:0; border-radius:10px; background:var(--teal); color:#fff; font:700 15px Inter,sans-serif; cursor:pointer; transition:background .2s,transform .2s,box-shadow .2s; }
-    .submit:hover { background:var(--teal-dark); transform:translateY(-1px); box-shadow:0 8px 20px rgba(8,119,140,.25); }
-    .back { display:flex; align-items:center; justify-content:center; gap:4px; min-height:32px; margin:16px auto 0; width:fit-content; padding:0 8px; color:var(--muted); text-decoration:none; font-size:13px; }
-    .back:hover { color:var(--teal-dark); }
-    @media (max-width:460px) { body{padding:16px}.login-shell{padding:30px 22px;border-radius:16px}.options{align-items:flex-start;gap:14px;flex-direction:column}.brand-mark{width:52px;height:52px} }
-  </style>
-</head>
+<head th:replace="~{layout/site-layout :: head('Đăng nhập', 'Đăng nhập tài khoản bTaskee để đặt dịch vụ và theo dõi đơn.')}"></head>
 <body>
-  <main class="login-shell">
-    <a href="/" class="brand" aria-label="Về trang chủ Neatify">
-      <span class="brand-mark"><img src="/images/Logo.png" alt="Neatify"></span>
-      <span class="brand-name">Neatify</span>
-    </a>
-    <h1>Đăng nhập</h1>
-    <p class="subtitle">Nhập thông tin tài khoản để tiếp tục.</p>
+<header th:replace="~{layout/site-layout :: header('dang-nhap')}"></header>
 
-    <div class="alert" th:if="${error}" role="alert">
-      <i class="ti ti-alert-circle"></i><span th:text="${error}">Tên đăng nhập hoặc mật khẩu không chính xác.</span>
+<main class="auth">
+  <!-- Cộng tác viên: bắt buộc dùng ứng dụng -->
+  <div class="auth-card app-gate" th:if="${ctvApp}">
+    <h1>Cộng tác viên dùng ứng dụng</h1>
+    <p class="sub" style="margin:0">Tài khoản cộng tác viên chỉ đăng nhập trên ứng dụng bTaskee Partner: nhận việc, xem lịch làm và thu nhập ngay trên điện thoại.</p>
+    <div class="btns">
+      <a th:if="${appDownloadUrl != null and !appDownloadUrl.isEmpty()}" th:href="${appDownloadUrl}" rel="noopener" aria-label="Tải ứng dụng bTaskee Partner" style="justify-self:center"><img src="/images/btaskee-partner-app.svg" alt="bTaskee Partner – tải ứng dụng" width="216" height="60"></a>
+      <p class="hint" style="margin:0" th:unless="${appDownloadUrl != null and !appDownloadUrl.isEmpty()}">Liên hệ bộ phận Hành chính Nhân sự để nhận link tải ứng dụng.</p>
+      <a class="btn btn-outline btn-lg btn-block" href="/login">Đăng nhập tài khoản khác</a>
     </div>
-    <div class="alert" th:if="${warning}" role="alert" style="background:#fffbe6;border-color:#ffe58f;color:#d46b08">
-      <i class="ti ti-alert-triangle"></i><span th:text="${warning}">Vui lòng đăng nhập để tiếp tục.</span>
+  </div>
+
+  <div class="auth-card" th:unless="${ctvApp}">
+    <h1>Đăng nhập</h1>
+    <p class="sub">Dùng số điện thoại hoặc tên đăng nhập của bạn.</p>
+
+    <div class="banner banner-error" th:if="${error}" role="alert">
+      <svg class="ic"><use href="#i-alert"/></svg><span th:text="${error}">Tên đăng nhập hoặc mật khẩu không chính xác.</span>
     </div>
-    <div class="alert" th:if="${info}" role="alert" style="background:#e6f7ff;border-color:#91d5ff;color:#096dd9">
-      <i class="ti ti-info-circle"></i><span th:text="${info}">Bạn đã đăng xuất thành công.</span>
+    <div class="banner banner-warn" th:if="${warning}" role="alert">
+      <svg class="ic"><use href="#i-alert"/></svg><span th:text="${warning}">Vui lòng đăng nhập để tiếp tục.</span>
+    </div>
+    <div class="banner banner-ok" th:if="${info}" role="status">
+      <svg class="ic"><use href="#i-check-circle"/></svg><span th:text="${info}">Bạn đã đăng xuất.</span>
     </div>
 
     <form method="post" action="/login">
+      <input type="hidden" name="redirect" th:value="${redirect}">
       <div class="field">
-        <label for="tenDangNhap">Tên đăng nhập</label>
-        <div class="input-wrap">
-          <i class="ti ti-user"></i>
-          <input id="tenDangNhap" name="tenDangNhap" type="text" placeholder="Nhập tên đăng nhập" autocomplete="username" required autofocus th:value="${tenDangNhap}">
-        </div>
+        <label for="tenDangNhap">Số điện thoại hoặc tên đăng nhập</label>
+        <input id="tenDangNhap" name="tenDangNhap" type="text" class="input" placeholder="0901 234 567" autocomplete="username" required autofocus th:value="${tenDangNhap}">
       </div>
       <div class="field">
         <label for="matKhau">Mật khẩu</label>
-        <div class="input-wrap">
-          <i class="ti ti-lock"></i>
-          <input id="matKhau" name="matKhau" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
-          <button class="toggle-password" type="button" aria-label="Hiện mật khẩu" onclick="togglePassword()"><i id="passwordIcon" class="ti ti-eye"></i></button>
+        <div class="pass-wrap">
+          <input id="matKhau" name="matKhau" type="password" class="input" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
+          <button class="pass-toggle" type="button" aria-label="Hiện mật khẩu" data-pass-toggle><svg class="ic"><use href="#i-eye"/></svg></button>
         </div>
       </div>
-      <div class="options">
-        <label class="remember"><input type="checkbox" name="remember"> Ghi nhớ đăng nhập</label>
-        <a class="help" href="mailto:support@neatify.vn">Quên mật khẩu?</a>
-      </div>
-      <button class="submit" type="submit"><i class="ti ti-login"></i> Đăng nhập</button>
+      <div class="row"><a class="link" href="/quen-mat-khau">Quên mật khẩu?</a></div>
+      <button class="btn btn-primary btn-lg btn-block" type="submit">Đăng nhập</button>
     </form>
-    <a class="back" href="/"><i class="ti ti-arrow-left"></i> Quay lại trang chủ</a>
-  </main>
-  <script>
-    function togglePassword() {
-      const input = document.getElementById('matKhau');
-      const icon = document.getElementById('passwordIcon');
-      const hidden = input.type === 'password';
-      input.type = hidden ? 'text' : 'password';
-      icon.className = hidden ? 'ti ti-eye-off' : 'ti ti-eye';
-    }
-  </script>
+    <p class="auth-foot">Chưa có tài khoản? <a class="link" href="/dang-ky">Đăng ký</a></p>
+  </div>
+</main>
+
+<div th:replace="~{layout/site-layout :: scripts}"></div>
 </body>
 </html>

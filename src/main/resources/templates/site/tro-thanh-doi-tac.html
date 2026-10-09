@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/site-layout :: head('Trở thành đối tác', 'Đăng ký làm cộng tác viên Neatify: gửi hồ sơ, CCCD và chứng chỉ để được xét duyệt.')}"></head>
+<head th:replace="~{layout/site-layout :: head('Trở thành đối tác', 'Đăng ký làm cộng tác viên bTaskee: gửi hồ sơ, CCCD và chứng chỉ để được xét duyệt.')}"></head>
 <body>
 <header th:replace="~{layout/site-layout :: header('doi-tac')}"></header>
 
@@ -8,14 +8,14 @@
   <section class="page-hero with-photo">
     <div class="wrap">
       <div>
-        <h1>Nhận việc gần nhà, chủ động thời gian cùng Neatify</h1>
+        <h1>Nhận việc gần nhà, chủ động thời gian cùng bTaskee</h1>
         <p>Gửi hồ sơ ngay trên trang này. Phòng Hành chính Nhân sự xét duyệt và báo kết quả trong 1 đến 3 ngày làm việc.</p>
         <div class="hero-cta">
           <a class="btn btn-sun" href="#dang-ky">Điền hồ sơ ứng tuyển</a>
           <a class="btn btn-line" href="#tra-cuu">Tra cứu kết quả</a>
         </div>
       </div>
-      <div class="leaf"><img src="/images/services/ve-sinh-may-lanh.png" alt="Cộng tác viên Neatify vệ sinh máy lạnh"></div>
+      <div class="leaf"><img src="/images/services/ve-sinh-may-lanh.png" alt="Cộng tác viên bTaskee vệ sinh máy lạnh"></div>
     </div>
   </section>
 
@@ -70,7 +70,7 @@
                   <span id="iconMatKhau">👁</span>
                 </button>
               </div>
-              <div class="hint">Ít nhất 6 ký tự. Nếu số điện thoại đã có tài khoản khách hàng Neatify, hãy nhập đúng mật khẩu đó để dùng chung tài khoản.</div>
+              <div class="hint">Ít nhất 6 ký tự. Nếu số điện thoại đã có tài khoản khách hàng bTaskee, hãy nhập đúng mật khẩu đó để dùng chung tài khoản.</div>
               <div class="error">Mật khẩu cần ít nhất 6 ký tự.</div>
             </div>
             <div class="field">
@@ -115,7 +115,7 @@
             <div class="field full">
               <label for="diaChiChiTiet">Số nhà, tên đường</label>
               <input type="text" id="diaChiChiTiet" name="diaChiChiTiet" autocomplete="address-line1" required>
-              <div class="hint" id="diaChiHint">Neatify dùng địa chỉ này để xếp bạn vào khu vực nhận việc gần nơi bạn sống.</div>
+              <div class="hint" id="diaChiHint">bTaskee dùng địa chỉ này để xếp bạn vào khu vực nhận việc gần nơi bạn sống.</div>
               <div class="error">Nhập số nhà, tên đường.</div>
             </div>
             <div class="alert alert-error full" id="diaChiLoi" role="alert" style="margin:0">

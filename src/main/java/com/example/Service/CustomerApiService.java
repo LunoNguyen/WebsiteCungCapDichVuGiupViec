@@ -38,6 +38,9 @@ public class CustomerApiService {
     private final MaKhuyenMaiRepository maKhuyenMaiRepository;
     private final DonDatDichVuRepository donDatDichVuRepository;
     private final ChiTietDonDatRepository chiTietDonDatRepository;
+
+    @Autowired
+    private ChuongTrinhKhuyenMaiRepository chuongTrinhKhuyenMaiRepository;
     private final LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository;
     private final LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository;
     private final HoaDonRepository hoaDonRepository;
@@ -807,10 +810,11 @@ public class CustomerApiService {
             if (loaiDichVuId != null && !loaiDichVuId.equals(dv.getLoaiDichVu().getId())) continue;
             if (loaiHinhDat != null && !loaiHinhDat.equalsIgnoreCase(dv.getLoaiHinhDat())) continue;
             if (tuKhoa != null && !tuKhoa.isBlank()) {
-                String kw = tuKhoa.toLowerCase();
-                boolean matchName = dv.getTenDichVu() != null && dv.getTenDichVu().toLowerCase().contains(kw);
-                boolean matchDesc = dv.getMoTaChiTiet() != null && dv.getMoTaChiTiet().toLowerCase().contains(kw);
-                if (!matchName && !matchDesc) continue;
+                String kw = boDau(tuKhoa.trim());
+                boolean matchName = boDau(dv.getTenDichVu()).contains(kw);
+                boolean matchDesc = boDau(dv.getMoTaChiTiet()).contains(kw);
+                boolean matchNhom = dv.getLoaiDichVu() != null && boDau(dv.getLoaiDichVu().getTenLoaiDichVu()).contains(kw);
+                if (!matchName && !matchDesc && !matchNhom) continue;
             }
 
             // Giá hiện tại nằm ở DichVu.GiaHienTai; chỉ tra lịch sử bảng giá khi cột này chưa có giá
@@ -834,9 +838,19 @@ public class CustomerApiService {
             map.put("thoiGianThucHienPhut", dv.getThoiGianThucHien());
             map.put("moTaChiTiet", dv.getMoTaChiTiet());
             map.put("donGiaThamKhao", donGia);
+            if ("GoiThang".equalsIgnoreCase(dv.getLoaiHinhDat())) {
+                map.put("soBuoiGoi", LichGoiThang.soBuoi(dv.getSoBuoi(), dv.getTenDichVu()));
+            }
             list.add(map);
         }
         return list;
+    }
+
+    /** Chữ thường, bỏ dấu tiếng Việt: "Dọn dẹp" → "don dep", để tìm "don dep" cũng ra. */
+    static String boDau(String s) {
+        if (s == null) return "";
+        String n = java.text.Normalizer.normalize(s.toLowerCase(), java.text.Normalizer.Form.NFD);
+        return n.replaceAll("\\p{M}", "").replace('đ', 'd');
     }
 
     public Map<String, Object> getServiceDetail(Integer id) {
@@ -854,21 +868,51 @@ public class CustomerApiService {
         result.put("thoiGianThucHienPhut", dv.getThoiGianThucHien());
         result.put("moTaChiTiet", dv.getMoTaChiTiet());
         result.put("soBuoi", dv.getSoBuoi());
+        if ("GoiThang".equalsIgnoreCase(dv.getLoaiHinhDat())) {
+            result.put("soBuoiGoi", LichGoiThang.soBuoi(dv.getSoBuoi(), dv.getTenDichVu()));
+        }
         result.put("soNguoiThucHien", dv.getSoNguoiThucHien());
         result.put("giaHienTai", dv.getGiaHienTai());
 
         // Lịch sử bảng giá
         List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
-        result.put("bangGias", bangGias);
+        List<Map<String, Object>> bangGiaMaps = new ArrayList<>();
+        for (BangGiaDichVu bg : bangGias) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", bg.getId());
+            m.put("maBangGia", bg.getMaBangGia());
+            m.put("loaiHinhDat", bg.getLoaiHinhDat());
+            m.put("donViTinh", bg.getDonViTinh());
+            m.put("donGia", bg.getDonGia());
+            m.put("giaCu", bg.getGiaCu());
+            m.put("khuVucId", bg.getKhuVuc() != null ? bg.getKhuVuc().getId() : null);
+            m.put("khuVuc", bg.getKhuVuc() != null ? bg.getKhuVuc().getTenKhuVuc() : null);
+            bangGiaMaps.add(m);
+        }
+        result.put("bangGias", bangGiaMaps);
 
         // Đánh giá từ khách hàng (tìm qua chiTietDonDat → donDat)
-        List<DanhGia> danhGias = danhGiaRepository.findByCongTacVien_Id(dv.getId());
+        List<DanhGia> danhGias = getReviewsByService(dv.getId());
         result.put("soLuongDanhGia", danhGias.size());
         double avgScore = danhGias.stream()
                 .mapToInt(d -> (d.getDiemChatLuong() + d.getDiemThaiDo()) / 2)
                 .average().orElse(5.0);
         result.put("diemDanhGiaTrungBinh", BigDecimal.valueOf(avgScore).setScale(1, RoundingMode.HALF_UP));
-        result.put("danhGias", danhGias);
+        List<Map<String, Object>> danhGiaMaps = new ArrayList<>();
+        danhGias.stream()
+                .sorted(Comparator.comparing(DanhGia::getNgayDanhGia, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(10)
+                .forEach(dg -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", dg.getId());
+                    m.put("khachHang", dg.getKhachHang() != null ? dg.getKhachHang().getHoTen() : null);
+                    m.put("diem", (dg.getDiemChatLuong() + dg.getDiemThaiDo()) / 2.0);
+                    m.put("nhanXet", dg.getNhanXet());
+                    m.put("ngayDanhGia", dg.getNgayDanhGia());
+                    danhGiaMaps.add(m);
+                });
+        result.put("danhGias", danhGiaMaps);
+        result.put("soLuotDat", chiTietDonDatRepository.countByDichVu_Id(dv.getId()));
 
         // Danh sách CTV thực hiện dịch vụ này
         List<DichVuCTV> dvCtvs = dichVuCTVRepository.findByDichVu_Id(dv.getId());
@@ -963,6 +1007,41 @@ public class CustomerApiService {
                 .maKhuyenMai(req.getCodeKhuyenMai())
                 .thongDiepKMDuocApDung(thongDiepKM)
                 .build();
+    }
+
+    /** Chương trình khuyến mãi đang chạy kèm mã còn dùng được: banner "Ưu đãi" trên app. */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getActivePromotions() {
+        LocalDate homNay = LocalDate.now();
+        Map<Integer, List<MaKhuyenMai>> maTheoChuongTrinh = new HashMap<>();
+        for (MaKhuyenMai mkm : maKhuyenMaiRepository.findAll()) {
+            if (mkm.getChuongTrinhKhuyenMai() == null || !"HoatDong".equalsIgnoreCase(mkm.getTrangThai())) continue;
+            if (mkm.getSoLuotToiDa() != null && mkm.getSoLuotDaDung() != null
+                    && mkm.getSoLuotDaDung() >= mkm.getSoLuotToiDa()) continue;
+            maTheoChuongTrinh.computeIfAbsent(mkm.getChuongTrinhKhuyenMai().getId(), k -> new ArrayList<>()).add(mkm);
+        }
+        List<Map<String, Object>> ketQua = new ArrayList<>();
+        for (ChuongTrinhKhuyenMai ct : chuongTrinhKhuyenMaiRepository.findAll()) {
+            if (!"DangHoatDong".equalsIgnoreCase(ct.getTrangThai())) continue;
+            if (ct.getNgayBatDau() != null && ct.getNgayBatDau().isAfter(homNay)) continue;
+            if (ct.getNgayKetThuc() != null && ct.getNgayKetThuc().isBefore(homNay)) continue;
+            List<MaKhuyenMai> ma = maTheoChuongTrinh.getOrDefault(ct.getId(), List.of());
+            if (ma.isEmpty()) continue; // không còn mã nào để khách nhập
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", ct.getId());
+            m.put("tenChuongTrinh", ct.getTenChuongTrinh());
+            m.put("moTa", ct.getMoTa());
+            m.put("loaiGiam", ct.getLoaiGiam());
+            m.put("giaTriGiam", ct.getGiaTriGiam());
+            m.put("soTienGiamToiDa", ct.getSoTienGiamToiDa());
+            m.put("dieuKienToiThieu", ct.getDieuKienToiThieu());
+            m.put("ngayKetThuc", ct.getNgayKetThuc());
+            m.put("codeKhuyenMai", ma.get(0).getCodeKhuyenMai());
+            ketQua.add(m);
+        }
+        ketQua.sort(Comparator.comparing(m -> (LocalDate) m.get("ngayKetThuc"),
+                Comparator.nullsLast(Comparator.naturalOrder())));
+        return ketQua;
     }
 
     public Map<String, Object> validatePromotion(ValidatePromotionRequest req) {
@@ -1063,6 +1142,20 @@ public class CustomerApiService {
                 ? bangGiaDichVuRepository.findById(req.getBangGiaId()).orElse(null)
                 : null;
 
+        // Gói tháng: các thứ trong tuần phải đủ số buổi của gói trong vòng 1 tháng kể từ ngày bắt đầu.
+        // Ngày thực hiện của đơn = buổi đầu tiên; thứ được chuẩn hóa ("3,5,7,CN") để tính lại lịch khi xem.
+        LocalDate ngayThucHien = req.getNgayThucHien();
+        String thuTrongTuan = req.getNgayThucHienTrongTuan();
+        if ("GoiThang".equalsIgnoreCase(priceResult.getLoaiHinhDat())) {
+            if (ngayThucHien == null) {
+                throw new IllegalArgumentException("Vui lòng chọn ngày bắt đầu gói.");
+            }
+            List<LocalDate> lich = LichGoiThang.tinhLichDu(ngayThucHien, thuTrongTuan,
+                    LichGoiThang.soBuoi(dichVu.getSoBuoi(), dichVu.getTenDichVu()));
+            ngayThucHien = lich.get(0);
+            thuTrongTuan = LichGoiThang.vietThu(LichGoiThang.docThu(thuTrongTuan));
+        }
+
         LocalTime gioKetThuc = req.getGioKetThuc();
         if (gioKetThuc == null && dichVu.getThoiGianThucHien() != null) {
             gioKetThuc = req.getGioBatDau().plusMinutes(dichVu.getThoiGianThucHien());
@@ -1079,7 +1172,7 @@ public class CustomerApiService {
                 .diaChi(diaChi)
                 .khuyenMai(mkm)
                 .loaiHinhDat(priceResult.getLoaiHinhDat())
-                .ngayThucHien(req.getNgayThucHien())
+                .ngayThucHien(ngayThucHien)
                 .gioBatDau(req.getGioBatDau())
                 .gioKetThuc(gioKetThuc)
                 .yeuCauDacBiet(req.getYeuCauDacBiet())
@@ -1100,7 +1193,7 @@ public class CustomerApiService {
                 .soLuong(1)
                 .donGia(priceResult.getChiPhiGoc())
                 .thanhTien(priceResult.getChiPhiGoc())
-                .ngayThucHienTrongTuan(req.getNgayThucHienTrongTuan())
+                .ngayThucHienTrongTuan(thuTrongTuan)
                 .ghiChu(req.getGhiChu())
                 .build();
         chiTietDonDatRepository.save(chiTiet);
@@ -1239,6 +1332,15 @@ public class CustomerApiService {
                 }).toList());
         result.put("loaiHinhDat", d.getLoaiHinhDat());
         result.put("ngayThucHien", d.getNgayThucHien());
+        if ("GoiThang".equalsIgnoreCase(d.getLoaiHinhDat()) && d.getChiTietList() != null && !d.getChiTietList().isEmpty()) {
+            ChiTietDonDat ct = d.getChiTietList().get(0);
+            String thu = ct.getNgayThucHienTrongTuan();
+            int soBuoiGoi = LichGoiThang.soBuoi(ct.getDichVu().getSoBuoi(), ct.getDichVu().getTenDichVu());
+            result.put("thuTrongTuan", thu);
+            result.put("thuTrongTuanText", LichGoiThang.nhanThu(thu));
+            result.put("soBuoiGoi", soBuoiGoi);
+            result.put("lichBuoi", LichGoiThang.tinhLich(d.getNgayThucHien(), LichGoiThang.docThu(thu), soBuoiGoi));
+        }
         result.put("gioBatDau", d.getGioBatDau());
         result.put("gioKetThuc", d.getGioKetThuc());
         result.put("yeuCauDacBiet", d.getYeuCauDacBiet());
@@ -1340,7 +1442,7 @@ public class CustomerApiService {
         // Tạo dữ liệu mã QR VietQR mẫu liên kết tài khoản ngân hàng công ty
         String bankCode = "MB"; // Ngân hàng MBBank
         String accountNo = "0988888888"; // STK công ty
-        String accountName = "CONG TY DICH VU GIUP VIEC NEATIFY";
+        String accountName = "CONG TY DICH VU GIUP VIEC BTASKEE";
         String content = "THANHTOAN " + hd.getMaHoaDon();
         String qrQuickLink = String.format("https://img.vietqr.io/image/%s-%s-compact2.png?amount=%s&addInfo=%s&accountName=%s",
                 bankCode, accountNo, hd.getTongThanhToan().toPlainString(), content, accountName);

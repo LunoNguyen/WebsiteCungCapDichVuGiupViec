@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head(${mucDich == 'DatLaiMatKhau'} ? 'Đặt lại mật khẩu' : 'Xác thực số điện thoại', 'Nhập mã OTP bTaskee đã gửi tới số điện thoại của bạn.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dang-ky')}"></header>
+
+<main class="auth" th:with="datLai=${mucDich == 'DatLaiMatKhau'}">
+  <div class="auth-card">
+    <h1 th:text="${datLai} ? 'Đặt lại mật khẩu' : 'Nhập mã xác thực'">Nhập mã xác thực</h1>
+    <p class="sub">Mã 6 số đã gửi tới <b th:text="${sdt}">0901234567</b>, có hiệu lực 5 phút.</p>
+
+    <div th:replace="~{layout/account-layout :: flash}"></div>
+    <div class="banner banner-warn" th:if="${otpThu}" role="status"><svg class="ic"><use href="#i-info"/></svg><span>SMS đang ở chế độ thử, mã là <b th:text="${otpThu}">123456</b>.</span></div>
+
+    <form method="post" th:action="${datLai} ? '/dat-lai-mat-khau' : '/xac-thuc-otp'">
+      <input type="hidden" name="sdt" th:value="${sdt}">
+      <div class="field">
+        <label for="maCode">Mã OTP</label>
+        <input id="maCode" name="maCode" class="input otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" required autofocus>
+      </div>
+      <div class="field" th:if="${datLai}">
+        <label for="matKhauMoi">Mật khẩu mới</label>
+        <div class="pass-wrap">
+          <input id="matKhauMoi" name="matKhauMoi" type="password" class="input" placeholder="Ít nhất 6 ký tự" autocomplete="new-password" minlength="6" required>
+          <button class="pass-toggle" type="button" aria-label="Hiện mật khẩu" data-pass-toggle><svg class="ic"><use href="#i-eye"/></svg></button>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block" type="submit" th:text="${datLai} ? 'Đặt lại mật khẩu' : 'Xác thực'">Xác thực</button>
+    </form>
+    <form method="post" action="/xac-thuc-otp/gui-lai" class="auth-foot">
+      <input type="hidden" name="sdt" th:value="${sdt}">
+      <input type="hidden" name="mucDich" th:value="${mucDich}">
+      Chưa nhận được mã? <button class="link" type="submit" style="border:0;background:none;padding:0;cursor:pointer;font:inherit;font-weight:600">Gửi lại</button>
+    </form>
+  </div>
+</main>
+
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

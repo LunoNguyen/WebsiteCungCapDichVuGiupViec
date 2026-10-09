@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/site-layout :: head('Khuyến mãi', 'Các chương trình khuyến mãi và mã ưu đãi đang áp dụng tại Neatify.')}"></head>
+<head th:replace="~{layout/site-layout :: head('Khuyến mãi', 'Các chương trình khuyến mãi và mã ưu đãi đang áp dụng tại bTaskee.')}"></head>
 <body>
 <header th:replace="~{layout/site-layout :: header('khuyen-mai')}"></header>
 
@@ -22,7 +22,7 @@
             <p th:if="${km.moTa != null}" th:text="${km.moTa}">Mô tả chương trình</p>
             <p><span th:if="${!km.dieuKienText.isEmpty()}" th:text="${km.dieuKienText} + ', '">Đơn từ 300.000đ, </span><span th:text="${km.hanText}">đến hết 31/12/2026</span></p>
             <span class="promo-code" th:if="${km.code != null}">
-              <span th:text="${km.code}">NEATIFY20</span>
+              <span th:text="${km.code}">BTASKEE20</span>
               <button type="button" th:attr="data-copy=${km.code}">Sao chép</button>
             </span>
           </div>

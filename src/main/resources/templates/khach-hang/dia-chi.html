@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Sổ địa chỉ', 'Quản lý địa chỉ làm việc của bạn.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dia-chi')}"></header>
+
+<main class="acc">
+  <div class="wrap acc-layout">
+    <nav th:replace="~{layout/account-layout :: nav('dia-chi')}"></nav>
+
+    <section>
+      <div class="acc-head"><h1>Sổ địa chỉ</h1></div>
+      <div th:replace="~{layout/account-layout :: flash}"></div>
+      <div class="banner banner-error" th:if="${loiTai}" role="alert"><svg class="ic"><use href="#i-alert"/></svg><div><b>Không tải được địa chỉ.</b> Thử tải lại trang.</div></div>
+
+      <div class="stack">
+        <div class="addr-row" th:each="dc, st : ${diaChis}">
+          <span class="badge-ic" style="width:40px;height:40px"><svg class="ic"><use href="#i-pin"/></svg></span>
+          <div>
+            <b th:text="${dc.diaChiChiTiet}">45 Đường số 7, P. Bình Trị Đông B</b>
+            <p th:text="${(dc.khuVuc != null ? dc.khuVuc : 'Chưa chọn khu vực') + (dc.dienTichNha != null ? ' · ' + dc.dienTichNha + ' m²' : '')}">Bình Tân, TP. Hồ Chí Minh · 60 m²</p>
+            <p th:if="${dc.luuYDacBiet != null and !#strings.isEmpty(dc.luuYDacBiet)}" th:text="'Lưu ý: ' + ${dc.luuYDacBiet}">Lưu ý: có chó</p>
+          </div>
+          <div class="actions">
+            <span class="badge badge-primary" th:if="${dc.laMacDinh}">Mặc định</span>
+            <form method="post" th:action="@{/tai-khoan/dia-chi/{id}/mac-dinh(id=${dc.id})}" th:unless="${dc.laMacDinh}">
+              <button class="btn btn-outline btn-sm" type="submit">Đặt mặc định</button>
+            </form>
+            <button class="btn btn-danger btn-sm" type="button" th:attr="data-open-dialog='xoa' + ${dc.id}">Xóa</button>
+          </div>
+          <dialog class="modal" th:id="'xoa' + ${dc.id}">
+            <form method="post" th:action="@{/tai-khoan/dia-chi/{id}/xoa(id=${dc.id})}">
+              <h2>Xóa địa chỉ này?</h2>
+              <p th:text="${dc.diaChiChiTiet}">45 Đường số 7</p>
+              <div class="actions">
+                <button class="btn btn-outline" type="button" data-close-dialog>Giữ lại</button>
+                <button class="btn btn-danger" type="submit">Xóa</button>
+              </div>
+            </form>
+          </dialog>
+        </div>
+
+        <div class="empty" th:if="${diaChis.isEmpty() and loiTai == null}">
+          <span class="badge-ic"><svg class="ic"><use href="#i-pin"/></svg></span>
+          <h3>Chưa có địa chỉ nào</h3>
+          <p>Thêm địa chỉ để bTaskee tìm cộng tác viên gần bạn.</p>
+        </div>
+
+        <section class="panel">
+          <h2>Thêm địa chỉ</h2>
+          <p class="hint">Cộng tác viên dựa vào địa chỉ và khu vực để nhận việc.</p>
+          <form method="post" action="/tai-khoan/dia-chi" class="form-grid">
+            <input type="hidden" name="quay-lai" th:value="${quayLai}">
+            <div class="field full">
+              <label for="diaChiChiTiet">Số nhà, đường, phường <span class="req">*</span></label>
+              <input id="diaChiChiTiet" name="diaChiChiTiet" class="input" maxlength="300" placeholder="45 Đường số 7, P. Bình Trị Đông B" required>
+            </div>
+            <div class="field">
+              <label for="khuVucId">Quận, huyện <span class="req">*</span></label>
+              <select id="khuVucId" name="khuVucId" class="select" required>
+                <option value="" disabled selected>Chọn quận, huyện</option>
+                <option th:each="kv : ${khuVucs}" th:value="${kv.id}" th:text="${kv.tenKhuVuc + ', ' + kv.tinhThanh}">Bình Tân, TP. Hồ Chí Minh</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="dienTichNha">Diện tích nhà (m²)</label>
+              <input id="dienTichNha" name="dienTichNha" type="number" min="1" step="1" class="input" placeholder="60">
+            </div>
+            <div class="field full">
+              <label for="luuYDacBiet">Lưu ý cho cộng tác viên</label>
+              <input id="luuYDacBiet" name="luuYDacBiet" class="input" placeholder="Ví dụ: nhà có chó, gửi xe ở hầm">
+            </div>
+            <label class="check full" style="border:0;padding:0"><input type="checkbox" name="laMacDinh" value="true" th:checked="${diaChis.isEmpty()}"> Đặt làm địa chỉ mặc định</label>
+            <div class="full"><button class="btn btn-primary" type="submit">Lưu địa chỉ</button></div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

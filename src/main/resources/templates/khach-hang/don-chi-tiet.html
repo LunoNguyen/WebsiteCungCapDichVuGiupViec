@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Đơn ' + ${don.maDonDat}, 'Chi tiết đơn dịch vụ bTaskee.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('don-hang')}"></header>
+
+<main class="acc" th:with="thu=${ {'T2','T3','T4','T5','T6','T7','CN'} }">
+  <div class="wrap acc-layout">
+    <nav th:replace="~{layout/account-layout :: nav('don-hang')}"></nav>
+
+    <section>
+      <div class="crumb"><a href="/tai-khoan/don-hang">Đơn của tôi</a><svg class="ic"><use href="#i-right"/></svg><span th:text="${don.maDonDat}">DD-123</span></div>
+      <div class="acc-head">
+        <h1 th:text="${don.tenDichVu}">Dọn dẹp nhà 3 giờ</h1>
+        <span class="badge" th:classappend="'badge-' + ${don.toneTrangThai}" th:text="${don.nhanTrangThai}">Đang tìm người làm</span>
+      </div>
+      <div th:replace="~{layout/account-layout :: flash}"></div>
+      <div class="banner banner-warn" th:if="${don.toneTrangThai == 'warning'}" role="status">
+        <svg class="ic"><use href="#i-clock"/></svg><div><b>Đã quá giờ hẹn mà chưa có cộng tác viên nhận.</b> Gọi 1900 1234 để được hỗ trợ ngay.</div>
+      </div>
+
+      <div class="detail-layout">
+        <div class="stack">
+          <section class="panel">
+            <h2 style="margin-bottom:16px">Thông tin đơn</h2>
+            <dl class="dl">
+              <dt>Mã đơn</dt><dd th:text="${don.maDonDat}">DD-123</dd>
+              <dt>Ngày giờ</dt>
+              <dd th:text="${don.ngayThucHien != null ? thu[don.ngayThucHien.dayOfWeek.value - 1] + ', ' + #temporals.format(don.ngayThucHien, 'dd/MM/yyyy') : '—'} + (${don.gioBatDau != null} ? ' · ' + ${#temporals.format(don.gioBatDau, 'HH:mm')} + (${don['gioKetThuc'] != null} ? '–' + ${#temporals.format(don['gioKetThuc'], 'HH:mm')} : '') : '')">T5, 09/10/2026 · 09:00–12:00</dd>
+              <dt>Địa chỉ</dt><dd th:text="${don.diaChi}">45 Đường số 7, Q. Bình Tân</dd>
+              <dt>Hình thức</dt><dd th:text="${don.loaiHinhDat == 'GoiThang'} ? 'Gói tháng' : 'Theo lần'">Theo lần</dd>
+              <th:block th:if="${don['lichBuoi'] != null}">
+                <dt>Thứ trong tuần</dt><dd th:text="${don['thuTrongTuanText']}">T3, T5, T7, CN</dd>
+                <dt th:text="'Lịch ' + ${don['lichBuoi'].size()} + ' buổi'">Lịch 13 buổi</dt>
+                <dd><span th:each="n, st : ${don['lichBuoi']}" th:text="${thu[n.dayOfWeek.value - 1] + ' ' + #temporals.format(n, 'dd/MM') + (st.last ? '' : ' · ')}">T3 07/10 · </span></dd>
+              </th:block>
+              <dt th:if="${don['yeuCauDacBiet'] != null and !#strings.isEmpty(don['yeuCauDacBiet'])}">Ghi chú</dt>
+              <dd th:if="${don['yeuCauDacBiet'] != null and !#strings.isEmpty(don['yeuCauDacBiet'])}" th:text="${don['yeuCauDacBiet']}">Chìa khóa gửi bảo vệ</dd>
+              <dt>Ngày đặt</dt><dd th:text="${don['ngayTao'] != null} ? ${#temporals.format(don['ngayTao'], 'HH:mm dd/MM/yyyy')} : '—'">08:15 07/10/2026</dd>
+            </dl>
+          </section>
+
+          <section class="panel">
+            <h2 style="margin-bottom:16px">Cộng tác viên</h2>
+            <div class="person" th:if="${don['congTacVien'] != null}">
+              <span class="avatar" th:text="${#strings.substring(don['congTacVien'].hoTen, 0, 1)}">M</span>
+              <div>
+                <b th:text="${don['congTacVien'].hoTen}">Trần Thị Mai</b>
+                <span th:text="${don['congTacVien'].soDienThoai} + (${don['congTacVien'].diemDanhGia != null} ? ' · ★ ' + ${don['congTacVien'].diemDanhGia} : '')">0909 111 222 · ★ 4.8</span>
+              </div>
+              <a class="btn btn-outline btn-sm" style="margin-left:auto" th:href="'tel:' + ${don['congTacVien'].soDienThoai}"><svg class="ic"><use href="#i-phone"/></svg>Gọi</a>
+            </div>
+            <p class="hint" style="margin:0" th:if="${don['congTacVien'] == null}">Chưa có cộng tác viên nhận đơn. bTaskee sẽ báo cho bạn khi có người nhận.</p>
+          </section>
+
+          <!-- Đánh giá sau khi hoàn thành -->
+          <section class="panel" th:if="${don.trangThai == 'HoanThanh' and don['danhGia'] == null}">
+            <h2>Đánh giá buổi làm</h2>
+            <p class="hint">Đánh giá giúp bTaskee giữ chất lượng cộng tác viên.</p>
+            <form method="post" th:action="@{/tai-khoan/don-hang/{id}/danh-gia(id=${don.id})}">
+              <span class="label" style="margin-top:0">Chất lượng công việc</span>
+              <div class="rating">
+                <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                  <input type="radio" name="diemChatLuong" th:id="'cl' + ${i}" th:value="${i}" required>
+                  <label th:for="'cl' + ${i}" th:attr="aria-label=${i} + ' sao'"><svg class="ic"><use href="#i-star"/></svg></label>
+                </th:block>
+              </div>
+              <span class="label">Thái độ</span>
+              <div class="rating">
+                <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                  <input type="radio" name="diemThaiDo" th:id="'td' + ${i}" th:value="${i}" required>
+                  <label th:for="'td' + ${i}" th:attr="aria-label=${i} + ' sao'"><svg class="ic"><use href="#i-star"/></svg></label>
+                </th:block>
+              </div>
+              <label class="label" for="nhanXet">Nhận xét</label>
+              <textarea id="nhanXet" name="nhanXet" class="textarea" maxlength="500" placeholder="Cộng tác viên làm kỹ, đúng giờ…"></textarea>
+              <button class="btn btn-primary" type="submit" style="margin-top:16px">Gửi đánh giá</button>
+            </form>
+          </section>
+          <section class="panel" th:if="${don['danhGia'] != null}">
+            <h2>Bạn đã đánh giá</h2>
+            <p class="hint" style="margin:4px 0 0" th:text="'Chất lượng ' + ${don['danhGia'].diemChatLuong} + '/5 · Thái độ ' + ${don['danhGia'].diemThaiDo} + '/5'">Chất lượng 5/5 · Thái độ 5/5</p>
+            <p style="margin-top:8px" th:if="${don['danhGia'].nhanXet != null}" th:text="${don['danhGia'].nhanXet}">Nhận xét</p>
+          </section>
+        </div>
+
+        <aside class="panel">
+          <h2>Thanh toán</h2>
+          <div class="sum-rows">
+            <div class="sum-row"><span>Tạm tính</span><b th:text="${don['chiPhiGoc'] != null} ? ${#numbers.formatDecimal(don['chiPhiGoc'], 0, 'POINT', 0, 'COMMA')} + 'đ' : '—'">270.000đ</b></div>
+            <div class="sum-row" th:if="${don['soTienGiam'] != null and don['soTienGiam'] > 0}"><span>Ưu đãi</span><b class="minus" th:text="'−' + ${#numbers.formatDecimal(don['soTienGiam'], 0, 'POINT', 0, 'COMMA')} + 'đ'">−20.000đ</b></div>
+            <div class="sum-row" th:if="${don['hoaDon'] != null}"><span>Hóa đơn</span><b th:text="${don['hoaDon'].trangThaiThanhToan == 'DaThanhToan'} ? 'Đã thanh toán' : 'Chưa thanh toán'">Chưa thanh toán</b></div>
+          </div>
+          <div class="sum-total" style="margin-bottom:0"><span>Tổng</span><b th:text="${don.thanhTien != null} ? ${#numbers.formatDecimal(don.thanhTien, 0, 'POINT', 0, 'COMMA')} + 'đ' : '—'">250.000đ</b></div>
+          <button class="btn btn-danger btn-block" type="button" style="margin-top:16px" th:if="${don.trangThai == 'ChoDuyet'}" data-open-dialog="huyDon">Hủy đơn</button>
+          <p class="sum-note" th:if="${don.trangThai == 'ChoDuyet'}">Chỉ hủy được khi chưa có cộng tác viên nhận.</p>
+        </aside>
+      </div>
+    </section>
+  </div>
+
+  <dialog class="modal" id="huyDon" th:if="${don.trangThai == 'ChoDuyet'}">
+    <form method="post" th:action="@{/tai-khoan/don-hang/{id}/huy(id=${don.id})}">
+      <h2>Hủy đơn này?</h2>
+      <p>Đơn sẽ dừng tìm cộng tác viên. Bạn có thể đặt lại bất cứ lúc nào.</p>
+      <label class="label" for="lyDo">Lý do</label>
+      <input id="lyDo" name="lyDo" class="input" placeholder="Ví dụ: đổi lịch">
+      <div class="actions">
+        <button class="btn btn-outline" type="button" data-close-dialog>Giữ đơn</button>
+        <button class="btn btn-danger" type="submit">Hủy đơn</button>
+      </div>
+    </form>
+  </dialog>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

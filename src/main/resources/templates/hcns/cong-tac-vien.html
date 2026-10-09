@@ -452,10 +452,10 @@
     // Cùng mẫu với CapTaiKhoanCtvService (SMS không dấu)
     const sendsPassword = pw.length > 0 || !approveHasAccount;
     document.getElementById('approveSmsPreview').textContent = sendsPassword
-      ? 'Neatify: Ho so cong tac vien cua ban da duoc duyet. Tai khoan: ' + approveUsername +
-        ', mat khau: ' + (pw || '(tu sinh)') + '. Vui long dang nhap ung dung Neatify va doi mat khau.'
-      : 'Neatify: Ho so cong tac vien cua ban da duoc duyet va tai khoan da duoc kich hoat. ' +
-        'Dang nhap ung dung Neatify bang tai khoan ' + approveUsername + ' va mat khau ban da dat khi dang ky.';
+      ? 'bTaskee: Ho so cong tac vien cua ban da duoc duyet. Tai khoan: ' + approveUsername +
+        ', mat khau: ' + (pw || '(tu sinh)') + '. Vui long dang nhap ung dung bTaskee va doi mat khau.'
+      : 'bTaskee: Ho so cong tac vien cua ban da duoc duyet va tai khoan da duoc kich hoat. ' +
+        'Dang nhap ung dung bTaskee bang tai khoan ' + approveUsername + ' va mat khau ban da dat khi dang ky.';
     document.getElementById('approveMatKhauError').hidden = pw.length === 0 || pw.length >= 6;
   }
 

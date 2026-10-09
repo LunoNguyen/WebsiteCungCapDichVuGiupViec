@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Tìm dịch vụ', 'Tìm và so sánh dịch vụ giúp việc theo nhóm, hình thức, khoảng giá.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dich-vu')}"></header>
+
+<main>
+  <section class="search-head">
+    <div class="wrap">
+      <h1>Tìm dịch vụ</h1>
+      <form th:replace="~{layout/site-layout :: finder(${q}, ${nhom})}"></form>
+    </div>
+  </section>
+
+  <div class="wrap search-layout">
+    <!-- Bộ lọc: đổi lựa chọn là tải lại kết quả -->
+    <details class="filters" open data-filters>
+      <summary><svg class="ic"><use href="#i-grid"/></svg>Bộ lọc</summary>
+      <form class="filter-body" id="filterForm" action="/tim-dich-vu" method="get" style="display:grid;gap:20px">
+        <input type="hidden" name="q" th:value="${q}">
+        <div class="filter-group">
+          <h2>Nhóm dịch vụ</h2>
+          <label class="filter-opt"><input type="radio" name="nhom" value="" th:checked="${nhom == null}">Tất cả</label>
+          <label class="filter-opt" th:each="dm : ${danhMucs}"><input type="radio" name="nhom" th:value="${dm.id}" th:checked="${nhom != null and nhom == dm.id}"><span th:text="${dm.tenLoaiDichVu}">Dọn dẹp</span></label>
+        </div>
+        <div class="filter-group">
+          <h2>Hình thức</h2>
+          <label class="filter-opt"><input type="radio" name="hinhThuc" value="" th:checked="${hinhThuc == null}">Tất cả</label>
+          <label class="filter-opt"><input type="radio" name="hinhThuc" value="TheoLan" th:checked="${hinhThuc == 'TheoLan'}">Theo lần</label>
+          <label class="filter-opt"><input type="radio" name="hinhThuc" value="GoiThang" th:checked="${hinhThuc == 'GoiThang'}">Gói tháng</label>
+        </div>
+        <div class="filter-group">
+          <h2>Khoảng giá</h2>
+          <label class="filter-opt"><input type="radio" name="gia" value="" th:checked="${gia == null}">Tất cả</label>
+          <label class="filter-opt"><input type="radio" name="gia" value="duoi-300" th:checked="${gia == 'duoi-300'}">Dưới 300.000đ</label>
+          <label class="filter-opt"><input type="radio" name="gia" value="300-700" th:checked="${gia == '300-700'}">300.000đ – 700.000đ</label>
+          <label class="filter-opt"><input type="radio" name="gia" value="700-2000" th:checked="${gia == '700-2000'}">700.000đ – 2.000.000đ</label>
+          <label class="filter-opt"><input type="radio" name="gia" value="tren-2000" th:checked="${gia == 'tren-2000'}">Trên 2.000.000đ</label>
+        </div>
+        <a class="link" href="/tim-dich-vu" th:if="${coLoc}">Xóa bộ lọc</a>
+        <noscript><button class="btn btn-outline" type="submit">Áp dụng</button></noscript>
+      </form>
+    </details>
+
+    <section>
+      <div class="result-bar">
+        <b th:text="${ketQua.size()} + ' dịch vụ'">24 dịch vụ</b>
+        <label>
+          <span class="sr-only">Sắp xếp</span>
+          <select name="sapXep" class="select" form="filterForm" data-auto-submit>
+            <option value="phu-hop" th:selected="${sapXep == 'phu-hop'}">Phù hợp nhất</option>
+            <option value="gia-tang" th:selected="${sapXep == 'gia-tang'}">Giá thấp đến cao</option>
+            <option value="gia-giam" th:selected="${sapXep == 'gia-giam'}">Giá cao đến thấp</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="banner banner-error" th:if="${loiTai}" role="alert"><svg class="ic"><use href="#i-alert"/></svg><div><b>Không tải được danh sách dịch vụ.</b> Thử tải lại trang sau ít phút.</div></div>
+
+      <div class="results" th:if="${!ketQua.isEmpty()}">
+        <article class="result" th:each="m : ${ketQua}" th:with="phut=${m.thoiGianThucHienPhut}">
+          <div class="ph" th:classappend="${anhNhom[m.loaiDichVuId] == null} ? 'ph-empty'">
+            <img th:if="${anhNhom[m.loaiDichVuId] != null}" th:src="${anhNhom[m.loaiDichVuId]}" alt="" loading="lazy">
+          </div>
+          <div style="min-width:0">
+            <h3><a th:href="@{/dich-vu/chi-tiet/{id}(id=${m.id})}" th:text="${m.tenDichVu}">Dọn dẹp nhà 3 giờ</a></h3>
+            <p class="meta">
+              <span th:text="${m.tenLoaiDichVu}">Dọn dẹp nhà cửa</span>
+              <span th:text="${m.loaiHinhDat == 'GoiThang'} ? 'Gói tháng' + (${m['soBuoiGoi'] != null} ? ' · ' + ${m['soBuoiGoi']} + ' buổi' : '') : 'Theo lần'">Theo lần</span>
+              <span th:if="${phut != null and phut > 0}" th:text="${phut % 60 == 0} ? ${phut / 60} + ' giờ mỗi buổi' : ${phut} + ' phút mỗi buổi'">3 giờ mỗi buổi</span>
+            </p>
+          </div>
+          <div class="result-side">
+            <div class="price"><small>từ </small><span th:text="${#numbers.formatDecimal(m.donGiaThamKhao, 0, 'POINT', 0, 'COMMA')} + 'đ'">270.000đ</span></div>
+            <div class="actions">
+              <a class="btn btn-outline btn-sm" th:href="@{/dich-vu/chi-tiet/{id}(id=${m.id})}">Xem</a>
+              <a class="btn btn-primary btn-sm" th:href="@{/dat-dich-vu/{nhom}(nhom=${m.loaiDichVuId},dv=${m.id})}">Đặt</a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="empty" th:if="${ketQua.isEmpty() and loiTai == null}">
+        <span class="badge-ic"><svg class="ic"><use href="#i-search"/></svg></span>
+        <h3>Không có dịch vụ khớp</h3>
+        <p>Thử từ khóa ngắn hơn, ví dụ "sofa" thay cho "vệ sinh sofa da 3 ghế", hoặc bỏ bớt bộ lọc.</p>
+        <a class="btn btn-outline" href="/tim-dich-vu">Xóa bộ lọc</a>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+<script>
+  (function () {
+    var form = document.getElementById('filterForm');
+    form.addEventListener('change', function () { form.submit(); });
+    document.querySelectorAll('[data-auto-submit]').forEach(function (s) { s.addEventListener('change', function () { form.submit(); }); });
+    // Điện thoại: bộ lọc gập lại mặc định
+    if (window.matchMedia('(max-width: 1023px)').matches) document.querySelector('[data-filters]').open = false;
+  })();
+</script>
+</body>
+</html>

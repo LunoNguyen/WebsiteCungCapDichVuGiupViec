@@ -14,10 +14,10 @@
     background: var(--primary) !important;
     color: #fff !important;
     border-color: var(--primary) !important;
-    box-shadow: 0 4px 10px rgba(13, 155, 163, 0.25);
+    box-shadow: 0 4px 10px rgba(194, 78, 8, 0.25);
   }
   .person-item:hover {
-    background: rgba(13, 155, 163, 0.07) !important;
+    background: rgba(194, 78, 8, 0.07) !important;
   }
 </style>
 <body>
@@ -153,7 +153,7 @@
                   <span th:if="${tk.loaiTaiKhoan != 'NhanVien' and tk.loaiTaiKhoan != 'CongTacVien' and tk.loaiTaiKhoan != 'KhachHang'}" class="badge badge-info" th:text="${tk.loaiTaiKhoan}">Khác</span>
                 </td>
                 <td>
-                  <div style="font-weight:500;font-size:0.875rem" th:text="${tk.email != null ? tk.email : '---'}">user@neatify.vn</div>
+                  <div style="font-weight:500;font-size:0.875rem" th:text="${tk.email != null ? tk.email : '---'}">user@btaskee.vn</div>
                   <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${tk.soDienThoai != null ? tk.soDienThoai : ''}">0900000000</div>
                 </td>
                 <td style="font-size:0.8rem;color:var(--text-muted)" th:text="${tk.ngayTao != null ? #temporals.format(tk.ngayTao, 'dd/MM/yyyy HH:mm') : '---'}">01/01/2026</td>
@@ -264,7 +264,7 @@
                     <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400" th:text="'(' + ${nv.maNhanVien} + ')'"></span>
                   </div>
                   <div style="font-size:0.75rem;color:var(--text-muted)">
-                    <i class="ti ti-phone"></i> <span th:text="${nv.soDienThoai}">0900000000</span> • <i class="ti ti-mail"></i> <span th:text="${nv.email}">nv@neatify.vn</span>
+                    <i class="ti ti-phone"></i> <span th:text="${nv.soDienThoai}">0900000000</span> • <i class="ti ti-mail"></i> <span th:text="${nv.email}">nv@btaskee.vn</span>
                   </div>
                 </div>
               </div>
@@ -360,7 +360,7 @@
               <label class="form-label">Mật khẩu khởi tạo *</label>
               <div style="position:relative">
                 <i class="ti ti-key" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
-                <input type="password" name="matKhau" id="createPassword" class="form-control" style="padding-left:2.2rem;padding-right:2.5rem" placeholder="Tối thiểu 6 ký tự" required value="Neatify@2026">
+                <input type="password" name="matKhau" id="createPassword" class="form-control" style="padding-left:2.2rem;padding-right:2.5rem" placeholder="Tối thiểu 6 ký tự" required value="bTaskee@2026">
                 <button type="button" onclick="togglePassVisibility('createPassword', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
                   <i class="ti ti-eye"></i>
                 </button>
@@ -472,7 +472,7 @@
     document.getElementById('createAccountForm').reset();
     document.getElementById('targetPersonId').value = '';
     document.getElementById('selectedPersonName').value = '';
-    document.getElementById('createPassword').value = 'Neatify@2026';
+    document.getElementById('createPassword').value = 'bTaskee@2026';
     document.querySelectorAll('.person-item').forEach(el => {
       el.style.backgroundColor = '';
       const r = el.querySelector('.person-radio-input');
@@ -545,7 +545,7 @@
       if (r) r.checked = false;
     });
 
-    el.style.backgroundColor = 'rgba(13,155,163,0.12)';
+    el.style.backgroundColor = 'rgba(194,78,8,0.12)';
     const radio = el.querySelector('.person-radio-input');
     if (radio) radio.checked = true;
 
@@ -560,7 +560,7 @@
     } else {
       const cleanName = removeVietnameseTones(personName).toLowerCase().replace(/\s+/g, '');
       const prefix = currentSelectedType === 'CongTacVien' ? 'ctv.' : (currentSelectedType === 'KhachHang' ? 'kh.' : '');
-      document.getElementById('createEmail').value = prefix + cleanName + '@neatify.vn';
+      document.getElementById('createEmail').value = prefix + cleanName + '@btaskee.vn';
     }
 
     // Tự động gợi ý tên đăng nhập

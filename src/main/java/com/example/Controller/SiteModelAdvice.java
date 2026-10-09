@@ -15,7 +15,7 @@ import java.util.List;
  * Nạp danh mục dịch vụ cho menu và chân trang của mọi trang công khai
  * (trang chủ, giới thiệu, dịch vụ, khuyến mãi, trở thành đối tác, đăng nhập).
  */
-@ControllerAdvice(assignableTypes = {LandingController.class, SiteController.class})
+@ControllerAdvice(assignableTypes = {LandingController.class, SiteController.class, KhachHangWebController.class})
 public class SiteModelAdvice {
 
     private static final Logger log = LoggerFactory.getLogger(SiteModelAdvice.class);

@@ -1,6 +1,6 @@
 /* ==========================================================
    DASHBOARD.CSS – Khung app và khối riêng của trang quản trị
-   Neatify. Token ở main.css.
+   bTaskee. Token ở main.css.
    ========================================================== */
 
 /* --- Khung --- */
@@ -34,9 +34,10 @@
   border-bottom: 1px solid var(--line);
 }
 .sidebar-logo-link { display: flex; align-items: center; gap: 0.625rem; min-width: 0; flex: 1; }
+.sidebar-logo-svg { display: block; width: auto; height: 28px; flex-shrink: 0; }
 .sidebar-logo-img { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; border-radius: var(--radius-sm); }
-.sidebar-logo-text { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; color: var(--foreground); }
-.sidebar-logo-text span { color: inherit; }
+.sidebar-logo-text { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; color: var(--foreground); }
+.sidebar-logo-text span { color: var(--foreground); }
 .sidebar-toggle {
   width: 32px; height: 32px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;

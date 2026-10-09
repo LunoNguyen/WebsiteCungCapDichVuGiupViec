@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Đặt ' + ${danhMuc.tenLoaiDichVu}, 'Chọn dịch vụ, ngày giờ và địa chỉ, biết giá trước khi đặt.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dich-vu')}"></header>
+
+<main class="book"
+      th:with="thu=${ {'T2','T3','T4','T5','T6','T7','CN'} },
+               coTheoLan=${!danhMuc.dichVuTheoLan.isEmpty()},
+               coGoiThang=${!danhMuc.dichVuGoiThang.isEmpty()}">
+  <form class="wrap" method="post" th:action="@{/dat-dich-vu/{id}(id=${danhMuc.id})}" id="bookForm">
+    <div class="crumb"><a href="/dich-vu">Dịch vụ</a><svg class="ic"><use href="#i-right"/></svg><a th:href="@{/dich-vu/{id}(id=${danhMuc.id})}" th:text="${danhMuc.tenLoaiDichVu}">Dọn dẹp nhà</a></div>
+    <h1 th:text="'Đặt ' + ${#strings.toLowerCase(danhMuc.tenLoaiDichVu)}">Đặt dọn dẹp nhà theo giờ</h1>
+
+    <div th:replace="~{layout/account-layout :: flash}"></div>
+    <div class="banner banner-error" role="alert" data-price-error hidden><svg class="ic"><use href="#i-alert"/></svg><div><b>Chưa tính được giá.</b> Máy chủ không phản hồi, thử lại sau ít phút.</div></div>
+
+    <div class="book-layout">
+      <div>
+        <!-- 1. Địa chỉ -->
+        <section class="panel">
+          <h2>Địa chỉ làm việc</h2>
+          <p class="hint">Cộng tác viên đến đúng địa chỉ này.</p>
+          <div class="addr-list" th:if="${!diaChis.isEmpty()}">
+            <label class="addr addr-opt" th:each="dc, st : ${diaChis}">
+              <input type="radio" name="diaChiId" th:value="${dc.id}"
+                     th:checked="${dc.laMacDinh or (st.first and !#lists.contains(diaChis.![laMacDinh], true))}"
+                     th:attr="data-dia-chi=${dc.diaChiChiTiet}">
+              <div>
+                <b th:text="${dc.laMacDinh} ? 'Mặc định' : ('Địa chỉ ' + ${st.count})">Nhà riêng</b>
+                <span th:text="${dc.diaChiChiTiet + (dc.khuVuc != null ? ', ' + dc.khuVuc : '')}">45 Đường số 7, Q. Bình Tân</span>
+              </div>
+            </label>
+            <a class="link addr-more" th:href="@{/tai-khoan/dia-chi(quay-lai=${'/dat-dich-vu/' + danhMuc.id})}"><svg class="ic"><use href="#i-plus"/></svg>Thêm địa chỉ khác</a>
+          </div>
+          <div th:if="${diaChis.isEmpty()}">
+            <div class="field">
+              <label for="diaChiChiTiet">Số nhà, đường, phường <span class="req">*</span></label>
+              <input id="diaChiChiTiet" name="diaChiChiTiet" class="input" placeholder="45 Đường số 7, P. Bình Trị Đông B" required>
+            </div>
+            <div class="field">
+              <label for="khuVucId">Quận, huyện <span class="req">*</span></label>
+              <select id="khuVucId" name="khuVucId" class="select" required>
+                <option value="" disabled selected>Chọn quận, huyện</option>
+                <option th:each="kv : ${khuVucs}" th:value="${kv.id}" th:text="${kv.tenKhuVuc + ', ' + kv.tinhThanh}">Bình Tân, TP. Hồ Chí Minh</option>
+              </select>
+              <p class="hint">Địa chỉ này được lưu vào sổ địa chỉ của bạn.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Dịch vụ -->
+        <section class="panel">
+          <h2>Chọn dịch vụ</h2>
+          <p class="hint">Giá đã gồm công cộng tác viên.</p>
+          <div class="seg" role="group" aria-label="Hình thức" th:if="${coTheoLan and coGoiThang}" style="margin-bottom:16px">
+            <button type="button" aria-pressed="true" data-loai="TheoLan">Theo lần</button>
+            <button type="button" aria-pressed="false" data-loai="GoiThang">Gói tháng</button>
+          </div>
+          <input type="hidden" name="loaiHinhDat" th:value="${coTheoLan} ? 'TheoLan' : 'GoiThang'" data-loai-input>
+          <div class="search" style="max-width:none;margin-bottom:12px" th:if="${danhMuc.dichVuTheoLan.size() > 6 or danhMuc.dichVuGoiThang.size() > 6}">
+            <svg class="ic"><use href="#i-search"/></svg>
+            <input type="search" placeholder="Tìm dịch vụ, ví dụ: sofa, 3 giờ" aria-label="Tìm dịch vụ" data-svc-search>
+          </div>
+
+          <div class="opt-grid" data-group="TheoLan" th:if="${coTheoLan}">
+            <label class="opt" th:each="dv, st : ${danhMuc.dichVuTheoLan}">
+              <input type="radio" name="dichVuId" th:value="${dv.id}"
+                     th:checked="${dvChon != null ? dvChon == dv.id : st.first}"
+                     th:attr="data-ten=${dv.tenDichVu},data-gia=${dv.gia},data-gia-text=${dv.giaText}">
+              <b th:text="${dv.tenDichVu}">Dọn dẹp nhà 3 giờ</b>
+              <span th:if="${dv.thoiGianText != null and !#strings.contains(dv.tenDichVu, dv.thoiGianText)}" th:text="${dv.thoiGianText}">3 giờ</span>
+              <strong th:text="${dv.giaText}">270.000đ</strong>
+            </label>
+          </div>
+          <div class="opt-grid" data-group="GoiThang" th:if="${coGoiThang}" th:hidden="${coTheoLan}">
+            <label class="opt" th:each="dv, st : ${danhMuc.dichVuGoiThang}">
+              <input type="radio" name="dichVuId" th:value="${dv.id}"
+                     th:checked="${dvChon != null ? dvChon == dv.id : (!coTheoLan and st.first)}" th:disabled="${coTheoLan}"
+                     th:attr="data-ten=${dv.tenDichVu},data-gia=${dv.gia},data-gia-text=${dv.giaText},data-so-buoi=${soBuoiGoi[dv.id]}">
+              <b th:text="${dv.tenDichVu}">Gói dọn dẹp 4 buổi</b>
+              <span th:text="${soBuoiGoi[dv.id] + ' buổi trong 1 tháng' + (dv.thoiGianText != null ? ' · ' + dv.thoiGianText + ' mỗi buổi' : '')}">13 buổi trong 1 tháng · 3 giờ mỗi buổi</span>
+              <strong th:text="${dv.giaText}">1.040.000đ</strong>
+            </label>
+          </div>
+          <p class="hint" data-svc-none hidden style="margin:12px 0 0">Không có dịch vụ khớp. Thử từ khóa khác.</p>
+          <button class="btn btn-outline btn-block" type="button" style="margin-top:12px" data-svc-more hidden>Xem tất cả dịch vụ</button>
+          <div class="empty" th:if="${!coTheoLan and !coGoiThang}" style="border:0;padding:24px 0">
+            <h3>Nhóm này chưa có dịch vụ đang mở</h3>
+            <p>Bạn chọn nhóm khác hoặc quay lại sau.</p>
+            <a class="btn btn-outline" href="/#dat-dich-vu">Xem nhóm khác</a>
+          </div>
+        </section>
+
+        <!-- 3. Ngày giờ -->
+        <section class="panel">
+          <h2 data-tieu-de-ngay>Ngày và giờ bắt đầu</h2>
+          <p class="hint" data-goi-an>Giờ bắt đầu cần sau hiện tại ít nhất 1 giờ.</p>
+          <p class="hint" data-goi-hien hidden>Ngày bắt đầu gói và giờ làm của mỗi buổi.</p>
+          <div class="days" role="radiogroup" aria-label="Ngày làm">
+            <label class="day" th:each="ngay, st : ${ngays}">
+              <input type="radio" name="ngayThucHien" th:value="${ngay}" th:checked="${st.index == 1}" th:attr="data-nhan=${thu[ngay.dayOfWeek.value - 1] + ' ' + #temporals.format(ngay, 'dd/MM')}">
+              <small th:text="${st.first} ? 'Hôm nay' : ${thu[ngay.dayOfWeek.value - 1]}">T5</small>
+              <b th:text="${#temporals.format(ngay, 'dd')}">09</b>
+            </label>
+          </div>
+          <div class="times" role="radiogroup" aria-label="Giờ bắt đầu">
+            <label class="time" th:each="gio : ${gios}">
+              <input type="radio" name="gioBatDau" th:value="${gio}" th:checked="${gio == '09:00'}">
+              <span th:text="${gio}">09:00</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- 3b. Gói tháng: các thứ trong tuần, đủ số buổi trong 1 tháng -->
+        <section class="panel" data-goi-panel th:if="${coGoiThang}" hidden>
+          <h2>Các thứ trong tuần</h2>
+          <p class="hint">Chọn thứ để đủ <b data-so-buoi-text>13</b> buổi trong vòng 1 tháng kể từ ngày bắt đầu.</p>
+          <div class="finder-chips" style="margin:0 0 12px" aria-label="Chọn nhanh">
+            <a href="#" data-mau-thu="3,5,7,CN">T3 · T5 · T7 · CN</a>
+            <a href="#" data-mau-thu="2,4,6,CN">T2 · T4 · T6 · CN</a>
+            <a href="#" data-mau-thu="2,3,4,5,6">T2 → T6</a>
+            <a href="#" data-mau-thu="2,3,4,5,6,7,CN">Cả tuần</a>
+          </div>
+          <div class="times" style="margin:0" role="group" aria-label="Thứ trong tuần">
+            <label class="wday" th:each="t, st : ${thu}">
+              <input type="checkbox" name="ngayTrongTuan" th:value="${st.last} ? 'CN' : ${st.count + 1}" disabled>
+              <span th:text="${t}">T2</span>
+            </label>
+          </div>
+          <div class="banner banner-ok" style="margin:16px 0 0" data-lich-ok hidden><svg class="ic"><use href="#i-calendar"/></svg><div><b data-lich-tom-tat>13 buổi, từ 09/10 đến 05/11</b><div data-lich-ngay style="margin-top:4px"></div></div></div>
+          <div class="banner banner-warn" style="margin:16px 0 0" data-lich-thieu hidden><svg class="ic"><use href="#i-alert"/></svg><span data-lich-loi>Chọn thêm thứ.</span></div>
+        </section>
+
+        <!-- 4. Ghi chú -->
+        <section class="panel">
+          <h2>Ghi chú cho cộng tác viên</h2>
+          <p class="hint">Không bắt buộc.</p>
+          <textarea name="yeuCauDacBiet" class="textarea" maxlength="500" placeholder="Ví dụ: chìa khóa gửi bảo vệ, ưu tiên lau bếp" aria-label="Ghi chú cho cộng tác viên"></textarea>
+        </section>
+      </div>
+
+      <!-- Tóm tắt đơn -->
+      <aside class="panel summary">
+        <h2>Tóm tắt đơn</h2>
+        <div class="sum-rows">
+          <div class="sum-row"><span>Dịch vụ</span><b data-sum-ten>Chưa chọn</b></div>
+          <div class="sum-row"><span>Thời gian</span><b data-sum-gio>Chưa chọn</b></div>
+          <div class="sum-row" data-sum-lich-row hidden><span>Lịch</span><b data-sum-lich>Chưa chọn thứ</b></div>
+          <div class="sum-row"><span>Tạm tính</span><b data-sum-goc>0đ</b></div>
+          <div class="sum-row" data-sum-giam-row hidden><span>Ưu đãi</span><b class="minus" data-sum-giam>−0đ</b></div>
+        </div>
+        <label class="label" for="codeKhuyenMai" style="margin-top:0">Mã ưu đãi</label>
+        <div class="promo-row">
+          <input id="codeKhuyenMai" name="codeKhuyenMai" class="input" placeholder="Nhập mã" autocomplete="off">
+          <button class="btn btn-outline" type="button" data-apply-code>Áp dụng</button>
+        </div>
+        <p class="promo-msg" data-promo-msg hidden></p>
+        <div class="sum-total"><span>Tổng thanh toán</span><b data-sum-tong>0đ</b></div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit" th:disabled="${!coTheoLan and !coGoiThang}">Đặt dịch vụ</button>
+        <p class="sum-note">Trả tiền mặt hoặc chuyển khoản sau buổi làm.</p>
+      </aside>
+    </div>
+
+    <div class="mobile-bar">
+      <div class="price"><b data-sum-tong>0đ</b><span data-sum-gio-ngan>Chưa chọn giờ</span></div>
+      <button class="btn btn-primary btn-lg" type="submit" th:disabled="${!coTheoLan and !coGoiThang}">Đặt dịch vụ</button>
+    </div>
+  </form>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+<script>
+(function () {
+  'use strict';
+  var form = document.getElementById('bookForm');
+  var tien = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN').replace(/,/g, '.') + 'đ'; };
+  var all = function (sel) { return form.querySelectorAll(sel); };
+  var giam = 0;
+
+  // Theo lần / Gói tháng: nhóm đang ẩn thì tắt input để không gửi lên
+  var loaiInput = form.querySelector('[data-loai-input]');
+  all('[data-loai]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var loai = btn.getAttribute('data-loai');
+      all('[data-loai]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+      loaiInput.value = loai;
+      all('[data-group]').forEach(function (g) {
+        var on = g.getAttribute('data-group') === loai;
+        g.hidden = !on;
+        g.querySelectorAll('input').forEach(function (i) { i.disabled = !on; });
+      });
+      var goi = loai === 'GoiThang';
+      var pg = form.querySelector('[data-goi-panel]');
+      if (pg) { pg.hidden = !goi; pg.querySelectorAll('input').forEach(function (i) { i.disabled = !goi; }); }
+      // Gói tháng chưa chọn thứ nào: chọn sẵn T3, T5, T7, CN (sửa được)
+      if (goi && pg && !pg.querySelector('input[name="ngayTrongTuan"]:checked')) {
+        pg.querySelectorAll('input[name="ngayTrongTuan"]').forEach(function (i) { i.checked = ['3', '5', '7', 'CN'].indexOf(i.value) !== -1; });
+      }
+      form.querySelector('[data-tieu-de-ngay]').textContent = goi ? 'Ngày bắt đầu và giờ làm' : 'Ngày và giờ bắt đầu';
+      form.querySelector('[data-goi-an]').hidden = goi;
+      form.querySelector('[data-goi-hien]').hidden = !goi;
+      form.querySelector('[data-sum-lich-row]').hidden = !goi;
+      var first = form.querySelector('[data-group="' + loai + '"] input[name="dichVuId"]');
+      if (first && !form.querySelector('[data-group="' + loai + '"] input[name="dichVuId"]:checked')) first.checked = true;
+      tinhGia();
+    });
+  });
+
+  // Giờ đã qua (hôm nay, chưa đủ 1 giờ) thì khóa
+  function khoaGio() {
+    var ngay = form.querySelector('input[name="ngayThucHien"]:checked');
+    var homNay = new Date();
+    var isoHomNay = homNay.getFullYear() + '-' + String(homNay.getMonth() + 1).padStart(2, '0') + '-' + String(homNay.getDate()).padStart(2, '0');
+    all('input[name="gioBatDau"]').forEach(function (i) {
+      var p = i.value.split(':');
+      var t = new Date(); t.setHours(+p[0], +p[1], 0, 0);
+      i.disabled = ngay && ngay.value === isoHomNay && t.getTime() < Date.now() + 3600000;
+      if (i.disabled && i.checked) i.checked = false;
+    });
+  }
+
+  // Lịch gói tháng: cùng thuật toán với máy chủ (LichGoiThang.java): các ngày khớp thứ đã chọn,
+  // từ ngày bắt đầu tới trước cùng ngày tháng sau, lấy đủ số buổi của gói.
+  var THU_JS = { '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, 'CN': 0 };
+  var TEN_THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  var lichDu = true;
+  var buoiDau = null; // nhãn buổi đầu tiên của gói, vd "T5 08/10"
+  function dd(d) { return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function tinhLich() {
+    var pg = form.querySelector('[data-goi-panel]');
+    lichDu = true;
+    buoiDau = null;
+    if (!pg || pg.hidden) return;
+    var dv = form.querySelector('input[name="dichVuId"]:checked');
+    var soBuoi = dv ? Number(dv.getAttribute('data-so-buoi')) || 4 : 4;
+    form.querySelector('[data-so-buoi-text]').textContent = soBuoi;
+    var thu = [].map.call(pg.querySelectorAll('input[name="ngayTrongTuan"]:checked'), function (i) { return THU_JS[i.value]; });
+    var ngayInput = form.querySelector('input[name="ngayThucHien"]:checked');
+    var ok = pg.querySelector('[data-lich-ok]'), thieu = pg.querySelector('[data-lich-thieu]');
+    var nhanThu = [].map.call(pg.querySelectorAll('input[name="ngayTrongTuan"]:checked'), function (i) { return i.nextElementSibling.textContent; }).join(', ');
+    if (!thu.length || !ngayInput) {
+      ok.hidden = true; thieu.hidden = false; lichDu = false;
+      pg.querySelector('[data-lich-loi]').textContent = 'Chọn các thứ trong tuần sẽ làm.';
+      form.querySelector('[data-sum-lich]').textContent = 'Chưa chọn thứ';
+      return;
+    }
+    var p = ngayInput.value.split('-');
+    var batDau = new Date(+p[0], +p[1] - 1, +p[2]);
+    var ketThuc = new Date(+p[0], +p[1], +p[2]);
+    var ngays = [];
+    for (var d = new Date(batDau); d < ketThuc && ngays.length < soBuoi; d.setDate(d.getDate() + 1)) {
+      if (thu.indexOf(d.getDay()) !== -1) ngays.push(new Date(d));
+    }
+    if (ngays.length < soBuoi) {
+      ok.hidden = true; thieu.hidden = false; lichDu = false;
+      pg.querySelector('[data-lich-loi]').textContent = 'Các thứ đã chọn chỉ có ' + ngays.length + ' buổi trong 1 tháng, gói cần ' + soBuoi + ' buổi. Hãy chọn thêm ít nhất ' + Math.ceil((soBuoi - ngays.length) / 4) + ' thứ.';
+      form.querySelector('[data-sum-lich]').textContent = 'Thiếu ' + (soBuoi - ngays.length) + ' buổi';
+      return;
+    }
+    ok.hidden = false; thieu.hidden = true;
+    buoiDau = TEN_THU[ngays[0].getDay()] + ' ' + dd(ngays[0]);
+    pg.querySelector('[data-lich-tom-tat]').textContent = soBuoi + ' buổi, từ ' + TEN_THU[ngays[0].getDay()] + ' ' + dd(ngays[0]) + ' đến ' + TEN_THU[ngays[ngays.length - 1].getDay()] + ' ' + dd(ngays[ngays.length - 1]);
+    pg.querySelector('[data-lich-ngay]').textContent = ngays.map(function (x) { return TEN_THU[x.getDay()] + ' ' + dd(x); }).join(' · ');
+    form.querySelector('[data-sum-lich]').textContent = soBuoi + ' buổi · ' + nhanThu;
+  }
+  form.querySelectorAll('[data-mau-thu]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var chon = a.getAttribute('data-mau-thu').split(',');
+      form.querySelectorAll('input[name="ngayTrongTuan"]').forEach(function (i) { i.checked = chon.indexOf(i.value) !== -1; });
+      tinhLich(); capNhatTomTat();
+    });
+  });
+
+  function capNhatTomTat() {
+    var dv = form.querySelector('input[name="dichVuId"]:checked');
+    var ngay = form.querySelector('input[name="ngayThucHien"]:checked');
+    var gio = form.querySelector('input[name="gioBatDau"]:checked');
+    form.querySelector('[data-sum-ten]').textContent = dv ? dv.getAttribute('data-ten') : 'Chưa chọn';
+    var tg = ngay && gio ? (buoiDau ? 'Từ ' + buoiDau : ngay.getAttribute('data-nhan')) + ' · ' + gio.value : 'Chưa chọn';
+    form.querySelector('[data-sum-gio]').textContent = tg;
+    form.querySelector('[data-sum-gio-ngan]').textContent = ngay && gio ? tg : 'Chưa chọn giờ';
+    var goc = dv ? Number(dv.getAttribute('data-gia')) : 0;
+    form.querySelector('[data-sum-goc]').textContent = tien(goc);
+    form.querySelector('[data-sum-giam-row]').hidden = !giam;
+    form.querySelector('[data-sum-giam]').textContent = '−' + tien(giam);
+    all('[data-sum-tong]').forEach(function (el) { el.textContent = tien(Math.max(goc - giam, 0)); });
+  }
+
+  // Giá và mã ưu đãi tính ở máy chủ (/v1/bookings/calculate-price), cùng logic với ứng dụng
+  var msg = form.querySelector('[data-promo-msg]');
+  var loiGia = document.querySelector('[data-price-error]');
+  function tinhGia(coMa) {
+    var dv = form.querySelector('input[name="dichVuId"]:checked');
+    var ma = form.querySelector('#codeKhuyenMai').value.trim();
+    if (!dv || !ma) { giam = 0; msg.hidden = true; capNhatTomTat(); return; }
+    fetch('/v1/bookings/calculate-price', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dichVuId: Number(dv.value), loaiHinhDat: loaiInput.value, codeKhuyenMai: ma })
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      loiGia.hidden = true;
+      if (!res.success) throw new Error(res.message);
+      var kq = res.data;
+      giam = Number(kq.soTienGiam) || 0;
+      msg.hidden = false;
+      msg.className = 'promo-msg ' + (giam > 0 ? 'ok' : 'err');
+      msg.textContent = giam > 0 ? 'Đã giảm ' + tien(giam) : (kq.thongDiepKMDuocApDung || 'Mã không dùng được cho dịch vụ này.');
+      capNhatTomTat();
+    }).catch(function () {
+      giam = 0; capNhatTomTat();
+      if (coMa) loiGia.hidden = false;
+    });
+  }
+
+  form.querySelector('[data-apply-code]').addEventListener('click', function () { tinhGia(true); });
+  form.querySelector('#codeKhuyenMai').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); tinhGia(true); } });
+  form.addEventListener('change', function (e) {
+    if (e.target.name === 'ngayThucHien') khoaGio();
+    tinhLich();
+    if (e.target.name === 'dichVuId') tinhGia();
+    capNhatTomTat();
+  });
+  form.addEventListener('submit', function (e) {
+    if (!form.querySelector('input[name="gioBatDau"]:checked')) { e.preventDefault(); window.siteToast('Vui lòng chọn giờ bắt đầu.'); return; }
+    if (loaiInput.value === 'GoiThang' && !lichDu) { e.preventDefault(); window.siteToast('Các thứ đã chọn chưa đủ số buổi của gói.'); form.querySelector('[data-goi-panel]').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  });
+  // Nhóm nhiều dịch vụ: hiện 6 mục đầu (luôn gồm mục đang chọn), ô tìm lọc theo tên
+  var GIOI_HAN = 6, moRong = false;
+  var oTim = form.querySelector('[data-svc-search]');
+  var nutThem = form.querySelector('[data-svc-more]');
+  var khongCo = form.querySelector('[data-svc-none]');
+  var boDau = function (s) { return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd'); };
+  function locDichVu() {
+    var nhom = form.querySelector('[data-group="' + loaiInput.value + '"]');
+    if (!nhom) return;
+    var q = boDau(oTim ? oTim.value.trim() : '');
+    var the = nhom.querySelectorAll('label.opt');
+    var hien = 0, khop = 0;
+    the.forEach(function (l, i) {
+      var ok = !q || boDau(l.textContent).indexOf(q) !== -1;
+      if (ok) khop++;
+      var chon = l.querySelector('input').checked;
+      var show = ok && (q || moRong || khop <= GIOI_HAN || chon);
+      l.hidden = !show;
+      if (show) hien++;
+    });
+    if (nutThem) {
+      nutThem.hidden = !!q || moRong || the.length <= GIOI_HAN;
+      nutThem.textContent = 'Xem tất cả ' + the.length + ' dịch vụ';
+    }
+    if (khongCo) khongCo.hidden = khop !== 0;
+  }
+  if (oTim) oTim.addEventListener('input', locDichVu);
+  if (nutThem) nutThem.addEventListener('click', function () { moRong = true; locDichVu(); });
+  all('[data-loai]').forEach(function (btn) { btn.addEventListener('click', function () { moRong = false; locDichVu(); }); });
+
+  // Mở trang bằng ?dv= của một gói tháng thì bật sẵn tab Gói tháng
+  var goiDaChon = form.querySelector('[data-group="GoiThang"] input[name="dichVuId"]:checked');
+  var nutGoi = form.querySelector('[data-loai="GoiThang"]');
+  if (goiDaChon && nutGoi) nutGoi.click();
+  else if (goiDaChon && !nutGoi) {
+    var pg0 = form.querySelector('[data-goi-panel]');
+    if (pg0) { pg0.hidden = false; pg0.querySelectorAll('input').forEach(function (i) { i.disabled = false; i.checked = i.checked || ['3', '5', '7', 'CN'].indexOf(i.value) !== -1; }); }
+    form.querySelector('[data-sum-lich-row]').hidden = false;
+  }
+
+  khoaGio();
+  locDichVu();
+  tinhLich();
+  capNhatTomTat();
+})();
+</script>
+</body>
+</html>

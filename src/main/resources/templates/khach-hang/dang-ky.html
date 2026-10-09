@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Đăng ký', 'Tạo tài khoản bTaskee để đặt dịch vụ giúp việc theo giờ.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dang-ky')}"></header>
+
+<main class="auth">
+  <div class="auth-card">
+    <h1>Tạo tài khoản</h1>
+    <p class="sub">Đăng ký bằng số điện thoại, bTaskee gửi mã OTP để xác thực.</p>
+
+    <div th:replace="~{layout/account-layout :: flash}"></div>
+
+    <form method="post" action="/dang-ky">
+      <div class="field">
+        <label for="hoTen">Họ và tên <span class="req">*</span></label>
+        <input id="hoTen" name="hoTen" class="input" placeholder="Nguyễn Văn An" autocomplete="name" required th:value="${hoTen}">
+      </div>
+      <div class="field">
+        <label for="soDienThoai">Số điện thoại <span class="req">*</span></label>
+        <input id="soDienThoai" name="soDienThoai" type="tel" class="input" placeholder="0901 234 567" autocomplete="tel" inputmode="tel" pattern="[0-9 ]{9,13}" required th:value="${soDienThoai}">
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" class="input" placeholder="ban@email.com" autocomplete="email" th:value="${email}">
+      </div>
+      <div class="field">
+        <label for="matKhau">Mật khẩu <span class="req">*</span></label>
+        <div class="pass-wrap">
+          <input id="matKhau" name="matKhau" type="password" class="input" placeholder="Ít nhất 6 ký tự" autocomplete="new-password" minlength="6" required>
+          <button class="pass-toggle" type="button" aria-label="Hiện mật khẩu" data-pass-toggle><svg class="ic"><use href="#i-eye"/></svg></button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="nhapLaiMatKhau">Nhập lại mật khẩu <span class="req">*</span></label>
+        <input id="nhapLaiMatKhau" name="nhapLaiMatKhau" type="password" class="input" placeholder="Nhập lại mật khẩu" autocomplete="new-password" minlength="6" required>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block" type="submit">Đăng ký</button>
+    </form>
+    <p class="auth-foot">Đã có tài khoản? <a class="link" href="/login">Đăng nhập</a></p>
+    <p class="auth-foot" style="margin-top:4px">Bạn muốn nhận việc? <a class="link" href="/tro-thanh-doi-tac">Đăng ký cộng tác viên</a></p>
+  </div>
+</main>
+
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>
