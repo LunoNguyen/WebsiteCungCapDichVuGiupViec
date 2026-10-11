@@ -39,6 +39,16 @@ public class CollaboratorProfileController {
         }
     }
 
+    /** Bắt đầu ca làm việc */
+    @PutMapping("/assignments/{id}/start")
+    public ResponseEntity<?> startAssignment(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.startAssignment(id)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     /** Từ chối đơn, body tuỳ chọn: { "lyDoTuChoi": "..." } */
     @PutMapping("/assignments/{id}/reject")
     public ResponseEntity<?> rejectAssignment(@PathVariable Integer id,

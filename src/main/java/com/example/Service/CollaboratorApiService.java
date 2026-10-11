@@ -71,6 +71,8 @@ public class CollaboratorApiService {
             item.put("phanCongId", pc.getId());
             item.put("maPhanCong", pc.getMaPhanCong());
             item.put("trangThaiPhanCong", pc.getTrangThai());
+            item.put("trangThaiDon", don.getTrangThai());
+            item.put("trangThai", don.getTrangThai());
             item.put("thoiGianPhanCong", pc.getThoiGianPhanCong());
             item.put("donDatId", don.getId());
             item.put("maDonDat", don.getMaDonDat());
@@ -345,6 +347,44 @@ public class CollaboratorApiService {
         res.put("phanCongId", pc.getId());
         res.put("trangThaiPhanCong", "TuChoi");
         res.put("message", "Đã từ chối đơn. Hệ thống sẽ thông báo phòng HCNS để phân công lại.");
+        return res;
+    }
+
+    @Transactional
+    public Map<String, Object> startAssignment(Integer phanCongId) {
+        PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
+
+        // Không update pc.TrangThai sang DangThucHien vì bảng PhanCongCTV chỉ cho phép:
+        // ('ChoPhanCong', 'DaXacNhan', 'TuChoi', 'HoanThanh')
+
+        DonDatDichVu don = pc.getDonDat();
+        don.setTrangThai("DangThucHien");
+        donDatDichVuRepository.save(don);
+
+        List<LichLamViec> sches = lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId());
+        for (LichLamViec llv : sches) {
+            if ("SapToi".equalsIgnoreCase(llv.getTrangThai())) {
+                llv.setTrangThai("DangThucHien");
+                lichLamViecRepository.save(llv);
+            }
+        }
+
+        LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()
+                .donDat(don)
+                .trangThaiCu("DaPhanCong")
+                .trangThaiMoi("DangThucHien")
+                .nguoiThucHien("CongTacVien: " + (pc.getCongTacVien() != null ? pc.getCongTacVien().getHoTen() : "CTV"))
+                .thoiGian(LocalDateTime.now())
+                .ghiChu("CTV bắt đầu thực hiện ca làm việc")
+                .build();
+        lichSuTrangThaiDonRepository.save(ls);
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("phanCongId", pc.getId());
+        res.put("trangThaiDon", "DangThucHien");
+        res.put("trangThaiPhanCong", pc.getTrangThai());
+        res.put("message", "Đã bắt đầu thực hiện ca làm việc!");
         return res;
     }
 
@@ -689,6 +729,8 @@ public class CollaboratorApiService {
         }
 
         List<Map<String, Object>> result = new ArrayList<>();
+        Map<Integer, Integer> donBuoiCounter = new HashMap<>();
+
         for (LichLamViec llv : list) {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("id", llv.getId());
@@ -699,16 +741,35 @@ public class CollaboratorApiService {
             item.put("trangThai", llv.getTrangThai());
             item.put("ketQuaThucHien", llv.getKetQuaThucHien());
 
-            if (llv.getPhanCong() != null && llv.getPhanCong().getDonDat() != null) {
-                DonDatDichVu d = llv.getPhanCong().getDonDat();
-                item.put("donDatId", d.getId());
-                item.put("maDonDat", d.getMaDonDat());
-                String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
-                        ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
-                item.put("tenDichVu", tenDv);
-                item.put("diaChi", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
-                item.put("khachHangTen", d.getKhachHang().getHoTen());
-                item.put("khachHangPhone", d.getKhachHang().getSoDienThoai());
+            if (llv.getPhanCong() != null) {
+                PhanCongCTV pc = llv.getPhanCong();
+                item.put("phanCongId", pc.getId());
+                item.put("trangThaiPhanCong", pc.getTrangThai());
+
+                if (pc.getDonDat() != null) {
+                    DonDatDichVu d = pc.getDonDat();
+                    item.put("donDatId", d.getId());
+                    item.put("maDonDat", d.getMaDonDat());
+                    item.put("trangThaiDon", d.getTrangThai());
+                    String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
+                            ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+                    item.put("tenDichVu", tenDv);
+                    item.put("diaChi", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
+                    item.put("diaChiChiTiet", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
+                    item.put("khachHangTen", d.getKhachHang() != null ? d.getKhachHang().getHoTen() : "Khách hàng");
+                    item.put("khachHangPhone", d.getKhachHang() != null ? d.getKhachHang().getSoDienThoai() : "");
+                    item.put("yeuCauDacBiet", d.getYeuCauDacBiet());
+                    item.put("thanhTien", d.getThanhTien());
+                    item.put("loaiHinhDat", d.getLoaiHinhDat());
+                    item.put("loaiHinh", d.getLoaiHinhDat());
+
+                    boolean isGoi = "GoiThang".equalsIgnoreCase(d.getLoaiHinhDat());
+                    int soBuoi = isGoi ? LichGoiThang.soBuoi(null, tenDv) : 1;
+                    int buoiThu = isGoi ? donBuoiCounter.compute(d.getId(), (k, v) -> v == null ? 1 : v + 1) : 1;
+                    item.put("soBuoi", soBuoi);
+                    item.put("buoiThu", buoiThu);
+                    item.put("isGoiThang", isGoi);
+                }
             }
             result.add(item);
         }
