@@ -617,6 +617,10 @@ public class CSKHController {
         return dto;
     }
 
-    // ── UC-CSKH06 – Quản lý thông báo CSKH ─────────────────────────
-
+        // ── UC-CSKH06 – Quản lý thông báo CSKH ─────────────────────────
+    @GetMapping("/thong-bao")
+    public String thongBao(org.springframework.ui.Model model) {
+        model.addAttribute("thongBaos", thongBaoService.danhSach());
+        return "cskh/thong-bao";
+    }
 }
