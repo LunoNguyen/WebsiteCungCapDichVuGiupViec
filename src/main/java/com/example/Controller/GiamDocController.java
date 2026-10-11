@@ -2,12 +2,14 @@ package com.example.Controller;
 
 import com.example.DTO.*;
 import com.example.Model.ThongBao;
+import com.example.Model.ThongBaoNguoiDung;
 import com.example.Model.TaiKhoan;
 import com.example.Model.NhatKyTaiKhoan;
 import com.example.Repository.*;
 import com.example.Service.ThongKeService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.util.ArrayList;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +36,8 @@ public class GiamDocController {
     private final ThongBaoRepository thongBaoRepository;
     private final TaiKhoanRepository taiKhoanRepository;
     private final DichVuRepository dichVuRepository;
-    private final NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository; // <--- Khai báo thêm log
-    private final com.example.Service.ThongBaoPhatService thongBaoPhatService; // <--- Khai báo thêm ThongBaoPhatService
+    private final NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository;
+    private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
 
     public GiamDocController(
             ThongKeService thongKeService,
@@ -46,7 +48,7 @@ public class GiamDocController {
             TaiKhoanRepository taiKhoanRepository,
             DichVuRepository dichVuRepository,
             NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository,
-            com.example.Service.ThongBaoPhatService thongBaoPhatService) { // <--- Thêm vào Constructor
+            ThongBaoNguoiDungRepository thongBaoNguoiDungRepository) {
         this.thongKeService = thongKeService;
         this.donDatDichVuRepository = donDatDichVuRepository;
         this.khieuNaiRepository = khieuNaiRepository;
@@ -55,7 +57,7 @@ public class GiamDocController {
         this.taiKhoanRepository = taiKhoanRepository;
         this.dichVuRepository = dichVuRepository;
         this.nhatKyTaiKhoanRepository = nhatKyTaiKhoanRepository;
-        this.thongBaoPhatService = thongBaoPhatService;
+        this.thongBaoNguoiDungRepository = thongBaoNguoiDungRepository;
     }
 
    @GetMapping("/dashboard")
@@ -231,9 +233,7 @@ public String baoCao(
             tb.setTrangThai("DaGui");
             tb.setThoiGianGui(LocalDateTime.now());
             thongBaoRepository.save(tb);
-
-              // 👉 Phát thông báo tới toàn bộ người nhận (Khách hàng / CTV) để App nhận được:
-            thongBaoPhatService.phatChoNhom(tb.getId(), tb.getNhomNhan());
+            broadcastNotification(tb);
         });
         return "redirect:/giam-doc/thong-bao";
     }
@@ -279,7 +279,43 @@ public String baoCao(
         tb.setTrangThai("DaGui");
 
         thongBaoRepository.save(tb);
+        broadcastNotification(tb);
+
         return "redirect:/giam-doc/thong-bao";
+    }
+
+    private void broadcastNotification(ThongBao tb) {
+        if (!"DaGui".equalsIgnoreCase(tb.getTrangThai())) return;
+        List<TaiKhoan> targets;
+        String nhom = tb.getNhomNhan();
+        if ("CongTacVien".equalsIgnoreCase(nhom)) {
+            targets = taiKhoanRepository.findAll().stream()
+                    .filter(t -> "CongTacVien".equalsIgnoreCase(t.getLoaiTaiKhoan()))
+                    .collect(Collectors.toList());
+        } else if ("KhachHang".equalsIgnoreCase(nhom)) {
+            targets = taiKhoanRepository.findAll().stream()
+                    .filter(t -> "KhachHang".equalsIgnoreCase(t.getLoaiTaiKhoan()))
+                    .collect(Collectors.toList());
+        } else if ("NhanVien".equalsIgnoreCase(nhom)) {
+            targets = taiKhoanRepository.findAll().stream()
+                    .filter(t -> "NhanVien".equalsIgnoreCase(t.getLoaiTaiKhoan()))
+                    .collect(Collectors.toList());
+        } else {
+            targets = taiKhoanRepository.findAll();
+        }
+
+        List<ThongBaoNguoiDung> list = new ArrayList<>();
+        for (TaiKhoan tk : targets) {
+            list.add(ThongBaoNguoiDung.builder()
+                    .thongBao(tb)
+                    .taiKhoan(tk)
+                    .daDoc(false)
+                    .trangThai("DaGui")
+                    .build());
+        }
+        if (!list.isEmpty()) {
+            thongBaoNguoiDungRepository.saveAll(list);
+        }
     }
 
     // =========================================================================

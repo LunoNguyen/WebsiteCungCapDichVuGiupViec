@@ -18,6 +18,8 @@ public class ThongBaoPhatService {
 
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
     private final RealtimeService realtimeService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Repository.ThongBaoRepository thongBaoRepository;
 
     public ThongBaoPhatService(ThongBaoNguoiDungRepository thongBaoNguoiDungRepository,
                                RealtimeService realtimeService) {
@@ -40,6 +42,9 @@ public class ThongBaoPhatService {
                 soNguoi += thongBaoNguoiDungRepository.phatChoCongTacVien(thongBaoId);
             }
             log.info("Đã phát thông báo #{} tới {} người nhận (nhóm {})", thongBaoId, soNguoi, nhomNhan);
+            // App đang mở của nhóm nhận: hiện thông báo và cập nhật số chưa đọc
+            thongBaoRepository.findById(thongBaoId).ifPresent(tb ->
+                    realtimeService.guiChoNhom(nhomNhan, "thong-bao-moi", RealtimeService.jsonThongBao(tb)));
         } catch (RuntimeException e) {
             log.error("Phát thông báo #{} thất bại: {}", thongBaoId, e.getMessage(), e);
             throw e; // để giao dịch được hoàn tác

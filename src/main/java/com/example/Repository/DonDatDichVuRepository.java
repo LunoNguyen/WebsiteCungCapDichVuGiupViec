@@ -37,6 +37,22 @@ public interface DonDatDichVuRepository extends JpaRepository<DonDatDichVu, Inte
          + "WHERE d.id = :id")
     Optional<DonDatDichVu> findByIdWithDetails(@Param("id") Integer id);
 
+    /** Đơn chưa làm (chờ duyệt / đã xác nhận) có ngày bắt đầu từ hôm nay trở về trước: ứng viên tự hủy khi quá hạn. */
+    @Query("SELECT DISTINCT d FROM DonDatDichVu d "
+         + "LEFT JOIN FETCH d.khachHang "
+         + "LEFT JOIN FETCH d.chiTietList ct "
+         + "LEFT JOIN FETCH ct.dichVu "
+         + "WHERE d.trangThai IN ('ChoDuyet', 'DaXacNhan') AND d.ngayThucHien <= :homNay")
+    List<DonDatDichVu> findChuaLamDenNgay(@Param("homNay") java.time.LocalDate homNay);
+
+    /** Lấy tất cả đơn đang tìm CTV (pool) */
+    List<DonDatDichVu> findByTrangThaiOrderByNgayTaoDesc(String trangThai);
+
+    /** Atomic accept - update status from ChoDuyet to DaXacNhan, returns rows affected */
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE DonDatDichVu d SET d.trangThai = 'DaXacNhan' WHERE d.id = :id AND d.trangThai = 'ChoDuyet'")
+    int atomicAcceptOrder(@org.springframework.data.repository.query.Param("id") Integer id);
+
     /**
      * Lấy bản ghi và KHÓA dòng đó trong CSDL (SELECT ... FOR UPDATE) cho tới khi giao dịch kết thúc.
      * Hai người cùng sửa một bản ghi sẽ lần lượt thực hiện: người sau thấy dữ liệu người trước đã lưu.

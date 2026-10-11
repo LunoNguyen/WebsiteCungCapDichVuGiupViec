@@ -134,14 +134,14 @@
             <div class="sum-row" th:if="${don['hoaDon'] != null}"><span>Hóa đơn</span><b th:text="${don['hoaDon'].trangThaiThanhToan == 'DaThanhToan'} ? 'Đã thanh toán' : 'Chưa thanh toán'">Chưa thanh toán</b></div>
           </div>
           <div class="sum-total" style="margin-bottom:0"><span>Tổng</span><b th:text="${don.thanhTien != null} ? ${#numbers.formatDecimal(don.thanhTien, 0, 'POINT', 0, 'COMMA')} + 'đ' : '—'">250.000đ</b></div>
-          <button class="btn btn-danger btn-block" type="button" style="margin-top:16px" th:if="${don.trangThai == 'ChoDuyet'}" data-open-dialog="huyDon">Hủy đơn</button>
-          <p class="sum-note" th:if="${don.trangThai == 'ChoDuyet'}">Chỉ hủy được khi chưa có cộng tác viên nhận.</p>
+          <button class="btn btn-danger btn-block" type="button" style="margin-top:16px" th:if="${don.trangThai == 'ChoDuyet' or don.trangThai == 'DaXacNhan'}" data-open-dialog="huyDon">Hủy đơn</button>
+          <p class="sum-note" th:if="${don.trangThai == 'ChoDuyet' or don.trangThai == 'DaXacNhan'}">Hủy được trước giờ bắt đầu. Cộng tác viên đã nhận đơn sẽ được báo ngay.</p>
         </aside>
       </div>
     </section>
   </div>
 
-  <dialog class="modal" id="huyDon" th:if="${don.trangThai == 'ChoDuyet'}">
+  <dialog class="modal" id="huyDon" th:if="${don.trangThai == 'ChoDuyet' or don.trangThai == 'DaXacNhan'}">
     <form method="post" th:action="@{/tai-khoan/don-hang/{id}/huy(id=${don.id})}">
       <h2>Hủy đơn này?</h2>
       <p>Đơn sẽ dừng tìm cộng tác viên. Bạn có thể đặt lại bất cứ lúc nào.</p>

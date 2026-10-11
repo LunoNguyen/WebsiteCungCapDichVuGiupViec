@@ -42,6 +42,8 @@ public class ThongBaoService {
     private final KhachHangRepository khachHangRepository;
     private final CongTacVienRepository congTacVienRepository;
     private final ThongBaoPhatService thongBaoPhatService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private RealtimeService realtimeService;
 
     public ThongBaoService(ThongBaoRepository thongBaoRepository,
                            ThongBaoNguoiDungRepository thongBaoNguoiDungRepository,
@@ -109,6 +111,10 @@ public class ThongBaoService {
                     .daDoc(false)
                     .trangThai("DaGui")
                     .build());
+            // Báo app của người nhận (hiện thông báo, cập nhật số chưa đọc) sau khi đã ghi xong
+            final Integer taiKhoanId = nguoiNhan.getId();
+            final String duLieu = RealtimeService.jsonThongBao(thongBao);
+            sauKhiGhi(() -> realtimeService.guiChoTaiKhoan(taiKhoanId, "thong-bao-moi", duLieu));
         } else {
             // Gửi cho cả nhóm: phát ở luồng nền SAU KHI giao dịch này đã ghi xong (commit),
             // để luồng nền chắc chắn nhìn thấy thông báo vừa tạo.
@@ -121,6 +127,20 @@ public class ThongBaoService {
             });
         }
         return thongBao;
+    }
+
+    /** Chạy sau khi giao dịch hiện tại ghi xong; không có giao dịch thì chạy ngay. */
+    private static void sauKhiGhi(Runnable viec) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    viec.run();
+                }
+            });
+        } else {
+            viec.run();
+        }
     }
 
     // =========================================================================

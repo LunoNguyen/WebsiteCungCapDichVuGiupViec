@@ -475,6 +475,42 @@ public class KhachHangWebController {
     }
 
     // =====================================================================
+    // THÔNG BÁO (cùng dữ liệu với màn thông báo trên app)
+    // =====================================================================
+
+    @GetMapping("/tai-khoan/thong-bao")
+    public String thongBao(HttpSession session, HttpServletRequest request, Model model) {
+        Integer khId = khachHangId(session);
+        if (khId == null) return chuyenDangNhap(request);
+        Integer tkId = taiKhoanId(session);
+        List<Map<String, Object>> ds;
+        try {
+            ds = tkId != null ? customerApiService.getCustomerNotifications(tkId) : List.of();
+        } catch (Exception e) {
+            ds = List.of();
+            model.addAttribute("loiTai", true);
+        }
+        model.addAttribute("thongBaos", ds);
+        model.addAttribute("soChuaDoc", ds.stream().filter(m -> !Boolean.TRUE.equals(m.get("daDoc"))).count());
+        model.addAttribute("active", "thong-bao");
+        return "khach-hang/thong-bao";
+    }
+
+    @PostMapping("/tai-khoan/thong-bao/da-doc")
+    public String daDocTatCa(HttpSession session, HttpServletRequest request) {
+        Integer khId = khachHangId(session);
+        if (khId == null) return chuyenDangNhap(request);
+        Integer tkId = taiKhoanId(session);
+        if (tkId != null) customerApiService.markAllNotificationsRead(tkId);
+        return "redirect:/tai-khoan/thong-bao";
+    }
+
+    private static Integer taiKhoanId(HttpSession session) {
+        Object id = session.getAttribute("authenticatedUserId");
+        return id instanceof Number n ? n.intValue() : null;
+    }
+
+    // =====================================================================
     // SỔ ĐỊA CHỈ
     // =====================================================================
 

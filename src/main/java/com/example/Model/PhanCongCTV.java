@@ -5,6 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /** Bang 24: PhanCongCTV */
+@EntityListeners(com.example.SuKien.DonDatListener.class)
 @Entity @Table(name = "PhanCongCTV", uniqueConstraints = @UniqueConstraint(columnNames = {"donDatId", "congTacVienId"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class PhanCongCTV {
@@ -16,5 +17,8 @@ public class PhanCongCTV {
     @Column(name = "ThoiGianPhanCong", nullable = false, updatable = false) private LocalDateTime thoiGianPhanCong;
     @Column(name = "ThoiGianXacNhan") private LocalDateTime thoiGianXacNhan;
     @Column(name = "LyDoTuChoi", columnDefinition = "TEXT") private String lyDoTuChoi;
+    /** Trạng thái lúc tải / lưu gần nhất (chỉ trong bộ nhớ) – xem DonDatListener. */
+    @Transient @com.fasterxml.jackson.annotation.JsonIgnore private String trangThaiGoc;
+    public void chupTrangThai() { trangThaiGoc = trangThai; }
     @PrePersist protected void onCreate() { if (trangThai == null) trangThai = "ChoPhanCong"; if (thoiGianPhanCong == null) thoiGianPhanCong = LocalDateTime.now(); }
 }

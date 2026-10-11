@@ -7,6 +7,7 @@
 
 <nav class="acc-nav" aria-label="Tài khoản" th:fragment="nav(active)">
   <a href="/tai-khoan/don-hang" th:classappend="${active == 'don-hang'} ? 'is-active'" th:attr="aria-current=${active == 'don-hang'} ? 'page'"><svg class="ic"><use href="#i-list"/></svg>Đơn của tôi</a>
+  <a href="/tai-khoan/thong-bao" th:classappend="${active == 'thong-bao'} ? 'is-active'" th:attr="aria-current=${active == 'thong-bao'} ? 'page'"><svg class="ic"><use href="#i-bell"/></svg>Thông báo</a>
   <a href="/tai-khoan/dia-chi" th:classappend="${active == 'dia-chi'} ? 'is-active'" th:attr="aria-current=${active == 'dia-chi'} ? 'page'"><svg class="ic"><use href="#i-pin"/></svg>Sổ địa chỉ</a>
   <a href="/tai-khoan" th:classappend="${active == 'tai-khoan'} ? 'is-active'" th:attr="aria-current=${active == 'tai-khoan'} ? 'page'"><svg class="ic"><use href="#i-user"/></svg>Tài khoản</a>
   <hr>

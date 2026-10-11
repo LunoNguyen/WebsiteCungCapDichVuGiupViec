@@ -21,6 +21,8 @@ public interface LichLamViecRepository extends JpaRepository<LichLamViec, Intege
          + "JOIN FETCH l.congTacVien ctv "
          + "LEFT JOIN FETCH l.phanCong pc "
          + "LEFT JOIN FETCH pc.donDat dd "
+         + "LEFT JOIN FETCH dd.chiTietList ct "
+         + "LEFT JOIN FETCH ct.dichVu dv "
          + "LEFT JOIN FETCH dd.khachHang kh "
          + "LEFT JOIN FETCH dd.diaChi dc "
          + "ORDER BY l.ngayLam ASC, l.gioBatDau ASC")
@@ -30,6 +32,8 @@ public interface LichLamViecRepository extends JpaRepository<LichLamViec, Intege
          + "JOIN FETCH l.congTacVien ctv "
          + "LEFT JOIN FETCH l.phanCong pc "
          + "LEFT JOIN FETCH pc.donDat dd "
+         + "LEFT JOIN FETCH dd.chiTietList ct "
+         + "LEFT JOIN FETCH ct.dichVu dv "
          + "LEFT JOIN FETCH dd.khachHang kh "
          + "LEFT JOIN FETCH dd.diaChi dc "
          + "WHERE ctv.id = :ctvId "
@@ -67,3 +71,4 @@ public interface LichLamViecRepository extends JpaRepository<LichLamViec, Intege
 
     List<LichLamViec> findByPhanCong_Id(Integer phanCongId);
 }
+

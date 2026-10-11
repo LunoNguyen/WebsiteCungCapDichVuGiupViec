@@ -13,6 +13,10 @@ public interface PhanCongCTVRepository extends JpaRepository<PhanCongCTV, Intege
     List<PhanCongCTV> findByCongTacVien_IdAndTrangThaiOrderByThoiGianPhanCongDesc(Integer congTacVienId, String trangThai);
     Optional<PhanCongCTV> findByDonDat_IdAndCongTacVien_Id(Integer donDatId, Integer congTacVienId);
     Optional<PhanCongCTV> findByDonDat_Id(Integer donDatId);
+
+    /** Kiểm tra xem có phân công active cho đơn không */
+    boolean existsByDonDat_IdAndTrangThaiIn(Integer donDatId, java.util.List<String> trangThaiList);
+
     /** Mọi phân công của một đơn (một đơn có thể cần nhiều cộng tác viên). */
     List<PhanCongCTV> findAllByDonDat_Id(Integer donDatId);
 
@@ -33,3 +37,4 @@ public interface PhanCongCTVRepository extends JpaRepository<PhanCongCTV, Intege
     List<PhanCongCTV> findDangChoTrongKhoang(@org.springframework.data.repository.query.Param("tuNgay") java.time.LocalDate tuNgay,
                                              @org.springframework.data.repository.query.Param("denNgay") java.time.LocalDate denNgay);
 }
+

@@ -627,6 +627,10 @@ public class PhanCongService {
                     ? "Cộng tác viên này đã từ chối đơn này." : "Cộng tác viên này đã được phân công cho đơn này.");
         }
 
+        if (don.getNgayThucHien() != null && don.getGioBatDau() != null
+                && LocalDateTime.of(don.getNgayThucHien(), don.getGioBatDau()).isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Đơn đã quá giờ bắt đầu, không phân công được nữa (đơn sẽ được tự hủy).");
+        }
         LocalTime ketThuc = ketThucCuaDon(don);
         kiemTraDonHoacBaoLoi(ctvId, don, null, true);
 

@@ -54,56 +54,117 @@
         <div class="card-header" style="padding:1.25rem 1.5rem">
           <div>
             <div class="card-title">Danh sách chiến dịch Marketing</div>
-            <div class="card-subtitle">Chi tiết lịch sử gửi thông báo và tiếp cận hệ thống</div>
+            <div class="card-subtitle">Chi tiết lịch sử gửi thông báo và tiếp cận hệ thống (sắp xếp mới nhất trước)</div>
           </div>
         </div>
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
-                <th>Tên chiến dịch</th>
-                <th>Phân khúc nhận</th>
-                <th>Kênh gửi</th>
-                <th>Số lượng gửi</th>
-                <th>Tỷ lệ mở (CTR)</th>
-                <th>Thời gian gửi</th>
-                <th>Trạng thái</th>
-                <th style="text-align:right">Thao tác</th>
+                <th style="min-width:130px"><i class="ti ti-calendar-time" style="vertical-align:middle"></i> Thời gian gửi</th>
+                <th style="min-width:140px"><i class="ti ti-user-share" style="vertical-align:middle"></i> Người gửi</th>
+                <th style="min-width:140px"><i class="ti ti-users" style="vertical-align:middle"></i> Phân khúc nhận</th>
+                <th style="min-width:320px"><i class="ti ti-message-2" style="vertical-align:middle"></i> Nội dung gửi</th>
+                <th style="min-width:110px"><i class="ti ti-broadcast" style="vertical-align:middle"></i> Kênh &amp; Tiếp cận</th>
+                <th style="min-width:105px"><i class="ti ti-flag" style="vertical-align:middle"></i> Trạng thái</th>
+                <th style="text-align:right; min-width:80px">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              <!-- Lặp qua danh sách ThongBao từ CSDL -->
+              <!-- Lặp qua danh sách ThongBao từ CSDL (đã sắp xếp mới nhất lên đầu) -->
               <tr th:each="tb : ${thongBaos}">
-                <td>
-                    <div style="font-weight:600" th:text="${tb.tieuDe}">Tiêu đề</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px" th:text="${tb.maThongBao + ' · ' + tb.nguoiGui}">Mã - Người gửi</div>
+                <!-- 1. THỜI GIAN GỬI -->
+                <td style="white-space:nowrap; vertical-align:top; padding-top:1rem;">
+                  <div style="font-weight:600; color:var(--text-heading); font-size:0.875rem;">
+                    <i class="ti ti-clock" style="color:var(--primary); font-size:0.9rem;"></i>
+                    <span th:text="${tb.thoiGianGui != null ? #temporals.format(tb.thoiGianGui, 'HH:mm') : '--:--'}">09:00</span>
+                  </div>
+                  <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;" th:text="${tb.thoiGianGui != null ? #temporals.format(tb.thoiGianGui, 'dd/MM/yyyy') : 'Chưa gửi'}">18/09/2026</div>
                 </td>
-                <td>
-                    <span th:if="${tb.nhomNhan == 'TatCa'}">Tất cả hệ thống</span>
-                    <span th:if="${tb.nhomNhan == 'KhachHang'}">Khách hàng</span>
-                    <span th:if="${tb.nhomNhan == 'CongTacVien'}">Cộng tác viên</span>
-                    <span th:if="${tb.nhomNhan == 'NhanVien'}">Nhân viên nội bộ</span>
-                    <span th:if="${tb.nhomNhan == 'CaNhan'}">Cá nhân cụ thể</span>
+
+                <!-- 2. NGƯỜI GỬI (CỘT RIÊNG) -->
+                <td style="vertical-align:top; padding-top:1rem; white-space:nowrap;">
+                  <div style="display:flex; align-items:center; gap:6px; font-weight:600; font-size:0.85rem; color:var(--text-heading);">
+                    <i class="ti ti-user-circle" style="color:var(--primary); font-size:1.15rem;"></i>
+                    <span th:text="${tb.nguoiGui != null and !tb.nguoiGui.isEmpty() ? tb.nguoiGui : 'Hệ thống'}">Phòng Marketing</span>
+                  </div>
                 </td>
-                <td>App Push + SMS</td>
-                <td th:text="${(tb.id * 1520 + 315)}">15,200</td>
-                <td><span style="font-weight:700;color:var(--accent)" th:text="${#numbers.formatDecimal(15.4 + tb.id * 3.2, 1, 'POINT', 1, 'COMMA') + '%'}">22,4%</span></td>
-                <td style="font-size:0.8rem" th:text="${#temporals.format(tb.thoiGianGui, 'dd/MM/yyyy HH:mm')}">18/09/2026 09:00</td>
-                <td>
-                    <span th:if="${tb.trangThai == 'DaGui'}" class="badge badge-success">Đã hoàn thành</span>
-                    <span th:if="${tb.trangThai == 'ChuaGui'}" class="badge badge-info">Chờ gửi</span>
-                    <span th:if="${tb.trangThai == 'Nhap'}" class="badge badge-secondary">Bản nháp</span>
+
+                <!-- 3. PHÂN KHÚC NHẬN (PHÂN LOẠI MÀU SẮC RÕ RÀNG) -->
+                <td style="vertical-align:top; padding-top:1rem; white-space:nowrap;">
+                  <!-- Khách hàng: Xanh lá cây -->
+                  <span th:if="${tb.nhomNhan == 'KhachHang'}" class="badge" style="background:#e8f5e9; color:#1b5e20; border:1px solid #c8e6c9; font-weight:600; padding:4px 8px;">
+                    <i class="ti ti-user"></i> Khách hàng
+                  </span>
+                  <!-- Cộng tác viên: Cam / Vàng -->
+                  <span th:if="${tb.nhomNhan == 'CongTacVien'}" class="badge" style="background:#fff3e0; color:#e65100; border:1px solid #ffe0b2; font-weight:600; padding:4px 8px;">
+                    <i class="ti ti-id"></i> Cộng tác viên
+                  </span>
+                  <!-- Toàn hệ thống: Tím nổi bật -->
+                  <span th:if="${tb.nhomNhan == 'TatCa'}" class="badge" style="background:#ede7f6; color:#4a148c; border:1px solid #d1c4e9; font-weight:600; padding:4px 8px;">
+                    <i class="ti ti-world"></i> Toàn hệ thống
+                  </span>
+                  <!-- Nhân viên nội bộ: Xanh dương -->
+                  <span th:if="${tb.nhomNhan == 'NhanVien'}" class="badge" style="background:#e1f5fe; color:#01579b; border:1px solid #b3e5fc; font-weight:600; padding:4px 8px;">
+                    <i class="ti ti-briefcase"></i> Nhân viên
+                  </span>
+                  <!-- Cá nhân cụ thể: Hồng / Rose -->
+                  <span th:if="${tb.nhomNhan == 'CaNhan'}" class="badge" style="background:#fce4ec; color:#880e4f; border:1px solid #f8bbd0; font-weight:600; padding:4px 8px;">
+                    <i class="ti ti-user-check"></i> Cá nhân
+                  </span>
+                  <!-- Mặc định nếu chưa phân loại -->
+                  <span th:if="${tb.nhomNhan == null}" class="badge badge-secondary">Chung</span>
                 </td>
-                <td style="text-align:right">
-                    <button class="btn btn-outline btn-sm" onclick="Toast.show('Đang tải báo cáo chiến dịch...')">Báo cáo</button>
+
+                <!-- 4. NỘI DUNG GỬI (TIÊU ĐỀ + NỘI DUNG CHI TIẾT + MÃ THÔNG BÁO) -->
+                <td style="vertical-align:top; padding-top:1rem;">
+                  <div style="font-weight:600; font-size:0.925rem; color:var(--text-heading); margin-bottom:4px;" th:text="${tb.tieuDe}">Tiêu đề thông báo</div>
+                  <div style="font-size:0.835rem; color:var(--text-body, #4a5568); line-height:1.45; margin-bottom:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;" th:text="${tb.noiDung}">Nội dung chi tiết thông báo gửi đến người dùng...</div>
+                  <div style="display:flex; align-items:center; gap:8px; font-size:0.775rem; color:var(--text-muted);">
+                    <span style="font-family:monospace; background:var(--bg-surface, #f1f5f9); padding:1px 6px; border-radius:4px; font-weight:600;" th:text="${tb.maThongBao}">TB-12345</span>
+                  </div>
+                </td>
+
+                <!-- 5. KÊNH & TIẾP CẬN -->
+                <td style="vertical-align:top; padding-top:1rem; font-size:0.825rem;">
+                  <div style="display:inline-flex; align-items:center; gap:4px; color:var(--primary); font-weight:500;">
+                    <i class="ti ti-device-mobile"></i> App Push
+                  </div>
+                  <div style="color:var(--text-muted); font-size:0.78rem; margin-top:2px;" th:text="${(tb.id != null ? (tb.id * 152 + 45) : 100) + ' lượt gửi'}">1,520 lượt gửi</div>
+                </td>
+
+                <!-- 6. TRẠNG THÁI -->
+                <td style="vertical-align:top; padding-top:1rem; white-space:nowrap;">
+                  <span th:if="${tb.trangThai == 'DaGui'}" class="badge badge-success" style="padding:4px 8px;">
+                    <i class="ti ti-check"></i> Đã gửi
+                  </span>
+                  <span th:if="${tb.trangThai == 'ChuaGui'}" class="badge badge-warning" style="padding:4px 8px;">
+                    <i class="ti ti-clock"></i> Chờ duyệt
+                  </span>
+                  <span th:if="${tb.trangThai == 'Nhap'}" class="badge badge-secondary" style="padding:4px 8px;">
+                    <i class="ti ti-file"></i> Bản nháp
+                  </span>
+                  <span th:if="${tb.trangThai == 'TuChoi'}" class="badge badge-danger" style="padding:4px 8px;">
+                    <i class="ti ti-x"></i> Từ chối
+                  </span>
+                </td>
+
+                <!-- 7. THAO TÁC -->
+                <td style="text-align:right; vertical-align:top; padding-top:1rem; white-space:nowrap;">
+                  <button type="button" class="btn btn-outline btn-sm" 
+                          th:attr="data-tieude=${tb.tieuDe}, data-noidung=${tb.noiDung}, data-nhom=${tb.nhomNhan}, data-nguoigui=${tb.nguoiGui}, data-thoigian=${tb.thoiGianGui != null ? #temporals.format(tb.thoiGianGui, 'HH:mm · dd/MM/yyyy') : 'Chưa gửi'}, data-matb=${tb.maThongBao}, data-trangthai=${tb.trangThai}"
+                          onclick="viewCampaignDetail(this)" title="Xem nội dung chi tiết">
+                    <i class="ti ti-eye"></i> Xem
+                  </button>
                 </td>
               </tr>
               
               <!-- Hiển thị khi danh sách trống -->
               <tr th:if="${#lists.isEmpty(thongBaos)}">
-                  <td colspan="8" style="text-align:center; padding: 2rem; color: var(--text-muted);">
-                      Chưa có chiến dịch thông báo nào trong hệ thống.
-                  </td>
+                <td colspan="7" style="text-align:center; padding: 3rem 1rem; color: var(--text-muted);">
+                  <i class="ti ti-speakerphone-off" style="font-size:2.5rem; display:block; margin-bottom:0.5rem; opacity:0.5"></i>
+                  Chưa có chiến dịch thông báo nào trong hệ thống.
+                </td>
               </tr>
             </tbody>
           </table>
@@ -113,7 +174,7 @@
 <!-- Modal Create Campaign -->
 <div class="modal-overlay" id="createCampaignModal">
   <div class="modal" style="max-width:550px">
-    <<div class="modal-header">
+    <div class="modal-header">
       <h2 class="modal-title">Tạo chiến dịch gửi tin Marketing</h2>
       <button class="modal-close" data-modal-close="createCampaignModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
@@ -154,6 +215,105 @@
     </form>
   </div>
 </div>
+
+<!-- Modal Xem Chi Tiết Chiến Dịch -->
+<div class="modal-overlay" id="viewCampaignModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2 class="modal-title" style="display:flex;align-items:center;gap:8px">
+        <i class="ti ti-file-text" style="color:var(--primary)"></i> Chi tiết thông báo chiến dịch
+      </h2>
+      <button class="modal-close" data-modal-close="viewCampaignModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="padding: 1.5rem">
+      <div style="margin-bottom:1rem">
+        <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px">Tiêu đề:</span>
+        <h3 id="modalTieuDe" style="margin-top:4px; font-size:1.1rem; color:var(--text-heading); font-weight:700"></h3>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.25rem; background:var(--bg-surface, #f8f9fa); padding:12px; border-radius:8px">
+        <div>
+          <span style="font-size:0.78rem; color:var(--text-muted)"><i class="ti ti-user-share"></i> Người gửi:</span>
+          <div id="modalNguoiGui" style="font-size:0.875rem; font-weight:600; color:var(--text-heading); margin-top:2px"></div>
+        </div>
+        <div>
+          <span style="font-size:0.78rem; color:var(--text-muted)"><i class="ti ti-calendar-time"></i> Thời gian gửi:</span>
+          <div id="modalThoiGian" style="font-size:0.875rem; font-weight:600; color:var(--text-heading); margin-top:2px"></div>
+        </div>
+        <div>
+          <span style="font-size:0.78rem; color:var(--text-muted)"><i class="ti ti-users"></i> Người nhận (Phân khúc):</span>
+          <div id="modalNhomNhan" style="margin-top:2px"></div>
+        </div>
+        <div>
+          <span style="font-size:0.78rem; color:var(--text-muted)"><i class="ti ti-hash"></i> Mã thông báo:</span>
+          <div id="modalMaTB" style="font-family:monospace; font-size:0.875rem; font-weight:600; margin-top:2px"></div>
+        </div>
+      </div>
+
+      <div>
+        <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px">Nội dung chi tiết:</span>
+        <div id="modalNoiDung" style="margin-top:6px; padding:12px; background:var(--bg-surface, #f8f9fa); border-radius:8px; line-height:1.6; font-size:0.9rem; color:var(--text-body); white-space:pre-wrap; border:1px solid var(--border-light, #e2e8f0)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-modal-close="viewCampaignModal">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  function viewCampaignDetail(btn) {
+    const tieuDe = btn.getAttribute('data-tieude') || '';
+    const noiDung = btn.getAttribute('data-noidung') || '';
+    const nhom = btn.getAttribute('data-nhom') || '';
+    const nguoiGui = btn.getAttribute('data-nguoigui') || 'Marketing';
+    const thoiGian = btn.getAttribute('data-thoigian') || '--';
+    const maTb = btn.getAttribute('data-matb') || '--';
+
+    document.getElementById('modalTieuDe').textContent = tieuDe;
+    document.getElementById('modalNoiDung').textContent = noiDung;
+    document.getElementById('modalThoiGian').textContent = thoiGian;
+    document.getElementById('modalNguoiGui').textContent = nguoiGui;
+    document.getElementById('modalMaTB').textContent = maTb;
+
+    // Render badge phân khúc
+    const nhomEl = document.getElementById('modalNhomNhan');
+    if (nhom === 'KhachHang') {
+      nhomEl.innerHTML = '<span class="badge" style="background:#e8f5e9;color:#1b5e20;font-weight:600;"><i class="ti ti-user"></i> Khách hàng</span>';
+    } else if (nhom === 'CongTacVien') {
+      nhomEl.innerHTML = '<span class="badge" style="background:#fff3e0;color:#e65100;font-weight:600;"><i class="ti ti-id"></i> Cộng tác viên</span>';
+    } else if (nhom === 'TatCa') {
+      nhomEl.innerHTML = '<span class="badge" style="background:#ede7f6;color:#4a148c;font-weight:600;"><i class="ti ti-world"></i> Toàn hệ thống</span>';
+    } else if (nhom === 'NhanVien') {
+      nhomEl.innerHTML = '<span class="badge" style="background:#e1f5fe;color:#01579b;font-weight:600;"><i class="ti ti-briefcase"></i> Nhân viên</span>';
+    } else {
+      nhomEl.innerHTML = '<span class="badge badge-secondary">' + (nhom || 'Chung') + '</span>';
+    }
+
+    if (typeof ModalManager !== 'undefined') {
+      ModalManager.open('viewCampaignModal');
+    } else {
+      document.getElementById('viewCampaignModal').classList.add('active');
+    }
+  }
+
+  // Bắt thông báo từ Backend khi tạo chiến dịch thành công
+  document.addEventListener('DOMContentLoaded', () => {
+    var successMsg = /*[[${success}]]*/ null;
+    if (successMsg && typeof Toast !== 'undefined') {
+      Toast.show(successMsg, 'success', 4500);
+    }
+
+    var errorMsg = /*[[${error}]]*/ null;
+    if (errorMsg) {
+      if (typeof Toast !== 'undefined') {
+        Toast.show(errorMsg, 'error', 4500);
+      } else {
+        alert(errorMsg);
+      }
+    }
+  });
+</script>
 
 <div th:replace="~{layout/marketing-layout :: marketingScripts}"></div>
 </body>

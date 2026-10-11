@@ -56,6 +56,7 @@ public class CSKHController {
     private final DichVuRepository dichVuRepository;
     private final DiaChiKhachHangRepository diaChiKhachHangRepository;
     private final KhuVucRepository khuVucRepository;
+    private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(6))
@@ -74,7 +75,8 @@ public class CSKHController {
             PhanHoiDanhGiaRepository phanHoiDanhGiaRepository,
             DichVuRepository dichVuRepository,
             DiaChiKhachHangRepository diaChiKhachHangRepository,
-            KhuVucRepository khuVucRepository) {
+            KhuVucRepository khuVucRepository,
+            ThongBaoNguoiDungRepository thongBaoNguoiDungRepository) {
         this.thongKeService = thongKeService;
         this.khachHangRepository = khachHangRepository;
         this.donDatDichVuRepository = donDatDichVuRepository;
@@ -88,6 +90,7 @@ public class CSKHController {
         this.dichVuRepository = dichVuRepository;
         this.diaChiKhachHangRepository = diaChiKhachHangRepository;
         this.khuVucRepository = khuVucRepository;
+        this.thongBaoNguoiDungRepository = thongBaoNguoiDungRepository;
     }
 
     // ── Dashboard ────────────────────────────────────────────────────
@@ -529,23 +532,20 @@ public class CSKHController {
             phanCongService.kiemTraCacBuoiHoacBaoLoi(ctvId, cacBuoi, start, end,
                     dd.getDiaChi() != null ? dd.getDiaChi().getKhuVuc() : null, null, true);
 
-            // 1. Lưu Phân công CTV
+            // 1. Lưu Phân công CTV ở trạng thái ChoPhanCong để CTV xác nhận qua Mobile
             PhanCongCTV pc = PhanCongCTV.builder()
                     .maPhanCong(com.example.Service.MaSinh.tao("PC-"))
                     .donDat(dd)
                     .congTacVien(ctv)
-                    .trangThai("DaXacNhan")
+                    .trangThai("ChoPhanCong")
                     .thoiGianPhanCong(java.time.LocalDateTime.now())
-                    .thoiGianXacNhan(java.time.LocalDateTime.now())
                     .build();
             phanCongCTVRepository.save(pc);
 
             // 2. Tạo Lịch làm việc cho CTV (mỗi buổi một lịch)
             phanCongService.taoLichLamViec(pc, cacBuoi, start, end, ghiChu);
 
-            // 3. Cập nhật trạng thái đơn
-            dd.setTrangThai("DaXacNhan");
-            donDatDichVuRepository.save(dd);
+            // 3. Thông báo cho CTV: ThongBaoSuKienService gửi khi phân công được tạo
 
             return ResponseEntity.ok(Map.of("success", true, "message", "Phân công và tạo lịch làm việc thành công!"));
         } catch (Exception ex) {
@@ -605,5 +605,19 @@ public class CSKHController {
     public String thongBao(org.springframework.ui.Model model) {
         model.addAttribute("thongBaos", thongBaoService.danhSach());
         return "cskh/thong-bao";
+    }
+
+    private String getThuTiengViet(LocalDate date) {
+        if (date == null) return "";
+        switch (date.getDayOfWeek()) {
+            case MONDAY: return "Thứ Hai";
+            case TUESDAY: return "Thứ Ba";
+            case WEDNESDAY: return "Thứ Tư";
+            case THURSDAY: return "Thứ Năm";
+            case FRIDAY: return "Thứ Sáu";
+            case SATURDAY: return "Thứ Bảy";
+            case SUNDAY: return "Chủ Nhật";
+            default: return "";
+        }
     }
 }

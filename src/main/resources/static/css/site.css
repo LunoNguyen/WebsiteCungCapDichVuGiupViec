@@ -698,3 +698,13 @@ li, span { text-wrap: pretty; }
 .dg-trao-doi .top { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
 .dg-trao-doi .top span { color: var(--muted); }
 .dg-trao-doi p { margin: 4px 0 0; font-size: 14px; white-space: pre-line; }
+
+/* Thông báo của khách hàng (/tai-khoan/thong-bao) */
+.tb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tb-list li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.tb-list li.chua-doc { border-color: var(--primary); background: var(--primary-soft); }
+.tb-list li > div { min-width: 0; flex: 1; }
+.tb-list .top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.tb-list .top span { color: var(--muted); white-space: nowrap; font-size: 13px; }
+.tb-list p { margin: 4px 0 0; font-size: 14px; color: var(--foreground-soft); }
+@media (max-width: 600px) { .tb-list .top { flex-direction: column; gap: 2px; } }

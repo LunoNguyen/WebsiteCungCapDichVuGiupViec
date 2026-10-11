@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+
 /**
  * Xac thuc tai khoan va phan quyen tu CSDL.
  */
@@ -36,7 +39,10 @@ public class AuthService {
             return AuthenticationResult.failure("Vui lÃ²ng nháº­p tÃªn Ä‘Äƒng nháº­p vÃ  máº­t kháº©u.");
         }
 
-        TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(tenDangNhap.trim()).orElse(null);
+        String loginIdentifier = tenDangNhap.trim();
+        TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(loginIdentifier)
+                .or(() -> taiKhoanRepository.findBySoDienThoai(loginIdentifier))
+                .orElse(null);
         if (taiKhoan == null || !passwordMatches(matKhau, taiKhoan.getMatKhau())) {
             return AuthenticationResult.failure("TÃªn Ä‘Äƒng nháº­p hoáº·c máº­t kháº©u khÃ´ng chÃ­nh xÃ¡c.");
         }
@@ -158,7 +164,11 @@ public class AuthService {
             }
         } catch (Exception ignored) {
         }
-        return false;
+        // 2. Tương thích ngược: Mật khẩu cũ lưu dạng thường (plaintext)
+        return MessageDigest.isEqual(
+                input.getBytes(StandardCharsets.UTF_8),
+                storedPassword.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private boolean isBlank(String value) {

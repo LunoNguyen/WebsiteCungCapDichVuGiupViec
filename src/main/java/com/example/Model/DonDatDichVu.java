@@ -9,6 +9,7 @@ import java.util.List;
 
 @Entity 
 @Table(name = "DonDatDichVu")
+@EntityListeners(com.example.SuKien.DonDatListener.class)
 @Data 
 @NoArgsConstructor 
 @AllArgsConstructor 
@@ -83,6 +84,19 @@ public class DonDatDichVu {
         chiTietList.add(ct);
     }
     
+    /** Trạng thái và thông tin lúc tải / lưu gần nhất (chỉ trong bộ nhớ) để phát sự kiện thay đổi – xem DonDatListener. */
+    public record AnhChup(String trangThai, LocalDate ngay, LocalTime gioBatDau, LocalTime gioKetThuc, Integer diaChiId) { }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private AnhChup anhChup;
+
+    public void chupTrangThai() {
+        anhChup = new AnhChup(trangThai, ngayThucHien, gioBatDau, gioKetThuc, diaChi != null ? diaChi.getId() : null);
+    }
+
     @PrePersist 
     protected void onCreate() { 
         if (soTienGiam == null) soTienGiam = BigDecimal.ZERO; 

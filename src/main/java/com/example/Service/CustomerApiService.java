@@ -59,6 +59,7 @@ public class CustomerApiService {
     private final KhieuNaiRepository khieuNaiRepository;
     private final TaiLieuKhieuNaiRepository taiLieuKhieuNaiRepository;
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
+    private final ThongBaoRepository thongBaoRepository;
     private final PhanCongCTVRepository phanCongCTVRepository;
     private final LichLamViecRepository lichLamViecRepository;
     private final AuthService authService;
@@ -103,6 +104,7 @@ public class CustomerApiService {
             KhieuNaiRepository khieuNaiRepository,
             TaiLieuKhieuNaiRepository taiLieuKhieuNaiRepository,
             ThongBaoNguoiDungRepository thongBaoNguoiDungRepository,
+            ThongBaoRepository thongBaoRepository,
             PhanCongCTVRepository phanCongCTVRepository,
             LichLamViecRepository lichLamViecRepository,
             AuthService authService,
@@ -132,6 +134,7 @@ public class CustomerApiService {
         this.khieuNaiRepository = khieuNaiRepository;
         this.taiLieuKhieuNaiRepository = taiLieuKhieuNaiRepository;
         this.thongBaoNguoiDungRepository = thongBaoNguoiDungRepository;
+        this.thongBaoRepository = thongBaoRepository;
         this.phanCongCTVRepository = phanCongCTVRepository;
         this.lichLamViecRepository = lichLamViecRepository;
         this.authService = authService;
@@ -1457,9 +1460,16 @@ public class CustomerApiService {
         });
 
         // Đánh giá nếu có
-        // Đánh giá kèm trao đổi giữa khách và CSKH
-        Map<String, Object> danhGia = danhGiaService.cuaDon(d.getId());
-        if (danhGia != null) result.put("danhGia", danhGia);
+        danhGiaRepository.findByDonDat_Id(d.getId()).ifPresent(dg -> {
+            Map<String, Object> dgMap = new LinkedHashMap<>();
+            dgMap.put("id", dg.getId());
+            dgMap.put("maDanhGia", dg.getMaDanhGia());
+            dgMap.put("diemChatLuong", dg.getDiemChatLuong());
+            dgMap.put("diemThaiDo", dg.getDiemThaiDo());
+            dgMap.put("nhanXet", dg.getNhanXet());
+            dgMap.put("ngayDanhGia", dg.getNgayDanhGia());
+            result.put("danhGia", dgMap);
+        });
 
         return result;
     }
@@ -1468,13 +1478,36 @@ public class CustomerApiService {
         DonDatDichVu d = donDatDichVuRepository.findByIdForUpdate(donDatId) // khóa đơn: tránh vừa hủy vừa được phân công
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt ID: " + donDatId));
 
-        if (!"ChoDuyet".equalsIgnoreCase(d.getTrangThai())) {
-            throw new IllegalArgumentException("Chỉ có thể hủy đơn khi đang ở trạng thái 'Chờ xác nhận'.");
+        if (khachHangId != null && (d.getKhachHang() == null || !khachHangId.equals(d.getKhachHang().getId()))) {
+            throw new IllegalArgumentException("Không tìm thấy đơn.");
+        }
+        // Hủy được khi đơn chưa bắt đầu làm (chờ duyệt, hoặc đã có cộng tác viên nhận) và chưa tới giờ bắt đầu
+        if (!"ChoDuyet".equalsIgnoreCase(d.getTrangThai()) && !"DaXacNhan".equalsIgnoreCase(d.getTrangThai())) {
+            throw new IllegalArgumentException("Chỉ hủy được đơn chưa bắt đầu thực hiện.");
+        }
+        if (d.getNgayThucHien() != null && d.getGioBatDau() != null
+                && !LocalDateTime.of(d.getNgayThucHien(), d.getGioBatDau()).isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Đơn đã tới giờ bắt đầu, vui lòng liên hệ CSKH để hủy.");
         }
 
         String trangThaiCu = d.getTrangThai();
         d.setTrangThai("DaHuy");
         donDatDichVuRepository.save(d);
+
+        // Gỡ lịch làm việc chưa làm và lời mời đang chờ; cộng tác viên đã nhận đơn được báo qua ThongBaoSuKienService
+        for (LichLamViec l : lichLamViecRepository.findByPhanCong_DonDat_Id(d.getId())) {
+            if ("SapToi".equals(l.getTrangThai())) {
+                l.setTrangThai("Huy");
+                lichLamViecRepository.save(l);
+            }
+        }
+        for (PhanCongCTV pc : phanCongCTVRepository.findAllByDonDat_Id(d.getId())) {
+            if ("ChoPhanCong".equals(pc.getTrangThai())) {
+                pc.setTrangThai("TuChoi");
+                pc.setLyDoTuChoi("Khách hàng đã hủy đơn");
+                phanCongCTVRepository.save(pc);
+            }
+        }
 
         LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()
                 .donDat(d)
@@ -1669,25 +1702,84 @@ public class CustomerApiService {
     // UC-KH09: NHẬN THÔNG BÁO CỦA KHÁCH HÀNG
     // ==========================================
     public List<Map<String, Object>> getCustomerNotifications(Integer taiKhoanId) {
-        List<ThongBaoNguoiDung> list = thongBaoNguoiDungRepository.findByTaiKhoan_IdOrderByThongBao_ThoiGianGuiDesc(taiKhoanId);
+        // Resolve TaiKhoan linh hoạt (hỗ trợ truyền taiKhoanId hoặc khachHangId)
+        TaiKhoan tk = resolveTaiKhoan(taiKhoanId);
+        if (tk == null) {
+            return Collections.emptyList();
+        }
+        Integer actualTaiKhoanId = tk.getId();
+
+        // 1. Tự động đồng bộ các thông báo chung từ Marketing, Ban Giám Đốc, CSKH (nhomNhan = KhachHang hoặc TatCa)
+        List<ThongBao> broadcastList = thongBaoRepository.findAll().stream()
+                .filter(tb -> "DaGui".equalsIgnoreCase(tb.getTrangThai()) &&
+                        ("KhachHang".equalsIgnoreCase(tb.getNhomNhan()) || "TatCa".equalsIgnoreCase(tb.getNhomNhan())))
+                .toList();
+
+        List<ThongBaoNguoiDung> existingList = thongBaoNguoiDungRepository.findByTaiKhoan_IdOrderByThongBao_ThoiGianGuiDesc(actualTaiKhoanId);
+        Set<Integer> existingTbIds = new HashSet<>();
+        for (ThongBaoNguoiDung item : existingList) {
+            if (item.getThongBao() != null) {
+                existingTbIds.add(item.getThongBao().getId());
+            }
+        }
+
+        List<ThongBaoNguoiDung> newlyCreated = new ArrayList<>();
+        for (ThongBao tb : broadcastList) {
+            if (!existingTbIds.contains(tb.getId())) {
+                ThongBaoNguoiDung nb = ThongBaoNguoiDung.builder()
+                        .thongBao(tb)
+                        .taiKhoan(tk)
+                        .daDoc(false)
+                        .trangThai("DaGui")
+                        .build();
+                newlyCreated.add(nb);
+                existingTbIds.add(tb.getId());
+            }
+        }
+        if (!newlyCreated.isEmpty()) {
+            thongBaoNguoiDungRepository.saveAll(newlyCreated);
+            existingList = thongBaoNguoiDungRepository.findByTaiKhoan_IdOrderByThongBao_ThoiGianGuiDesc(actualTaiKhoanId);
+        }
+
         List<Map<String, Object>> result = new ArrayList<>();
-        for (ThongBaoNguoiDung tbnd : list) {
+        for (ThongBaoNguoiDung tbnd : existingList) {
+            ThongBao tb = tbnd.getThongBao();
+            if (tb == null) continue;
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", tbnd.getId());
-            m.put("thongBaoId", tbnd.getThongBao().getId());
-            m.put("tieuDe", tbnd.getThongBao().getTieuDe());
-            m.put("noiDung", tbnd.getThongBao().getNoiDung());
-            m.put("thoiGianGui", tbnd.getThongBao().getThoiGianGui());
+            m.put("thongBaoId", tb.getId());
+            m.put("tieuDe", tb.getTieuDe());
+            m.put("noiDung", tb.getNoiDung());
+            m.put("nguoiGui", tb.getNguoiGui() != null ? tb.getNguoiGui() : "Hệ thống");
+            m.put("thoiGianGui", tb.getThoiGianGui());
             m.put("daDoc", tbnd.getDaDoc());
             m.put("thoiGianDoc", tbnd.getThoiGianDoc());
+
+            // Phân loại thông báo cho Mobile hiển thị icon và màu sắc
+            String text = ((tb.getTieuDe() != null ? tb.getTieuDe() : "") + " "
+                    + (tb.getNoiDung() != null ? tb.getNoiDung() : "")).toLowerCase();
+            String loai = "heThong";
+            if (text.contains("khuyến mãi") || text.contains("ưu đãi") || text.contains("coupon") || text.contains("giảm giá") || text.contains("tặng bạn")) {
+                loai = "khuyenMai";
+            } else if (text.contains("hoàn thành")) {
+                loai = "hoanThanh";
+            } else if (text.contains("tiếp nhận") || text.contains("đã có cộng tác viên") || text.contains("xác nhận")) {
+                loai = "tiepNhan";
+            } else if (text.contains("lịch") || text.contains("nhắc lịch")) {
+                loai = "nhacLich";
+            }
+            m.put("loai", loai);
+
             result.add(m);
         }
         return result;
     }
 
     public void markNotificationRead(Integer notificationId, Integer taiKhoanId) {
+        TaiKhoan tk = resolveTaiKhoan(taiKhoanId);
+        final Integer actualId = tk != null ? tk.getId() : taiKhoanId;
         thongBaoNguoiDungRepository.findById(notificationId).ifPresent(tbnd -> {
-            if (tbnd.getTaiKhoan().getId().equals(taiKhoanId)) {
+            if (tbnd.getTaiKhoan() != null && tbnd.getTaiKhoan().getId().equals(actualId)) {
                 tbnd.setDaDoc(true);
                 tbnd.setThoiGianDoc(LocalDateTime.now());
                 thongBaoNguoiDungRepository.save(tbnd);
@@ -1696,11 +1788,25 @@ public class CustomerApiService {
     }
 
     public void markAllNotificationsRead(Integer taiKhoanId) {
-        List<ThongBaoNguoiDung> list = thongBaoNguoiDungRepository.findByTaiKhoan_IdAndDaDocFalseOrderByThongBao_ThoiGianGuiDesc(taiKhoanId);
+        TaiKhoan tk = resolveTaiKhoan(taiKhoanId);
+        final Integer actualId = tk != null ? tk.getId() : taiKhoanId;
+        List<ThongBaoNguoiDung> list = thongBaoNguoiDungRepository.findByTaiKhoan_IdAndDaDocFalseOrderByThongBao_ThoiGianGuiDesc(actualId);
         for (ThongBaoNguoiDung tb : list) {
             tb.setDaDoc(true);
             tb.setThoiGianDoc(LocalDateTime.now());
         }
         thongBaoNguoiDungRepository.saveAll(list);
+    }
+
+    private TaiKhoan resolveTaiKhoan(Integer id) {
+        if (id == null) return null;
+        TaiKhoan tk = taiKhoanRepository.findById(id).orElse(null);
+        if (tk == null) {
+            KhachHang kh = khachHangRepository.findById(id).orElse(null);
+            if (kh != null) {
+                tk = kh.getTaiKhoan();
+            }
+        }
+        return tk;
     }
 }

@@ -1,8 +1,10 @@
 package com.example.API;
 
 import com.example.DTO.request.AssignmentActionRequest;
+import com.example.DTO.request.LocationRequest;
 import com.example.Model.CongTacVien;
 import com.example.Service.CollaboratorApiService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,6 +55,16 @@ public class CollaboratorProfileController {
     public ResponseEntity<?> acceptAssignment(@PathVariable Integer id) {
         try {
             return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.acceptAssignment(id)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** Bắt đầu ca làm việc */
+    @PutMapping("/assignments/{id}/start")
+    public ResponseEntity<?> startAssignment(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.startAssignment(id)));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
@@ -114,7 +126,7 @@ public class CollaboratorProfileController {
 
     /** GPS: app CTV gửi vị trí hiện tại mỗi 5 giây, lưu trên Redis (ViTriCtvStore) */
     @PutMapping("/{id}/location")
-    public ResponseEntity<?> updateLocation(@PathVariable Integer id, @jakarta.validation.Valid @RequestBody com.example.DTO.request.LocationRequest req) {
+    public ResponseEntity<?> updateLocation(@PathVariable Integer id, @Valid @RequestBody LocationRequest req) {
         try {
             return ResponseEntity.ok(Map.of("success", true, "message", "Đã cập nhật vị trí.",
                     "data", collaboratorApiService.updateLocation(id, req.getViDo(), req.getKinhDo())));
@@ -122,6 +134,69 @@ public class CollaboratorProfileController {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(503).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** [POOL] Lấy danh sách đơn đang tìm CTV */
+    @GetMapping("/available-orders")
+    public ResponseEntity<?> getAvailableOrders(@RequestParam Integer congTacVienId) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data",
+                    collaboratorApiService.getAvailableOrders(congTacVienId)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** [POOL] CTV nhận đơn từ pool (atomic) */
+    @PostMapping("/orders/{donId}/accept")
+    public ResponseEntity<?> acceptOrderFromPool(
+            @PathVariable Integer donId,
+            @RequestBody Map<String, Integer> req) {
+        try {
+            Integer congTacVienId = req.get("congTacVienId");
+            if (congTacVienId == null) congTacVienId = req.get("taiKhoanId");
+            if (congTacVienId == null) return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Thiếu congTacVienId"));
+            return ResponseEntity.ok(Map.of("success", true, "data",
+                    collaboratorApiService.acceptOrderFromPool(congTacVienId, donId)));
+        } catch (IllegalStateException e) {
+            // Đơn đã có người nhận → 409 Conflict
+            return ResponseEntity.status(409).body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** [POOL] CTV từ chối đơn từ pool */
+    @PostMapping("/orders/{donId}/reject")
+    public ResponseEntity<?> rejectOrderFromPool(
+            @PathVariable Integer donId,
+            @RequestBody Map<String, Object> req) {
+        try {
+            Object ctvIdObj = req.get("congTacVienId") != null ? req.get("congTacVienId") : req.get("taiKhoanId");
+            if (ctvIdObj == null) return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Thiếu congTacVienId"));
+            Integer congTacVienId = Integer.valueOf(ctvIdObj.toString());
+            String lyDo = req.getOrDefault("lyDo", "").toString();
+            return ResponseEntity.ok(Map.of("success", true, "data",
+                    collaboratorApiService.rejectOrderFromPool(congTacVienId, donId, lyDo)));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /** [TEST] Tạo đơn pool test + thông báo broadcast tất cả CTV */
+    @PostMapping("/test-create-pool-order")
+    public ResponseEntity<?> createTestPoolOrder(@RequestBody(required = false) Map<String, Object> req) {
+        try {
+            String maDon = (req != null && req.get("maDon") != null) ? req.get("maDon").toString() : null;
+            String tenDichVu = (req != null && req.get("tenDichVu") != null) ? req.get("tenDichVu").toString() : "Dọn dẹp nhà cửa";
+            Integer thanhTien = (req != null && req.get("thanhTien") != null) ? Integer.valueOf(req.get("thanhTien").toString()) : 320000;
+            return ResponseEntity.ok(Map.of("success", true, "data",
+                    collaboratorApiService.createTestPoolOrder(maDon, tenDichVu, thanhTien)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 }

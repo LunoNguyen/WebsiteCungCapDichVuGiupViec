@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Thông báo', 'Thông báo về đơn đặt và ưu đãi của bạn tại bTaskee.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('thong-bao')}"></header>
+
+<main class="acc">
+  <div class="wrap acc-layout">
+    <nav th:replace="~{layout/account-layout :: nav('thong-bao')}"></nav>
+
+    <section>
+      <div class="acc-head">
+        <h1>Thông báo</h1>
+        <form method="post" action="/tai-khoan/thong-bao/da-doc" th:if="${soChuaDoc > 0}">
+          <button class="btn btn-outline btn-sm" type="submit"><svg class="ic"><use href="#i-check"/></svg>Đánh dấu đã đọc tất cả</button>
+        </form>
+      </div>
+      <div th:replace="~{layout/account-layout :: flash}"></div>
+      <div class="banner banner-error" th:if="${loiTai}" role="alert"><svg class="ic"><use href="#i-alert"/></svg><div><b>Không tải được thông báo.</b> Thử tải lại trang.</div></div>
+
+      <p class="hint" th:if="${soChuaDoc > 0}" th:text="${soChuaDoc} + ' thông báo chưa đọc'">2 thông báo chưa đọc</p>
+
+      <ol class="tb-list" th:if="${!thongBaos.isEmpty()}">
+        <li th:each="tb : ${thongBaos}" th:classappend="${tb.daDoc} ? '' : 'chua-doc'">
+          <span class="badge-ic" style="width:36px;height:36px">
+            <svg class="ic"><use th:href="${tb.loai == 'khuyenMai'} ? '#i-ticket' : (${tb.loai == 'hoanThanh'} ? '#i-check-circle' : (${tb.loai == 'nhacLich'} ? '#i-calendar' : '#i-bell'))" href="#i-bell"/></svg>
+          </span>
+          <div>
+            <div class="top">
+              <b th:text="${tb.tieuDe}">Đơn DD-001 – Đã có cộng tác viên tiếp nhận</b>
+              <span th:text="${tb.thoiGianGui != null} ? ${#temporals.format(tb.thoiGianGui, 'HH:mm dd/MM/yyyy')} : ''">09:00 12/10/2026</span>
+            </div>
+            <p th:text="${tb.noiDung}">Nội dung thông báo</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="empty" th:if="${thongBaos.isEmpty() and loiTai == null}">
+        <span class="badge-ic"><svg class="ic"><use href="#i-bell"/></svg></span>
+        <h3>Chưa có thông báo</h3>
+        <p>bTaskee sẽ báo khi đơn của bạn có người nhận, đổi trạng thái hoặc khi có ưu đãi mới.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>
