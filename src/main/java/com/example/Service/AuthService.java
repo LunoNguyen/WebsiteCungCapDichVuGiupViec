@@ -4,9 +4,6 @@ import com.example.Model.*;
 import com.example.Repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
@@ -36,15 +33,15 @@ public class AuthService {
 
     public AuthenticationResult authenticate(String tenDangNhap, String matKhau) {
         if (isBlank(tenDangNhap) || isBlank(matKhau)) {
-            return AuthenticationResult.failure("Vui lòng nhập tên đăng nhập và mật khẩu.");
+            return AuthenticationResult.failure("Vui lÃ²ng nháº­p tÃªn Ä‘Äƒng nháº­p vÃ  máº­t kháº©u.");
         }
 
         TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(tenDangNhap.trim()).orElse(null);
         if (taiKhoan == null || !passwordMatches(matKhau, taiKhoan.getMatKhau())) {
-            return AuthenticationResult.failure("Tên đăng nhập hoặc mật khẩu không chính xác.");
+            return AuthenticationResult.failure("TÃªn Ä‘Äƒng nháº­p hoáº·c máº­t kháº©u khÃ´ng chÃ­nh xÃ¡c.");
         }
         if (!"HoatDong".equalsIgnoreCase(taiKhoan.getTrangThai())) {
-            return AuthenticationResult.failure("Tài khoản chưa được kích hoạt hoặc đã bị khóa.");
+            return AuthenticationResult.failure("TÃ i khoáº£n chÆ°a Ä‘Æ°á»£c kÃ­ch hoáº¡t hoáº·c Ä‘Ã£ bá»‹ khÃ³a.");
         }
 
         return resolveUserRoleAndRedirect(taiKhoan);
@@ -70,7 +67,7 @@ public class AuthService {
                 if ("CV-GD".equalsIgnoreCase(maChucVu) || "PB-BGD".equalsIgnoreCase(maPhongBan)) {
                     role = "ROLE_GIAM_DOC";
                     redirectUrl = "/giam-doc/dashboard";
-                    avatar = "GĐ";
+                    avatar = "GÄ";
                 } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu)
                         || "CV-NVNS".equalsIgnoreCase(maChucVu)) {
                     role = "ROLE_HCNS";
@@ -93,7 +90,7 @@ public class AuthService {
                 if ("giamdoc".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_GIAM_DOC";
                     redirectUrl = "/giam-doc/dashboard";
-                    avatar = "GĐ";
+                    avatar = "GÄ";
                 } else if ("hanhnt".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_HCNS";
                     redirectUrl = "/hcns/dashboard";
@@ -150,16 +147,16 @@ public class AuthService {
         if (storedPassword == null || input == null) {
             return false;
         }
-        // 1. Nếu mật khẩu trong CSDL đã được mã hóa bằng BCrypt (bắt đầu bằng $2a$,
-        // $2b$, $2y$)
-        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")
-                || storedPassword.startsWith("$2y$")) {
-            try {
-                if (passwordEncoder.matches(input, storedPassword)) {
-                    return true;
-                }
-            } catch (Exception ignored) {
+        // 1. So khá»›p trá»±c tiáº¿p (trÆ°á»ng há»£p dá»¯ liá»‡u máº«u plain-text)
+        if (input.equals(storedPassword)) {
+            return true;
+        }
+        // 2. So khá»›p BCrypt
+        try {
+            if (passwordEncoder.matches(input, storedPassword)) {
+                return true;
             }
+        } catch (Exception ignored) {
         }
         return false;
     }

@@ -35,6 +35,7 @@ public class GiamDocController {
     private final TaiKhoanRepository taiKhoanRepository;
     private final DichVuRepository dichVuRepository;
     private final NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository; // <--- Khai báo thêm log
+    private final com.example.Service.ThongBaoPhatService thongBaoPhatService; // <--- Khai báo thêm ThongBaoPhatService
 
     public GiamDocController(
             ThongKeService thongKeService,
@@ -44,7 +45,8 @@ public class GiamDocController {
             ThongBaoRepository thongBaoRepository,
             TaiKhoanRepository taiKhoanRepository,
             DichVuRepository dichVuRepository,
-            NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository) { // <--- Thêm vào Constructor
+            NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository,
+            com.example.Service.ThongBaoPhatService thongBaoPhatService) { // <--- Thêm vào Constructor
         this.thongKeService = thongKeService;
         this.donDatDichVuRepository = donDatDichVuRepository;
         this.khieuNaiRepository = khieuNaiRepository;
@@ -53,6 +55,7 @@ public class GiamDocController {
         this.taiKhoanRepository = taiKhoanRepository;
         this.dichVuRepository = dichVuRepository;
         this.nhatKyTaiKhoanRepository = nhatKyTaiKhoanRepository;
+        this.thongBaoPhatService = thongBaoPhatService;
     }
 
    @GetMapping("/dashboard")
@@ -228,6 +231,9 @@ public String baoCao(
             tb.setTrangThai("DaGui");
             tb.setThoiGianGui(LocalDateTime.now());
             thongBaoRepository.save(tb);
+
+              // 👉 Phát thông báo tới toàn bộ người nhận (Khách hàng / CTV) để App nhận được:
+            thongBaoPhatService.phatChoNhom(tb.getId(), tb.getNhomNhan());
         });
         return "redirect:/giam-doc/thong-bao";
     }
