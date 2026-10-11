@@ -25,4 +25,9 @@ public class MockSmsSender implements SmsSender {
         log.info("[SMS mô phỏng {}] Gửi tới {}: {}", maTin, soDienThoai, noiDung);
         return maTin;
     }
+
+    @Override
+    public boolean laMoPhong() {
+        return true;
+    }
 }

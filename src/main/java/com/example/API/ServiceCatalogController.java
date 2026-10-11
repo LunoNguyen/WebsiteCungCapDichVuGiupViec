@@ -69,6 +69,14 @@ public class ServiceCatalogController {
     }
 
     /**
+     * Chương trình khuyến mãi đang chạy (kèm mã) cho banner "Ưu đãi" trên app
+     */
+    @GetMapping("/promotions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPromotions() {
+        return ResponseEntity.ok(ApiResponse.ok(customerApiService.getActivePromotions()));
+    }
+
+    /**
      * Danh mục khu vực phục vụ
      */
     @GetMapping("/areas")

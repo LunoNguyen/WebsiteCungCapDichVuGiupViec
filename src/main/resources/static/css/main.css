@@ -1,6 +1,6 @@
 /* ==========================================================
    MAIN.CSS – Token và component dùng chung cho trang quản trị
-   Neatify. Chỉ các layout quản trị (admin, cskh, marketing) nạp file này.
+   bTaskee. Chỉ các layout quản trị (admin, cskh, marketing) nạp file này.
 
    ĐỔI THƯƠNG HIỆU: màu nhấn nằm ở --primary (nền sáng) và --primary
    trong khối [data-theme="dark"]. Font nằm ở --font-base.
@@ -14,12 +14,12 @@
   /* ---- Font ---- */
   --font-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  /* ---- Màu nhấn: xanh ngọc của logo ---- */
-  --primary: #08778C;
-  --primary-hover: #0B8AA1;
+  /* ---- Màu nhấn: cam bTaskee (btaskee.com) ---- */
+  --primary: #FF8228;
+  --primary-hover: #F2721A;
   --primary-foreground: #FFFFFF;
-  --primary-soft: rgba(8, 119, 140, 0.08);   /* nền nhạt: ô icon, badge, mục nổi */
-  --primary-soft-strong: rgba(8, 119, 140, 0.14);
+  --primary-soft: rgba(255, 130, 40, 0.10);   /* nền nhạt: ô icon, badge, mục nổi */
+  --primary-soft-strong: rgba(255, 130, 40, 0.16);
 
   /* ---- Nền, chữ, viền ---- */
   --background: #F3F6F8;      /* nền trang: xám ánh lạnh, hợp với xanh ngọc */
@@ -37,7 +37,7 @@
   --fill-subtle: rgba(30, 42, 50, 0.05);  /* rãnh thanh tiến độ, rê nút icon */
   --button-hover: #EEF2F5;
 
-  --ring-focus: rgba(8, 119, 140, 0.14);
+  --ring-focus: rgba(255, 130, 40, 0.2);
 
   /* ---- Sắc phân loại: chỉ cho ô icon số liệu, badge "đang chạy", chuỗi biểu đồ.
      Không mang nghĩa trạng thái (đỏ, hổ phách, xanh lá để dành cho trạng thái). ---- */
@@ -68,7 +68,7 @@
   --warning-dark: var(--warning);
   --danger-dark: var(--danger);
   --info: var(--primary);
-  --brand-700: #08778C; --brand-600: #1197B0; --brand-500: #22BED0; --brand-300: #58D9C6;
+  --brand-700: #C24E08; --brand-600: #E86F14; --brand-500: #FF8228; --brand-300: #FFB27A;
 
   --gradient-primary: var(--primary);
   --gradient-brand: var(--primary);
@@ -126,11 +126,11 @@
 /* Nền tối: mỗi token một giá trị riêng, không đảo ngược bản sáng. */
 [data-theme="dark"] {
   color-scheme: dark;
-  --primary: #22BED0;
-  --primary-hover: #1AA8B9;
-  --primary-foreground: #04161A;
-  --primary-soft: rgba(34, 190, 208, 0.12);
-  --primary-soft-strong: rgba(34, 190, 208, 0.2);
+  --primary: #FF8A3D;
+  --primary-hover: #FF9D5C;
+  --primary-foreground: #1F0E02;
+  --primary-soft: rgba(255, 138, 61, 0.12);
+  --primary-soft-strong: rgba(255, 138, 61, 0.2);
 
   --background: #0B0D12;
   --surface: #12151C;
@@ -230,7 +230,7 @@ input, select, textarea { font-family: var(--font-base); }
 }
 .avatar-sm { width: 32px; height: 32px; font-size: 0.75rem; }
 .avatar-lg { width: 56px; height: 56px; font-size: 1.125rem; }
-.avatar[data-tone="0"] { background: #E6F4F6; color: #08778C; }
+.avatar[data-tone="0"] { background: #FFF1E6; color: #A84306; }
 .avatar[data-tone="1"] { background: #F0F9FF; color: #0069A8; }
 .avatar[data-tone="2"] { background: #EEF2FF; color: #432DD7; }
 .avatar[data-tone="3"] { background: #FDF2F8; color: #C6005C; }

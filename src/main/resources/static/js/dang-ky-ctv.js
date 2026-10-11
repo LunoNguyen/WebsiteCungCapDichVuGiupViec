@@ -303,7 +303,7 @@
         show(okBox, 'Đã gửi hồ sơ' + (d.maCongTacVien ? ' ' + d.maCongTacVien : '') +
           '. Thời gian xét duyệt dự kiến ' + (d.thoiGianXetDuyetDuKien || '1-3 ngày làm việc') +
           (d.khuVuc ? '. Khu vực nhận việc: ' + d.khuVuc : '') +
-          '. Khi hồ sơ được duyệt, tài khoản và mật khẩu sẽ được gửi qua tin nhắn tới số điện thoại bạn đã đăng ký.');
+          '. Khi hồ sơ được duyệt, tài khoản sẽ được kích hoạt và bạn nhận tin nhắn thông báo. Đăng nhập bằng số điện thoại và mật khẩu đã đặt.');
       })
       .catch(function (err) { show(errorBox, err.message); })
       .then(function () {
@@ -317,7 +317,7 @@
   var ketQua = document.getElementById('traCuuKetQua');
   var TRANG_THAI = {
     ChoDuyet: 'Hồ sơ đang chờ xét duyệt.',
-    HoatDong: 'Hồ sơ đã được duyệt. Tài khoản và mật khẩu đã được gửi qua tin nhắn tới số điện thoại này.',
+    HoatDong: 'Hồ sơ đã được duyệt, tài khoản đã được kích hoạt. Đăng nhập ứng dụng bằng số điện thoại và mật khẩu đã đặt.',
     TuChoi: 'Hồ sơ chưa đạt yêu cầu.',
     DinhChi: 'Tài khoản cộng tác viên đang bị đình chỉ.'
   };

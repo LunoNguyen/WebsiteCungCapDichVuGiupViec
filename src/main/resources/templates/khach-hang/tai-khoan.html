@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Tài khoản', 'Thông tin tài khoản khách hàng bTaskee.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('tai-khoan')}"></header>
+
+<main class="acc">
+  <div class="wrap acc-layout">
+    <nav th:replace="~{layout/account-layout :: nav('tai-khoan')}"></nav>
+
+    <section>
+      <div class="acc-head"><h1>Tài khoản</h1></div>
+      <div th:replace="~{layout/account-layout :: flash}"></div>
+
+      <div class="stack">
+        <section class="panel">
+          <div class="person" style="margin-bottom:20px">
+            <span class="avatar" th:text="${session.userAvatar}">NA</span>
+            <div><b th:text="${kh.hoTen}">Nguyễn Văn An</b><span th:text="${kh.maKhachHang}">KH-001</span></div>
+          </div>
+          <dl class="dl">
+            <dt>Số điện thoại</dt><dd th:text="${kh.soDienThoai}">0901 234 567</dd>
+            <dt>Email</dt><dd th:text="${kh.email != null and !#strings.endsWith(kh.email, '@customer.local')} ? ${kh.email} : 'Chưa có'">an@email.com</dd>
+            <dt>Ngày sinh</dt><dd th:text="${kh.ngaySinh != null} ? ${#temporals.format(kh.ngaySinh, 'dd/MM/yyyy')} : 'Chưa có'">01/01/1990</dd>
+            <dt>Thành viên từ</dt><dd th:text="${kh.ngayDangKy != null} ? ${#temporals.format(kh.ngayDangKy, 'dd/MM/yyyy')} : '—'">07/10/2026</dd>
+          </dl>
+          <p class="hint" style="margin-top:16px">Cần sửa họ tên hoặc số điện thoại? Liên hệ 1900 1234.</p>
+        </section>
+
+        <section class="panel">
+          <h2>Đổi mật khẩu</h2>
+          <p class="hint">Mật khẩu mới cần ít nhất 6 ký tự.</p>
+          <form method="post" action="/tai-khoan/doi-mat-khau" class="form-grid">
+            <div class="field full">
+              <label for="matKhauHienTai">Mật khẩu hiện tại</label>
+              <div class="pass-wrap">
+                <input id="matKhauHienTai" name="matKhauHienTai" type="password" class="input" autocomplete="current-password" required>
+                <button class="pass-toggle" type="button" aria-label="Hiện mật khẩu" data-pass-toggle><svg class="ic"><use href="#i-eye"/></svg></button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="matKhauMoi">Mật khẩu mới</label>
+              <input id="matKhauMoi" name="matKhauMoi" type="password" class="input" autocomplete="new-password" minlength="6" required>
+            </div>
+            <div class="field">
+              <label for="nhapLaiMatKhau">Nhập lại mật khẩu mới</label>
+              <input id="nhapLaiMatKhau" name="nhapLaiMatKhau" type="password" class="input" autocomplete="new-password" minlength="6" required>
+            </div>
+            <div class="full"><button class="btn btn-primary" type="submit">Đổi mật khẩu</button></div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

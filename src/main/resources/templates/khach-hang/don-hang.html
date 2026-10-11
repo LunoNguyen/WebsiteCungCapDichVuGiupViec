@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Đơn của tôi', 'Theo dõi các đơn dịch vụ đã đặt tại bTaskee.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('don-hang')}"></header>
+
+<main class="acc" th:with="thu=${ {'T2','T3','T4','T5','T6','T7','CN'} }">
+  <div class="wrap acc-layout">
+    <nav th:replace="~{layout/account-layout :: nav('don-hang')}"></nav>
+
+    <section>
+      <div class="acc-head">
+        <h1>Đơn của tôi</h1>
+        <a class="btn btn-outline" href="/#dat-dich-vu" th:if="${!dons.isEmpty() or tab != 'sap-toi'}"><svg class="ic"><use href="#i-plus"/></svg>Đặt dịch vụ</a>
+      </div>
+      <div th:replace="~{layout/account-layout :: flash}"></div>
+
+      <div class="tabs" role="tablist" style="margin-bottom:16px">
+        <a class="tab" role="tab" href="?tab=sap-toi" th:attr="aria-selected=${tab == 'sap-toi'}" style="display:inline-flex;align-items:center" th:text="'Sắp tới · ' + ${soSapToi}">Sắp tới · 2</a>
+        <a class="tab" role="tab" href="?tab=da-xong" th:attr="aria-selected=${tab == 'da-xong'}" style="display:inline-flex;align-items:center" th:text="'Đã xong · ' + ${soDaXong}">Đã xong · 5</a>
+        <a class="tab" role="tab" href="?tab=da-huy" th:attr="aria-selected=${tab == 'da-huy'}" style="display:inline-flex;align-items:center" th:text="'Đã hủy · ' + ${soDaHuy}">Đã hủy · 1</a>
+      </div>
+
+      <div class="banner banner-error" th:if="${loiTai}" role="alert">
+        <svg class="ic"><use href="#i-alert"/></svg><div><b>Không tải được danh sách đơn.</b> Kiểm tra kết nối rồi thử lại.</div>
+        <a class="btn btn-outline btn-sm" href="">Thử lại</a>
+      </div>
+
+      <div class="order-list" th:if="${!dons.isEmpty()}">
+        <a class="order" th:each="d : ${dons}" th:href="@{/tai-khoan/don-hang/{id}(id=${d.id})}">
+          <div class="order-date">
+            <span>
+              <small th:text="${d['ngayThucHien'] != null} ? ${thu[d['ngayThucHien'].dayOfWeek.value - 1]} : '—'">T5</small><br>
+              <b th:text="${d['ngayThucHien'] != null} ? ${#temporals.format(d['ngayThucHien'], 'dd/MM')} : '—'">09/10</b>
+            </span>
+          </div>
+          <div style="min-width:0">
+            <h3 th:text="${d.tenDichVu}">Dọn dẹp nhà 3 giờ</h3>
+            <p class="meta">
+              <span th:if="${d['gioBatDau'] != null}" th:text="${#temporals.format(d['gioBatDau'], 'HH:mm')} + (${d['gioKetThuc'] != null} ? '–' + ${#temporals.format(d['gioKetThuc'], 'HH:mm')} : '')">09:00–12:00</span>
+              <span th:if="${d['congTacVienTen'] != null}" th:text="' · ' + ${d['congTacVienTen']}"> · Trần Thị Mai</span>
+            </p>
+            <p class="meta" th:text="${d['diaChi']}">45 Đường số 7, Q. Bình Tân</p>
+          </div>
+          <div class="order-side">
+            <span class="badge" th:classappend="'badge-' + ${d.toneTrangThai}" th:text="${d.nhanTrangThai}">Đang tìm người làm</span>
+            <b th:text="${d['thanhTien'] != null} ? ${#numbers.formatDecimal(d['thanhTien'], 0, 'POINT', 0, 'COMMA')} + 'đ' : ''">280.000đ</b>
+          </div>
+        </a>
+      </div>
+
+      <div class="empty" th:if="${dons.isEmpty() and loiTai == null}">
+        <span class="badge-ic"><svg class="ic"><use href="#i-list"/></svg></span>
+        <h3 th:text="${tab == 'sap-toi'} ? 'Chưa có đơn sắp tới' : (${tab == 'da-xong'} ? 'Chưa có đơn đã xong' : 'Không có đơn đã hủy')">Chưa có đơn sắp tới</h3>
+        <p th:if="${tab == 'sap-toi'}">Đặt dịch vụ đầu tiên, giá hiện ngay khi bạn chọn.</p>
+        <a class="btn btn-primary" href="/#dat-dich-vu" th:if="${tab == 'sap-toi'}">Đặt dịch vụ</a>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

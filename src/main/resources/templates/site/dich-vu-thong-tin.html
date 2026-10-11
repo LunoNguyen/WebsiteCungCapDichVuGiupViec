@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head(${dv.tenDichVu}, ${dv.moTaChiTiet != null ? dv.moTaChiTiet : dv.tenDichVu})}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dich-vu')}"></header>
+
+<main class="svc-info" th:with="phut=${dv.thoiGianThucHienPhut}, goi=${dv.loaiHinhDat == 'GoiThang'}">
+  <div class="wrap">
+    <div class="crumb">
+      <a href="/tim-dich-vu">Tìm dịch vụ</a><svg class="ic"><use href="#i-right"/></svg>
+      <a th:href="@{/tim-dich-vu(nhom=${dv.loaiDichVuId})}" th:text="${dv.tenLoaiDichVu}">Dọn dẹp nhà cửa</a>
+    </div>
+
+    <div class="detail-layout">
+      <div class="stack">
+        <section class="panel">
+          <h1 th:text="${dv.tenDichVu}">Dọn dẹp nhà theo diện tích 3 giờ</h1>
+          <div class="svc-facts">
+            <span class="badge badge-primary" th:text="${goi} ? 'Gói tháng' : 'Theo lần'">Theo lần</span>
+            <span class="badge badge-neutral" th:if="${goi and dv['soBuoiGoi'] != null}" th:text="${dv['soBuoiGoi']} + ' buổi trong 1 tháng'">13 buổi trong 1 tháng</span>
+            <span class="badge badge-neutral" th:if="${phut != null and phut > 0}" th:text="${phut % 60 == 0} ? ${phut / 60} + ' giờ mỗi buổi' : ${phut} + ' phút mỗi buổi'">3 giờ mỗi buổi</span>
+            <span class="badge badge-neutral" th:if="${dv.soNguoiThucHien != null and dv.soNguoiThucHien > 1}" th:text="${dv.soNguoiThucHien} + ' người làm'">2 người làm</span>
+          </div>
+          <p class="svc-desc" th:text="${dv.moTaChiTiet != null and !#strings.isEmpty(dv.moTaChiTiet)} ? ${dv.moTaChiTiet} : 'Chưa có mô tả chi tiết cho dịch vụ này.'">Mô tả dịch vụ</p>
+        </section>
+
+        <section class="panel" th:if="${goi}">
+          <h2>Gói tháng làm thế nào?</h2>
+          <p class="hint">Bạn chọn ngày bắt đầu và các thứ trong tuần, ví dụ T3, T5, T7, CN. bTaskee xếp đủ <b th:text="${dv['soBuoiGoi']}">13</b> buổi trong vòng 1 tháng theo các thứ đó, bạn xem trước lịch trước khi đặt.</p>
+        </section>
+
+        <section class="panel">
+          <h2 style="margin-bottom:16px" th:text="'Đánh giá (' + ${dv.soLuongDanhGia} + ')'">Đánh giá (12)</h2>
+          <div class="review-item" th:each="r : ${dv.danhGias}">
+            <div class="top"><b th:text="${r.khachHang != null ? r.khachHang : 'Khách hàng'}">Nguyễn An</b><span th:text="'★ ' + ${r.diem} + (${r.ngayDanhGia != null} ? ' · ' + ${#temporals.format(r.ngayDanhGia, 'dd/MM/yyyy')} : '')">★ 5.0 · 01/10/2026</span></div>
+            <p th:text="${r.nhanXet != null and !#strings.isEmpty(r.nhanXet)} ? ${r.nhanXet} : 'Không để lại nhận xét.'">Làm kỹ, đúng giờ.</p>
+          </div>
+          <p class="hint" style="margin:0" th:if="${dv.danhGias.isEmpty()}">Dịch vụ chưa có đánh giá.</p>
+        </section>
+      </div>
+
+      <aside class="panel summary">
+        <span class="hint" style="margin:0">Giá</span>
+        <div class="sum-total" style="margin:4px 0 12px"><b th:text="${gia != null} ? ${#numbers.formatDecimal(gia, 0, 'POINT', 0, 'COMMA')} + 'đ' : 'Liên hệ'">270.000đ</b><span th:text="${goi} ? '/ gói' : '/ lần'">/ lần</span></div>
+        <div class="sum-rows" style="margin-top:0">
+          <div class="sum-row"><span>Đánh giá</span><b th:text="${dv.soLuongDanhGia > 0} ? '★ ' + ${dv.diemDanhGiaTrungBinh} + ' (' + ${dv.soLuongDanhGia} + ')' : 'Chưa có'">★ 4.8 (12)</b></div>
+          <div class="sum-row"><span>Lượt đặt</span><b th:text="${dv.soLuotDat}">58</b></div>
+          <div class="sum-row"><span>Cộng tác viên làm được</span><b th:text="${dv.congTacViens.size()}">6</b></div>
+        </div>
+        <a class="btn btn-primary btn-lg btn-block" th:href="@{/dat-dich-vu/{nhom}(nhom=${dv.loaiDichVuId},dv=${dv.id})}">Đặt dịch vụ này</a>
+        <p class="sum-note" th:if="${session.khachHangId == null}">Bạn sẽ đăng nhập ở bước đặt.</p>
+      </aside>
+    </div>
+
+    <div class="mobile-bar">
+      <div class="price"><b th:text="${gia != null} ? ${#numbers.formatDecimal(gia, 0, 'POINT', 0, 'COMMA')} + 'đ' : 'Liên hệ'">270.000đ</b><span th:text="${goi} ? 'Gói ' + ${dv['soBuoiGoi']} + ' buổi' : 'Theo lần'">Theo lần</span></div>
+      <a class="btn btn-primary btn-lg" th:href="@{/dat-dich-vu/{nhom}(nhom=${dv.loaiDichVuId},dv=${dv.id})}">Đặt dịch vụ</a>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

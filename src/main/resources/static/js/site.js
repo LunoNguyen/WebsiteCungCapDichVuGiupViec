@@ -1,18 +1,54 @@
 /* ==========================================================
-   SITE.JS – Tương tác cho website công khai Neatify
+   SITE.JS – Tương tác cho website công khai bTaskee
    ========================================================== */
 (function () {
   'use strict';
 
-  // ---- Menu trên điện thoại ----
-  var nav = document.getElementById('mainNav');
+  // ---- Panel trượt trên điện thoại: bấm lớp phủ hoặc Esc thì đóng ----
   var menuBtn = document.querySelector('[data-menu-toggle]');
-  if (nav && menuBtn) {
-    menuBtn.addEventListener('click', function () {
-      var open = nav.classList.toggle('is-open');
-      menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
+  function setDrawer(open) {
+    document.body.classList.toggle('menu-open', open);
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
+  if (menuBtn) menuBtn.addEventListener('click', function () { setDrawer(!document.body.classList.contains('menu-open')); });
+  document.querySelectorAll('[data-menu-close]').forEach(function (el) { el.addEventListener('click', function () { setDrawer(false); }); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setDrawer(false); });
+
+  // ---- Menu tài khoản trên header ----
+  var accBtn = document.querySelector('[data-account-toggle]');
+  var accMenu = document.querySelector('[data-account-menu]');
+  function setAcc(open) {
+    if (!accMenu) return;
+    accMenu.classList.toggle('is-open', open);
+    accBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  if (accBtn && accMenu) {
+    accBtn.addEventListener('click', function (e) { e.stopPropagation(); setAcc(!accMenu.classList.contains('is-open')); });
+    document.addEventListener('click', function (e) { if (!accMenu.contains(e.target)) setAcc(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setAcc(false); });
+  }
+
+  // ---- Hiện / ẩn mật khẩu ----
+  document.querySelectorAll('[data-pass-toggle]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = btn.parentElement.querySelector('input');
+      var hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      btn.setAttribute('aria-label', hidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+      btn.querySelector('use').setAttribute('href', hidden ? '#i-eye-off' : '#i-eye');
+    });
+  });
+
+  // ---- Hộp xác nhận: nút có data-confirm="idDialog" mở dialog ----
+  document.querySelectorAll('[data-open-dialog]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var dlg = document.getElementById(btn.getAttribute('data-open-dialog'));
+      if (dlg && dlg.showModal) dlg.showModal();
+    });
+  });
+  document.querySelectorAll('[data-close-dialog]').forEach(function (btn) {
+    btn.addEventListener('click', function () { btn.closest('dialog').close(); });
+  });
 
   // ---- Mega menu "Dịch vụ" ----
   var megaBtn = document.querySelector('[data-mega-toggle]');

@@ -11,6 +11,8 @@ import java.util.List;
 
 @Repository
 public interface ChiTietDonDatRepository extends JpaRepository<ChiTietDonDat, Integer> {
+    long countByDichVu_Id(Integer dichVuId);
+
 
     List<ChiTietDonDat> findByDonDat_Id(Integer donDatId);
 
