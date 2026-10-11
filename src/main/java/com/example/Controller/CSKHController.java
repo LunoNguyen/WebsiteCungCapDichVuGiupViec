@@ -525,6 +525,7 @@ public class CSKHController {
             if ("DaHuy".equalsIgnoreCase(dd.getTrangThai()) || "HoanThanh".equalsIgnoreCase(dd.getTrangThai())) {
                 throw new IllegalArgumentException("Đơn này đã hủy hoặc đã hoàn thành, không thể phân công.");
             }
+            com.example.Service.PhanCongService.kiemTraKhongTuPhucVu(ctv, dd);
             if (phanCongCTVRepository.findByDonDat_IdAndCongTacVien_Id(orderId, ctvId).isPresent()) {
                 throw new IllegalArgumentException("Cộng tác viên này đã được phân công cho đơn này.");
             }

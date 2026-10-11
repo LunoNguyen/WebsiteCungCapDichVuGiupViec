@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.sms.provider=mock") // test không gửi SMS thật, API trả otpCode
 class WebsiteCungCapDichVuGiupViecApplicationTests {
 
 	@Autowired

@@ -25,6 +25,9 @@ public class CollaboratorApiService {
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
     private final TaiKhoanRepository taiKhoanRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private ViTriCtvStore viTriCtvStore;
+
     public CollaboratorApiService(
             PhanCongCTVRepository phanCongCTVRepository,
             DonDatDichVuRepository donDatDichVuRepository,
@@ -79,6 +82,22 @@ public class CollaboratorApiService {
         return result;
     }
 
+    /** CTV gửi vị trí hiện tại (GPS) từ ứng dụng. Lưu trên Redis, không thêm cột vào CSDL. */
+    @Transactional(readOnly = true)
+    public Map<String, Object> updateLocation(Integer congTacVienId, java.math.BigDecimal viDo, java.math.BigDecimal kinhDo) {
+        if (!congTacVienRepository.existsById(congTacVienId)) {
+            throw new IllegalArgumentException("Không tìm thấy cộng tác viên.");
+        }
+        ViTriCtvStore.ViTri vt = viTriCtvStore.update(congTacVienId, viDo, kinhDo);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("congTacVienId", congTacVienId);
+        result.put("viDo", vt.viDo());
+        result.put("kinhDo", vt.kinhDo());
+        result.put("thoiGianCapNhatViTri", vt.thoiGian());
+        return result;
+    }
+
     public Map<String, Object> getAssignmentDetail(Integer phanCongId) {
         PhanCongCTV pc = phanCongCTVRepository.findById(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
@@ -120,6 +139,7 @@ public class CollaboratorApiService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
         DonDatDichVu don = pc.getDonDat();
+        PhanCongService.kiemTraKhongTuPhucVu(pc.getCongTacVien(), don);
 
         // CTV tự nhận đơn cũng phải theo quy tắc xếp lịch: không trùng giờ, cách việc khác ít nhất 1 tiếng,
         // không quá tải trong ngày. Khóa CTV để hai lần nhận đơn cùng lúc được kiểm tra lần lượt.

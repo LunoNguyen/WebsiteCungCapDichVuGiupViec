@@ -7,8 +7,8 @@
 <head th:fragment="adminHead(pageTitle)">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="${pageTitle != null ? pageTitle + ' – Neatify' : 'Neatify – Quản trị hệ thống'}">Neatify – Quản trị hệ thống</title>
-  <link rel="icon" href="/images/Logo.png">
+  <title th:text="${pageTitle != null ? pageTitle + ' – bTaskee' : 'bTaskee – Quản trị hệ thống'}">bTaskee – Quản trị hệ thống</title>
+  <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
 
   <!-- Đặt theme trước khi vẽ để khỏi chớp -->
   <script>
@@ -42,8 +42,7 @@
 <aside class="sidebar" id="sidebar" th:fragment="adminSidebar(role, activeMenu)">
   <div class="sidebar-header">
     <a th:href="@{'/' + ${role} + '/dashboard'}" class="sidebar-logo-link">
-      <img src="/images/Logo.png" class="sidebar-logo-img" alt="">
-      <span class="sidebar-logo-text">Neatify</span>
+      <img src="/images/logo-btaskee.svg" class="sidebar-logo-svg" alt="bTaskee" width="109" height="28">
     </a>
     <button type="button" class="sidebar-toggle" id="sidebarToggle" title="Thu gọn menu" aria-label="Thu gọn menu"><i class="ti ti-layout-sidebar-left-collapse"></i></button>
   </div>

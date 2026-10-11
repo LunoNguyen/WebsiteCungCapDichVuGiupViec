@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/site-layout :: head('Giúp việc nhà theo giờ', 'Neatify – đặt dịch vụ dọn dẹp, vệ sinh điện máy, chăm sóc gia đình theo giờ. Giá hiển thị trước khi đặt.')}"></head>
+<head th:replace="~{layout/site-layout :: head('Giúp việc nhà theo giờ', 'bTaskee – đặt dịch vụ dọn dẹp, vệ sinh điện máy, chăm sóc gia đình theo giờ. Giá hiển thị trước khi đặt.')}"></head>
 <body>
 <header th:replace="~{layout/site-layout :: header('trang-chu')}"></header>
 
@@ -9,146 +9,66 @@
   <section class="hero">
     <div class="wrap">
       <div>
-        <h1>Việc nhà có người lo, bạn có thêm thời gian cho gia đình</h1>
-        <p class="hero-lead">Đặt người giúp việc theo giờ, vệ sinh máy lạnh, nấu ăn, trông trẻ hay dọn văn phòng. Chọn dịch vụ, chọn giờ, biết giá trước khi đặt.</p>
-        <div class="hero-cta">
-          <a class="btn btn-sun" href="/dich-vu">Xem dịch vụ và bảng giá</a>
-          <a class="btn btn-line" href="#tai-ung-dung">Tải ứng dụng để đặt lịch</a>
+        <h1>Việc nhà có <em>bTaskee</em> lo, bạn có thêm thời gian cho gia đình</h1>
+        <p class="hero-lead">Đặt người giúp việc theo giờ, vệ sinh máy lạnh, nấu ăn, trông trẻ. Chọn dịch vụ, chọn giờ, biết giá trước khi đặt.</p>
+        <div style="margin-top:28px">
+          <form th:replace="~{layout/site-layout :: finder(null, null)}"></form>
+          <div class="finder-chips" aria-label="Tìm nhanh">
+            <a href="/tim-dich-vu?hinhThuc=GoiThang">Gói tháng</a>
+            <a href="/tim-dich-vu?gia=duoi-300&amp;sapXep=gia-tang">Dưới 300.000đ</a>
+            <a href="/tim-dich-vu?q=m%C3%A1y%20l%E1%BA%A1nh">Máy lạnh</a>
+            <a href="/tim-dich-vu?q=sofa">Sofa</a>
+            <a href="/tim-dich-vu?q=ng%C6%B0%E1%BB%9Di%20cao%20tu%E1%BB%95i">Người cao tuổi</a>
+          </div>
         </div>
-        <ul class="hero-points">
-          <li><svg class="ic"><use href="#i-check"/></svg>Cộng tác viên được xét duyệt hồ sơ và phỏng vấn trước khi nhận việc</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Ghi nhận hiện trạng tài sản trước và sau mỗi buổi làm</li>
-          <li><svg class="ic"><use href="#i-check"/></svg>Thanh toán tiền mặt hoặc chuyển khoản, có hóa đơn và biên lai</li>
+        <ul class="hero-proof">
+          <li><svg class="ic"><use href="#i-check-circle"/></svg>Người làm được xét duyệt</li>
+          <li><svg class="ic"><use href="#i-check-circle"/></svg>Giá hiện trước khi đặt</li>
         </ul>
       </div>
-      <div class="hero-photos" aria-hidden="true">
-        <div class="leaf"><img src="/images/services/don-dep-nha-cua.png" alt=""></div>
-        <div class="leaf"><img src="/images/services/nau-an-gia-dinh.jpg" alt=""></div>
-        <div class="leaf"><img src="/images/services/trong-tre.jpg" alt=""></div>
-      </div>
+      <div class="ph"><img src="/images/services/don-dep-nha-cua.png" alt="Cộng tác viên bTaskee dọn dẹp phòng khách"></div>
     </div>
   </section>
 
-  <!-- ===== DỊCH VỤ PHỔ BIẾN (giá lấy từ CSDL) ===== -->
-  <section class="section" th:if="${dichVuNoiBat != null and !dichVuNoiBat.isEmpty()}">
-    <div class="wrap">
-      <div class="section-head">
-        <h2>Dịch vụ được đặt nhiều</h2>
-      </div>
-      <div class="rail">
-        <a class="svc-card" th:each="dv : ${dichVuNoiBat}" th:href="@{/dich-vu/{id}(id=${dv.danhMucId})}">
-          <div class="leaf"><img th:src="${dv.hinhAnhUrl}" th:alt="${dv.ten}" loading="lazy"></div>
-          <h3 th:text="${dv.ten}">Dọn dẹp nhà theo giờ</h3>
-          <p th:text="${dv.giaTuText}">từ 192.000đ</p>
+  <!-- ===== LƯỚI NHÓM DỊCH VỤ (giá lấy từ CSDL) ===== -->
+  <div class="wrap" id="dat-dich-vu">
+    <div class="svc-panel">
+      <div class="svc-icons" th:if="${danhMucs != null and !danhMucs.isEmpty()}">
+        <a class="svc-icon" th:each="dm : ${danhMucs}" th:href="@{/tim-dich-vu(nhom=${dm.id})}"
+           th:with="ten=${#strings.toLowerCase(dm.tenLoaiDichVu)}">
+          <span class="badge-ic">
+            <svg class="ic"><use th:href="${#strings.contains(ten,'máy') or #strings.contains(ten,'điện') ? '#i-air'
+              : (#strings.contains(ten,'nấu') ? '#i-chef'
+              : (#strings.contains(ten,'chăm sóc') or #strings.contains(ten,'trẻ') or #strings.contains(ten,'gia đình') ? '#i-heart'
+              : (#strings.contains(ten,'văn phòng') or #strings.contains(ten,'doanh nghiệp') ? '#i-building' : '#i-sparkles')))}" href="#i-sparkles"/></svg>
+          </span>
+          <b th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</b>
+          <small th:text="${dm.giaTuText}">từ 192.000đ</small>
         </a>
       </div>
-    </div>
-  </section>
-
-  <!-- ===== NHÓM DỊCH VỤ ===== -->
-  <section class="section section-foam" id="dich-vu">
-    <div class="wrap">
-      <div class="section-head">
-        <h2>Tất cả nhóm dịch vụ</h2>
-        <p>Mỗi nhóm có bảng giá riêng theo lần hoặc theo gói tháng.</p>
-      </div>
-
-      <div class="cat-list" th:if="${danhMucs != null and !danhMucs.isEmpty()}">
-        <article class="cat-row" th:each="dm : ${danhMucs}">
-          <a class="leaf" th:href="@{/dich-vu/{id}(id=${dm.id})}" tabindex="-1" aria-hidden="true">
-            <img th:src="${dm.hinhAnhUrl}" alt="" loading="lazy">
-          </a>
-          <div>
-            <h3><a th:href="@{/dich-vu/{id}(id=${dm.id})}" th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</a></h3>
-            <p th:text="${dm.moTa}">Mô tả nhóm dịch vụ</p>
-            <div class="chips">
-              <span class="chip" th:each="ten : ${dm.tieuBieu}" th:text="${ten}">Tổng vệ sinh</span>
-            </div>
-          </div>
-          <div class="cat-side">
-            <div class="price" th:text="${dm.giaTuText}">từ 192.000đ</div>
-            <div class="count" th:text="${dm.soDichVu} + ' dịch vụ'">12 dịch vụ</div>
-            <a class="btn btn-line btn-sm" th:href="@{/dich-vu/{id}(id=${dm.id})}">Xem bảng giá</a>
-          </div>
-        </article>
-      </div>
-      <div class="empty" th:if="${danhMucs == null or danhMucs.isEmpty()}">
-        Chưa có nhóm dịch vụ nào đang hiển thị. Nhân viên HCNS có thể thêm tại mục Danh mục dịch vụ.
+      <div class="empty" th:if="${danhMucs == null or danhMucs.isEmpty()}" style="border:0">
+        <span class="badge-ic"><svg class="ic"><use href="#i-grid"/></svg></span>
+        <h3>Chưa có dịch vụ nào đang mở</h3>
+        <p>Danh sách dịch vụ đang được cập nhật. Bạn có thể tải ứng dụng để nhận thông báo khi dịch vụ mở lại.</p>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- ===== SỐ LIỆU THẬT TỪ CSDL (ẩn mục bằng 0) ===== -->
-  <section class="stats" th:if="${soLieu != null and soLieu['dichVu'] > 0}">
-    <div class="wrap">
-      <div class="stat"><b th:text="${soLieu['dichVu']}">143</b><span>dịch vụ đang cung cấp</span></div>
-      <div class="stat" th:if="${danhMucs != null and !danhMucs.isEmpty()}"><b th:text="${danhMucs.size()}">5</b><span>nhóm dịch vụ</span></div>
-      <div class="stat" th:if="${soLieu['congTacVien'] > 0}"><b th:text="${soLieu['congTacVien']}">0</b><span>cộng tác viên đang hoạt động</span></div>
-      <div class="stat" th:if="${soLieu['khachHang'] > 0}"><b th:text="${soLieu['khachHang']}">0</b><span>khách hàng thành viên</span></div>
-      <div class="stat" th:if="${soLieu['tinhThanh'] > 0}"><b th:text="${soLieu['tinhThanh']}">0</b><span>tỉnh, thành phố phục vụ</span></div>
-    </div>
-  </section>
-
-  <!-- ===== CÁCH ĐẶT DỊCH VỤ ===== -->
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <h2>Đặt dịch vụ trong bốn bước</h2>
-      </div>
-      <div class="steps">
-        <div class="step"><h3>Chọn dịch vụ</h3><p>Chọn đặt theo lần hoặc theo gói tháng, kèm ngày giờ, địa chỉ và yêu cầu riêng.</p></div>
-        <div class="step"><h3>Xem giá và mã ưu đãi</h3><p>Chi phí hiện ngay khi chọn. Nhập mã khuyến mãi nếu có để thấy số tiền sau giảm.</p></div>
-        <div class="step"><h3>Nhận cộng tác viên</h3><p>Neatify phân công người phù hợp theo khu vực và khung giờ, rồi gửi xác nhận cho bạn.</p></div>
-        <div class="step"><h3>Thanh toán và đánh giá</h3><p>Thanh toán tiền mặt hoặc chuyển khoản. Sau buổi làm, bạn chấm điểm chất lượng và thái độ.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== CAM KẾT ===== -->
-  <section class="section section-foam">
-    <div class="wrap">
-      <div class="section-head">
-        <h2>Neatify giữ lời với từng buổi làm</h2>
-      </div>
-      <div class="grid-4">
-        <div class="value">
-          <div class="badge-ic"><svg class="ic"><use href="#i-users"/></svg></div>
-          <h3>Người làm được xét duyệt</h3>
-          <p>Ứng viên nộp CCCD, chứng chỉ và qua phỏng vấn trước khi trở thành cộng tác viên.</p>
-        </div>
-        <div class="value">
-          <div class="badge-ic"><svg class="ic"><use href="#i-tag"/></svg></div>
-          <h3>Giá rõ từ đầu</h3>
-          <p>Bảng giá công khai theo từng dịch vụ. Hóa đơn ghi đủ tiền dịch vụ và khoản giảm.</p>
-        </div>
-        <div class="value">
-          <div class="badge-ic"><svg class="ic"><use href="#i-clipboard"/></svg></div>
-          <h3>Tài sản được ghi nhận</h3>
-          <p>Cộng tác viên lập biểu mẫu hiện trạng tài sản trước và sau dịch vụ để bạn xác nhận.</p>
-        </div>
-        <div class="value">
-          <div class="badge-ic"><svg class="ic"><use href="#i-chat"/></svg></div>
-          <h3>Khiếu nại có người xử lý</h3>
-          <p>Bộ phận chăm sóc khách hàng tiếp nhận, xác minh và đưa ra phương án bồi thường khi có lỗi.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== KHUYẾN MÃI ĐANG CHẠY (từ CSDL) ===== -->
+  <!-- ===== ƯU ĐÃI ĐANG CHẠY (từ CSDL) ===== -->
   <section class="section" th:if="${khuyenMais != null and !khuyenMais.isEmpty()}">
     <div class="wrap">
       <div class="section-head">
-        <h2>Ưu đãi đang áp dụng</h2>
+        <h2>Ưu đãi đang chạy</h2>
+        <a class="link" href="/khuyen-mai">Xem tất cả</a>
       </div>
-      <div class="grid-3">
-        <div class="promo" th:each="km : ${khuyenMais}">
-          <div class="promo-amount" th:text="${km.mucGiamText}">Giảm 20%</div>
+      <div class="promos">
+        <div class="promo" th:each="km, st : ${khuyenMais}" th:if="${st.index < 3}">
+          <span class="badge-ic"><svg class="ic"><use href="#i-ticket"/></svg></span>
           <div>
-            <h3 th:text="${km.tenChuongTrinh}">Tên chương trình</h3>
-            <p><span th:if="${!km.dieuKienText.isEmpty()}" th:text="${km.dieuKienText} + ', '">Đơn từ 300.000đ, </span><span th:text="${km.hanText}">đến hết 31/12/2026</span></p>
+            <h3 th:text="${km.tenChuongTrinh + ': ' + km.mucGiamText}">Giảm 20.000đ cho đơn đầu tiên</h3>
+            <p><span th:if="${!km.dieuKienText.isEmpty()}" th:text="${km.dieuKienText} + ', '">Đơn từ 300.000đ, </span><span th:text="${km.hanText}">đến 31/10</span></p>
             <span class="promo-code" th:if="${km.code != null}">
-              <span th:text="${km.code}">NEATIFY20</span>
+              <span th:text="${km.code}">BTASKEE20</span>
               <button type="button" th:attr="data-copy=${km.code}">Sao chép</button>
             </span>
           </div>
@@ -157,52 +77,41 @@
     </div>
   </section>
 
-  <!-- ===== ĐÁNH GIÁ ĐÃ DUYỆT (từ CSDL) ===== -->
-  <section class="section section-foam" th:if="${danhGias != null and !danhGias.isEmpty()}">
+  <!-- ===== CÁCH ĐẶT DỊCH VỤ ===== -->
+  <section class="section section-alt">
     <div class="wrap">
-      <div class="section-head">
-        <h2>Khách hàng nói gì sau buổi làm</h2>
-      </div>
-      <div class="grid-3">
-        <figure class="review" th:each="dg : ${danhGias}" style="margin:0">
-          <div class="stars" th:attr="aria-label=${dg.soSao} + ' trên 5 sao'">
-            <span th:each="i : ${#numbers.sequence(1, dg.soSao)}">★</span>
-          </div>
-          <p th:text="${dg.nhanXet}">Nhận xét của khách hàng</p>
-          <figcaption class="review-by">
-            <span class="avatar" th:text="${dg.chuCaiDau}">K</span>
-            <span><b th:text="${dg.tenKhachHang}">Khách hàng</b><small th:text="${dg.ngayText}">01/01/2026</small></span>
-          </figcaption>
-        </figure>
+      <div class="section-head"><h2>Đặt dịch vụ trong bốn bước</h2></div>
+      <div class="steps">
+        <div class="step"><h3>Chọn dịch vụ</h3><p>Theo lần hoặc gói tháng, kèm thời lượng và yêu cầu riêng.</p></div>
+        <div class="step"><h3>Chọn giờ, xem giá</h3><p>Giá hiện ngay khi chọn. Nhập mã để thấy số tiền sau giảm.</p></div>
+        <div class="step"><h3>Nhận cộng tác viên</h3><p>Người làm được xét duyệt hồ sơ, phân công theo khu vực của bạn.</p></div>
+        <div class="step"><h3>Thanh toán, đánh giá</h3><p>Tiền mặt hoặc chuyển khoản, có hóa đơn. Chấm điểm sau buổi làm.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- ===== TRỞ THÀNH ĐỐI TÁC ===== -->
-  <section class="section">
-    <div class="wrap split">
-      <div class="leaf"><img src="/images/services/ve-sinh-may-lanh.png" alt="Cộng tác viên Neatify vệ sinh máy lạnh" loading="lazy"></div>
-      <div>
-        <h2>Bạn muốn nhận việc cùng Neatify?</h2>
-        <p>Đăng ký làm cộng tác viên, chọn dịch vụ và khu vực bạn muốn nhận. Phòng Hành chính Nhân sự xét duyệt hồ sơ trong 1 đến 3 ngày làm việc.</p>
-        <div class="hero-cta">
-          <a class="btn btn-teal" href="/tro-thanh-doi-tac">Gửi hồ sơ ứng tuyển</a>
-        </div>
-      </div>
+  <!-- ===== SỐ LIỆU THẬT TỪ CSDL (ẩn mục bằng 0) ===== -->
+  <section class="section stats" th:if="${soLieu != null and soLieu['dichVu'] > 0}">
+    <div class="wrap">
+      <div class="stat"><b th:text="${soLieu['dichVu']}">143</b><span>dịch vụ đang cung cấp</span></div>
+      <div class="stat" th:if="${soLieu['congTacVien'] > 0}"><b th:text="${soLieu['congTacVien']}">0</b><span>cộng tác viên đang hoạt động</span></div>
+      <div class="stat" th:if="${soLieu['khachHang'] > 0}"><b th:text="${soLieu['khachHang']}">0</b><span>khách hàng thành viên</span></div>
+      <div class="stat" th:if="${soLieu['tinhThanh'] > 0}"><b th:text="${soLieu['tinhThanh']}">0</b><span>tỉnh, thành phố phục vụ</span></div>
     </div>
   </section>
 
   <!-- ===== TẢI ỨNG DỤNG ===== -->
-  <section class="cta-band" id="tai-ung-dung">
+  <section class="section" id="tai-ung-dung" th:style="${soLieu != null and soLieu['dichVu'] > 0} ? 'padding-top:0' : ''">
     <div class="wrap">
-      <div>
-        <h2>Đặt lịch và theo dõi buổi làm trên ứng dụng Neatify</h2>
-        <p>Ứng dụng Android dành cho khách hàng và cộng tác viên: đặt dịch vụ, thanh toán, xem lịch làm việc, đánh giá và gửi khiếu nại.</p>
-      </div>
-      <div class="actions">
-        <a class="btn btn-sun" th:if="${appDownloadUrl != null and !appDownloadUrl.isEmpty()}" th:href="${appDownloadUrl}" rel="noopener"><svg class="ic"><use href="#i-phone-app"/></svg>Tải ứng dụng Android</a>
-        <a class="btn btn-sun" th:if="${appDownloadUrl == null or appDownloadUrl.isEmpty()}" href="/dich-vu">Xem dịch vụ và bảng giá</a>
-        <a class="btn btn-ghost-light" href="/tro-thanh-doi-tac">Dành cho cộng tác viên</a>
+      <div class="app-band">
+        <div>
+          <h2>Đặt nhanh hơn trên ứng dụng bTaskee</h2>
+          <p>Theo dõi cộng tác viên, nhận thông báo và ưu đãi riêng trên điện thoại.</p>
+        </div>
+        <div class="btns">
+          <a class="btn btn-store" th:if="${appDownloadUrl != null and !appDownloadUrl.isEmpty()}" th:href="${appDownloadUrl}" rel="noopener"><svg class="ic"><use href="#i-play"/></svg>Tải cho Android</a>
+          <a class="btn btn-store" th:if="${appDownloadUrl == null or appDownloadUrl.isEmpty()}" href="/dich-vu">Xem bảng giá</a>
+        </div>
       </div>
     </div>
   </section>

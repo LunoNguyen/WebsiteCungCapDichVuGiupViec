@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<!-- Mảnh dùng chung của khu tài khoản khách hàng:
+       <nav th:replace="~{layout/account-layout :: nav(${active})}"></nav>
+       <div th:replace="~{layout/account-layout :: flash}"></div> -->
+<body>
+
+<nav class="acc-nav" aria-label="Tài khoản" th:fragment="nav(active)">
+  <a href="/tai-khoan/don-hang" th:classappend="${active == 'don-hang'} ? 'is-active'" th:attr="aria-current=${active == 'don-hang'} ? 'page'"><svg class="ic"><use href="#i-list"/></svg>Đơn của tôi</a>
+  <a href="/tai-khoan/dia-chi" th:classappend="${active == 'dia-chi'} ? 'is-active'" th:attr="aria-current=${active == 'dia-chi'} ? 'page'"><svg class="ic"><use href="#i-pin"/></svg>Sổ địa chỉ</a>
+  <a href="/tai-khoan" th:classappend="${active == 'tai-khoan'} ? 'is-active'" th:attr="aria-current=${active == 'tai-khoan'} ? 'page'"><svg class="ic"><use href="#i-user"/></svg>Tài khoản</a>
+  <hr>
+  <a class="danger" href="/logout"><svg class="ic"><use href="#i-logout"/></svg>Đăng xuất</a>
+</nav>
+
+<div th:fragment="flash" th:remove="tag">
+  <div class="banner banner-ok" th:if="${success}" role="status"><svg class="ic"><use href="#i-check-circle"/></svg><span th:text="${success}">Đã lưu.</span></div>
+  <div class="banner banner-error" th:if="${error}" role="alert"><svg class="ic"><use href="#i-alert"/></svg><span th:text="${error}">Có lỗi.</span></div>
+  <div class="banner banner-info" th:if="${info}" role="status"><svg class="ic"><use href="#i-info"/></svg><span th:text="${info}">Thông tin.</span></div>
+</div>
+
+</body>
+</html>

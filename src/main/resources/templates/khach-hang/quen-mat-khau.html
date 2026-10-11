@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Quên mật khẩu', 'Lấy lại mật khẩu tài khoản bTaskee bằng mã OTP.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dang-nhap')}"></header>
+
+<main class="auth">
+  <div class="auth-card">
+    <h1>Quên mật khẩu</h1>
+    <p class="sub">Nhập số điện thoại đã đăng ký, bTaskee gửi mã OTP để bạn đặt mật khẩu mới.</p>
+
+    <div th:replace="~{layout/account-layout :: flash}"></div>
+
+    <form method="post" action="/quen-mat-khau">
+      <div class="field">
+        <label for="soDienThoai">Số điện thoại</label>
+        <input id="soDienThoai" name="soDienThoai" type="tel" class="input" placeholder="0901 234 567" autocomplete="tel" inputmode="tel" required autofocus th:value="${soDienThoai}">
+      </div>
+      <button class="btn btn-primary btn-lg btn-block" type="submit">Gửi mã OTP</button>
+    </form>
+    <p class="auth-foot"><a class="link" href="/login">Quay lại đăng nhập</a></p>
+  </div>
+</main>
+
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

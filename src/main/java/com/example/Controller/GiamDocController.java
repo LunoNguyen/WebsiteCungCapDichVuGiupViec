@@ -532,7 +532,7 @@ public String baoCao(
 
             // Tạo tiêu đề báo cáo
             Row row0 = sheet.createRow(0);
-            row0.createCell(0).setCellValue("BÁO CÁO HOẠT ĐỘNG KINH DOANH - NEATIFY");
+            row0.createCell(0).setCellValue("BÁO CÁO HOẠT ĐỘNG KINH DOANH - BTASKEE");
 
             Row row2 = sheet.createRow(2);
             row2.createCell(0).setCellValue("Chỉ số KPI");

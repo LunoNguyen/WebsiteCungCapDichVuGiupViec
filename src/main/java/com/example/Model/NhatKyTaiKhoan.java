@@ -34,5 +34,13 @@ public class NhatKyTaiKhoan {
     @PrePersist
     protected void onCreate() {
         if (thoiGian == null) thoiGian = LocalDateTime.now();
+        // Cắt theo độ dài cột để một dòng nhật ký dài không làm hỏng cả thao tác nghiệp vụ
+        hanhDong = catNgan(hanhDong, 100);
+        diaChiIP = catNgan(diaChiIP, 45);
+        thietBi = catNgan(thietBi, 200);
+    }
+
+    private static String catNgan(String s, int toiDa) {
+        return s != null && s.length() > toiDa ? s.substring(0, toiDa - 1) + "…" : s;
     }
 }
