@@ -21,6 +21,10 @@ public class BookingCreateRequest {
     // Nếu khách hàng nhập địa chỉ mới ngay tại màn hình đặt dịch vụ:
     private String diaChiChiTiet;
     private Integer khuVucId;
+    // Địa chỉ theo tỉnh, phường (provinces.open-api.vn v2); khu vực tự suy ra từ phường
+    private String soNhaTenDuong;
+    private Integer maTinh;
+    private Integer maPhuong;
 
     // Danh sách dịch vụ trong đơn (đặt nhiều dịch vụ)
     @Valid

@@ -4,6 +4,7 @@ import com.example.DTO.request.ReviewCreateRequest;
 import com.example.DTO.response.ApiResponse;
 import com.example.Model.DanhGia;
 import com.example.Service.CustomerApiService;
+import com.example.Service.DanhGiaService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,9 +21,44 @@ import java.util.Map;
 public class ReviewApiController {
 
     private final CustomerApiService customerApiService;
+    private final DanhGiaService danhGiaService;
 
-    public ReviewApiController(CustomerApiService customerApiService) {
+    public ReviewApiController(CustomerApiService customerApiService, DanhGiaService danhGiaService) {
         this.customerApiService = customerApiService;
+        this.danhGiaService = danhGiaService;
+    }
+
+    /** Đánh giá của một đơn kèm trao đổi với CSKH (data = null nếu chưa đánh giá). */
+    @GetMapping("/order/{donDatId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getByOrder(@PathVariable Integer donDatId) {
+        return ResponseEntity.ok(ApiResponse.ok(danhGiaService.cuaDon(donDatId)));
+    }
+
+    /** Khách sửa đánh giá (trong 7 ngày sau khi gửi). */
+    @PutMapping("/order/{donDatId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateReview(@PathVariable Integer donDatId,
+                                                                         @RequestBody ReviewCreateRequest request) {
+        return xuLy("Đã cập nhật đánh giá.", () -> danhGiaService.suaDanhGia(donDatId, request.getKhachHangId(),
+                request.getDiemChatLuong(), request.getDiemThaiDo(), request.getNhanXet()));
+    }
+
+    /** Khách gửi bình luận / phản hồi thêm dưới đánh giá của đơn. Body: {khachHangId, noiDung}. */
+    @PostMapping("/order/{donDatId}/comments")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> comment(@PathVariable Integer donDatId,
+                                                                    @RequestBody Map<String, Object> body) {
+        Integer khachHangId = body.get("khachHangId") != null ? Integer.valueOf(body.get("khachHangId").toString()) : null;
+        Object noiDung = body.get("noiDung");
+        return xuLy("Đã gửi bình luận.", () -> danhGiaService.binhLuanCuaKhach(donDatId, khachHangId,
+                noiDung != null ? noiDung.toString() : null));
+    }
+
+    private ResponseEntity<ApiResponse<Map<String, Object>>> xuLy(String thongBao,
+                                                                 java.util.function.Supplier<Map<String, Object>> viec) {
+        try {
+            return ResponseEntity.ok(ApiResponse.ok(thongBao, viec.get()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     /**

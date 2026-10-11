@@ -24,6 +24,19 @@
           <p class="svc-desc" th:text="${dv.moTaChiTiet != null and !#strings.isEmpty(dv.moTaChiTiet)} ? ${dv.moTaChiTiet} : 'Chưa có mô tả chi tiết cho dịch vụ này.'">Mô tả dịch vụ</p>
         </section>
 
+        <!-- Các lựa chọn của cùng dịch vụ (cùng mã): thời lượng, kích thước, gói tháng -->
+        <section class="panel" th:if="${bienThe != null}">
+          <h2 style="margin-bottom:12px">Chọn gói phù hợp</h2>
+          <div class="variant-list">
+            <a class="variant" th:each="b : ${bienThe}" th:href="@{/dich-vu/chi-tiet/{id}(id=${b.id})}"
+               th:classappend="${b.id == dv.id} ? 'is-current'" th:attr="aria-current=${b.id == dv.id ? 'page' : null}">
+              <span class="variant-name" th:text="${#strings.indexOf(b.tenDichVu, ' (') > 0} ? ${#strings.substring(b.tenDichVu, #strings.indexOf(b.tenDichVu, ' (') + 2, #strings.length(b.tenDichVu) - 1)} : ${b.tenDichVu}">2 giờ</span>
+              <span class="variant-type" th:text="${b.loaiHinhDat == 'GoiThang'} ? 'Gói tháng' : ${b.donViTinh}">Buổi</span>
+              <b><span th:text="${#numbers.formatDecimal(b.giaHienTai, 0, 'POINT', 0, 'COMMA')} + 'đ'">216.000đ</span><s class="gia-goc" th:if="${giaGocBienThe != null and giaGocBienThe.get(b.id) != null}" th:text="${#numbers.formatDecimal(giaGocBienThe.get(b.id), 0, 'POINT', 0, 'COMMA')} + 'đ'">240.000đ</s></b>
+            </a>
+          </div>
+        </section>
+
         <section class="panel" th:if="${goi}">
           <h2>Gói tháng làm thế nào?</h2>
           <p class="hint">Bạn chọn ngày bắt đầu và các thứ trong tuần, ví dụ T3, T5, T7, CN. bTaskee xếp đủ <b th:text="${dv['soBuoiGoi']}">13</b> buổi trong vòng 1 tháng theo các thứ đó, bạn xem trước lịch trước khi đặt.</p>
@@ -42,6 +55,7 @@
       <aside class="panel summary">
         <span class="hint" style="margin:0">Giá</span>
         <div class="sum-total" style="margin:4px 0 12px"><b th:text="${gia != null} ? ${#numbers.formatDecimal(gia, 0, 'POINT', 0, 'COMMA')} + 'đ' : 'Liên hệ'">270.000đ</b><span th:text="${goi} ? '/ gói' : '/ lần'">/ lần</span></div>
+        <s class="gia-goc" style="margin:-8px 0 12px" th:if="${giaGoc != null}" th:text="'Giá gốc ' + ${#numbers.formatDecimal(giaGoc, 0, 'POINT', 0, 'COMMA')} + 'đ'">Giá gốc 240.000đ</s>
         <div class="sum-rows" style="margin-top:0">
           <div class="sum-row"><span>Đánh giá</span><b th:text="${dv.soLuongDanhGia > 0} ? '★ ' + ${dv.diemDanhGiaTrungBinh} + ' (' + ${dv.soLuongDanhGia} + ')' : 'Chưa có'">★ 4.8 (12)</b></div>
           <div class="sum-row"><span>Lượt đặt</span><b th:text="${dv.soLuotDat}">58</b></div>

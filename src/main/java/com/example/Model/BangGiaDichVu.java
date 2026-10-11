@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /** Bang 17: BangGiaDichVu (lịch sử cập nhật giá) */
 @Entity @Table(name = "BangGiaDichVu")
@@ -42,10 +43,10 @@ public class BangGiaDichVu {
     private String nguoiCapNhat;
 
     @Column(name = "NgayApDung", nullable = false)
-    private LocalDate ngayApDung;
+    private LocalDateTime ngayApDung; // DATETIME: thời điểm bắt đầu áp dụng
 
     @Column(name = "NgayKetThuc")
-    private LocalDate ngayKetThuc; // NULL = khong gioi han
+    private LocalDateTime ngayKetThuc; // NULL = khong gioi han
 
     @Column(name = "TrangThai", nullable = false, length = 20)
     private String trangThai; // DangApDung | HetHan

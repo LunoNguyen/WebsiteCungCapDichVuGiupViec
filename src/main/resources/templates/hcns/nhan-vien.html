@@ -166,7 +166,7 @@
         <button type="button" class="modal-close" data-modal-close="addStaffModal" aria-label="Đóng"><i class="ti ti-x"></i></button>
       </div>
       <form th:action="@{/hcns/nhan-vien/them}" method="post" id="addStaffForm"
-        onsubmit="return validateStaffSubmit(event, 'addStaffNgaySinh', 'addStaffNgaySinhError', true)">
+        onsubmit="return validateStaffSubmit(event, 'addStaffNgaySinh', 'addStaffNgaySinhError', true) &amp;&amp; validateNgayVaoLam(event)">
         <div>
           <div class="form-row" style="margin-bottom:1rem">
             <div class="form-group">
@@ -181,7 +181,7 @@
           <div class="form-row" style="margin-bottom:1rem">
             <div class="form-group">
               <label class="form-label">Số điện thoại *</label>
-              <input class="form-control" name="soDienThoai" placeholder="VD: 0901234567" required pattern="\d{9,11}">
+              <input class="form-control" name="soDienThoai" placeholder="Số điện thoại" required pattern="\d{9,11}">
             </div>
             <div class="form-group">
               <label class="form-label">Giới tính*</label>
@@ -200,7 +200,7 @@
                   autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
                   onchange="validateStaffDob('addStaffNgaySinh', 'addStaffNgaySinhError', true)"
                   onblur="validateStaffDob('addStaffNgaySinh', 'addStaffNgaySinhError', true)">
-                <input type="date" id="addStaffNgaySinhPicker" tabindex="-1" aria-hidden="true"
+                <input type="date" id="addStaffNgaySinhPicker" tabindex="-1" aria-hidden="true" data-min-age="18"
                   style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
                   onchange="syncDatePickerToText('addStaffNgaySinhPicker', 'addStaffNgaySinh', 'addStaffNgaySinhError', true)">
                 <button type="button" class="btn btn-outline"
@@ -217,10 +217,11 @@
               <div style="display:flex;align-items:stretch">
                 <input class="form-control" type="text" name="ngayVaoLam" id="addStaffNgayVaoLam"
                   th:value="${#temporals.format(T(java.time.LocalDate).now(), 'dd/MM/yyyy')}" required
-                  autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1">
-                <input type="date" id="addStaffNgayVaoLamPicker" tabindex="-1" aria-hidden="true"
+                  autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
+                  onchange="validateNgayVaoLam()" onblur="validateNgayVaoLam()">
+                <input type="date" id="addStaffNgayVaoLamPicker" tabindex="-1" aria-hidden="true" data-min-today
                   style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
-                  onchange="syncDatePickerToText('addStaffNgayVaoLamPicker', 'addStaffNgayVaoLam')">
+                  onchange="syncDatePickerToText('addStaffNgayVaoLamPicker', 'addStaffNgayVaoLam'); validateNgayVaoLam()">
                 <button type="button" class="btn btn-outline"
                   style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding:0 0.85rem;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"
                   onclick="openCalendarPicker('addStaffNgayVaoLamPicker', 'addStaffNgayVaoLam')"
@@ -293,7 +294,7 @@
                   style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
                   onchange="validateStaffDob('editStaffNgaySinh', 'editStaffNgaySinhError', false)"
                   onblur="validateStaffDob('editStaffNgaySinh', 'editStaffNgaySinhError', false)">
-                <input type="date" id="editStaffNgaySinhPicker" tabindex="-1" aria-hidden="true"
+                <input type="date" id="editStaffNgaySinhPicker" tabindex="-1" aria-hidden="true" data-min-age="18"
                   style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
                   onchange="syncDatePickerToText('editStaffNgaySinhPicker', 'editStaffNgaySinh', 'editStaffNgaySinhError', false)">
                 <button type="button" class="btn btn-outline"
@@ -409,6 +410,27 @@
       }
     }
 
+    // Ngày vào làm (dd/mm/yyyy) không được ở quá khứ
+    function validateNgayVaoLam(e) {
+      const input = document.getElementById('addStaffNgayVaoLam');
+      const val = (input.value || '').trim();
+      const m = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      let msg = '';
+      if (!m) {
+        msg = 'Ngày vào làm không hợp lệ (dd/mm/yyyy).';
+      } else {
+        const iso = m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+        if (iso < DateRules.today()) msg = 'Ngày vào làm không được ở quá khứ.';
+      }
+      input.classList.toggle('error', !!msg);
+      input.setCustomValidity(msg);
+      if (msg && e) {
+        e.preventDefault();
+        input.reportValidity();
+      }
+      return !msg;
+    }
+
     function validateStaffSubmit(e, inputId, errorId, isRequired) {
       const isValid = validateStaffDob(inputId, errorId, isRequired);
       if (!isValid) {
@@ -436,6 +458,12 @@
         } else if (ymd) {
           picker.value = `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
         }
+      }
+      // Lịch dùng chung (lich.js): đồng bộ ngày đang nhập rồi mở lịch cạnh nút
+      if (picker._flatpickr && window.Lich) {
+        Lich.dongBo(picker);
+        picker._flatpickr.open();
+        return;
       }
       try {
         if (typeof picker.showPicker === 'function') {

@@ -24,11 +24,14 @@ public class CollaboratorRegisterRequest {
     private LocalDate ngaySinh;
     private String gioiTinh; // Nam | Nu | Khac
 
-    @NotBlank(message = "Nơi cư trú không được để trống")
+    // Nơi ở dạng chữ (app cũ); app/web mới gửi soNhaTenDuong + maTinh + maPhuong
     private String noiCuTru;
 
-    // Địa chỉ cư trú tách theo đơn vị hành chính (2 cấp: tỉnh/thành - phường/xã).
-    // Hệ thống dựa vào hai trường này để xếp cộng tác viên vào khu vực hoạt động.
+    // ĐỊA CHỈ nơi ở hiện tại theo provinces.open-api.vn v2: số nhà, tên đường + mã tỉnh + mã phường.
+    // Hệ thống ghép thành noiCuTru. (App cũ: noiCuTru dạng chữ + tinhThanh/phuongXa = tên quận, huyện.)
+    private String soNhaTenDuong;
+    private Integer maTinh;
+    private Integer maPhuong;
     private String tinhThanh;
     private String phuongXa;
 
@@ -37,7 +40,7 @@ public class CollaboratorRegisterRequest {
     // Danh sách ID các dịch vụ CTV muốn đăng ký
     private List<Integer> danhSachDichVuId;
 
-    // Danh sách ID các khu vực hoạt động
+    // KHU VỰC nhận việc: 1 đến 5 quận, huyện (không gửi thì lấy khu vực chứa phường nơi ở)
     private List<Integer> danhSachKhuVucId;
 
     // Danh sách chứng chỉ, bằng cấp (Đường dẫn lưu trên MinIO)

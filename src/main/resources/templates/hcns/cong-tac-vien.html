@@ -21,7 +21,7 @@
       <div th:if="${successMessage}" style="padding:1rem;background:var(--success-bg);border:1px solid var(--success);color:var(--success);border-radius:var(--radius-md);margin-bottom:1rem;font-weight:600">
         <div th:text="${successMessage}"></div>
         <div th:if="${tinNhanDaGui}" style="margin-top:0.5rem;font-weight:400;color:var(--foreground)">
-          <span style="font-size:var(--text-xs);color:var(--muted)">Nội dung tin nhắn (SMS mô phỏng, chỉ hiện một lần):</span>
+          <span style="font-size:var(--text-xs);color:var(--muted)">Nội dung tin nhắn đã gửi (chỉ hiện một lần):</span>
           <div style="margin-top:0.25rem;padding:0.625rem 0.75rem;background:var(--surface);border-radius:var(--radius-sm);font-size:var(--text-sm)" th:text="${tinNhanDaGui}"></div>
         </div>
       </div>
@@ -65,32 +65,45 @@
         </div>
       </div>
 
-      <!-- Pending Section if any -->
-      <div th:if="${congTacVienStats != null and congTacVienStats.choDuyetCount > 0}" style="margin-bottom:1.5rem">
-        <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem">
-          <span class="badge badge-warning" th:text="${congTacVienStats.choDuyetCount}">0</span> Hồ sơ CTV chờ phê duyệt
+      <!-- Hồ sơ ứng tuyển chờ duyệt: đơn mới (HCNS chưa mở) lên đầu và được làm nổi bật.
+           Quy trình: Xem chi tiết → Gửi lịch phỏng vấn → Phê duyệt (kích hoạt tài khoản) hoặc Từ chối -->
+      <div th:if="${!#lists.isEmpty(hoSoChoDuyet)}" style="margin-bottom:1.5rem">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.375rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+          <span class="badge badge-warning" th:text="${#lists.size(hoSoChoDuyet)}">0</span> Hồ sơ CTV chờ phê duyệt
+          <span class="badge badge-danger" th:if="${soHoSoMoi > 0}" th:text="${soHoSoMoi} + ' đơn mới'">2 đơn mới</span>
         </h3>
+        <p style="font-size:var(--text-sm);color:var(--muted);margin:0 0 1rem">Quy trình: xem chi tiết đơn → gửi lịch phỏng vấn → phê duyệt sau khi phỏng vấn đạt.</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:1.25rem">
-          <div th:each="ctv : ${congTacViens}" th:if="${ctv.trangThai == 'ChoDuyet'}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+          <div th:each="ctv : ${hoSoChoDuyet}"
+               th:with="moi=${!daXemIds.contains(ctv.id)}, lich=${lichPhongVan.get(ctv.id)}"
+               class="ung-vien-card" th:classappend="${moi} ? 'is-new' : ''"
+               th:attr="data-ctv-id=${ctv.id}">
             <div style="padding:1.25rem">
               <div style="display:flex;align-items:center;gap:0.875rem;margin-bottom:1rem">
                 <div class="avatar avatar-lg" th:text="${#strings.substring(ctv.hoTen, 0, 1)}">C</div>
-                <div>
-                  <div style="font-weight:700" th:text="${ctv.hoTen}">Họ tên</div>
-                  <div style="font-size:0.8rem;color:var(--text-muted)" th:text="${ctv.soDienThoai} + ' · ' + ${ctv.noiCuTru}">SĐT · Nơi cư trú</div>
-                  <span class="badge badge-warning" style="margin-top:0.25rem">Chờ duyệt hồ sơ</span>
+                <div style="min-width:0">
+                  <div class="ung-vien-ten" th:text="${ctv.hoTen}">Họ tên</div>
+                  <div style="font-size:0.8rem;color:var(--text-muted)" th:text="${ctv.soDienThoai} + ' · Gửi ngày ' + ${ctv.ngayDangKy != null ? #temporals.format(ctv.ngayDangKy, 'dd/MM/yyyy') : '--'}">SĐT · Ngày gửi</div>
+                  <div style="display:flex;gap:0.375rem;flex-wrap:wrap;margin-top:0.25rem">
+                    <span class="badge badge-danger ung-vien-moi" th:if="${moi}"><span class="dot" style="width:6px;height:6px;background:currentColor"></span>Mới</span>
+                    <span class="badge badge-warning" th:if="${lich == null}">Chờ mời phỏng vấn</span>
+                    <span class="badge badge-info" th:if="${lich != null}" th:text="'Phỏng vấn ' + ${lich.thoiGian}">Phỏng vấn 09:00 15/10/2026</span>
+                  </div>
                 </div>
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.8rem;margin-bottom:1rem">
-                <div><span style="color:var(--text-muted)">Nơi cư trú: </span><strong th:text="${ctv.noiCuTru}">--</strong></div>
-                <div><span style="color:var(--text-muted)">Cấp độ: </span><strong th:insert="~{layout/status :: tierLabel(${ctv.capDo})}">Mới</strong></div>
+              <div style="font-size:0.8rem">
+                <span style="color:var(--text-muted)">Địa chỉ hiện tại: </span><strong th:text="${ctv.noiCuTru}">--</strong>
               </div>
             </div>
-            <div style="padding:0.875rem 1.25rem;background:var(--primary-soft);border-top:1px solid var(--border-light);display:flex;gap:0.625rem">
-              <!-- Xem ảnh chân dung, CCCD, chứng chỉ ứng viên đã tải lên MinIO -->
-              <button type="button" class="btn btn-outline btn-sm" style="flex:1"
-                      th:attr="data-files=@{/hcns/cong-tac-vien/{id}/tai-lieu(id=${ctv.id})}"><i class="ti ti-paperclip"></i> Hồ sơ</button>
+            <div style="padding:0.875rem 1.25rem;background:var(--primary-soft);border-top:1px solid var(--border-light);display:flex;gap:0.5rem;flex-wrap:wrap">
+              <button type="button" class="btn btn-outline btn-sm" style="flex:1" th:attr="data-chi-tiet=${ctv.id}"><i class="ti ti-file-description"></i> Chi tiết</button>
+              <button type="button" class="btn btn-sm" style="flex:1" th:classappend="${lich == null} ? 'btn-primary' : 'btn-outline'"
+                      th:attr="data-phong-van=${ctv.id}, data-name=${ctv.hoTen}, data-phone=${ctv.soDienThoai}, data-lich=${lich != null ? lich.thoiGian : ''}">
+                <i class="ti ti-calendar-event"></i> <span th:text="${lich == null} ? 'Mời phỏng vấn' : 'Đổi lịch'">Mời phỏng vấn</span>
+              </button>
               <button type="button" class="btn btn-success btn-sm" style="flex:1" onclick="openApproveModal(this)"
+                      th:disabled="${lich == null and ctv.taiKhoan != null}"
+                      th:title="${lich == null and ctv.taiKhoan != null} ? 'Cần gửi lịch phỏng vấn trước khi phê duyệt' : 'Duyệt hồ sơ và kích hoạt tài khoản'"
                       th:attr="data-id=${ctv.id}, data-name=${ctv.hoTen}, data-phone=${ctv.soDienThoai}, data-username=${ctv.taiKhoan != null ? ctv.taiKhoan.tenDangNhap : ctv.soDienThoai}, data-hasaccount=${ctv.taiKhoan != null}"><i class="ti ti-check"></i> Phê duyệt</button>
               <form th:action="@{/hcns/cong-tac-vien/tu-choi}" method="post" style="flex:1" onsubmit="return confirm('Bạn có chắc muốn từ chối hồ sơ này?');">
                 <input type="hidden" name="id" th:value="${ctv.id}">
@@ -112,7 +125,7 @@
         <div class="filter-bar" style="padding:0 1.25rem 1rem">
           <div class="search-box" style="flex:1">
             <i class="ti ti-search search-icon"></i>
-            <input type="text" class="form-control" id="searchCtvInput" placeholder="Tìm theo tên, số điện thoại, nơi cư trú..." oninput="filterCtvTable()">
+            <input type="text" class="form-control" id="searchCtvInput" placeholder="Tìm theo tên, số điện thoại, địa chỉ..." oninput="filterCtvTable()">
           </div>
           <select class="filter-select" id="filterLevelSelect" onchange="filterCtvTable()">
             <option value="">Tất cả cấp độ</option>
@@ -133,7 +146,8 @@
               <tr>
                 <th>Cộng tác viên</th>
                 <th>Số điện thoại</th>
-                <th>Nơi cư trú</th>
+                <th>Địa chỉ hiện tại</th>
+                <th>Khu vực nhận việc</th>
                 <th>Ngày đăng ký</th>
                 <th>Đánh giá</th>
                 <th>Cấp độ</th>
@@ -149,13 +163,18 @@
                   <div class="user-cell">
                     <div class="avatar avatar-sm" th:text="${#strings.substring(ctv.hoTen, 0, 1)}">C</div>
                     <div class="user-cell-info">
-                      <div class="name" th:text="${ctv.hoTen}">Tên CTV</div>
+                      <div class="name"><span th:text="${ctv.hoTen}">Tên CTV</span>
+                        <span class="badge badge-danger" th:if="${ctv.trangThai == 'ChoDuyet' and !daXemIds.contains(ctv.id)}" style="margin-left:0.25rem">Mới</span></div>
                       <div class="sub" th:text="|Mã: ${ctv.maCongTacVien}|">Mã CTV</div>
                     </div>
                   </div>
                 </td>
                 <td style="font-size:0.875rem" th:text="${ctv.soDienThoai}">0900000000</td>
                 <td style="font-size:0.875rem" th:text="${ctv.noiCuTru}">TP.HCM</td>
+                <td style="font-size:0.875rem" th:with="kvs=${khuVucCtv.get(ctv.id)}">
+                  <span th:if="${kvs != null}" th:text="${#strings.listJoin(kvs.![tenKhuVuc], ', ')}">Quận 1, Quận 3</span>
+                  <span th:if="${kvs == null}" style="color:var(--danger)">Chưa chọn</span>
+                </td>
                 <td style="font-size:0.875rem" th:text="${ctv.ngayDangKy != null ? #temporals.format(ctv.ngayDangKy, 'dd/MM/yyyy') : '--'}">01/01/2026</td>
                 <td>
                   <span class="nowrap" style="font-weight:600"><span style="color:#F59E0B" aria-hidden="true">&#9733;</span> <th:block th:text="${ctv.diemDanhGia != null ? #numbers.formatDecimal(ctv.diemDanhGia, 1, 'POINT', 2, 'COMMA') : '5,0'}">5,0</th:block></span>
@@ -180,6 +199,10 @@
                             th:data-hoten="${ctv.hoTen}"
                             th:data-sdt="${ctv.soDienThoai}"
                             th:data-noicutru="${ctv.noiCuTru}"
+                            th:data-matinh="${noiOTach.get(ctv.id).get('maTinh')}"
+                            th:data-maphuong="${noiOTach.get(ctv.id).get('maPhuong')}"
+                            th:data-sonha="${noiOTach.get(ctv.id).get('soNhaTenDuong')}"
+                            th:data-khuvuc="${khuVucCtv.get(ctv.id) != null ? #strings.listJoin(khuVucCtv.get(ctv.id).![id], ',') : ''}"
                             th:data-capdo="${ctv.capDo}"
                             th:data-trangthai="${ctv.trangThai}"
                             th:data-ngaysinh="${ctv.ngaySinh != null ? #temporals.format(ctv.ngaySinh, 'dd/MM/yyyy') : ''}"
@@ -192,14 +215,17 @@
                       <input type="hidden" name="trangThai" value="DinhChi">
                       <button type="submit" class="btn btn-danger btn-sm" title="Đình chỉ CTV"><i class="ti ti-ban"></i></button>
                     </form>
+                    <button th:if="${ctv.trangThai == 'ChoDuyet'}" type="button" class="btn btn-outline btn-sm"
+                            th:attr="data-chi-tiet=${ctv.id}" title="Xem chi tiết đơn ứng tuyển"><i class="ti ti-file-description"></i></button>
                     <button th:if="${ctv.trangThai == 'ChoDuyet'}" type="button" class="btn btn-primary btn-sm"
+                            th:disabled="${lichPhongVan.get(ctv.id) == null and ctv.taiKhoan != null}"
                             th:data-id="${ctv.id}"
                             th:data-name="${ctv.hoTen}"
                             th:data-phone="${ctv.soDienThoai}"
                             th:data-username="${ctv.taiKhoan != null ? ctv.taiKhoan.tenDangNhap : ctv.soDienThoai}"
                             th:data-hasaccount="${ctv.taiKhoan != null}"
                             onclick="openApproveModal(this)"
-                            title="Duyệt hồ sơ và kích hoạt tài khoản">
+                            th:title="${lichPhongVan.get(ctv.id) == null and ctv.taiKhoan != null} ? 'Cần gửi lịch phỏng vấn trước khi phê duyệt' : 'Duyệt hồ sơ và kích hoạt tài khoản'">
                       <i class="ti ti-check"></i> Duyệt
                     </button>
                     <form th:if="${ctv.trangThai == 'ChoDuyet'}" th:action="@{/hcns/cong-tac-vien/tu-choi}" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn từ chối hồ sơ cộng tác viên này?');">
@@ -256,10 +282,6 @@
         </div>
         <div class="form-row" style="margin-bottom:1rem">
           <div class="form-group">
-            <label class="form-label">Nơi cư trú *</label>
-            <input class="form-control" name="noiCuTru" placeholder="VD: Quận Bình Thạnh, TP.HCM" required>
-          </div>
-          <div class="form-group">
             <label class="form-label">Giới tính</label>
             <select class="form-control" name="gioiTinh">
               <option value="Nu">Nữ</option>
@@ -276,7 +298,7 @@
                 required autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
                 onchange="validateCtvDob('addCtvNgaySinh', 'addCtvNgaySinhError', true)"
                 onblur="validateCtvDob('addCtvNgaySinh', 'addCtvNgaySinhError', true)">
-              <input type="date" id="addCtvNgaySinhPicker" tabindex="-1" aria-hidden="true"
+              <input type="date" id="addCtvNgaySinhPicker" tabindex="-1" aria-hidden="true" data-min-age="18"
                 style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
                 onchange="syncDatePickerToText('addCtvNgaySinhPicker', 'addCtvNgaySinh', 'addCtvNgaySinhError', true)">
               <button type="button" class="btn btn-outline" style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding:0 0.85rem;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"
@@ -294,6 +316,31 @@
               <option value="UuTu">Ưu tú</option>
             </select>
           </div>
+        </div>
+        <div class="form-label" style="margin-bottom:0.5rem">Địa chỉ nơi ở hiện tại *</div>
+        <div data-dia-chi-form id="addCtvNoiO">
+          <div class="form-row" style="margin-bottom:0.5rem">
+            <div class="form-group">
+              <label class="form-label" for="addCtvTinh">Tỉnh / Thành phố *</label>
+              <select class="form-control" id="addCtvTinh" name="maTinh" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="addCtvPhuong">Phường / Xã *</label>
+              <select class="form-control" id="addCtvPhuong" name="maPhuong" required></select>
+            </div>
+          </div>
+          <div data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem"></div>
+          <div class="form-group" style="margin-bottom:1rem">
+            <label class="form-label" for="addCtvSoNha">Số nhà, tên đường *</label>
+            <input class="form-control" id="addCtvSoNha" name="soNhaTenDuong" maxlength="140" placeholder="VD: 45 Đường số 7" required>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Khu vực nhận việc * <span style="font-weight:400;color:var(--text-muted)">(1 đến 5 quận, huyện)</span></label>
+          <div class="kv-grid" id="addCtvKhuVuc">
+            <label th:each="kv : ${khuVucs}"><input type="checkbox" name="khuVucIds" th:value="${kv.id}"> <span th:text="${kv.tenKhuVuc}">Quận 1</span></label>
+          </div>
+          <div class="kv-loi" style="display:none;color:var(--danger);font-size:0.825rem;margin-top:0.35rem;font-weight:500">Chọn 1 đến 5 quận, huyện nhận việc.</div>
         </div>
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Trạng thái hồ sơ</label>
@@ -314,6 +361,11 @@
 <!-- ============================================================
      MODAL: CHỈNH SỬA CỘNG TÁC VIÊN (UPDATE)
      ============================================================ -->
+<style>
+  .kv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.35rem 0.75rem;
+             max-height: 180px; overflow: auto; padding: 0.6rem 0.75rem; border: 1px solid var(--border, #e4e4e7); border-radius: var(--radius-md, 8px); }
+  .kv-grid label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; cursor: pointer; }
+</style>
 <div class="modal-overlay" id="editCtvModal">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
@@ -350,7 +402,7 @@
                 autocomplete="off" style="border-top-right-radius:0;border-bottom-right-radius:0;flex:1"
                 onchange="validateCtvDob('editCtvNgaySinh', 'editCtvNgaySinhError', false)"
                 onblur="validateCtvDob('editCtvNgaySinh', 'editCtvNgaySinhError', false)">
-              <input type="date" id="editCtvNgaySinhPicker" tabindex="-1" aria-hidden="true"
+              <input type="date" id="editCtvNgaySinhPicker" tabindex="-1" aria-hidden="true" data-min-age="18"
                 style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
                 onchange="syncDatePickerToText('editCtvNgaySinhPicker', 'editCtvNgaySinh', 'editCtvNgaySinhError', false)">
               <button type="button" class="btn btn-outline" style="border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding:0 0.85rem;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"
@@ -361,9 +413,31 @@
             <div id="editCtvNgaySinhError" style="display:none;color:var(--danger);font-size:0.825rem;margin-top:0.35rem;font-weight:500"></div>
           </div>
         </div>
+        <div class="form-label" style="margin-bottom:0.5rem">Địa chỉ nơi ở hiện tại *</div>
+        <div id="editCtvNoiCuCu" style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem"></div>
+        <div data-dia-chi-form id="editCtvNoiO">
+          <div class="form-row" style="margin-bottom:0.5rem">
+            <div class="form-group">
+              <label class="form-label" for="editCtvTinh">Tỉnh / Thành phố *</label>
+              <select class="form-control" id="editCtvTinh" name="maTinh" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="editCtvPhuong">Phường / Xã *</label>
+              <select class="form-control" id="editCtvPhuong" name="maPhuong" required></select>
+            </div>
+          </div>
+          <div data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem"></div>
+          <div class="form-group" style="margin-bottom:1rem">
+            <label class="form-label" for="editCtvSoNha">Số nhà, tên đường *</label>
+            <input class="form-control" id="editCtvSoNha" name="soNhaTenDuong" maxlength="140" placeholder="VD: 45 Đường số 7" required>
+          </div>
+        </div>
         <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label">Nơi cư trú *</label>
-          <input class="form-control" name="noiCuTru" id="editCtvNoiCuTru" required>
+          <label class="form-label">Khu vực nhận việc * <span style="font-weight:400;color:var(--text-muted)">(1 đến 5 quận, huyện)</span></label>
+          <div class="kv-grid" id="editCtvKhuVuc">
+            <label th:each="kv : ${khuVucs}"><input type="checkbox" name="khuVucIds" th:value="${kv.id}"> <span th:text="${kv.tenKhuVuc}">Quận 1</span></label>
+          </div>
+          <div class="kv-loi" style="display:none;color:var(--danger);font-size:0.825rem;margin-top:0.35rem;font-weight:500">Chọn 1 đến 5 quận, huyện nhận việc.</div>
         </div>
         <div class="form-row" style="margin-bottom:0">
           <div class="form-group">
@@ -433,7 +507,80 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: CHI TIẾT ĐƠN ỨNG TUYỂN (nạp JSON từ /hcns/cong-tac-vien/{id}/chi-tiet)
+     ============================================================ -->
+<div class="modal-overlay" id="ungVienModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <h2 class="modal-title">Đơn ứng tuyển <span class="tabular" id="uvMa"></span></h2>
+      <button class="modal-close" data-modal-close="ungVienModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="uvBody" style="max-height:65vh;overflow:auto">
+      <p style="color:var(--muted)">Đang tải…</p>
+    </div>
+    <div class="modal-footer" id="uvFooter">
+      <button type="button" class="btn btn-secondary" data-modal-close="ungVienModal">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: GỬI LỊCH PHỎNG VẤN (bước trước khi phê duyệt)
+     ============================================================ -->
+<div class="modal-overlay" id="phongVanModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="pvTitle">Mời phỏng vấn</h2>
+      <button class="modal-close" data-modal-close="phongVanModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
+    </div>
+    <form method="post" id="phongVanForm">
+      <dl class="desc-list" style="margin-bottom:1rem">
+        <dt>Ứng viên</dt><dd id="pvName">—</dd>
+        <dt>Số điện thoại</dt><dd class="tabular" id="pvPhone">—</dd>
+        <dt id="pvLichCuLabel" hidden>Lịch hiện tại</dt><dd class="tabular" id="pvLichCu" hidden>—</dd>
+      </dl>
+      <div class="form-group">
+        <label class="form-label" for="pvThoiGian">Thời gian phỏng vấn *</label>
+        <input class="form-control" type="datetime-local" id="pvThoiGian" name="thoiGian" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="pvDiaDiem">Địa chỉ phỏng vấn *</label>
+        <input class="form-control" type="text" id="pvDiaDiem" name="diaDiem" required minlength="10" maxlength="250"
+               th:value="${diaChiPhongVanMacDinh}" placeholder="VD: Văn phòng bTaskee, 12 Nguyễn Huệ, Phường Sài Gòn, TP.HCM">
+        <div class="form-hint">Địa chỉ dùng lần trước được điền sẵn cho lần sau.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="pvGhiChu">Ghi chú cho ứng viên</label>
+        <input class="form-control" type="text" id="pvGhiChu" name="ghiChu" maxlength="200" placeholder="VD: Gặp chị Hạnh – phòng HCNS, tầng 3">
+      </div>
+      <div style="margin-top:0.75rem">
+        <div class="form-label">Tin nhắn sẽ gửi tới <span class="tabular" id="pvPhone2"></span></div>
+        <div id="pvPreview" style="padding:0.75rem;background:var(--background);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--foreground-soft);line-height:1.5"></div>
+        <div class="form-hint">Ứng viên cũng nhận thông báo đầy đủ (có dấu) trong tài khoản.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-modal-close="phongVanModal">Hủy</button>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-send"></i> <span id="pvSubmit">Gửi lịch phỏng vấn</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .ung-vien-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+  .ung-vien-ten { font-weight:600; }
+  /* Đơn mới: viền nhấn, nền nhạt và tên đậm hơn để phân biệt với đơn đã xem */
+  .ung-vien-card.is-new { border-color:var(--primary); box-shadow:inset 4px 0 0 var(--primary); background:color-mix(in srgb, var(--primary) 5%, var(--bg-card)); }
+  .ung-vien-card.is-new .ung-vien-ten { font-weight:800; }
+  .uv-section { margin-bottom:1.25rem; }
+  .uv-section h3 { font-size:var(--text-sm); font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 .5rem; }
+  .uv-tags { display:flex; flex-wrap:wrap; gap:.375rem; }
+  .uv-pre { white-space:pre-line; padding:.75rem; background:var(--background); border-radius:var(--radius-md); font-size:var(--text-sm); line-height:1.55; }
+</style>
+
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<script src="/js/dia-chi.js"></script>
 
 <script>
   // Duyệt hồ sơ: kích hoạt tài khoản, giữ mật khẩu ứng viên tự đặt (HCNS có thể đặt lại)
@@ -488,6 +635,216 @@
       document.getElementById('approveMatKhauError').hidden = false;
     }
   });
+</script>
+
+<script>
+  // ===================== ĐƠN ỨNG TUYỂN: CHI TIẾT + LỊCH PHỎNG VẤN =====================
+  (function () {
+    const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+    const STATUS = { ChoDuyet: 'Chờ duyệt', HoatDong: 'Hoạt động', DinhChi: 'Đình chỉ', TuChoi: 'Từ chối' };
+
+    // Mở chi tiết = đã xem: bỏ đánh dấu "Mới" trên trang ngay, không cần tải lại
+    function markRead(id) {
+      document.querySelectorAll('.ung-vien-card[data-ctv-id="' + id + '"]').forEach(card => {
+        card.classList.remove('is-new');
+        card.querySelectorAll('.ung-vien-moi').forEach(b => b.remove());
+      });
+      document.querySelectorAll('[data-chi-tiet="' + id + '"]').forEach(btn => {
+        const row = btn.closest('tr');
+        if (row) row.querySelectorAll('.name .badge-danger').forEach(b => b.remove());
+      });
+    }
+
+    function section(title, content) {
+      const sec = el('section', 'uv-section');
+      sec.appendChild(el('h3', null, title));
+      sec.appendChild(content);
+      return sec;
+    }
+    function descList(pairs) {
+      const dl = el('dl', 'desc-list');
+      pairs.forEach(([k, v]) => { dl.appendChild(el('dt', null, k)); dl.appendChild(el('dd', null, v == null || v === '' ? '—' : String(v))); });
+      return dl;
+    }
+    function tags(list, empty) {
+      const box = el('div', 'uv-tags');
+      if (!list || !list.length) { box.appendChild(el('span', null, empty)); return box; }
+      list.forEach(t => box.appendChild(el('span', 'badge badge-secondary', t)));
+      return box;
+    }
+
+    function render(d) {
+      document.getElementById('uvMa').textContent = d.ma || '';
+      const body = document.getElementById('uvBody');
+      body.innerHTML = '';
+      body.appendChild(section('Thông tin cá nhân', descList([
+        ['Họ tên', d.hoTen],
+        ['Ngày sinh', d.ngaySinh ? d.ngaySinh + (d.tuoi != null ? ' (' + d.tuoi + ' tuổi)' : '') : null],
+        ['Giới tính', d.gioiTinh],
+        ['Số điện thoại', d.soDienThoai],
+        ['Email', d.email],
+        ['Tên đăng nhập', d.tenDangNhap],
+        ['Ngày gửi đơn', d.ngayDangKy],
+        ['Trạng thái', STATUS[d.trangThai] || d.trangThai]
+      ])));
+      body.appendChild(section('Địa chỉ hiện tại', descList([
+        ['Địa chỉ', d.diaChiHienTai],
+        ['Khu vực nhận việc', (d.khuVuc || []).join('; ')]
+      ])));
+      body.appendChild(section('Dịch vụ đăng ký', tags(d.dichVu, 'Chưa chọn dịch vụ.')));
+
+      const cc = el('div');
+      if (d.chungChi && d.chungChi.length) {
+        const ul = el('ul'); ul.style.cssText = 'margin:0;padding-left:1.1rem;font-size:var(--text-sm)';
+        d.chungChi.forEach(c => ul.appendChild(el('li', null, [c.ten, c.noiCap ? 'cấp bởi ' + c.noiCap : null, c.ngayCap].filter(Boolean).join(' · '))));
+        cc.appendChild(ul);
+      } else {
+        cc.appendChild(el('span', null, 'Không có chứng chỉ.'));
+      }
+      const files = el('button', 'btn btn-outline btn-sm');
+      files.type = 'button';
+      files.style.marginTop = '.5rem';
+      files.setAttribute('data-files', '/hcns/cong-tac-vien/' + d.id + '/tai-lieu');
+      files.innerHTML = '<i class="ti ti-paperclip"></i> ';
+      files.appendChild(document.createTextNode('Xem ảnh chân dung, CCCD, chứng chỉ (' + (d.soTaiLieu || 0) + ' tệp)'));
+      cc.appendChild(files);
+      body.appendChild(section('Chứng chỉ, giấy tờ', cc));
+
+      const pv = el('div');
+      if (d.phongVan) {
+        pv.appendChild(el('div', 'uv-pre', d.phongVan.noiDung));
+        pv.appendChild(el('div', 'form-hint', 'Đã gửi lúc ' + d.phongVan.guiLuc));
+      } else {
+        pv.appendChild(el('span', null, 'Chưa gửi lịch phỏng vấn. Cần mời phỏng vấn trước khi phê duyệt.'));
+      }
+      body.appendChild(section('Phỏng vấn', pv));
+
+      if (d.lichSu && d.lichSu.length) {
+        const ul = el('ul'); ul.style.cssText = 'margin:0;padding-left:1.1rem;font-size:var(--text-sm);color:var(--muted)';
+        d.lichSu.forEach(h => ul.appendChild(el('li', null, h.thoiGian + ' – ' + h.hanhDong)));
+        body.appendChild(section('Lịch sử xử lý', ul));
+      }
+
+      // Nút thao tác theo bước của quy trình
+      const footer = document.getElementById('uvFooter');
+      footer.innerHTML = '';
+      const close = el('button', 'btn btn-secondary', 'Đóng');
+      close.type = 'button';
+      close.addEventListener('click', () => ModalManager.close('ungVienModal'));
+      footer.appendChild(close);
+      if (d.trangThai === 'ChoDuyet') {
+        if (d.tenDangNhap) {
+          const moi = el('button', d.phongVan ? 'btn btn-outline' : 'btn btn-primary', d.phongVan ? 'Đổi lịch phỏng vấn' : 'Mời phỏng vấn');
+          moi.type = 'button';
+          moi.addEventListener('click', () => {
+            ModalManager.close('ungVienModal');
+            openInterview({ id: d.id, name: d.hoTen, phone: d.soDienThoai, lich: d.phongVan ? d.phongVan.thoiGian : '' });
+          });
+          footer.appendChild(moi);
+        }
+        const approve = el('button', 'btn btn-success', 'Phê duyệt');
+        approve.type = 'button';
+        const canApprove = !!d.phongVan || !d.tenDangNhap;
+        approve.disabled = !canApprove;
+        approve.title = canApprove ? 'Duyệt hồ sơ và kích hoạt tài khoản' : 'Cần gửi lịch phỏng vấn trước khi phê duyệt';
+        approve.dataset.id = d.id;
+        approve.dataset.name = d.hoTen;
+        approve.dataset.phone = d.soDienThoai;
+        approve.dataset.username = d.tenDangNhap || d.soDienThoai;
+        approve.dataset.hasaccount = String(!!d.tenDangNhap);
+        approve.addEventListener('click', () => { ModalManager.close('ungVienModal'); openApproveModal(approve); });
+        footer.appendChild(approve);
+      }
+    }
+
+    function openDetail(id) {
+      document.getElementById('uvMa').textContent = '';
+      document.getElementById('uvBody').innerHTML = '<p style="color:var(--muted)">Đang tải…</p>';
+      document.getElementById('uvFooter').innerHTML = '<button type="button" class="btn btn-secondary" data-modal-close="ungVienModal">Đóng</button>';
+      ModalManager.open('ungVienModal');
+      fetch('/hcns/cong-tac-vien/' + encodeURIComponent(id) + '/chi-tiet', { headers: { 'Accept': 'application/json' } })
+        .then(r => r.ok ? r.json() : r.json().then(b => Promise.reject(new Error(b.message || 'HTTP ' + r.status))))
+        .then(d => { render(d); markRead(id); })
+        .catch(err => {
+          const body = document.getElementById('uvBody');
+          body.innerHTML = '';
+          body.appendChild(el('p', 'form-error', 'Không tải được đơn ứng tuyển: ' + err.message));
+        });
+    }
+
+    // ---- Lịch phỏng vấn ----
+    const PV_KEY = 'hcns.phongVan.diaChi';
+    const boDau = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+    const pad = n => String(n).padStart(2, '0');
+    const isoLocal = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    let pvDoiLich = false;
+
+    function pvPreview() {
+      const tg = document.getElementById('pvThoiGian').value;
+      const dd = document.getElementById('pvDiaDiem').value.trim();
+      let luc = '…';
+      if (tg) {
+        const [d, t] = tg.split('T');
+        const [y, m, day] = d.split('-');
+        luc = t + ' ' + day + '/' + m + '/' + y;
+      }
+      // Cùng mẫu với UngVienCtvService (SMS không dấu)
+      document.getElementById('pvPreview').textContent = 'bTaskee: ' +
+        (pvDoiLich ? 'Lich phong van CTV cua ban doi sang ' : 'Moi ban phong van CTV luc ') +
+        luc + ' tai ' + (dd ? boDau(dd) : '…') + '. Mang theo CCCD goc.';
+    }
+
+    function openInterview(o) {
+      pvDoiLich = !!o.lich;
+      document.getElementById('phongVanForm').action = '/hcns/cong-tac-vien/' + encodeURIComponent(o.id) + '/phong-van';
+      document.getElementById('pvTitle').textContent = pvDoiLich ? 'Đổi lịch phỏng vấn' : 'Mời phỏng vấn';
+      document.getElementById('pvSubmit').textContent = pvDoiLich ? 'Gửi lịch mới' : 'Gửi lịch phỏng vấn';
+      document.getElementById('pvName').textContent = o.name || '—';
+      document.getElementById('pvPhone').textContent = o.phone || '—';
+      document.getElementById('pvPhone2').textContent = o.phone || '';
+      document.getElementById('pvLichCu').textContent = o.lich || '';
+      document.getElementById('pvLichCu').hidden = !pvDoiLich;
+      document.getElementById('pvLichCuLabel').hidden = !pvDoiLich;
+
+      // Không chọn thời điểm đã qua; gợi ý 9:00 sáng ngày làm việc kế tiếp (bỏ Chủ nhật)
+      const now = new Date();
+      const tg = document.getElementById('pvThoiGian');
+      tg.min = isoLocal(now);
+      const goiY = new Date(now);
+      goiY.setDate(goiY.getDate() + 1);
+      while (goiY.getDay() === 0) goiY.setDate(goiY.getDate() + 1);
+      goiY.setHours(9, 0, 0, 0);
+      tg.value = isoLocal(goiY);
+
+      const dd = document.getElementById('pvDiaDiem');
+      if (!dd.value) { try { dd.value = localStorage.getItem(PV_KEY) || ''; } catch (e) {} }
+      document.getElementById('pvGhiChu').value = '';
+      pvPreview();
+      ModalManager.open('phongVanModal');
+    }
+
+    document.getElementById('pvThoiGian').addEventListener('input', pvPreview);
+    document.getElementById('pvDiaDiem').addEventListener('input', pvPreview);
+    document.getElementById('phongVanForm').addEventListener('submit', e => {
+      const tg = document.getElementById('pvThoiGian');
+      if (tg.value && tg.value < isoLocal(new Date())) {
+        e.preventDefault();
+        tg.setCustomValidity('Thời gian phỏng vấn phải sau thời điểm hiện tại.');
+        tg.reportValidity();
+        tg.setCustomValidity('');
+        return;
+      }
+      try { localStorage.setItem(PV_KEY, document.getElementById('pvDiaDiem').value.trim()); } catch (err) {}
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest) return;
+      const ct = e.target.closest('[data-chi-tiet]');
+      if (ct) { openDetail(ct.getAttribute('data-chi-tiet')); return; }
+      const pv = e.target.closest('[data-phong-van]');
+      if (pv) openInterview({ id: pv.getAttribute('data-phong-van'), name: pv.dataset.name, phone: pv.dataset.phone, lich: pv.dataset.lich });
+    });
+  })();
 </script>
 
 <script>
@@ -581,6 +938,12 @@
         picker.value = `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
       }
     }
+    // Lịch dùng chung (lich.js): đồng bộ ngày đang nhập rồi mở lịch cạnh nút
+    if (picker._flatpickr && window.Lich) {
+      Lich.dongBo(picker);
+      picker._flatpickr.open();
+      return;
+    }
     try {
       if (typeof picker.showPicker === 'function') {
         picker.showPicker();
@@ -629,11 +992,31 @@
     }
   }
 
+  // Khu vực nhận việc: 1 đến 5 quận, huyện
+  function kiemTraKhuVucCtv(form) {
+    const grid = form.querySelector('.kv-grid');
+    if (!grid) return true;
+    const n = grid.querySelectorAll('input[name="khuVucIds"]:checked').length;
+    const loi = grid.parentElement.querySelector('.kv-loi');
+    const ok = n >= 1 && n <= 5;
+    loi.style.display = ok ? 'none' : 'block';
+    if (!ok) grid.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return ok;
+  }
+  document.querySelectorAll('#addCtvForm, #editCtvForm').forEach(f => f.addEventListener('submit', e => {
+    if (!kiemTraKhuVucCtv(f)) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true));
+
   function openEditCtvModal(btn) {
     document.getElementById('editCtvId').value = btn.dataset.id;
     document.getElementById('editCtvHoTen').value = btn.dataset.hoten || '';
     document.getElementById('editCtvSdt').value = btn.dataset.sdt || '';
-    document.getElementById('editCtvNoiCuTru').value = btn.dataset.noicutru || '';
+    // Nơi ở: điền lại tỉnh, phường, số nhà (địa chỉ cũ không tách được thì hiện để HCNS chọn lại)
+    document.getElementById('editCtvSoNha').value = btn.dataset.sonha || '';
+    document.getElementById('editCtvNoiCuCu').textContent = btn.dataset.maphuong ? '' : 'Địa chỉ đang lưu: ' + (btn.dataset.noicutru || '—') + '. Hãy chọn lại tỉnh, phường.';
+    DiaChi.datGiaTri(document.getElementById('editCtvNoiO'), btn.dataset.matinh, btn.dataset.maphuong);
+    const kvDangChon = (btn.dataset.khuvuc || '').split(',').filter(Boolean);
+    document.querySelectorAll('#editCtvKhuVuc input[name="khuVucIds"]').forEach(cb => { cb.checked = kvDangChon.includes(cb.value); });
     if (btn.dataset.capdo) {
       document.getElementById('editCtvCapDo').value = btn.dataset.capdo;
     }

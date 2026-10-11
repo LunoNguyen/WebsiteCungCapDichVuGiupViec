@@ -1,0 +1,28 @@
+{
+  "ghiChu": "Khu vực phục vụ theo quận, huyện của TP.HCM (trước sắp xếp 01/07/2025), mã theo danh mục hành chính cũ. 'phuongMoi' là các phường, xã mới chủ yếu nằm trong quận cũ, chỉ dùng để chuyển dữ liệu cũ (địa chỉ, khu vực CTV đang gắn phường) sang quận.",
+  "tinhThanh": "Thành phố Hồ Chí Minh",
+  "quanHuyen": [
+    { "ma": 760, "ten": "Quận 1", "phuongMoi": ["Sài Gòn", "Tân Định", "Bến Thành", "Cầu Ông Lãnh"] },
+    { "ma": 770, "ten": "Quận 3", "phuongMoi": ["Bàn Cờ", "Xuân Hòa", "Nhiêu Lộc"] },
+    { "ma": 773, "ten": "Quận 4", "phuongMoi": ["Xóm Chiếu", "Khánh Hội", "Vĩnh Hội"] },
+    { "ma": 774, "ten": "Quận 5", "phuongMoi": ["Chợ Quán", "An Đông", "Chợ Lớn"] },
+    { "ma": 775, "ten": "Quận 6", "phuongMoi": ["Bình Tây", "Bình Tiên", "Bình Phú", "Phú Lâm"] },
+    { "ma": 778, "ten": "Quận 7", "phuongMoi": ["Tân Mỹ", "Tân Hưng", "Tân Thuận", "Phú Thuận"] },
+    { "ma": 776, "ten": "Quận 8", "phuongMoi": ["Chánh Hưng", "Phú Định", "Bình Đông"] },
+    { "ma": 771, "ten": "Quận 10", "phuongMoi": ["Diên Hồng", "Vườn Lài", "Hòa Hưng"] },
+    { "ma": 772, "ten": "Quận 11", "phuongMoi": ["Minh Phụng", "Bình Thới", "Hòa Bình", "Phú Thọ"] },
+    { "ma": 761, "ten": "Quận 12", "phuongMoi": ["Đông Hưng Thuận", "Trung Mỹ Tây", "Tân Thới Hiệp", "Thới An", "An Phú Đông"] },
+    { "ma": 765, "ten": "Quận Bình Thạnh", "phuongMoi": ["Gia Định", "Bình Thạnh", "Bình Lợi Trung", "Thạnh Mỹ Tây", "Bình Quới"] },
+    { "ma": 777, "ten": "Quận Bình Tân", "phuongMoi": ["Bình Hưng Hòa", "Bình Tân", "Bình Trị Đông", "Tân Tạo", "An Lạc"] },
+    { "ma": 764, "ten": "Quận Gò Vấp", "phuongMoi": ["Hạnh Thông", "An Nhơn", "Gò Vấp", "An Hội Đông", "Thông Tây Hội", "An Hội Tây"] },
+    { "ma": 768, "ten": "Quận Phú Nhuận", "phuongMoi": ["Đức Nhuận", "Cầu Kiệu", "Phú Nhuận"] },
+    { "ma": 766, "ten": "Quận Tân Bình", "phuongMoi": ["Tân Sơn Hòa", "Tân Sơn Nhất", "Tân Hòa", "Bảy Hiền", "Tân Bình", "Tân Sơn"] },
+    { "ma": 767, "ten": "Quận Tân Phú", "phuongMoi": ["Tây Thạnh", "Tân Sơn Nhì", "Phú Thọ Hòa", "Tân Phú", "Phú Thạnh"] },
+    { "ma": 769, "ten": "Thành phố Thủ Đức", "phuongMoi": ["Hiệp Bình", "Thủ Đức", "Tam Bình", "Linh Xuân", "Tăng Nhơn Phú", "Long Bình", "Long Phước", "Long Trường", "Cát Lái", "Bình Trưng", "Phước Long", "An Khánh"] },
+    { "ma": 785, "ten": "Huyện Bình Chánh", "phuongMoi": ["Vĩnh Lộc", "Tân Vĩnh Lộc", "Bình Lợi", "Tân Nhựt", "Bình Chánh", "Hưng Long", "Bình Hưng"] },
+    { "ma": 787, "ten": "Huyện Cần Giờ", "phuongMoi": ["Cần Giờ", "Bình Khánh", "An Thới Đông", "Thạnh An"] },
+    { "ma": 783, "ten": "Huyện Củ Chi", "phuongMoi": ["Củ Chi", "Tân An Hội", "Thái Mỹ", "An Nhơn Tây", "Nhuận Đức", "Phú Hòa Đông", "Bình Mỹ"] },
+    { "ma": 784, "ten": "Huyện Hóc Môn", "phuongMoi": ["Hóc Môn", "Bà Điểm", "Xuân Thới Sơn", "Đông Thạnh"] },
+    { "ma": 786, "ten": "Huyện Nhà Bè", "phuongMoi": ["Nhà Bè", "Hiệp Phước"] }
+  ]
+}

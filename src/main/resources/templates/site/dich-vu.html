@@ -23,7 +23,7 @@
             <h3><a th:href="@{/dich-vu/{id}(id=${dm.id})}" th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</a></h3>
             <p th:text="${dm.moTa}">Mô tả nhóm dịch vụ</p>
             <div class="chips">
-              <span class="chip" th:each="ten : ${dm.tieuBieu}" th:text="${ten}">Tổng vệ sinh</span>
+              <a class="chip" th:each="ten : ${dm.tieuBieu}" th:href="${dm.tieuBieuId != null and dm.tieuBieuId.get(ten) != null} ? @{/dich-vu/chi-tiet/{id}(id=${dm.tieuBieuId.get(ten)})} : @{/tim-dich-vu(nhom=${dm.id},q=${ten})}" th:text="${ten}">Tổng vệ sinh</a>
             </div>
           </div>
           <div class="cat-side">

@@ -325,7 +325,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Ngày thực hiện <span style="color:var(--danger)">*</span></label>
-        <input type="date" class="form-control" id="c-ngay">
+        <input type="date" class="form-control" id="c-ngay" data-min-today>
       </div>
       <div class="form-group">
         <label class="form-label">Giờ bắt đầu</label>
@@ -339,9 +339,16 @@
         <label class="form-label">Thành tiền (đ)</label>
         <input type="number" class="form-control" id="c-tien" placeholder="VD: 200000">
       </div>
-      <div class="form-group" style="grid-column:span 2">
-        <label class="form-label">Địa chỉ thực hiện <span style="color:var(--danger)">*</span></label>
-        <input type="text" class="form-control" id="c-dc" placeholder="Số nhà, đường, quận/huyện, thành phố...">
+      <div class="form-group">
+        <label class="form-label">Số nhà, tên đường <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-control" id="c-dc" placeholder="VD: 45 Đường số 7, Phường Bình Trị Đông B">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quận, huyện <span style="color:var(--danger)">*</span></label>
+        <select class="form-control" id="c-kv">
+          <option value="">-- Chọn quận, huyện --</option>
+          <option th:each="kv : ${khuVucs}" th:value="${kv.id}" th:text="${kv.tenKhuVuc}">Quận 1</option>
+        </select>
       </div>
       <div class="form-group" style="grid-column:span 2">
         <label class="form-label">Ghi chú / Yêu cầu đặc biệt</label>
@@ -395,7 +402,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Ngày thực hiện</label>
-        <input type="date" class="form-control" id="e-ngay">
+        <input type="date" class="form-control" id="e-ngay" data-min-today>
       </div>
       <div class="form-group">
         <label class="form-label">Giờ bắt đầu</label>
@@ -847,7 +854,7 @@
 
   // ── Create Modal ───────────────────────────────────
   function openCreateModal() {
-    document.getElementById('c-ngay').value = new Date().toISOString().split('T')[0];
+    DateRules.fill('c-ngay', DateRules.today());
     ModalManager.open('createOrderModal');
   }
 
@@ -855,10 +862,13 @@
     const kh = document.getElementById('c-kh').value.trim();
     const dv = document.getElementById('c-dv').value;
     const ngay = document.getElementById('c-ngay').value;
-    if (!kh || !dv || !ngay) {
+    const dc = document.getElementById('c-dc').value.trim();
+    const kv = document.getElementById('c-kv').value;
+    if (!kh || !dv || !ngay || !dc || !kv) {
       CSKH.toast('Vui lòng điền đầy đủ thông tin bắt buộc!', 'error');
       return;
     }
+    if (!DateRules.validate(document.getElementById('createOrderModal'))) return;
     ModalManager.close('createOrderModal');
     if (withCTV) {
       CSKH.toast('Tạo đơn thành công! Đang tìm CTV phù hợp...');
@@ -872,7 +882,7 @@
     currentEditId = btn.dataset.id;
     document.getElementById('e-ma').value = btn.dataset.ma || '';
     document.getElementById('e-kh').value = btn.dataset.kh || '';
-    document.getElementById('e-ngay').value = btn.dataset.ngay || '';
+    DateRules.fill('e-ngay', btn.dataset.ngay);
     document.getElementById('e-giobatdau').value = btn.dataset.giobatdau ? btn.dataset.giobatdau.substring(0,5) : '';
     document.getElementById('e-gioketthuc').value = btn.dataset.gioketthuc ? btn.dataset.gioketthuc.substring(0,5) : '';
     document.getElementById('e-tien').value = btn.dataset.tien || '';
@@ -885,6 +895,7 @@
   }
 
   function saveEditOrder() {
+    if (!DateRules.validate(document.getElementById('editOrderModal'))) return;
     ModalManager.close('editOrderModal');
     CSKH.toast('Cập nhật đơn #' + document.getElementById('e-ma').value + ' thành công!');
   }

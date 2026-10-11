@@ -66,12 +66,14 @@
             <h3><a th:href="@{/dich-vu/chi-tiet/{id}(id=${m.id})}" th:text="${m.tenDichVu}">Dọn dẹp nhà 3 giờ</a></h3>
             <p class="meta">
               <span th:text="${m.tenLoaiDichVu}">Dọn dẹp nhà cửa</span>
-              <span th:text="${m.loaiHinhDat == 'GoiThang'} ? 'Gói tháng' + (${m['soBuoiGoi'] != null} ? ' · ' + ${m['soBuoiGoi']} + ' buổi' : '') : 'Theo lần'">Theo lần</span>
+              <span th:text="${m['loaiHinhText']} + (${m['soBuoiGoi'] != null} ? ' · ' + ${m['soBuoiGoi']} + ' buổi' : '')">Theo lần</span>
+              <span th:if="${m['soLuaChon'] != null and m['soLuaChon'] > 1}" th:text="${m['soLuaChon']} + ' lựa chọn'">4 lựa chọn</span>
               <span th:if="${phut != null and phut > 0}" th:text="${phut % 60 == 0} ? ${phut / 60} + ' giờ mỗi buổi' : ${phut} + ' phút mỗi buổi'">3 giờ mỗi buổi</span>
             </p>
           </div>
           <div class="result-side">
-            <div class="price"><small>từ </small><span th:text="${#numbers.formatDecimal(m.donGiaThamKhao, 0, 'POINT', 0, 'COMMA')} + 'đ'">270.000đ</span></div>
+            <div class="price"><small>từ </small><span th:text="${#numbers.formatDecimal(m.donGiaThamKhao, 0, 'POINT', 0, 'COMMA')} + 'đ'">270.000đ</span>
+              <s class="gia-goc" th:if="${m['giaGoc'] != null}" th:text="${#numbers.formatDecimal(m['giaGoc'], 0, 'POINT', 0, 'COMMA')} + 'đ'">300.000đ</s></div>
             <div class="actions">
               <a class="btn btn-outline btn-sm" th:href="@{/dich-vu/chi-tiet/{id}(id=${m.id})}">Xem</a>
               <a class="btn btn-primary btn-sm" th:href="@{/dat-dich-vu/{nhom}(nhom=${m.loaiDichVuId},dv=${m.id})}">Đặt</a>

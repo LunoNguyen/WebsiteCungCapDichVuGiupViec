@@ -26,7 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Dịch vụ lưu trữ file trên MinIO cho toàn hệ thống Neatify.
+ * Dịch vụ lưu trữ file trên MinIO cho toàn hệ thống bTaskee.
  *
  * Quy ước:
  *   - Cơ sở dữ liệu chỉ lưu "object key" (đường dẫn trong bucket, vd: ctv/ho-so/abc.jpg),

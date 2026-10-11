@@ -30,6 +30,10 @@ public class SiteController {
 
     private final CatalogService catalogService;
     private final CustomerApiService customerApiService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Repository.DichVuRepository dichVuRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.BangGiaService bangGiaService;
 
     public SiteController(CatalogService catalogService, CustomerApiService customerApiService) {
         this.catalogService = catalogService;
@@ -68,6 +72,8 @@ public class SiteController {
             ketQua = new ArrayList<>();
             model.addAttribute("loiTai", true);
         }
+        // Các biến thể cùng mã (VD "Dọn dẹp nhà theo giờ (2 giờ)", "(3 giờ)"...) gộp thành một dịch vụ
+        ketQua = gopTheoMaDichVu(ketQua);
         Comparator<Map<String, Object>> theoGia = Comparator.comparing(m -> (BigDecimal) m.get("donGiaThamKhao"),
                 Comparator.nullsLast(Comparator.naturalOrder()));
         if ("gia-tang".equals(sapXep)) ketQua.sort(theoGia);
@@ -89,6 +95,44 @@ public class SiteController {
         return "site/tim-dich-vu";
     }
 
+    /**
+     * Gộp các dòng cùng mã dịch vụ thành một kết quả: tên chung (bỏ phần trong ngoặc), giá "từ" thấp nhất,
+     * số lựa chọn; liên kết tới biến thể rẻ nhất, trang chi tiết cho chọn biến thể khác.
+     */
+    private static List<Map<String, Object>> gopTheoMaDichVu(List<Map<String, Object>> ds) {
+        Map<Object, List<Map<String, Object>>> nhom = new LinkedHashMap<>();
+        for (Map<String, Object> m : ds) {
+            Object ma = m.get("maDichVu") != null ? m.get("maDichVu") : m.get("id");
+            nhom.computeIfAbsent(ma, k -> new ArrayList<>()).add(m);
+        }
+        Comparator<Map<String, Object>> theoGia = Comparator.comparing(m -> (BigDecimal) m.get("donGiaThamKhao"),
+                Comparator.nullsLast(Comparator.naturalOrder()));
+        List<Map<String, Object>> ketQua = new ArrayList<>();
+        for (List<Map<String, Object>> bienThe : nhom.values()) {
+            Map<String, Object> reNhat = bienThe.stream().min(theoGia).orElse(bienThe.get(0));
+            Map<String, Object> g = new HashMap<>(reNhat);
+            String ten = String.valueOf(reNhat.get("tenDichVu"));
+            int ngoac = ten.indexOf(" (");
+            if (bienThe.size() > 1 && ngoac > 0) g.put("tenDichVu", ten.substring(0, ngoac));
+            g.put("soLuaChon", bienThe.size());
+            // Giá gốc của nhóm: giá "từ" khi chưa có đợt tạm; chỉ hiện khi khác giá "từ" hiện tại
+            BigDecimal tuGoc = bienThe.stream()
+                    .map(m -> m.get("giaGoc") != null ? (BigDecimal) m.get("giaGoc") : (BigDecimal) m.get("donGiaThamKhao"))
+                    .filter(java.util.Objects::nonNull).min(Comparator.naturalOrder()).orElse(null);
+            BigDecimal tu = (BigDecimal) reNhat.get("donGiaThamKhao");
+            g.put("giaGoc", tuGoc != null && tu != null && tuGoc.compareTo(tu) != 0 ? tuGoc : null);
+            boolean theoLan = bienThe.stream().anyMatch(m -> !"GoiThang".equals(m.get("loaiHinhDat")));
+            boolean goiThang = bienThe.stream().anyMatch(m -> "GoiThang".equals(m.get("loaiHinhDat")));
+            g.put("loaiHinhText", theoLan && goiThang ? "Theo lần, gói tháng" : goiThang ? "Gói tháng" : "Theo lần");
+            if (bienThe.stream().map(m -> m.get("thoiGianThucHienPhut")).distinct().count() > 1) {
+                g.put("thoiGianThucHienPhut", null); // thời lượng khác nhau giữa các lựa chọn
+            }
+            if (bienThe.size() > 1) g.remove("soBuoiGoi");
+            ketQua.add(g);
+        }
+        return ketQua;
+    }
+
     /** Thông tin một dịch vụ (không cần đăng nhập): giá, thời lượng, số buổi gói, mô tả, đánh giá. */
     @GetMapping("/dich-vu/chi-tiet/{id}")
     @SuppressWarnings("unchecked")
@@ -102,6 +146,20 @@ public class SiteController {
                 if (bangGias != null && !bangGias.isEmpty()) gia = (BigDecimal) bangGias.get(0).get("donGia");
             }
             model.addAttribute("gia", gia);
+            model.addAttribute("giaGoc", dv.get("giaGoc"));
+
+            // Các lựa chọn khác của cùng dịch vụ (cùng mã): theo lần trước, rồi theo giá
+            Object ma = dv.get("maDichVu");
+            if (ma != null) {
+                List<com.example.Model.DichVu> bienThe = new ArrayList<>(
+                        dichVuRepository.findByMaDichVuAndTrangThai(ma.toString(), "HoatDong"));
+                bienThe.sort(Comparator.comparing((com.example.Model.DichVu d) -> "GoiThang".equals(d.getLoaiHinhDat()))
+                        .thenComparing(com.example.Model.DichVu::getGiaHienTai, Comparator.nullsLast(Comparator.naturalOrder())));
+                if (bienThe.size() > 1) model.addAttribute("bienThe", bienThe);
+                Map<Integer, BigDecimal> giaGocBienThe = new HashMap<>();
+                bienThe.forEach(b -> { if (bangGiaService.giaGoc(b.getId()) != null) giaGocBienThe.put(b.getId(), bangGiaService.giaGoc(b.getId())); });
+                model.addAttribute("giaGocBienThe", giaGocBienThe);
+            }
         } catch (IllegalArgumentException e) {
             return "redirect:/tim-dich-vu";
         }
@@ -149,9 +207,14 @@ public class SiteController {
         return "site/khuyen-mai";
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.KhuVucService khuVucService;
+
     /** Đăng ký làm cộng tác viên (UC: Đăng ký làm cộng tác viên). */
     @GetMapping("/tro-thanh-doi-tac")
-    public String troThanhDoiTac() {
+    public String troThanhDoiTac(org.springframework.ui.Model model) {
+        model.addAttribute("khuVucs", khuVucService.danhSach());
+        model.addAttribute("tinhThanhPhucVu", khuVucService.getTinhThanh());
         return "site/tro-thanh-doi-tac";
     }
 }

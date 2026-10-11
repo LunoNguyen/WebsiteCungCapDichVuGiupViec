@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Các ô địa chỉ dùng chung (trang khách hàng, giao diện site): Tỉnh, thành → Phường, xã (provinces.open-api.vn v2)
+  + số nhà, tên đường. Khu vực (quận, huyện) tự suy ra từ phường; chỉ hiện ô chọn khi phường thuộc nhiều khu vực.
+  Hoạt động nhờ /js/dia-chi.js (đã nạp trong layout/site-layout :: scripts).
+    tienTo   : tiền tố id cho các ô (nhiều form trên cùng trang)
+    maTinh, maPhuong, khuVucId, soNha : giá trị sẵn có khi sửa (null khi thêm mới)
+    batBuoc  : true = không cho gửi nếu địa chỉ ngoài khu vực phục vụ (đặt dịch vụ)
+-->
+<th:block th:fragment="truong(tienTo, maTinh, maPhuong, khuVucId, soNha, batBuoc)">
+  <div data-dia-chi-form style="display:contents"
+       th:attr="data-ma-tinh=${maTinh}, data-ma-phuong=${maPhuong}, data-khu-vuc-id=${khuVucId}, data-bat-buoc-khu-vuc=${batBuoc ? '' : null}">
+    <div class="field">
+      <label th:for="${tienTo} + '-tinh'">Tỉnh, thành phố <span class="req">*</span></label>
+      <select th:id="${tienTo} + '-tinh'" name="maTinh" class="select" required></select>
+    </div>
+    <div class="field">
+      <label th:for="${tienTo} + '-phuong'">Phường, xã <span class="req">*</span></label>
+      <select th:id="${tienTo} + '-phuong'" name="maPhuong" class="select" required></select>
+    </div>
+    <div class="field" data-kv-wrap hidden>
+      <label th:for="${tienTo} + '-kv'">Khu vực <span class="req">*</span></label>
+      <select th:id="${tienTo} + '-kv'" name="khuVucId" class="select"></select>
+    </div>
+    <p class="hint full" data-kv-note style="margin:0"></p>
+    <div class="field full">
+      <label th:for="${tienTo} + '-sonha'">Số nhà, tên đường <span class="req">*</span></label>
+      <input th:id="${tienTo} + '-sonha'" name="soNhaTenDuong" class="input" maxlength="200" th:value="${soNha}"
+             placeholder="VD: 45 Đường số 7" autocomplete="address-line1" required>
+    </div>
+  </div>
+</th:block>
+</body>
+</html>

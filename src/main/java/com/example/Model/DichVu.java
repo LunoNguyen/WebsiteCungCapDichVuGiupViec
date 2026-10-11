@@ -12,7 +12,8 @@ public class DichVu {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "MaDichVu", nullable = false, unique = true, length = 20)
+    // Mã nhóm dịch vụ: các biến thể cùng tên (VD "2 giờ", "3 giờ") dùng chung một mã nên không UNIQUE
+    @Column(name = "MaDichVu", nullable = false, length = 20)
     private String maDichVu;
 
     @ManyToOne(fetch = FetchType.LAZY)

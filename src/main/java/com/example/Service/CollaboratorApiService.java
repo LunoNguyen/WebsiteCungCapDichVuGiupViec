@@ -17,6 +17,8 @@ public class CollaboratorApiService {
     @org.springframework.beans.factory.annotation.Autowired
     private PhanCongService phanCongService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private KhuVucCtvService khuVucCtvService;
     private final PhanCongCTVRepository phanCongCTVRepository;
     private final DonDatDichVuRepository donDatDichVuRepository;
     private final LichLamViecRepository lichLamViecRepository;
@@ -72,7 +74,8 @@ public class CollaboratorApiService {
             item.put("ngayThucHien", don.getNgayThucHien());
             item.put("gioBatDau", don.getGioBatDau());
             item.put("gioKetThuc", don.getGioKetThuc());
-            item.put("diaChi", don.getDiaChi() != null ? don.getDiaChi().getDiaChiChiTiet() : "");
+            item.put("diaChi", CustomerAddressService.diaChiDayDu(don.getDiaChi()));
+            item.put("khuVuc", don.getDiaChi() != null && don.getDiaChi().getKhuVuc() != null ? don.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
             item.put("khachHangTen", don.getKhachHang().getHoTen());
             item.put("khachHangPhone", don.getKhachHang().getSoDienThoai());
             item.put("yeuCauDacBiet", don.getYeuCauDacBiet());
@@ -127,7 +130,8 @@ public class CollaboratorApiService {
         Map<String, Object> khMap = new LinkedHashMap<>();
         khMap.put("hoTen", don.getKhachHang().getHoTen());
         khMap.put("soDienThoai", don.getKhachHang().getSoDienThoai());
-        khMap.put("diaChi", don.getDiaChi() != null ? don.getDiaChi().getDiaChiChiTiet() : "");
+        khMap.put("diaChi", CustomerAddressService.diaChiDayDu(don.getDiaChi()));
+            khMap.put("khuVuc", don.getDiaChi() != null && don.getDiaChi().getKhuVuc() != null ? don.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
         result.put("khachHang", khMap);
 
         return result;
@@ -145,9 +149,8 @@ public class CollaboratorApiService {
         // không quá tải trong ngày. Khóa CTV để hai lần nhận đơn cùng lúc được kiểm tra lần lượt.
         if (!"DaXacNhan".equalsIgnoreCase(pc.getTrangThai())) {
             congTacVienRepository.findByIdForUpdate(pc.getCongTacVien().getId());
-            phanCongService.kiemTraLichHoacBaoLoi(pc.getCongTacVien().getId(), don.getNgayThucHien(),
-                    don.getGioBatDau(), don.getGioKetThuc(),
-                    don.getDiaChi() != null ? don.getDiaChi().getKhuVuc() : null, pc.getId(), false);
+            // Gói tháng: kiểm tra mọi buổi trong tháng
+            phanCongService.kiemTraDonHoacBaoLoi(pc.getCongTacVien().getId(), don, pc.getId(), false);
         }
 
         pc.setTrangThai("DaXacNhan"); 
@@ -169,19 +172,10 @@ public class CollaboratorApiService {
                 .build();
         lichSuTrangThaiDonRepository.save(ls);
 
-        // Tự động tạo hoặc cập nhật Lịch làm việc cho CTV
-        List<LichLamViec> existing = lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId());
-        if (existing.isEmpty()) {
-            LichLamViec llv = LichLamViec.builder()
-                    .maLichLamViec(com.example.Service.MaSinh.tao("LLV-"))
-                    .phanCong(pc)
-                    .congTacVien(pc.getCongTacVien())
-                    .ngayLam(don.getNgayThucHien())
-                    .gioBatDau(don.getGioBatDau())
-                    .gioKetThuc(don.getGioKetThuc())
-                    .trangThai("SapToi")
-                    .build();
-            lichLamViecRepository.save(llv);
+        // Tạo lịch làm việc của CTV này (gói tháng: mỗi buổi một lịch)
+        if (lichLamViecRepository.findByPhanCong_Id(pc.getId()).isEmpty()) {
+            phanCongService.taoLichLamViec(pc, PhanCongService.cacBuoi(don), don.getGioBatDau(),
+                    PhanCongService.gioKetThuc(don), null);
         }
 
         Map<String, Object> res = new LinkedHashMap<>();
@@ -331,7 +325,8 @@ public class CollaboratorApiService {
                 String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
                         ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
                 item.put("tenDichVu", tenDv);
-                item.put("diaChi", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
+                item.put("diaChi", CustomerAddressService.diaChiDayDu(d.getDiaChi()));
+            item.put("khuVuc", d.getDiaChi() != null && d.getDiaChi().getKhuVuc() != null ? d.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
                 item.put("khachHangTen", d.getKhachHang().getHoTen());
                 item.put("khachHangPhone", d.getKhachHang().getSoDienThoai());
             }
@@ -360,7 +355,8 @@ public class CollaboratorApiService {
             String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
                     ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
             result.put("tenDichVu", tenDv);
-            result.put("diaChi", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
+            result.put("diaChi", CustomerAddressService.diaChiDayDu(d.getDiaChi()));
+            result.put("khuVuc", d.getDiaChi() != null && d.getDiaChi().getKhuVuc() != null ? d.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
             result.put("yeuCauDacBiet", d.getYeuCauDacBiet());
             result.put("khachHangTen", d.getKhachHang().getHoTen());
             result.put("khachHangPhone", d.getKhachHang().getSoDienThoai());
@@ -426,6 +422,8 @@ public class CollaboratorApiService {
         m.put("ngaySinh", ctv.getNgaySinh() != null ? ctv.getNgaySinh().toString() : null);
         m.put("gioiTinh", ctv.getGioiTinh());
         m.put("noiCuTru", ctv.getNoiCuTru());
+        // Quận, huyện nhận việc (app CTV: mục "Khu vực nhận việc")
+        m.put("khuVucNhanViec", khuVucCtvService != null ? khuVucCtvService.tomTat(ctv.getId()) : "");
         m.put("soDienThoai", ctv.getSoDienThoai());
         m.put("diemDanhGia", ctv.getDiemDanhGia());
         m.put("capDo", ctv.getCapDo());

@@ -136,12 +136,9 @@
         <div id="tableView" style="display:none">
           <!-- Filter -->
           <div class="filter-bar" style="margin-bottom:1rem">
-            <select class="filter-select">
-              <option>Tất cả khu vực</option>
-              <option>Quận 1, Quận 3</option>
-              <option>Bình Thạnh, Phú Nhuận</option>
-              <option>Tân Bình, Gò Vấp</option>
-              <option>Quận 7, Nhà Bè</option>
+            <select class="filter-select" id="locKhuVucCtv" onchange="locCtvTheoKhuVuc()" aria-label="Lọc theo khu vực nhận việc">
+              <option value="">Tất cả khu vực</option>
+              <option th:each="kv : ${khuVucs}" th:value="${kv.id}" th:text="${kv.tenKhuVuc}">Quận 1</option>
             </select>
             <select class="filter-select">
               <option>Tất cả kỹ năng</option>
@@ -172,7 +169,7 @@
                 <thead>
                   <tr>
                     <th>Cộng tác viên</th>
-                    <th>Khu vực & Kỹ năng</th>
+                    <th>Khu vực nhận việc</th>
                     <th>Ca Sáng (07:30–11:30)</th>
                     <th>Ca Chiều (13:00–17:00)</th>
                     <th>Ca Tối (17:30–20:30)</th>
@@ -180,7 +177,9 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr th:each="ctv : ${congTacViens}">
+                  <tr th:each="ctv : ${congTacViens}"
+                      th:with="kvs=${khuVucCtv.get(ctv.id)}"
+                      th:data-khuvuc="${kvs != null ? ',' + #strings.listJoin(kvs.![id], ',') + ',' : ''}">
                     <td>
                       <div class="user-cell">
                         <div class="avatar avatar-sm"
@@ -195,8 +194,8 @@
                       </div>
                     </td>
                     <td>
-                      <div th:text="${ctv.noiCuTru != null ? ctv.noiCuTru : 'Hồ Chí Minh'}">HCM</div>
-                      <div style="font-size:0.75rem;color:var(--text-muted)">Dịch vụ gia đình</div>
+                      <div th:text="${kvs != null ? #strings.listJoin(kvs.![tenKhuVuc], ', ') : 'Chưa chọn khu vực'}">Quận 1, Quận 3</div>
+                      <div style="font-size:0.75rem;color:var(--text-muted)" th:text="${ctv.noiCuTru != null ? 'Ở: ' + ctv.noiCuTru : ''}">Ở: Quận Bình Thạnh</div>
                     </td>
                     <td th:with="shift=${ctvShiftsMap != null ? ctvShiftsMap.get(ctv.id) : null}">
                       <span th:class="|badge ${shift != null ? shift.get('sangClass') : 'badge-success'}|"
@@ -267,7 +266,7 @@
         </div>
         <div class="form-group" style="margin-bottom:1rem">
           <label class="form-label">Ngày thực hiện <span style="color:var(--danger)">*</span></label>
-          <input type="date" class="form-control" id="assignDate">
+          <input type="date" class="form-control" id="assignDate" data-min-today>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
           <div>
@@ -540,7 +539,7 @@
     function onOrderSelectChange(sel) {
       const opt = sel.options[sel.selectedIndex];
       if (opt && opt.dataset.date) {
-        document.getElementById('assignDate').value = opt.dataset.date;
+        DateRules.fill('assignDate', opt.dataset.date >= DateRules.today() ? opt.dataset.date : DateRules.today());
         if (opt.dataset.start) document.getElementById('assignStart').value = opt.dataset.start.substring(0, 5);
         if (opt.dataset.end) document.getElementById('assignEnd').value = opt.dataset.end.substring(0, 5);
       }
@@ -551,7 +550,7 @@
       document.getElementById('assignCTVId').value = ctvId || '';
       document.getElementById('assignCTVName').value = ctvName || '';
       document.getElementById('assignOrderSelect').selectedIndex = 0;
-      document.getElementById('assignDate').value = new Date().toISOString().split('T')[0];
+      DateRules.fill('assignDate', DateRules.today());
       document.getElementById('assignStart').value = '08:30';
       document.getElementById('assignEnd').value = '11:30';
       document.getElementById('assignNote').value = '';
@@ -587,6 +586,7 @@
         alert('Vui lòng nhập đầy đủ ngày và giờ làm việc!');
         return;
       }
+      if (!DateRules.validate(document.getElementById('assignModal'))) return;
 
       const btn = document.getElementById('btnConfirmAssign');
       btn.disabled = true;
@@ -633,7 +633,15 @@
       initCalendar();
       selectCTV('all', 'Tất cả CTV', document.getElementById('ctv-item-all'));
     });
-  </script>
+  
+  // Lọc CTV theo quận, huyện nhận việc
+  function locCtvTheoKhuVuc() {
+    const id = document.getElementById('locKhuVucCtv').value;
+    document.querySelectorAll('tr[data-khuvuc]').forEach(tr => {
+      tr.style.display = !id || tr.dataset.khuvuc.includes(',' + id + ',') ? '' : 'none';
+    });
+  }
+</script>
 </body>
 
 </html>

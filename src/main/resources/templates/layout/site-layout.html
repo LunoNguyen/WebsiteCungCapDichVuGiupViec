@@ -22,6 +22,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
+  <!-- Lịch chọn ngày dùng chung (flatpickr + giao diện riêng) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="/css/lich.css">
 </head>
 
 <body>
@@ -91,7 +94,7 @@
             <div class="mega-col" th:each="dm : ${danhMucs}">
               <h3><a th:href="@{/dich-vu/{id}(id=${dm.id})}" th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</a></h3>
               <ul>
-                <li th:each="ten : ${dm.tieuBieu}" th:text="${ten}">Dọn dẹp nhà theo giờ</li>
+                <li th:each="ten : ${dm.tieuBieu}"><a th:href="${dm.tieuBieuId != null and dm.tieuBieuId.get(ten) != null} ? @{/dich-vu/chi-tiet/{id}(id=${dm.tieuBieuId.get(ten)})} : @{/tim-dich-vu(nhom=${dm.id},q=${ten})}" th:text="${ten}">Dọn dẹp nhà theo giờ</a></li>
               </ul>
               <a class="more" th:href="@{/tim-dich-vu(nhom=${dm.id})}">Xem dịch vụ</a>
             </div>
@@ -213,6 +216,10 @@
 <div th:fragment="scripts">
   <div class="toast" id="siteToast" role="status" aria-live="polite"></div>
   <script src="/js/site.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/vn.js"></script>
+  <script src="/js/lich.js"></script>
+  <script src="/js/dia-chi.js"></script>
 </div>
 
 </body>

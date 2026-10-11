@@ -52,7 +52,7 @@ import java.util.Set;
  *  Bước 3 – Sắp xếp giảm dần theo điểm; bằng điểm thì ưu tiên người ít việc trong tuần hơn
  *     để chia việc đều, tránh dồn đơn cho một người.
  *
- * Hệ thống chưa lưu tọa độ nên thời gian di chuyển được ước lượng theo khu vực (phường/xã, tỉnh/thành).
+ * Hệ thống chưa lưu tọa độ nên thời gian di chuyển được ước lượng theo khu vực (quận/huyện, tỉnh/thành).
  * Mọi thao tác phân công (CSKH phân công, CTV tự nhận) đều kiểm tra lại các ràng buộc cứng ở bước 1.
  */
 @Service
@@ -148,6 +148,32 @@ public class PhanCongService {
         return don != null && don.getDiaChi() != null ? don.getDiaChi().getKhuVuc() : null;
     }
 
+    /** Giờ kết thúc của mỗi buổi: lấy theo đơn, chưa có thì tính từ thời lượng dịch vụ. */
+    public static LocalTime gioKetThuc(DonDatDichVu don) {
+        return ketThucCuaDon(don);
+    }
+
+    /** Các ngày làm của đơn: đơn theo lần là 1 ngày; gói tháng là mọi buổi trong tháng (tính lại từ các thứ đã chọn). */
+    public static List<LocalDate> cacBuoi(DonDatDichVu don) {
+        return cacBuoi(don, don.getNgayThucHien());
+    }
+
+    public static List<LocalDate> cacBuoi(DonDatDichVu don, LocalDate batDau) {
+        if ("GoiThang".equalsIgnoreCase(don.getLoaiHinhDat()) && don.getChiTietList() != null) {
+            for (ChiTietDonDat ct : don.getChiTietList()) {
+                if (ct.getDichVu() == null || ct.getNgayThucHienTrongTuan() == null) {
+                    continue;
+                }
+                List<LocalDate> lich = LichGoiThang.tinhLich(batDau, LichGoiThang.docThu(ct.getNgayThucHienTrongTuan()),
+                        LichGoiThang.soBuoi(ct.getDichVu().getSoBuoi(), ct.getDichVu().getTenDichVu()));
+                if (!lich.isEmpty()) {
+                    return lich;
+                }
+            }
+        }
+        return List.of(batDau);
+    }
+
     /** Mọi việc của tất cả CTV trong khoảng ngày, gom theo CTV. */
     /**
      * @param gomDangCho true: tính cả phân công đang chờ CTV xác nhận (khi CSKH xếp lịch, để không giao chồng);
@@ -172,14 +198,20 @@ public class PhanCongService {
         if (!gomDangCho) {
             return theoCtv;
         }
-        for (PhanCongCTV pc : phanCongCTVRepository.findDangChoTrongKhoang(tuNgay, denNgay)) {
+        // Gói tháng bắt đầu tới 1 tháng trước vẫn còn buổi trong khoảng đang xét
+        for (PhanCongCTV pc : phanCongCTVRepository.findDangChoTrongKhoang(tuNgay.minusMonths(1), denNgay)) {
             if (phanCongCoLich.contains(pc.getId())) {
                 continue;
             }
             DonDatDichVu don = pc.getDonDat();
-            theoCtv.computeIfAbsent(pc.getCongTacVien().getId(), k -> new ArrayList<>())
-                    .add(new Viec(pc.getCongTacVien().getId(), don.getId(), pc.getId(), don.getNgayThucHien(),
-                            don.getGioBatDau(), ketThucCuaDon(don), khuVucCuaDon(don)));
+            for (LocalDate ngay : cacBuoi(don)) {
+                if (ngay.isBefore(tuNgay) || ngay.isAfter(denNgay)) {
+                    continue;
+                }
+                theoCtv.computeIfAbsent(pc.getCongTacVien().getId(), k -> new ArrayList<>())
+                        .add(new Viec(pc.getCongTacVien().getId(), don.getId(), pc.getId(), ngay,
+                                don.getGioBatDau(), ketThucCuaDon(don), khuVucCuaDon(don)));
+            }
         }
         return theoCtv;
     }
@@ -286,11 +318,59 @@ public class PhanCongService {
         if (!ketThuc.isAfter(batDau)) {
             throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu.");
         }
-        List<Viec> viec = taiViec(ngay, ngay, gomDangCho).getOrDefault(ctvId, List.of());
-        KiemTra kq = kiemTra(viec, ngay, batDau, ketThuc, khuVucDon, boQuaPhanCongId);
-        if (kq.lyDoLoai != null) {
-            throw new IllegalArgumentException("Không thể xếp lịch: " + kq.lyDoLoai + ".");
+        kiemTraCacBuoiHoacBaoLoi(ctvId, List.of(ngay), batDau, ketThuc, khuVucDon, boQuaPhanCongId, gomDangCho);
+    }
+
+    /**
+     * Kiểm tra toàn bộ buổi của một đơn (gói tháng có nhiều buổi): mỗi buổi phải không trùng giờ,
+     * cách việc khác ít nhất {@code khoangCachPhut} phút để nghỉ và di chuyển, không quá tải trong ngày.
+     */
+    @Transactional(readOnly = true)
+    public void kiemTraDonHoacBaoLoi(Integer ctvId, DonDatDichVu don, Integer boQuaPhanCongId, boolean gomDangCho) {
+        kiemTraCacBuoiHoacBaoLoi(ctvId, cacBuoi(don), don.getGioBatDau(), ketThucCuaDon(don), khuVucCuaDon(don),
+                boQuaPhanCongId, gomDangCho);
+    }
+
+    @Transactional(readOnly = true)
+    public void kiemTraCacBuoiHoacBaoLoi(Integer ctvId, List<LocalDate> ngays, LocalTime batDau, LocalTime ketThuc,
+                                        KhuVuc khuVucDon, Integer boQuaPhanCongId, boolean gomDangCho) {
+        if (ketThuc == null) {
+            ketThuc = congPhut(batDau, PHUT_MAC_DINH);
         }
+        if (!ketThuc.isAfter(batDau)) {
+            throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu.");
+        }
+        LocalDate tu = ngays.stream().min(LocalDate::compareTo).orElseThrow();
+        LocalDate den = ngays.stream().max(LocalDate::compareTo).orElseThrow();
+        List<Viec> viec = taiViec(tu, den, gomDangCho).getOrDefault(ctvId, List.of());
+        for (LocalDate ngay : ngays) {
+            KiemTra kq = kiemTra(viec, ngay, batDau, ketThuc, khuVucDon, boQuaPhanCongId);
+            if (kq.lyDoLoai != null) {
+                throw new IllegalArgumentException("Không thể xếp lịch"
+                        + (ngays.size() > 1 ? " buổi " + ngay.format(DateTimeFormatter.ofPattern("dd/MM")) : "")
+                        + ": " + kq.lyDoLoai + ".");
+            }
+        }
+    }
+
+    /** Tạo lịch làm việc cho mọi buổi của phân công (đơn theo lần 1 lịch, gói tháng mỗi buổi 1 lịch). */
+    @Transactional
+    public List<LichLamViec> taoLichLamViec(PhanCongCTV pc, List<LocalDate> ngays, LocalTime batDau, LocalTime ketThuc,
+                                            String ghiChu) {
+        List<LichLamViec> ds = new ArrayList<>();
+        for (LocalDate ngay : ngays) {
+            ds.add(lichLamViecRepository.save(LichLamViec.builder()
+                    .maLichLamViec(MaSinh.tao("LLV-"))
+                    .phanCong(pc)
+                    .congTacVien(pc.getCongTacVien())
+                    .ngayLam(ngay)
+                    .gioBatDau(batDau)
+                    .gioKetThuc(ketThuc)
+                    .trangThai("SapToi")
+                    .ketQuaThucHien(ghiChu)
+                    .build()));
+        }
+        return ds;
     }
 
     // =========================================================================
@@ -309,6 +389,8 @@ public class PhanCongService {
         KhuVuc khuVucDon = khuVucCuaDon(don);
         LocalDate dauTuan = ngay.with(DayOfWeek.MONDAY);
         LocalDate cuoiTuan = dauTuan.plusDays(6);
+        List<LocalDate> cacBuoi = cacBuoi(don);
+        LocalDate buoiCuoi = cacBuoi.get(cacBuoi.size() - 1);
 
         Set<Integer> dichVuCuaDon = new HashSet<>();
         int soNguoiCan = 1;
@@ -353,7 +435,8 @@ public class PhanCongService {
             }
         }
 
-        Map<Integer, List<Viec>> viecTrongTuan = taiViec(dauTuan, cuoiTuan, true);
+        // Gói tháng: tải lịch tới buổi cuối để kiểm tra khoảng nghỉ của mọi buổi
+        Map<Integer, List<Viec>> viecTheoCtv = taiViec(dauTuan, buoiCuoi.isAfter(cuoiTuan) ? buoiCuoi : cuoiTuan, true);
 
         List<Map<String, Object>> phuHop = new ArrayList<>();
         List<Map<String, Object>> khongPhuHop = new ArrayList<>();
@@ -362,8 +445,8 @@ public class PhanCongService {
             if (!"HoatDong".equalsIgnoreCase(ctv.getTrangThai())) {
                 continue; // chưa duyệt / bị đình chỉ: không đưa vào danh sách
             }
-            List<Viec> viec = viecTrongTuan.getOrDefault(ctv.getId(), List.of());
-            int soDonTrongTuan = viec.size();
+            List<Viec> viec = viecTheoCtv.getOrDefault(ctv.getId(), List.of());
+            int soDonTrongTuan = (int) viec.stream().filter(v -> !v.ngay().isBefore(dauTuan) && !v.ngay().isAfter(cuoiTuan)).count();
 
             Map<String, Object> dong = new LinkedHashMap<>();
             dong.put("ctvId", ctv.getId());
@@ -391,6 +474,13 @@ public class PhanCongService {
             } else {
                 kq = kiemTra(viec, ngay, batDau, ketThuc, khuVucDon, null);
                 lyDoLoai = kq.lyDoLoai;
+                // Các buổi sau của gói tháng cũng phải trống và đủ khoảng nghỉ
+                for (int i = 1; lyDoLoai == null && i < cacBuoi.size(); i++) {
+                    String lyDo = kiemTra(viec, cacBuoi.get(i), batDau, ketThuc, khuVucDon, null).lyDoLoai;
+                    if (lyDo != null) {
+                        lyDoLoai = "Buổi " + cacBuoi.get(i).format(DateTimeFormatter.ofPattern("dd/MM")) + ": " + lyDo;
+                    }
+                }
                 dong.put("soDonTrongNgay", kq.soDonTrongNgay);
                 dong.put("gioTrongNgay", Math.round(kq.phutTrongNgay / 6.0) / 10.0);
             }
@@ -538,7 +628,7 @@ public class PhanCongService {
         }
 
         LocalTime ketThuc = ketThucCuaDon(don);
-        kiemTraLichHoacBaoLoi(ctvId, don.getNgayThucHien(), don.getGioBatDau(), ketThuc, khuVucCuaDon(don), null);
+        kiemTraDonHoacBaoLoi(ctvId, don, null, true);
 
         PhanCongCTV pc = phanCongCTVRepository.save(PhanCongCTV.builder()
                 .maPhanCong(MaSinh.tao("PC-"))
@@ -549,15 +639,7 @@ public class PhanCongService {
                 .thoiGianXacNhan(LocalDateTime.now())
                 .build());
 
-        lichLamViecRepository.save(LichLamViec.builder()
-                .maLichLamViec(MaSinh.tao("LLV-"))
-                .phanCong(pc)
-                .congTacVien(ctv)
-                .ngayLam(don.getNgayThucHien())
-                .gioBatDau(don.getGioBatDau())
-                .gioKetThuc(ketThuc)
-                .trangThai("SapToi")
-                .build());
+        taoLichLamViec(pc, cacBuoi(don), don.getGioBatDau(), ketThuc, null);
 
         String trangThaiCu = don.getTrangThai();
         if (!"DaXacNhan".equalsIgnoreCase(trangThaiCu)) {

@@ -15,6 +15,27 @@ public class CollaboratorProfileController {
     @Autowired
     private CollaboratorApiService collaboratorApiService;
 
+    @Autowired
+    private com.example.Service.KhuVucCtvService khuVucCtvService;
+
+    /** Quận, huyện CTV đang nhận việc. */
+    @GetMapping("/{id}/areas")
+    public ResponseEntity<?> getAreas(@PathVariable Integer id) {
+        return ResponseEntity.ok(Map.of("success", true,
+                "data", com.example.Service.KhuVucCtvService.toMap(khuVucCtvService.dangNhan(id))));
+    }
+
+    /** Đặt lại khu vực nhận việc, body: { "khuVucIds": [1, 2] } (1 đến 5 quận, huyện). */
+    @PutMapping("/{id}/areas")
+    public ResponseEntity<?> updateAreas(@PathVariable Integer id, @RequestBody Map<String, java.util.List<Integer>> req) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đã cập nhật khu vực nhận việc.",
+                    "data", com.example.Service.KhuVucCtvService.toMap(khuVucCtvService.capNhat(id, req.get("khuVucIds")))));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     /** Lấy danh sách đơn hàng */
     @GetMapping("/assignments")
     public ResponseEntity<?> getAssignments(@RequestParam Integer congTacVienId, @RequestParam(required = false) String trangThai) {

@@ -29,6 +29,9 @@
 
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/dashboard.css">
+  <!-- Lịch chọn ngày dùng chung (flatpickr + giao diện riêng) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="/css/lich.css">
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script>if (window.Chart) Chart.defaults.locale = 'vi-VN';</script>
@@ -243,6 +246,9 @@
   <div class="toast-container" id="toastContainer"></div>
   <div class="overlay" id="sidebarOverlay"></div>
   <script src="/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/vn.js"></script>
+  <script src="/js/lich.js"></script>
   <!-- Cập nhật dữ liệu theo thời gian thực (SSE) -->
   <script src="/js/realtime.js"></script>
   <!-- Xem file đính kèm lưu trên MinIO: gắn data-files="..." vào nút -->

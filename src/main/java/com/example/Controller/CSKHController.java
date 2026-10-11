@@ -43,6 +43,12 @@ public class CSKHController {
     private com.example.Service.ThongBaoService thongBaoService;
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Service.PhanCongService phanCongService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.DanhGiaService danhGiaService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.KhuVucCtvService khuVucCtvService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.DiaGioiService diaGioiService;
     private final CongTacVienRepository congTacVienRepository;
     private final LichLamViecRepository lichLamViecRepository;
     private final PhanCongCTVRepository phanCongCTVRepository;
@@ -116,8 +122,14 @@ public class CSKHController {
     }
 
     // ── UC-CSKH01 – Quản lý khách hàng ──────────────────────────────
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.KhuVucService khuVucService;
+
     @GetMapping("/khach-hang")
     public String khachHang(Model model) {
+        // Quận, huyện TP.HCM: cùng danh sách với sổ địa chỉ khách hàng và đăng ký CTV
+        model.addAttribute("khuVucs", khuVucService.danhSach());
+        model.addAttribute("tinhThanhPhucVu", khuVucService.getTinhThanh());
         model.addAttribute("khachHangStats", thongKeService.getKhachHangStats());
         var khachHangs = khachHangRepository.findAll();
         model.addAttribute("khachHangs", khachHangs);
@@ -163,12 +175,10 @@ public class CSKHController {
             @RequestParam(required = false) String email,
             @RequestParam(required = false, defaultValue = "Khac") String gioiTinh,
             @RequestParam(required = false) String ngaySinh,
-            @RequestParam(required = false) String tinhThanh,
-            @RequestParam(required = false) String quanHuyen,
-            @RequestParam(required = false) String phuongXa,
-            @RequestParam(required = false) String maKhuVuc,
+            @RequestParam(required = false) Integer maTinh,
+            @RequestParam(required = false) Integer maPhuong,
+            @RequestParam(required = false) Integer khuVucId,
             @RequestParam(required = false) String soNhaTenDuong,
-            @RequestParam(required = false) String diaChiChiTiet,
             @RequestParam(required = false) BigDecimal dienTichNha,
             @RequestParam(required = false) String ghiChu,
             HttpServletRequest request,
@@ -191,41 +201,10 @@ public class CSKHController {
                 throw new IllegalArgumentException("Số điện thoại '" + soDienThoai.trim() + "' đã được đăng ký cho khách hàng: " + existingByPhone.get().getHoTen());
             }
 
-            // 1. Xác thực / tìm hoặc tạo mới bản ghi KhuVuc từ dữ liệu API provinces.open-api.vn
-            KhuVuc kv = null;
-            if (maKhuVuc != null && !maKhuVuc.isBlank()) {
-                kv = khuVucRepository.findByMaKhuVuc(maKhuVuc.trim()).orElse(null);
-            }
-
-            String wardOrDistrict = (phuongXa != null && !phuongXa.isBlank())
-                    ? phuongXa.trim()
-                    : (quanHuyen != null ? quanHuyen.trim() : "");
-
-            if (kv == null && !wardOrDistrict.isBlank() && tinhThanh != null && !tinhThanh.isBlank()) {
-                kv = khuVucRepository.findFirstByQuanHuyenAndTinhThanh(wardOrDistrict, tinhThanh.trim())
-                        .or(() -> khuVucRepository.findFirstByTenKhuVucAndTinhThanh(wardOrDistrict, tinhThanh.trim()))
-                        .orElse(null);
-            }
-
-            if (kv == null && ((tinhThanh != null && !tinhThanh.isBlank()) || !wardOrDistrict.isBlank())) {
-                String code = (maKhuVuc != null && !maKhuVuc.isBlank() && maKhuVuc.trim().length() <= 20)
-                        ? maKhuVuc.trim()
-                        : (com.example.Service.MaSinh.tao("KV-"));
-                int retry = 0;
-                while (khuVucRepository.findByMaKhuVuc(code).isPresent() && retry < 20) {
-                    code = com.example.Service.MaSinh.tao("KV-");
-                    retry++;
-                }
-                String areaName = !wardOrDistrict.isBlank() ? wardOrDistrict : (tinhThanh != null ? tinhThanh.trim() : "Khu vực");
-                kv = KhuVuc.builder()
-                        .maKhuVuc(code)
-                        .tenKhuVuc(areaName)
-                        .quanHuyen(!wardOrDistrict.isBlank() ? wardOrDistrict : "Chưa xác định")
-                        .tinhThanh(tinhThanh != null && !tinhThanh.isBlank() ? tinhThanh.trim() : "Chưa xác định")
-                        .trangThai("HoatDong")
-                        .build();
-                kv = khuVucRepository.save(kv);
-            }
+            // 1. Địa chỉ: tỉnh, phường (provinces.open-api.vn v2) + số nhà; khu vực (quận, huyện) suy ra từ phường
+            com.example.Service.DiaGioiService.DiaChiDaXacDinh dcXacDinh =
+                    diaGioiService.xacDinh(soNhaTenDuong, maTinh, maPhuong, khuVucId);
+            KhuVuc kv = dcXacDinh.khuVuc(); // null = ngoài khu vực phục vụ: vẫn lưu, chưa đặt dịch vụ được
 
             // 2. Tạo bản ghi KhachHang
             String maKhachHang = com.example.Service.MaSinh.tao("KH-");
@@ -255,23 +234,7 @@ public class CSKHController {
             khachHang = khachHangRepository.save(khachHang);
 
             // 3. Tạo bản ghi DiaChiKhachHang
-            String fullAddress = (diaChiChiTiet != null && !diaChiChiTiet.isBlank()) ? diaChiChiTiet.trim() : "";
-            if (fullAddress.isBlank()) {
-                StringBuilder sb = new StringBuilder();
-                if (soNhaTenDuong != null && !soNhaTenDuong.isBlank()) sb.append(soNhaTenDuong.trim());
-                if (!wardOrDistrict.isBlank()) {
-                    if (sb.length() > 0) sb.append(", ");
-                    sb.append(wardOrDistrict);
-                }
-                if (tinhThanh != null && !tinhThanh.isBlank()) {
-                    if (sb.length() > 0) sb.append(", ");
-                    sb.append(tinhThanh.trim());
-                }
-                fullAddress = sb.toString();
-            }
-            if (fullAddress.isBlank()) {
-                fullAddress = "Chưa cập nhật";
-            }
+            String fullAddress = dcXacDinh.diaChiDayDu();
 
             String maDiaChi = com.example.Service.MaSinh.tao("DC-");
             int retryDc = 0;
@@ -386,6 +349,7 @@ public class CSKHController {
         model.addAttribute("donDatDichVus",  donDatDichVuRepository.findAllWithDetails());
         model.addAttribute("dichVus",        dichVuRepository.findAll());
         model.addAttribute("khachHangs",     khachHangRepository.findAll());
+        model.addAttribute("khuVucs",        khuVucService.danhSach());
         return "cskh/don-dat-dich-vu";
     }
 
@@ -406,19 +370,43 @@ public class CSKHController {
         long lowRating = danhGiaList.stream()
                 .filter(dg -> (dg.getDiemChatLuong() + dg.getDiemThaiDo()) / 2.0 < 3)
                 .count();
-        long replied = phanHoiList.stream()
-                .map(ph -> ph.getDanhGia().getId())
-                .distinct()
-                .count();
+        // Chỉ tính đánh giá đã có nhân viên trả lời (bình luận của khách không tính)
+        var daTraLoi = danhGiaService.daCoNhanVienTraLoi();
+        long replied = daTraLoi.size();
 
         model.addAttribute("danhGias",       danhGiaList);
         model.addAttribute("phanHoiList",    phanHoiList);
         model.addAttribute("diemDanhGiaTB",  thongKeService.getDiemDanhGiaTrungBinh());
         model.addAttribute("lowRatingCount", lowRating);
         model.addAttribute("repliedCount",   replied);
+        model.addAttribute("daTraLoi",       daTraLoi);
         model.addAttribute("congTacViens",   congTacVienRepository.findAll());
         model.addAttribute("khachHangs",     khachHangRepository.findAll());
         return "cskh/danh-gia";
+    }
+
+    /** Đánh giá kèm trao đổi giữa khách và CSKH (mở hộp thoại "Phản hồi đánh giá"). */
+    @GetMapping("/danh-gia/{id}/trao-doi")
+    @ResponseBody
+    public ResponseEntity<?> traoDoiDanhGia(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(danhGiaService.chiTiet(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    /** Nhân viên CSKH trả lời khách: hiện ngay trong mục đánh giá của đơn trên web và app. */
+    @PostMapping("/danh-gia/{id}/tra-loi")
+    @ResponseBody
+    public ResponseEntity<?> traLoiDanhGia(@PathVariable Integer id, @RequestParam String noiDung,
+                                           jakarta.servlet.http.HttpSession session) {
+        try {
+            Integer taiKhoanId = session.getAttribute("authenticatedUserId") instanceof Number n ? n.intValue() : null;
+            return ResponseEntity.ok(danhGiaService.traLoiCuaNhanVien(id, taiKhoanId, noiDung));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // ── UC-CSKH05 – Lịch làm việc CTV (calendar view) ───────────────
@@ -482,6 +470,9 @@ public class CSKHController {
 
         model.addAttribute("lichLamViecsJson",  dtoListJson);
         model.addAttribute("ctvShiftsMap",      ctvShiftsMap);
+        // Quận, huyện nhận việc của từng CTV: lọc và hiển thị trong bảng
+        model.addAttribute("khuVucs",           khuVucService.danhSach());
+        model.addAttribute("khuVucCtv",         khuVucCtvService.theoCtv());
         model.addAttribute("donDatDichVus",     donDatDichVus);
         model.addAttribute("congTacViens",      congTacViens);
         model.addAttribute("lichLamViecs",      lichLamViecs);
@@ -533,8 +524,10 @@ public class CSKHController {
                 throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu.");
             }
             // Trùng giờ, khoảng nghỉ 1 tiếng giữa hai việc, quá tải trong ngày, di chuyển khác tỉnh/thành
-            phanCongService.kiemTraLichHoacBaoLoi(ctvId, date, start, end,
-                    dd.getDiaChi() != null ? dd.getDiaChi().getKhuVuc() : null, null);
+            // Gói tháng: mọi buổi trong tháng (tính từ ngày bắt đầu đã chọn) đều được kiểm tra và xếp lịch
+            java.util.List<LocalDate> cacBuoi = com.example.Service.PhanCongService.cacBuoi(dd, date);
+            phanCongService.kiemTraCacBuoiHoacBaoLoi(ctvId, cacBuoi, start, end,
+                    dd.getDiaChi() != null ? dd.getDiaChi().getKhuVuc() : null, null, true);
 
             // 1. Lưu Phân công CTV
             PhanCongCTV pc = PhanCongCTV.builder()
@@ -547,18 +540,8 @@ public class CSKHController {
                     .build();
             phanCongCTVRepository.save(pc);
 
-            // 2. Tạo Lịch làm việc cho CTV
-            LichLamViec llv = LichLamViec.builder()
-                    .maLichLamViec(com.example.Service.MaSinh.tao("LLV-"))
-                    .phanCong(pc)
-                    .congTacVien(ctv)
-                    .ngayLam(date)
-                    .gioBatDau(start)
-                    .gioKetThuc(end)
-                    .trangThai("SapToi")
-                    .ketQuaThucHien(ghiChu)
-                    .build();
-            lichLamViecRepository.save(llv);
+            // 2. Tạo Lịch làm việc cho CTV (mỗi buổi một lịch)
+            phanCongService.taoLichLamViec(pc, cacBuoi, start, end, ghiChu);
 
             // 3. Cập nhật trạng thái đơn
             dd.setTrangThai("DaXacNhan");

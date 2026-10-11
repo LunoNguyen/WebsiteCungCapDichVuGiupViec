@@ -369,6 +369,10 @@ public String dashboard(
                 redirectAttributes.addFlashAttribute("error", "Lỗi: Ngày kết thúc không được nhỏ hơn ngày bắt đầu!");
                 return "redirect:/marketing/khuyen-mai";
             }
+            if (start.isBefore(java.time.LocalDate.now())) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Ngày bắt đầu không được ở quá khứ!");
+                return "redirect:/marketing/khuyen-mai";
+            }
             ct.setNgayBatDau(start); 
             ct.setNgayKetThuc(end);
         } catch (Exception e) {
@@ -523,6 +527,12 @@ public String dashboard(
                 if (end.isBefore(start)) {
                     throw new RuntimeException("INVALID_DATE");
                 }
+                // Không chọn ngày quá khứ; được giữ nguyên ngày cũ của chương trình đang chạy
+                java.time.LocalDate homNay = java.time.LocalDate.now();
+                if ((start.isBefore(homNay) && !start.equals(ct.getNgayBatDau()))
+                        || (end.isBefore(homNay) && !end.equals(ct.getNgayKetThuc()))) {
+                    throw new RuntimeException("PAST_DATE");
+                }
                 
                 ct.setNgayBatDau(start);
                 ct.setNgayKetThuc(end);
@@ -557,6 +567,8 @@ public String dashboard(
             
             if ("INVALID_DATE".equals(e.getMessage())) {
                 redirectAttributes.addFlashAttribute("error", "Lỗi: Ngày kết thúc không được nhỏ hơn ngày bắt đầu!");
+            } else if ("PAST_DATE".equals(e.getMessage())) {
+                redirectAttributes.addFlashAttribute("error", "Lỗi: Không được chọn ngày trong quá khứ!");
             } else {
                 // Nối thêm thông báo gốc của Java vào giao diện để biết nguyên nhân thật sự
                 redirectAttributes.addFlashAttribute("error", "Lỗi hệ thống: " + e.getMessage());

@@ -1,0 +1,238 @@
+package com.example.Service;
+
+import com.example.Model.KhuVuc;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Địa giới hành chính cho ĐỊA CHỈ (2 cấp từ 01/07/2025: tỉnh/thành → phường/xã), lấy từ
+ * https://provinces.open-api.vn/api/v2, và cách suy ra KHU VỰC của một địa chỉ.
+ *
+ * - Địa chỉ: nơi ở / nơi làm dịch vụ = số nhà, tên đường + phường/xã + tỉnh/thành (bất kỳ tỉnh nào).
+ * - Khu vực: cấp quận, huyện (lớn hơn phường, nhỏ hơn tỉnh) – bảng KhuVuc. API v2 không còn cấp quận,
+ *   nên khu vực của một phường mới lấy theo quận cũ chứa phường đó (/api/v2/w/{code}/to-legacies/).
+ *   Bảng phường TP.HCM → quận cũ đã được lấy sẵn vào data/phuong-xa-hcm.json (trường quanCu) để
+ *   không phụ thuộc mạng; phường nằm trên nhiều quận cũ thì người dùng chọn một trong các quận đó.
+ *
+ * Tỉnh khác và phường xã thuộc tỉnh khác lấy trực tiếp từ API (giữ trong bộ nhớ sau lần đầu).
+ */
+@Service
+public class DiaGioiService {
+
+    private static final Logger log = LoggerFactory.getLogger(DiaGioiService.class);
+    private static final String API = "https://provinces.open-api.vn/api/v2";
+    private static final String FILE_HCM = "data/phuong-xa-hcm.json";
+    public static final int MA_HCM = 79;
+
+    private final KhuVucService khuVucService;
+    private final ObjectMapper om = new ObjectMapper();
+    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+
+    private volatile List<Map<String, Object>> tinhCache;
+    private final Map<Integer, List<Map<String, Object>>> phuongCache = new ConcurrentHashMap<>();
+    /** Mã phường TP.HCM → mã quận cũ (thuộc TP.HCM cũ), theo thứ tự nhiều phường cũ nhất trước. */
+    private final Map<Integer, List<Integer>> quanCuTheoPhuong = new HashMap<>();
+    private String tenHcm = "Thành phố Hồ Chí Minh";
+
+    public DiaGioiService(KhuVucService khuVucService) {
+        this.khuVucService = khuVucService;
+        try (InputStream in = new ClassPathResource(FILE_HCM).getInputStream()) {
+            JsonNode goc = om.readTree(in);
+            tenHcm = goc.path("tinhThanh").asText(tenHcm);
+            List<Map<String, Object>> ds = new ArrayList<>();
+            for (JsonNode p : goc.path("phuongXa")) {
+                int ma = p.path("ma").asInt();
+                ds.add(phuong(ma, p.path("ten").asText()));
+                List<Integer> quan = new ArrayList<>();
+                for (JsonNode q : p.path("quanCu")) {
+                    if (q.path("tinh").asInt() == MA_HCM) quan.add(q.path("ma").asInt());
+                }
+                quanCuTheoPhuong.put(ma, quan);
+            }
+            phuongCache.put(MA_HCM, ds);
+        } catch (Exception e) {
+            log.warn("Không đọc được {}: {}", FILE_HCM, e.getMessage());
+        }
+    }
+
+    private static Map<String, Object> phuong(int ma, String ten) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("ma", ma);
+        m.put("ten", ten);
+        return m;
+    }
+
+    // =========================================================================
+    // TỈNH, PHƯỜNG (địa chỉ)
+    // =========================================================================
+
+    /** 34 tỉnh, thành; mạng lỗi thì chỉ còn TP.HCM. */
+    public List<Map<String, Object>> tinhThanh() {
+        if (tinhCache != null) return tinhCache;
+        try {
+            List<Map<String, Object>> ds = new ArrayList<>();
+            for (JsonNode p : goi(API + "/p/")) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("ma", p.path("code").asInt());
+                m.put("ten", p.path("name").asText());
+                ds.add(m);
+            }
+            // TP.HCM (nơi bTaskee phục vụ) lên đầu
+            ds.sort(Comparator.comparing((Map<String, Object> m) -> !Objects.equals(m.get("ma"), MA_HCM)));
+            tinhCache = List.copyOf(ds);
+            return tinhCache;
+        } catch (Exception e) {
+            log.warn("Không tải được danh sách tỉnh từ provinces.open-api.vn: {}", e.getMessage());
+            Map<String, Object> hcm = new LinkedHashMap<>();
+            hcm.put("ma", MA_HCM);
+            hcm.put("ten", tenHcm);
+            return List.of(hcm);
+        }
+    }
+
+    /** Phường, xã của một tỉnh (kèm khu vực ứng với mỗi phường nếu thuộc khu vực phục vụ). */
+    public List<Map<String, Object>> phuongXa(int maTinh) {
+        List<Map<String, Object>> ds = phuongCache.get(maTinh);
+        if (ds == null) {
+            try {
+                List<Map<String, Object>> moi = new ArrayList<>();
+                for (JsonNode w : goi(API + "/p/" + maTinh + "?depth=2").path("wards")) {
+                    moi.add(phuong(w.path("code").asInt(), w.path("name").asText()));
+                }
+                ds = List.copyOf(moi);
+                phuongCache.put(maTinh, ds);
+            } catch (Exception e) {
+                throw new IllegalStateException("Không tải được danh sách phường, xã. Thử lại sau ít phút.");
+            }
+        }
+        List<Map<String, Object>> kq = new ArrayList<>();
+        for (Map<String, Object> p : ds) {
+            Map<String, Object> m = new LinkedHashMap<>(p);
+            m.put("khuVuc", KhuVucCtvService.toMap(khuVucCuaPhuong((Integer) p.get("ma"))));
+            kq.add(m);
+        }
+        kq.sort(Comparator.comparing((Map<String, Object> m) -> boTienTo((String) m.get("ten")),
+                java.text.Collator.getInstance(new Locale("vi", "VN"))));
+        return kq;
+    }
+
+    public Optional<String> tenTinh(Integer maTinh) {
+        if (maTinh == null) return Optional.empty();
+        if (maTinh == MA_HCM) return Optional.of(tenHcm);
+        return tinhThanh().stream().filter(t -> Objects.equals(t.get("ma"), maTinh))
+                .map(t -> (String) t.get("ten")).findFirst();
+    }
+
+    public Optional<String> tenPhuong(Integer maTinh, Integer maPhuong) {
+        if (maTinh == null || maPhuong == null) return Optional.empty();
+        List<Map<String, Object>> ds = phuongCache.get(maTinh);
+        if (ds == null) {
+            phuongXa(maTinh);
+            ds = phuongCache.getOrDefault(maTinh, List.of());
+        }
+        return ds.stream().filter(p -> Objects.equals(p.get("ma"), maPhuong)).map(p -> (String) p.get("ten")).findFirst();
+    }
+
+    // =========================================================================
+    // KHU VỰC CỦA ĐỊA CHỈ
+    // =========================================================================
+
+    /** Khu vực (quận, huyện đang phục vụ) chứa phường này; rỗng nếu ngoài khu vực phục vụ. */
+    public List<KhuVuc> khuVucCuaPhuong(Integer maPhuong) {
+        List<Integer> quan = maPhuong == null ? null : quanCuTheoPhuong.get(maPhuong);
+        if (quan == null || quan.isEmpty()) return List.of();
+        Map<String, KhuVuc> theoMa = new HashMap<>();
+        for (KhuVuc kv : khuVucService.danhSach()) theoMa.put(kv.getMaKhuVuc(), kv);
+        List<KhuVuc> kq = new ArrayList<>();
+        for (Integer q : quan) {
+            KhuVuc kv = theoMa.get("KV-Q" + q);
+            if (kv != null) kq.add(kv);
+        }
+        return kq;
+    }
+
+    /** Kết quả xác định địa chỉ: chuỗi đầy đủ và khu vực (null = ngoài khu vực phục vụ). */
+    public record DiaChiDaXacDinh(String diaChiDayDu, KhuVuc khuVuc, String tenPhuong, String tenTinh) { }
+
+    /**
+     * Ghép địa chỉ "số nhà, tên đường, phường/xã, tỉnh/thành" và chọn khu vực.
+     * Phường thuộc 1 quận cũ: tự chọn; nhiều quận cũ: khuVucId phải là một trong số đó (không gửi thì lấy quận đầu).
+     */
+    public DiaChiDaXacDinh xacDinh(String soNhaTenDuong, Integer maTinh, Integer maPhuong, Integer khuVucId) {
+        if (soNhaTenDuong == null || soNhaTenDuong.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập số nhà, tên đường.");
+        }
+        String tinh = tenTinh(maTinh).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn tỉnh, thành phố."));
+        String phuong = tenPhuong(maTinh, maPhuong).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn phường, xã."));
+        String soNha = soNhaTenDuong.trim().replaceAll("\\s+", " ");
+        if (soNha.length() > 200) throw new IllegalArgumentException("Số nhà, tên đường tối đa 200 ký tự.");
+
+        List<KhuVuc> ungVien = khuVucCuaPhuong(maPhuong);
+        KhuVuc kv = null;
+        if (!ungVien.isEmpty()) {
+            kv = khuVucId == null ? ungVien.get(0) : ungVien.stream().filter(k -> k.getId().equals(khuVucId)).findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(phuong + " thuộc khu vực "
+                            + String.join(" hoặc ", ungVien.stream().map(KhuVuc::getTenKhuVuc).toList()) + "."));
+        }
+        return new DiaChiDaXacDinh(soNha + ", " + phuong + ", " + tinh, kv, phuong, tinh);
+    }
+
+    /**
+     * Tách địa chỉ đã lưu "số nhà, đường, phường, tỉnh" để điền lại form sửa (so tên với danh sách API).
+     * Không khớp thì trả về soNhaTenDuong = cả chuỗi để người dùng chọn lại phường, tỉnh.
+     */
+    public Map<String, Object> tach(String diaChi) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("soNhaTenDuong", diaChi == null ? "" : diaChi);
+        if (diaChi == null) return m;
+        List<String> phan = new ArrayList<>(Arrays.stream(diaChi.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
+        if (phan.size() < 3) return m;
+        String tenTinhCuoi = phan.get(phan.size() - 1);
+        Integer maTinh = null;
+        for (Map<String, Object> t : tinhThanh()) {
+            if (KhuVucService.chuanHoa((String) t.get("ten")).equals(KhuVucService.chuanHoa(tenTinhCuoi))) {
+                maTinh = (Integer) t.get("ma");
+                break;
+            }
+        }
+        if (maTinh == null) return m;
+        String tenPhuongKe = KhuVucService.chuanHoa(phan.get(phan.size() - 2));
+        List<Map<String, Object>> ds = phuongCache.containsKey(maTinh) ? phuongCache.get(maTinh) : List.of();
+        if (ds.isEmpty()) {
+            try { phuongXa(maTinh); ds = phuongCache.getOrDefault(maTinh, List.of()); } catch (Exception ignored) { }
+        }
+        for (Map<String, Object> p : ds) {
+            if (KhuVucService.chuanHoa((String) p.get("ten")).equals(tenPhuongKe)) {
+                m.put("maTinh", maTinh);
+                m.put("maPhuong", p.get("ma"));
+                m.put("soNhaTenDuong", String.join(", ", phan.subList(0, phan.size() - 2)));
+                break;
+            }
+        }
+        return m;
+    }
+
+    private JsonNode goi(String url) throws Exception {
+        HttpResponse<String> res = http.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(8)).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+        if (res.statusCode() != 200) throw new IllegalStateException("HTTP " + res.statusCode());
+        return om.readTree(res.body());
+    }
+
+    private static String boTienTo(String ten) {
+        return ten == null ? "" : ten.replaceFirst("^(Phường|Xã|Đặc khu|Thị trấn)\\s+", "");
+    }
+}

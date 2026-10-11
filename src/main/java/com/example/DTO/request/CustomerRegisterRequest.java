@@ -24,5 +24,9 @@ public class CustomerRegisterRequest {
     private String gioiTinh; // Nam | Nu | Khac
     private String diaChiChiTiet;
     private Integer khuVucId;
+    // Địa chỉ theo tỉnh, phường (provinces.open-api.vn v2); khu vực tự suy ra từ phường
+    private String soNhaTenDuong;
+    private Integer maTinh;
+    private Integer maPhuong;
     private String tenDangNhap; // Tùy chọn, nếu không gửi sẽ lấy số điện thoại làm tên đăng nhập
 }

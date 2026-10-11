@@ -231,11 +231,11 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Ngày bắt đầu</label>
-              <input type="date" name="ngayBatDau" class="form-control" required>
+              <input type="date" name="ngayBatDau" id="add-batdau" class="form-control" required data-min-today>
             </div>
             <div class="form-group">
               <label class="form-label">Ngày kết thúc</label>
-              <input type="date" name="ngayKetThuc" class="form-control" required>
+              <input type="date" name="ngayKetThuc" class="form-control" required data-min-today data-min-from="add-batdau">
             </div>
           </div>
         </div>
@@ -302,11 +302,11 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Ngày bắt đầu</label>
-              <input type="date" name="ngayBatDau" id="edit-batdau" class="form-control" required>
+              <input type="date" name="ngayBatDau" id="edit-batdau" class="form-control" required data-min-today>
             </div>
             <div class="form-group">
               <label class="form-label">Ngày kết thúc</label>
-              <input type="date" name="ngayKetThuc" id="edit-ketthuc" class="form-control" required>
+              <input type="date" name="ngayKetThuc" id="edit-ketthuc" class="form-control" required data-min-today data-min-from="edit-batdau">
             </div>
           </div>
 
@@ -368,8 +368,8 @@
       document.getElementById('edit-muc').value = button.getAttribute('data-muc');
       document.getElementById('edit-dk').value = button.getAttribute('data-dk');
       document.getElementById('edit-gioihan').value = button.getAttribute('data-gioihan');
-      document.getElementById('edit-batdau').value = button.getAttribute('data-batdau');
-      document.getElementById('edit-ketthuc').value = button.getAttribute('data-ketthuc');
+      DateRules.fill('edit-batdau', button.getAttribute('data-batdau'));
+      DateRules.fill('edit-ketthuc', button.getAttribute('data-ketthuc'));
       
 
       // Tự động tính trạng thái theo ngày khi vừa bật modal lên
@@ -385,8 +385,8 @@
       document.getElementById('edit-muc').value = button.getAttribute('data-muc');
       document.getElementById('edit-dk').value = button.getAttribute('data-dk');
       document.getElementById('edit-gioihan').value = button.getAttribute('data-gioihan');
-      document.getElementById('edit-batdau').value = button.getAttribute('data-batdau');
-      document.getElementById('edit-ketthuc').value = button.getAttribute('data-ketthuc');
+      DateRules.fill('edit-batdau', button.getAttribute('data-batdau'));
+      DateRules.fill('edit-ketthuc', button.getAttribute('data-ketthuc'));
       document.getElementById('edit-trangthai').value = button.getAttribute('data-trangthai');
       document.getElementById('edit-toida').value = button.getAttribute('data-toida');
 

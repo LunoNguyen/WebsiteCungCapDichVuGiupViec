@@ -40,4 +40,10 @@ public interface ThongBaoNguoiDungRepository extends JpaRepository<ThongBaoNguoi
          + "WHERE ctv.taiKhoanId IS NOT NULL AND ctv.TrangThai = 'HoatDong' "
          + "AND NOT EXISTS (SELECT 1 FROM ThongBaoNguoiDung x WHERE x.thongBaoId = :thongBaoId AND x.taiKhoanId = ctv.taiKhoanId)")
     int phatChoCongTacVien(@org.springframework.data.repository.query.Param("thongBaoId") Integer thongBaoId);
+
+    /** Thông báo gửi riêng có tiêu đề bắt đầu bằng tienTo (VD lịch phỏng vấn CTV), mới nhất trước. */
+    @org.springframework.data.jpa.repository.Query(
+            "select t from ThongBaoNguoiDung t join fetch t.thongBao b join fetch t.taiKhoan "
+                    + "where b.tieuDe like concat(:tienTo, '%') order by b.thoiGianGui desc, b.id desc")
+    List<ThongBaoNguoiDung> timTheoTienToTieuDe(@org.springframework.data.repository.query.Param("tienTo") String tienTo);
 }

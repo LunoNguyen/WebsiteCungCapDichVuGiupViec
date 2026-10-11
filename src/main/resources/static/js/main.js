@@ -754,3 +754,128 @@ const style = document.createElement('style');
 style.textContent = `.form-control.error { border-color: var(--danger) !important; animation: shake 0.3s ease; }
 @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }`;
 document.head.appendChild(style);
+
+// ============================================================
+// RÀNG BUỘC Ô NGÀY (input type="date")
+//   data-min-today      : không chọn ngày trong quá khứ
+//   data-min-from="id"  : không trước ngày ở ô có id này (VD ngày kết thúc >= ngày bắt đầu)
+//   data-min-age="18"   : ngày sinh phải đủ N tuổi (không chọn ngày tương lai)
+// Ô sửa dữ liệu cũ: gán giá trị bằng DateRules.fill(input, value). Ngày cũ đã ở quá khứ
+// vẫn được giữ nguyên, nhưng không được đổi sang một ngày quá khứ khác.
+// ============================================================
+const DateRules = {
+  iso(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  },
+  // Ngày hôm nay theo giờ máy người dùng (toISOString() lệch ngày vì dùng giờ UTC)
+  today() { return this.iso(new Date()); },
+  maxBirthDate(age) {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - age);
+    return this.iso(d);
+  },
+
+  fromValue(input) {
+    const from = input.dataset.minFrom ? document.getElementById(input.dataset.minFrom) : null;
+    return from && from.value ? from.value : '';
+  },
+
+  // Ô sửa bản ghi cũ đang giữ nguyên ngày cũ (đã ở quá khứ)
+  keepsOriginal(input) {
+    return !!input.dataset.original && input.value === input.dataset.original;
+  },
+
+  /** Lỗi của ô (chuỗi rỗng nếu hợp lệ). */
+  check(input) {
+    const v = input.value;
+    if (!v) return '';
+    const age = parseInt(input.dataset.minAge, 10);
+    if (age) {
+      if (v > this.today()) return 'Ngày sinh không được ở tương lai.';
+      if (v > this.maxBirthDate(age)) return 'Phải từ đủ ' + age + ' tuổi trở lên.';
+      return '';
+    }
+    const fv = this.fromValue(input);
+    if (fv && v < fv) return 'Ngày này không được trước ngày bắt đầu.';
+    if (input.hasAttribute('data-min-today') && v < this.today() && !this.keepsOriginal(input)) {
+      return 'Không được chọn ngày trong quá khứ.';
+    }
+    return '';
+  },
+
+  /** Cập nhật min/max để lịch chọn ngày làm mờ các ngày không hợp lệ. */
+  apply(input) {
+    const age = parseInt(input.dataset.minAge, 10);
+    if (age) {
+      input.max = this.maxBirthDate(age);
+    } else {
+      let min = (input.hasAttribute('data-min-today') && !this.keepsOriginal(input)) ? this.today() : '';
+      const fv = this.fromValue(input);
+      if (fv && fv > min) min = fv;
+      if (min) input.min = min; else input.removeAttribute('min');
+    }
+    const loi = this.check(input);
+    input.setCustomValidity(loi);
+    // Ô đã gắn lịch (lich.js): ô gốc bị ẩn, báo lỗi và cập nhật min/max trên lịch + ô hiển thị
+    if (window.Lich) Lich.dongBo(input);
+    const hien = this.oHien(input);
+    if (hien !== input) hien.setCustomValidity(loi);
+    return loi;
+  },
+
+  /** Ô người dùng nhìn thấy: ô hiển thị của lịch (flatpickr) nếu có, không thì chính ô đó. */
+  oHien(input) {
+    return (input._flatpickr && input._flatpickr.altInput) || input;
+  },
+
+  fill(input, value) {
+    if (typeof input === 'string') input = document.getElementById(input);
+    if (!input) return;
+    input.value = value || '';
+    input.dataset.original = value || '';
+    this.applyAll(); // ô kết thúc liên kết với ô này cũng tính lại
+    if (window.Lich) Lich.dongBo(input);
+  },
+
+  // Nhận theo thuộc tính ràng buộc (ô đã gắn lịch đổi type thành hidden)
+  selector: 'input[data-min-today], input[data-min-from], input[data-min-age]',
+
+  applyAll(root = document) {
+    root.querySelectorAll(this.selector).forEach(i => this.apply(i));
+  },
+
+  /** Dùng cho các nút lưu gọi JS (không submit form): trả false và báo lỗi nếu có ô sai. */
+  validate(root = document) {
+    for (const input of root.querySelectorAll(this.selector)) {
+      // Ô ẩn không được trình duyệt kiểm tra (validationMessage rỗng): dùng kết quả check() của mình.
+      // Ô phụ aria-hidden (HCNS: lịch đi kèm ô chữ dd/mm/yyyy) do ô chữ tự kiểm tra.
+      if (input.getAttribute('aria-hidden') === 'true') { this.apply(input); continue; }
+      if (this.apply(input)) {
+        const hien = this.oHien(input);
+        hien.reportValidity();
+        hien.focus();
+        return false;
+      }
+    }
+    return true;
+  },
+
+  init() {
+    this.applyAll();
+    document.addEventListener('input', e => {
+      if (!e.target.matches || !(e.target.matches('input[type="date"]') || e.target._flatpickr)) return;
+      // Đổi ngày bắt đầu thì ô kết thúc liên kết cũng phải tính lại
+      this.applyAll();
+    });
+    document.addEventListener('change', e => {
+      if (e.target.matches && (e.target.matches('input[type="date"]') || e.target._flatpickr)) this.applyAll();
+    });
+    // Trước khi gửi form: tính lại (giá trị có thể được gán bằng JS) để trình duyệt chặn ô sai
+    document.addEventListener('submit', e => {
+      if (!this.validate(e.target)) { e.preventDefault(); e.stopImmediatePropagation(); }
+    }, true);
+  }
+};
+window.DateRules = DateRules;
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => DateRules.init());
+else DateRules.init();

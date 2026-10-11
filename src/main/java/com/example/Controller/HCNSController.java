@@ -201,6 +201,9 @@ public class HCNSController {
 
             if (ngayVaoLam != null && !ngayVaoLam.trim().isEmpty()) {
                 LocalDate nvl = parseNgaySinh(ngayVaoLam);
+                if (nvl != null && nvl.isBefore(LocalDate.now())) {
+                    throw new IllegalArgumentException("Ngày vào làm không được ở quá khứ!");
+                }
                 nv.setNgayVaoLam(nvl != null ? nvl : LocalDate.now());
             } else {
                 nv.setNgayVaoLam(LocalDate.now());
@@ -334,24 +337,136 @@ public class HCNSController {
     // =========================================================================
     // 2. UC-HCNS02 – Quản lý Cộng tác viên (CRUD)
     // =========================================================================
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.UngVienCtvService ungVienCtvService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.BangGiaService bangGiaService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.KhuVucService khuVucService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.KhuVucCtvService khuVucCtvService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.DiaGioiService diaGioiService;
+
+    /**
+     * Địa chỉ nơi ở hiện tại của CTV: tỉnh, phường (provinces.open-api.vn v2) + số nhà, ghép thành chuỗi đầy đủ.
+     * Form cũ chỉ gửi chuỗi noiCuTru thì giữ nguyên chuỗi đó.
+     */
+    private String noiOCtv(String noiCuTru, String soNhaTenDuong, Integer maTinh, Integer maPhuong) {
+        String kq = maPhuong != null
+                ? diaGioiService.xacDinh(soNhaTenDuong, maTinh, maPhuong, null).diaChiDayDu()
+                : (noiCuTru != null ? noiCuTru.trim() : "");
+        if (kq.isBlank()) throw new IllegalArgumentException("Vui lòng nhập địa chỉ nơi ở hiện tại của cộng tác viên!");
+        if (kq.length() > 200) throw new IllegalArgumentException("Địa chỉ nơi ở quá dài (tối đa 200 ký tự)!");
+        return kq;
+    }
+
+    /** Khu vực nhận việc gửi từ form: 1 đến 5 quận, huyện. Trả về thông báo lỗi, null nếu hợp lệ. */
+    private static String loiKhuVuc(List<Integer> khuVucIds) {
+        int n = khuVucIds == null ? 0 : (int) khuVucIds.stream().filter(java.util.Objects::nonNull).distinct().count();
+        if (n == 0) return "Chọn ít nhất 1 quận, huyện nhận việc cho cộng tác viên!";
+        if (n > com.example.Service.KhuVucCtvService.TOI_DA) {
+            return "Chọn tối đa " + com.example.Service.KhuVucCtvService.TOI_DA + " quận, huyện nhận việc!";
+        }
+        return null;
+    }
+
+    /** Địa chỉ phỏng vấn điền sẵn (application.properties: app.phong-van.dia-chi). */
+    @org.springframework.beans.factory.annotation.Value("${app.phong-van.dia-chi:}")
+    private String diaChiPhongVanMacDinh;
+
     @GetMapping("/cong-tac-vien")
     public String congTacVien(Model model) {
+        List<CongTacVien> ds = congTacVienRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        var daXem = ungVienCtvService.hoSoDaXem(ds);
+        var lichPhongVan = ungVienCtvService.lichPhongVan(ds);
+
+        // Hồ sơ chờ duyệt: đơn mới (chưa xem) lên đầu, rồi đến đơn gửi gần đây nhất
+        List<CongTacVien> choDuyet = ds.stream()
+                .filter(c -> "ChoDuyet".equals(c.getTrangThai()))
+                .sorted(java.util.Comparator.comparing((CongTacVien c) -> daXem.contains(c.getId()))
+                        .thenComparing(CongTacVien::getId, java.util.Comparator.reverseOrder()))
+                .toList();
+
         model.addAttribute("congTacVienStats", thongKeService.getCongTacVienStats());
-        model.addAttribute("congTacViens", congTacVienRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
+        model.addAttribute("congTacViens", ds);
+        model.addAttribute("hoSoChoDuyet", choDuyet);
+        model.addAttribute("daXemIds", daXem);
+        model.addAttribute("lichPhongVan", lichPhongVan);
+        model.addAttribute("soHoSoMoi", choDuyet.stream().filter(c -> !daXem.contains(c.getId())).count());
+        model.addAttribute("diaChiPhongVanMacDinh", diaChiPhongVanMacDinh);
+        // Quận, huyện: chọn khu vực nhận việc khi thêm / sửa CTV, hiện trong bảng danh sách
+        model.addAttribute("khuVucs", khuVucService.danhSach());
+        model.addAttribute("khuVucCtv", khuVucCtvService.theoCtv());
+        // Tách nơi ở (số nhà / phường / tỉnh) để hộp sửa điền sẵn
+        java.util.Map<Integer, java.util.Map<String, Object>> noiOTach = new java.util.HashMap<>();
+        for (CongTacVien c : ds) noiOTach.put(c.getId(), diaGioiService.tach(c.getNoiCuTru()));
+        model.addAttribute("noiOTach", noiOTach);
         return "hcns/cong-tac-vien";
+    }
+
+    /** Chi tiết đơn ứng tuyển (JSON cho cửa sổ xem chi tiết). Mở xem thì đánh dấu đơn đã xem. */
+    @GetMapping(value = "/cong-tac-vien/{id}/chi-tiet", produces = "application/json")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public org.springframework.http.ResponseEntity<Map<String, Object>> chiTietUngVien(
+            @org.springframework.web.bind.annotation.PathVariable Integer id, HttpServletRequest request) {
+        var ctv = congTacVienRepository.findById(id).orElse(null);
+        if (ctv == null) {
+            return org.springframework.http.ResponseEntity.status(404).body(Map.of("message", "Không tìm thấy hồ sơ."));
+        }
+        ungVienCtvService.danhDauDaXem(ctv, request.getRemoteAddr(), request.getHeader("User-Agent"));
+        return org.springframework.http.ResponseEntity.ok(ungVienCtvService.chiTiet(id));
+    }
+
+    /** Bước trước khi duyệt: gửi thời gian, địa chỉ phỏng vấn cho ứng viên (thông báo + SMS). */
+    @PostMapping("/cong-tac-vien/{id}/phong-van")
+    public String guiLichPhongVan(@org.springframework.web.bind.annotation.PathVariable Integer id,
+                                  @RequestParam String thoiGian,
+                                  @RequestParam String diaDiem,
+                                  @RequestParam(required = false) String ghiChu,
+                                  HttpServletRequest request,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            LocalDateTime luc = LocalDateTime.parse(thoiGian.trim()); // input datetime-local: yyyy-MM-ddTHH:mm
+            Object ten = request.getSession().getAttribute("authenticatedFullName");
+            String sms = ungVienCtvService.guiLichPhongVan(id, luc, diaDiem, ghiChu,
+                    ten != null ? "HCNS - " + ten : "HCNS", request.getRemoteAddr(), request.getHeader("User-Agent"));
+            redirectAttributes.addFlashAttribute("successMessage", "Đã gửi lịch phỏng vấn cho ứng viên.");
+            redirectAttributes.addFlashAttribute("tinNhanDaGui", sms);
+        } catch (java.time.format.DateTimeParseException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Thời gian phỏng vấn không hợp lệ.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi gửi lịch phỏng vấn: " + e.getMessage());
+        }
+        return "redirect:/hcns/cong-tac-vien";
     }
 
     @PostMapping("/cong-tac-vien/them")
     public String themCongTacVien(
             @RequestParam String hoTen,
             @RequestParam String soDienThoai,
-            @RequestParam String noiCuTru,
+            @RequestParam(required = false) String noiCuTru,
+            @RequestParam(required = false) String soNhaTenDuong,
+            @RequestParam(required = false) Integer maTinh,
+            @RequestParam(required = false) Integer maPhuong,
             @RequestParam(required = false) String ngaySinh,
             @RequestParam(required = false, defaultValue = "Nam") String gioiTinh,
             @RequestParam(required = false, defaultValue = "Moi") String capDo,
             @RequestParam(required = false, defaultValue = "HoatDong") String trangThai,
+            @RequestParam(required = false) List<Integer> khuVucIds,
             RedirectAttributes redirectAttributes) {
         try {
+            String loiKv = loiKhuVuc(khuVucIds);
+            if (loiKv != null) {
+                redirectAttributes.addFlashAttribute("errorMessage", loiKv);
+                return "redirect:/hcns/cong-tac-vien";
+            }
             if (hoTen == null || hoTen.trim().isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Họ tên CTV không được để trống!");
                 return "redirect:/hcns/cong-tac-vien";
@@ -391,7 +506,7 @@ public class HCNSController {
             ctv.setMaCongTacVien(String.format("CTV-%03d", soThuTu));
             ctv.setHoTen(hoTen.trim());
             ctv.setSoDienThoai(soDienThoai.trim());
-            ctv.setNoiCuTru(noiCuTru != null ? noiCuTru.trim() : "TP.HCM");
+            ctv.setNoiCuTru(noiOCtv(noiCuTru, soNhaTenDuong, maTinh, maPhuong));
             ctv.setGioiTinh(gioiTinh);
             ctv.setNgaySinh(dob);
             ctv.setCapDo(capDo);
@@ -400,6 +515,7 @@ public class HCNSController {
             ctv.setNgayDangKy(LocalDate.now());
 
             congTacVienRepository.save(ctv);
+            khuVucCtvService.capNhat(ctv.getId(), khuVucIds);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm Cộng tác viên thành công (Mã: " + ctv.getMaCongTacVien() + ")!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thêm CTV: " + e.getMessage());
@@ -412,13 +528,22 @@ public class HCNSController {
             @RequestParam Integer id,
             @RequestParam String hoTen,
             @RequestParam String soDienThoai,
-            @RequestParam String noiCuTru,
+            @RequestParam(required = false) String noiCuTru,
+            @RequestParam(required = false) String soNhaTenDuong,
+            @RequestParam(required = false) Integer maTinh,
+            @RequestParam(required = false) Integer maPhuong,
             @RequestParam(required = false) String ngaySinh,
             @RequestParam String capDo,
             @RequestParam String trangThai,
+            @RequestParam(required = false) List<Integer> khuVucIds,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         try {
+            String loiKv = loiKhuVuc(khuVucIds);
+            if (loiKv != null) {
+                redirectAttributes.addFlashAttribute("errorMessage", loiKv);
+                return "redirect:/hcns/cong-tac-vien";
+            }
             var ctvOpt = congTacVienRepository.findById(id);
             if (ctvOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy cộng tác viên!");
@@ -447,8 +572,9 @@ public class HCNSController {
 
             ctv.setHoTen(hoTen.trim());
             ctv.setSoDienThoai(soDienThoai.trim());
-            ctv.setNoiCuTru(noiCuTru.trim());
+            ctv.setNoiCuTru(noiOCtv(noiCuTru, soNhaTenDuong, maTinh, maPhuong));
             ctv.setCapDo(capDo);
+            khuVucCtvService.capNhat(id, khuVucIds);
 
             // Chờ duyệt -> Hoạt động = duyệt hồ sơ: kích hoạt tài khoản và gửi tin nhắn như nút "Duyệt"
             if ("ChoDuyet".equals(ctv.getTrangThai()) && "HoatDong".equals(trangThai)) {
@@ -761,6 +887,7 @@ public class HCNSController {
             @RequestParam(required = false) String trangThai,
             @RequestParam(required = false) Integer loaiDichVuId,
             @RequestParam(required = false) Integer dichVuId,
+            @RequestParam(required = false) String maDichVu,
             @RequestParam(required = false) String loaiHinhDat,
             @RequestParam(required = false) BigDecimal giaTu,
             @RequestParam(required = false) BigDecimal giaDen,
@@ -782,15 +909,23 @@ public class HCNSController {
                 .filter(bg -> loaiDichVuId == null || (bg.getDichVu() != null && bg.getDichVu().getLoaiDichVu() != null
                         && loaiDichVuId.equals(bg.getDichVu().getLoaiDichVu().getId())))
                 .filter(bg -> dichVuId == null || (bg.getDichVu() != null && dichVuId.equals(bg.getDichVu().getId())))
+                // Lọc theo dịch vụ = theo mã: lấy mọi biến thể cùng mã (2 giờ, 3 giờ, gói tháng...)
+                .filter(bg -> maDichVu == null || maDichVu.isBlank()
+                        || (bg.getDichVu() != null && maDichVu.equals(bg.getDichVu().getMaDichVu())))
                 .filter(bg -> loaiHinhDat == null || loaiHinhDat.isBlank() || loaiHinhDat.equals(bg.getLoaiHinhDat()))
                 .filter(bg -> giaTu == null || (bg.getDonGia() != null && bg.getDonGia().compareTo(giaTu) >= 0))
                 .filter(bg -> giaDen == null || (bg.getDonGia() != null && bg.getDonGia().compareTo(giaDen) <= 0))
-                .filter(bg -> ngayTu == null || (bg.getNgayApDung() != null && !bg.getNgayApDung().isBefore(ngayTu)))
-                .filter(bg -> ngayDen == null || (bg.getNgayApDung() != null && !bg.getNgayApDung().isAfter(ngayDen)))
+                .filter(bg -> ngayTu == null || (bg.getNgayApDung() != null && !bg.getNgayApDung().toLocalDate().isBefore(ngayTu)))
+                .filter(bg -> ngayDen == null || (bg.getNgayApDung() != null && !bg.getNgayApDung().toLocalDate().isAfter(ngayDen)))
                 .toList();
 
-        long demDangApDung = truocTrangThai.stream().filter(bg -> "DangApDung".equals(bg.getTrangThai())).count();
-        String tab = "DangApDung".equals(trangThai) || "HetHan".equals(trangThai) ? trangThai : "";
+        // Trạng thái hiển thị: "Sắp áp dụng" suy ra từ thời điểm áp dụng (CSDL chỉ lưu DangApDung / HetHan)
+        LocalDateTime bayGio = LocalDateTime.now();
+        Map<Integer, String> hienThi = new HashMap<>();
+        truocTrangThai.forEach(bg -> hienThi.put(bg.getId(), com.example.Service.BangGiaService.hienThi(bg, bayGio)));
+        long demDangApDung = hienThi.values().stream().filter("DangApDung"::equals).count();
+        long demSapApDung = hienThi.values().stream().filter("ChuaApDung"::equals).count();
+        String tab = "DangApDung".equals(trangThai) || "HetHan".equals(trangThai) || "ChuaApDung".equals(trangThai) ? trangThai : "";
         java.util.Comparator<BangGiaDichVu> thuTu = switch (sapXep) {
             case "giaTang" -> java.util.Comparator.comparing(BangGiaDichVu::getDonGia, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
             case "giaGiam" -> java.util.Comparator.comparing(BangGiaDichVu::getDonGia, java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()));
@@ -800,7 +935,7 @@ public class HCNSController {
             default -> java.util.Comparator.comparing(BangGiaDichVu::getId);
         };
         List<BangGiaDichVu> ketQua = truocTrangThai.stream()
-                .filter(bg -> tab.isEmpty() || (tab.equals("DangApDung") == "DangApDung".equals(bg.getTrangThai())))
+                .filter(bg -> tab.isEmpty() || tab.equals(hienThi.get(bg.getId())))
                 .sorted(thuTu)
                 .toList();
 
@@ -815,6 +950,7 @@ public class HCNSController {
         if (!tuKhoa.isEmpty()) qs.queryParam("q", q.trim());
         if (loaiDichVuId != null) qs.queryParam("loaiDichVuId", loaiDichVuId);
         if (dichVuId != null) qs.queryParam("dichVuId", dichVuId);
+        if (maDichVu != null && !maDichVu.isBlank()) qs.queryParam("maDichVu", maDichVu);
         if (loaiHinhDat != null && !loaiHinhDat.isBlank()) qs.queryParam("loaiHinhDat", loaiHinhDat);
         if (giaTu != null) qs.queryParam("giaTu", giaTu.toPlainString());
         if (giaDen != null) qs.queryParam("giaDen", giaDen.toPlainString());
@@ -835,11 +971,27 @@ public class HCNSController {
 
         model.addAttribute("demTatCa", truocTrangThai.size());
         model.addAttribute("demDangApDung", demDangApDung);
-        model.addAttribute("demHetHan", truocTrangThai.size() - demDangApDung);
+        model.addAttribute("demSapApDung", demSapApDung);
+        model.addAttribute("demHetHan", truocTrangThai.size() - demDangApDung - demSapApDung);
+        // Gói đang quyết định giá hiện tại của từng dịch vụ (đánh dấu "Giá hiện hành")
+        java.util.Set<Integer> giaHienHanh = new java.util.HashSet<>();
+        truocTrangThai.stream().map(BangGiaDichVu::getDichVu).filter(java.util.Objects::nonNull).distinct()
+                .forEach(dv -> bangGiaService.giaApDung(dv.getId(), LocalDateTime.now()).ifPresent(bg -> giaHienHanh.add(bg.getId())));
+        model.addAttribute("giaHienHanh", giaHienHanh);
+        model.addAttribute("trangThaiHienThi", hienThi);
         model.addAttribute("fTrangThai", tab);
         model.addAttribute("fQ", q != null ? q.trim() : "");
         model.addAttribute("fLoaiDichVuId", loaiDichVuId);
         model.addAttribute("fDichVuId", dichVuId);
+        model.addAttribute("fMaDichVu", maDichVu != null ? maDichVu : "");
+        // Ô lọc "Dịch vụ": mỗi mã dịch vụ một dòng, tên chung (bỏ phần biến thể trong ngoặc)
+        Map<String, String[]> nhomDichVu = new java.util.LinkedHashMap<>();
+        for (DichVu dv : dichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "maDichVu").and(Sort.by(Sort.Direction.ASC, "id")))) {
+            String ten = dv.getTenDichVu() != null ? dv.getTenDichVu().replaceFirst("\\s*\\(.*\\)\\s*$", "") : dv.getMaDichVu();
+            nhomDichVu.putIfAbsent(dv.getMaDichVu(), new String[]{ten,
+                    dv.getLoaiDichVu() != null ? String.valueOf(dv.getLoaiDichVu().getId()) : ""});
+        }
+        model.addAttribute("nhomDichVus", nhomDichVu);
         model.addAttribute("fLoaiHinhDat", loaiHinhDat != null ? loaiHinhDat : "");
         model.addAttribute("fGiaTu", giaTu);
         model.addAttribute("fGiaDen", giaDen);
@@ -864,6 +1016,15 @@ public class HCNSController {
         }
     }
 
+    /**
+     * Ngày nhập không được ở quá khứ. Khi sửa, cho giữ nguyên ngày cũ (ngayCu) dù đã qua.
+     */
+    private static void khongQuaKhu(LocalDate ngay, LocalDate ngayCu, String tenTruong) {
+        if (ngay != null && ngay.isBefore(LocalDate.now()) && !ngay.equals(ngayCu)) {
+            throw new IllegalArgumentException(tenTruong + " không được ở quá khứ.");
+        }
+    }
+
     @PostMapping("/dich-vu-bang-gia/them")
     public String themBangGia(
             @RequestParam Integer dichVuId,
@@ -871,7 +1032,9 @@ public class HCNSController {
             @RequestParam String donViTinh,
             @RequestParam BigDecimal donGia,
             @RequestParam(required = false) String ngayApDung,
+            @RequestParam(required = false) String gioApDung,
             @RequestParam(required = false) String ngayKetThuc,
+            @RequestParam(required = false) String gioKetThuc,
             RedirectAttributes redirectAttributes) {
         try {
             var dvOpt = dichVuRepository.findById(dichVuId);
@@ -887,18 +1050,14 @@ public class HCNSController {
             bg.setDonViTinh(donViTinh != null ? donViTinh.trim() : "Lần");
             bg.setDonGia(donGia);
 
-            if (ngayApDung != null && !ngayApDung.trim().isEmpty()) {
-                bg.setNgayApDung(LocalDate.parse(ngayApDung.trim()));
-            } else {
-                bg.setNgayApDung(LocalDate.now());
-            }
-
-            if (ngayKetThuc != null && !ngayKetThuc.trim().isEmpty()) {
-                bg.setNgayKetThuc(LocalDate.parse(ngayKetThuc.trim()));
-            }
-
-            bg.setTrangThai("DangApDung");
+            // Thời điểm áp dụng (ngày + giờ); trống = ngay bây giờ. Kết thúc trống = không thời hạn
+            LocalDateTime tu = com.example.Service.BangGiaService.ghepNgayGio(ngayApDung, gioApDung, false);
+            bg.setNgayApDung(tu != null ? tu : LocalDateTime.now());
+            bg.setNgayKetThuc(com.example.Service.BangGiaService.ghepNgayGio(ngayKetThuc, gioKetThuc, true));
+            com.example.Service.BangGiaService.kiemTraKhoang(bg.getNgayApDung(), bg.getNgayKetThuc(), null);
+            bg.setTrangThai("DangApDung"); // chưa tới giờ áp dụng vẫn lưu DangApDung (CHECK chk_BG_trangThai)
             bangGiaDichVuRepository.save(bg);
+            bangGiaService.lamMoi();
             redirectAttributes.addFlashAttribute("successMessage", "Thêm gói bảng giá thành công (Mã: " + bg.getMaBangGia() + ")!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thêm bảng giá: " + e.getMessage());
@@ -914,7 +1073,9 @@ public class HCNSController {
             @RequestParam String donViTinh,
             @RequestParam BigDecimal donGia,
             @RequestParam(required = false) String ngayApDung,
+            @RequestParam(required = false) String gioApDung,
             @RequestParam(required = false) String ngayKetThuc,
+            @RequestParam(required = false) String gioKetThuc,
             @RequestParam(defaultValue = "DangApDung") String trangThai,
             RedirectAttributes redirectAttributes) {
         try {
@@ -931,23 +1092,25 @@ public class HCNSController {
             }
 
             BangGiaDichVu bg = bgOpt.get();
+            LocalDateTime apDungCu = bg.getNgayApDung();
             bg.setDichVu(dvOpt.get());
             bg.setLoaiHinhDat(loaiHinhDat);
             bg.setDonViTinh(donViTinh.trim());
-            bg.setDonGia(donGia);
+            // Đơn giá không sửa trực tiếp: dùng "Cập nhật giá" để tạo bảng giá mới, giữ lịch sử giá
+            boolean doiGia = donGia != null && bg.getDonGia() != null && donGia.compareTo(bg.getDonGia()) != 0;
 
-            if (ngayApDung != null && !ngayApDung.trim().isEmpty()) {
-                bg.setNgayApDung(LocalDate.parse(ngayApDung.trim()));
-            }
-            if (ngayKetThuc != null && !ngayKetThuc.trim().isEmpty()) {
-                bg.setNgayKetThuc(LocalDate.parse(ngayKetThuc.trim()));
-            } else {
-                bg.setNgayKetThuc(null);
-            }
+            LocalDateTime tu = com.example.Service.BangGiaService.ghepNgayGio(ngayApDung, gioApDung, false);
+            if (tu != null) bg.setNgayApDung(tu);
+            bg.setNgayKetThuc(com.example.Service.BangGiaService.ghepNgayGio(ngayKetThuc, gioKetThuc, true));
+            // Giữ nguyên thời điểm áp dụng cũ (đã qua) thì không báo quá khứ
+            com.example.Service.BangGiaService.kiemTraKhoang(bg.getNgayApDung(), bg.getNgayKetThuc(), apDungCu);
             bg.setTrangThai(trangThai);
 
             bangGiaDichVuRepository.save(bg);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật bảng giá thành công!");
+            bangGiaService.lamMoi(); // ngừng / áp dụng lại / đổi ngày: tính lại giá dịch vụ
+            redirectAttributes.addFlashAttribute("successMessage", doiGia
+                    ? "Đã lưu thông tin gói. Đơn giá không đổi ở đây, hãy dùng \"Cập nhật giá\" để tạo bảng giá mới."
+                    : "Cập nhật bảng giá thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật bảng giá: " + e.getMessage());
         }
@@ -955,7 +1118,9 @@ public class HCNSController {
     }
 
     /**
-     * Sửa giá nhiều gói cùng lúc. ids[i] nhận donGia[i]; ngayApDung (nếu có) áp cho mọi gói đã chọn.
+     * Cập nhật giá nhiều gói cùng lúc: mỗi gói ids[i] được tạo một bảng giá mới giá donGia[i], áp dụng từ
+     * ngayApDung (trống = hôm nay) đến ngayKetThuc (trống = không thời hạn). Bảng giá cũ giữ nguyên;
+     * hết thời hạn thì giá tự quay về bảng giá chưa kết thúc mới nhất (BangGiaService).
      * Chạy trong một giao dịch: một gói lỗi thì không gói nào bị đổi.
      */
     @PostMapping("/dich-vu-bang-gia/sua-hang-loat")
@@ -964,8 +1129,12 @@ public class HCNSController {
             @RequestParam(name = "ids", required = false) List<Integer> ids,
             @RequestParam(name = "donGia", required = false) List<BigDecimal> donGias,
             @RequestParam(required = false) String ngayApDung,
+            @RequestParam(required = false) String gioApDung,
+            @RequestParam(required = false) String ngayKetThuc,
+            @RequestParam(required = false) String gioKetThuc,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String returnQuery,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         // Quay về đúng bộ lọc và trang đang xem; chỉ nhận ký tự của query string đã mã hoá
         String giuLoc = (returnQuery != null && returnQuery.matches("[A-Za-z0-9%&=._+\\-]*")) ? returnQuery : "";
@@ -975,25 +1144,52 @@ public class HCNSController {
             return back;
         }
         try {
-            LocalDate ngayMoi = (ngayApDung != null && !ngayApDung.isBlank()) ? LocalDate.parse(ngayApDung.trim()) : null;
-            Map<Integer, BangGiaDichVu> theoId = new HashMap<>();
-            for (BangGiaDichVu bg : bangGiaDichVuRepository.findAllById(ids)) theoId.put(bg.getId(), bg);
-
+            LocalDateTime tuNhap = com.example.Service.BangGiaService.ghepNgayGio(ngayApDung, gioApDung, false);
+            LocalDateTime tu = tuNhap != null ? tuNhap : LocalDateTime.now();
+            LocalDateTime den = com.example.Service.BangGiaService.ghepNgayGio(ngayKetThuc, gioKetThuc, true);
+            String nguoi = nguoiCapNhat(request);
             for (int i = 0; i < ids.size(); i++) {
-                BangGiaDichVu bg = theoId.get(ids.get(i));
-                BigDecimal gia = donGias.get(i);
-                if (bg == null) throw new IllegalArgumentException("Gói giá #" + ids.get(i) + " không còn tồn tại");
-                if (gia == null || gia.signum() < 0) throw new IllegalArgumentException("Giá mới của " + bg.getMaBangGia() + " không hợp lệ");
-                bg.setDonGia(gia);
-                if (ngayMoi != null) bg.setNgayApDung(ngayMoi);
+                bangGiaService.capNhatGia(ids.get(i), donGias.get(i), tu, den, nguoi);
             }
-            bangGiaDichVuRepository.saveAll(theoId.values());
-            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật giá cho " + ids.size() + " gói.");
+            java.time.format.DateTimeFormatter f = java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo bảng giá mới cho " + ids.size() + " gói, áp dụng từ "
+                    + tu.format(f) + (den != null ? " đến " + den.format(f) + ", sau đó quay về giá trước đó." : "."));
         } catch (Exception e) {
             org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             redirectAttributes.addFlashAttribute("errorMessage", "Không cập nhật được giá: " + e.getMessage() + ". Chưa gói nào bị đổi.");
         }
         return back;
+    }
+
+    /** Cập nhật giá một gói: tạo bảng giá mới (giữ bảng giá cũ), áp dụng từ ngày bắt đầu đến ngày kết thúc. */
+    @PostMapping("/dich-vu-bang-gia/cap-nhat-gia")
+    public String capNhatGiaMotGoi(@RequestParam Integer id,
+                                   @RequestParam BigDecimal donGia,
+                                   @RequestParam(required = false) String ngayApDung,
+                                   @RequestParam(required = false) String gioApDung,
+                                   @RequestParam(required = false) String ngayKetThuc,
+                                   @RequestParam(required = false) String gioKetThuc,
+                                   HttpServletRequest request,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            LocalDateTime tuNhap = com.example.Service.BangGiaService.ghepNgayGio(ngayApDung, gioApDung, false);
+            LocalDateTime tu = tuNhap != null ? tuNhap : LocalDateTime.now();
+            LocalDateTime den = com.example.Service.BangGiaService.ghepNgayGio(ngayKetThuc, gioKetThuc, true);
+            BangGiaDichVu moi = bangGiaService.capNhatGia(id, donGia, tu, den, nguoiCapNhat(request));
+            java.time.format.DateTimeFormatter f = java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo bảng giá " + moi.getMaBangGia() + " áp dụng từ "
+                    + tu.format(f) + (den != null ? " đến " + den.format(f) + ", sau đó quay về giá trước đó." : "."));
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật giá: " + e.getMessage());
+        }
+        return "redirect:/hcns/dich-vu-bang-gia";
+    }
+
+    private static String nguoiCapNhat(HttpServletRequest request) {
+        Object ten = request.getSession().getAttribute("authenticatedFullName");
+        return ten != null ? "HCNS - " + ten : "HCNS";
     }
 
     @PostMapping("/dich-vu-bang-gia/xoa")
@@ -1004,10 +1200,12 @@ public class HCNSController {
                 BangGiaDichVu bg = bgOpt.get();
                 try {
                     bangGiaDichVuRepository.delete(bg);
+                    bangGiaService.lamMoi();
                     redirectAttributes.addFlashAttribute("successMessage", "Đã xóa gói bảng giá thành công!");
                 } catch (Exception ex) {
                     bg.setTrangThai("HetHan");
                     bangGiaDichVuRepository.save(bg);
+                    bangGiaService.lamMoi();
                     redirectAttributes.addFlashAttribute("successMessage", "Gói giá đã có đơn hàng sử dụng nên được chuyển sang trạng thái 'Hết hạn'!");
                 }
             }

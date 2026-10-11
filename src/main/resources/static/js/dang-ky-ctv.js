@@ -4,7 +4,7 @@
       Máy chủ trả về objectName (object key) – giá trị này được gửi kèm hồ sơ.
    2. Gửi hồ sơ                                   → POST /v1/collaborators/register
    3. Tra cứu kết quả                             → GET  /v1/collaborators/application-status
-   Tỉnh/thành và phường/xã lấy từ https://provinces.open-api.vn/api/v2/ (đơn vị hành chính 2 cấp).
+   Địa chỉ hiện tại: phường/xã TP.HCM lấy từ danh sách khu vực phục vụ của hệ thống.
    Máy chủ dựa vào tỉnh/thành + phường/xã để xếp cộng tác viên vào khu vực hoạt động.
    ========================================================== */
 (function () {
@@ -84,85 +84,25 @@
     });
   });
 
-  // ---- Địa chỉ: tỉnh/thành → phường/xã ----
-  var DIA_CHI_API = 'https://provinces.open-api.vn/api/v2';
+  // ---- Địa chỉ hiện tại: TP.HCM cố định, phường/xã chọn từ danh sách khu vực phục vụ (render sẵn) ----
   var tinhSelect = document.getElementById('tinhThanh');
   var phuongSelect = document.getElementById('phuongXa');
-  var diaChiLoi = document.getElementById('diaChiLoi');
-
-  function doDuLieu(select, items, placeholder) {
-    select.innerHTML = '';
-    var first = document.createElement('option');
-    first.value = '';
-    first.textContent = placeholder;
-    select.appendChild(first);
-    items.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'vi'); }).forEach(function (item) {
-      var opt = document.createElement('option');
-      opt.value = item.name;            // tên gửi lên máy chủ
-      opt.setAttribute('data-code', item.code);
-      opt.textContent = item.name;
-      select.appendChild(opt);
-    });
-  }
-
-  function layJson(url) {
-    return fetch(url).then(function (res) {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    });
-  }
-
-  function taiTinhThanh() {
-    diaChiLoi.classList.remove('is-shown');
-    tinhSelect.disabled = true;
-    tinhSelect.innerHTML = '<option value="">Đang tải danh sách…</option>';
-    layJson(DIA_CHI_API + '/p/')
-      .then(function (list) {
-        doDuLieu(tinhSelect, list || [], 'Chọn tỉnh, thành phố');
-        tinhSelect.disabled = false;
-      })
-      .catch(function () {
-        tinhSelect.innerHTML = '<option value="">Chưa tải được</option>';
-        diaChiLoi.classList.add('is-shown');
-      });
-  }
-
-  function taiPhuongXa() {
-    var chon = tinhSelect.options[tinhSelect.selectedIndex];
-    var code = chon ? chon.getAttribute('data-code') : null;
-    phuongSelect.disabled = true;
-    if (!code) {
-      phuongSelect.innerHTML = '<option value="">Chọn tỉnh, thành phố trước</option>';
-      return;
-    }
-    phuongSelect.innerHTML = '<option value="">Đang tải danh sách…</option>';
-    layJson(DIA_CHI_API + '/p/' + encodeURIComponent(code) + '?depth=2')
-      .then(function (tinh) {
-        // Đề phòng thao tác đổi tỉnh liên tiếp: chỉ nhận kết quả của tỉnh đang chọn
-        var hienTai = tinhSelect.options[tinhSelect.selectedIndex];
-        if (!hienTai || hienTai.getAttribute('data-code') !== code) return;
-        doDuLieu(phuongSelect, (tinh && tinh.wards) || [], 'Chọn phường, xã');
-        phuongSelect.disabled = false;
-      })
-      .catch(function () {
-        phuongSelect.innerHTML = '<option value="">Chưa tải được</option>';
-        diaChiLoi.classList.add('is-shown');
-      });
-  }
-
-  if (tinhSelect && phuongSelect) {
-    tinhSelect.addEventListener('change', taiPhuongXa);
-    document.getElementById('diaChiTaiLai').addEventListener('click', function () {
-      if (tinhSelect.value) { diaChiLoi.classList.remove('is-shown'); taiPhuongXa(); } else { taiTinhThanh(); }
-    });
-    taiTinhThanh();
-  }
 
   // ---- Kiểm tra dữ liệu ----
   function mark(field, bad) {
     if (field) field.classList.toggle('has-error', bad);
     return bad;
   }
+  // Lịch chọn ngày sinh chỉ cho chọn người đủ 18 tuổi
+  (function () {
+    var el = document.getElementById('ngaySinh');
+    if (!el) return;
+    var d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    el.max = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    if (window.Lich) Lich.dongBo(el); // lịch chọn ngày (lich.js) nhận mốc 18 tuổi
+  })();
+
   function du18Tuoi(value) {
     if (!value) return false;
     var sinh = new Date(value);
@@ -204,6 +144,9 @@
       }
     }
 
+    var soKhuVuc = form.querySelectorAll('input[name="khuVucNhanViec"]:checked').length;
+    if (mark(document.getElementById('khuVucField'), soKhuVuc < 1 || soKhuVuc > 5)) bad = true;
+
     var coDichVu = form.querySelectorAll('input[name="loaiDichVu"]:checked').length > 0;
     if (mark(document.getElementById('dichVuField'), !coDichVu)) bad = true;
 
@@ -218,6 +161,22 @@
       var field = e.target.closest ? e.target.closest('.field') : null;
       if (field) field.classList.remove('has-error');
     });
+  });
+
+  // Chọn phường nơi ở: tự tích khu vực gần nhà nếu chưa chọn khu vực nào
+  form.addEventListener('diachi:khuvuc', function (e) {
+    var kvs = e.detail || [];
+    if (!kvs.length || form.querySelector('input[name="khuVucNhanViec"]:checked')) return;
+    var cb = form.querySelector('input[name="khuVucNhanViec"][value="' + kvs[0].id + '"]');
+    if (cb) { cb.checked = true; document.getElementById('khuVucField').classList.remove('has-error'); }
+  });
+  // Tối đa 5 khu vực
+  form.addEventListener('change', function (e) {
+    if (e.target.name !== 'khuVucNhanViec' || !e.target.checked) return;
+    if (form.querySelectorAll('input[name="khuVucNhanViec"]:checked').length > 5) {
+      e.target.checked = false;
+      document.getElementById('khuVucField').classList.add('has-error');
+    }
   });
 
   function checkedValues(name) {
@@ -271,10 +230,11 @@
           matKhau: document.getElementById('matKhau') ? document.getElementById('matKhau').value : null,
           ngaySinh: document.getElementById('ngaySinh').value,
           gioiTinh: document.getElementById('gioiTinh').value,
-          // Địa chỉ đầy đủ để hiển thị; tỉnh/thành + phường/xã để máy chủ xếp khu vực
-          noiCuTru: [document.getElementById('diaChiChiTiet').value.trim(), phuongSelect.value, tinhSelect.value].join(', '),
-          tinhThanh: tinhSelect.value,
-          phuongXa: phuongSelect.value,
+          // Địa chỉ nơi ở: số nhà + mã tỉnh, phường (máy chủ ghép tên); khu vực nhận việc chọn riêng
+          soNhaTenDuong: document.getElementById('diaChiChiTiet').value.trim(),
+          maTinh: parseInt(tinhSelect.value, 10),
+          maPhuong: parseInt(phuongSelect.value, 10),
+          danhSachKhuVucId: checkedValues('khuVucNhanViec'),
           danhSachDichVuId: dichVuIds,
           danhSachHoSo: hoSo,
           danhSachChungChi: chungChi
@@ -293,7 +253,6 @@
         }
         var d = r.body.data || {};
         form.reset();
-        taiPhuongXa();
         uploaded = {};
         document.querySelectorAll('[data-upload]').forEach(function (zone) {
           zone.classList.remove('is-busy', 'is-done', 'is-failed');

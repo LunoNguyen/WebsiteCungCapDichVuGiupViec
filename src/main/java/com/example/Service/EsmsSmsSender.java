@@ -42,7 +42,7 @@ public class EsmsSmsSender implements SmsSender {
     @Value("${app.esms.secret-key}")
     private String secretKey;
 
-    @Value("${app.esms.brand-name:Neatify}")
+    @Value("${app.esms.brand-name:bTaskee}")
     private String brandName;
 
     /**

@@ -74,8 +74,10 @@ public class ThongKeService {
         return nhanVienRepository.count();
     }
 
+    /** Số dịch vụ đang hoạt động, đếm theo mã (các biến thể cùng mã là một dịch vụ). */
     public long getTongDichVu() {
-        return dichVuRepository.count();
+        return dichVuRepository.findByTrangThai("HoatDong").stream()
+                .map(dv -> dv.getMaDichVu()).distinct().count();
     }
 
     public long getTongKhieuNai() {

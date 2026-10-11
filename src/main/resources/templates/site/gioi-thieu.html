@@ -12,7 +12,7 @@
         <h1>Việc nhà là việc cần người đáng tin</h1>
         <p>bTaskee kết nối gia đình với cộng tác viên giúp việc theo giờ đã được xét duyệt, với giá công khai và quy trình rõ ràng từ lúc đặt lịch đến khi thanh toán.</p>
       </div>
-      <div class="leaf"><img src="/images/services/cham-soc-nguoi-cao-tuoi.png" alt="Cộng tác viên bTaskee trò chuyện cùng người cao tuổi"></div>
+      <div class="leaf"><img src="/images/btaskee/tasker-su-kien.jpg" alt="Đội ngũ Tasker bTaskee"></div>
     </div>
   </section>
 
@@ -25,7 +25,7 @@
         <p>Người làm nghề giúp việc cũng gặp khó: việc không đều, thu nhập phụ thuộc vào người môi giới.</p>
         <blockquote>Dịch vụ gia đình tốt phải bắt đầu từ một quy trình đáng tin, không phải từ sự may mắn.</blockquote>
       </div>
-      <div class="leaf"><img src="/images/services/don-dep-nha-cua.png" alt="Cộng tác viên bTaskee lau sàn phòng khách" loading="lazy"></div>
+      <div class="leaf"><img src="/images/btaskee/tasker-lam-viec-tron.webp" alt="Tasker bTaskee dọn dẹp phòng khách" loading="lazy"></div>
     </div>
   </section>
 
@@ -33,20 +33,22 @@
     <div class="wrap split reverse">
       <div>
         <h2>bTaskee, gọn gàng trong từng việc nhỏ</h2>
-        <p>Tên bTaskee ghép từ “neat”, nghĩa là gọn gàng, ngăn nắp. Đó cũng là cách chúng tôi tổ chức công việc: mỗi đơn đặt có người tiếp nhận, mỗi buổi làm có lịch, mỗi khoản thu có hóa đơn và biên lai.</p>
+        <p>Tên bTaskee ghép từ “bee” (chú ong chăm chỉ) và “task” (công việc). Như những chú ong, chúng tôi làm việc chăm chỉ và ngăn nắp: mỗi đơn đặt có người tiếp nhận, mỗi buổi làm có lịch, mỗi khoản thu có hóa đơn và biên lai.</p>
         <p>Khách hàng đặt lịch trên ứng dụng. Cộng tác viên nhận phân công, xem thời gian biểu và báo cáo kết quả trên ứng dụng của mình. Nhân viên bTaskee điều phối và hỗ trợ trên website quản trị.</p>
       </div>
-      <div class="leaf"><img src="/images/services/ve-sinh-van-phong.png" alt="Cộng tác viên bTaskee lau sàn văn phòng" loading="lazy"></div>
+      <div class="leaf"><img src="/images/btaskee/ve-sinh-van-phong-tron.webp" alt="Tasker bTaskee lau dọn văn phòng" loading="lazy"></div>
     </div>
   </section>
 
   <!-- ===== SỐ LIỆU THẬT TỪ CSDL ===== -->
   <section class="stats" th:if="${soLieu != null and soLieu['dichVu'] > 0}">
     <div class="wrap">
+     <div class="stats-card">
       <div class="stat"><b th:text="${soLieu['dichVu']}">143</b><span>dịch vụ đang cung cấp</span></div>
       <div class="stat" th:if="${danhMucs != null and !danhMucs.isEmpty()}"><b th:text="${danhMucs.size()}">5</b><span>nhóm dịch vụ</span></div>
       <div class="stat" th:if="${soLieu['congTacVien'] > 0}"><b th:text="${soLieu['congTacVien']}">0</b><span>cộng tác viên đang hoạt động</span></div>
       <div class="stat" th:if="${soLieu['khachHang'] > 0}"><b th:text="${soLieu['khachHang']}">0</b><span>khách hàng thành viên</span></div>
+     </div>
     </div>
   </section>
 

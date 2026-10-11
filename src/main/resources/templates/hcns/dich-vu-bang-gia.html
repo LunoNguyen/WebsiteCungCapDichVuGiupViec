@@ -19,6 +19,7 @@
           <nav class="tabs" aria-label="Lọc theo trạng thái">
             <a class="tab-btn" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${filterQuery}" th:classappend="${fTrangThai == ''} ? 'active' : ''" th:attr="aria-current=${fTrangThai == '' ? 'page' : null}">Tất cả <span class="tab-count" th:text="${demTatCa}">0</span></a>
             <a class="tab-btn" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${filterQuery} + 'trangThai=DangApDung'" th:classappend="${fTrangThai == 'DangApDung'} ? 'active' : ''" th:attr="aria-current=${fTrangThai == 'DangApDung' ? 'page' : null}">Đang áp dụng <span class="tab-count" th:text="${demDangApDung}">0</span></a>
+            <a class="tab-btn" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${filterQuery} + 'trangThai=ChuaApDung'" th:classappend="${fTrangThai == 'ChuaApDung'} ? 'active' : ''" th:attr="aria-current=${fTrangThai == 'ChuaApDung' ? 'page' : null}">Sắp áp dụng <span class="tab-count" th:text="${demSapApDung}">0</span></a>
             <a class="tab-btn" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${filterQuery} + 'trangThai=HetHan'" th:classappend="${fTrangThai == 'HetHan'} ? 'active' : ''" th:attr="aria-current=${fTrangThai == 'HetHan' ? 'page' : null}">Hết hạn <span class="tab-count" th:text="${demHetHan}">0</span></a>
           </nav>
           <div class="toolbar-end">
@@ -56,11 +57,11 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="fDichVu">Dịch vụ</label>
-                <select class="form-control" name="dichVuId" id="fDichVu">
+                <select class="form-control" name="maDichVu" id="fDichVu">
                   <option value="">Mọi dịch vụ</option>
-                  <option th:each="dv : ${dichVus}" th:value="${dv.id}" th:text="${dv.tenDichVu}"
-                          th:attr="data-loai=${dv.loaiDichVu != null ? dv.loaiDichVu.id : ''}"
-                          th:selected="${fDichVuId != null and fDichVuId == dv.id}">Dịch vụ</option>
+                  <option th:each="e : ${nhomDichVus}" th:value="${e.key}" th:text="${e.value[0] + ' (' + e.key + ')'}"
+                          th:attr="data-loai=${e.value[1]}"
+                          th:selected="${fMaDichVu == e.key}">Dọn dẹp nhà theo giờ (DV101)</option>
                 </select>
               </div>
               <div class="form-group">
@@ -136,10 +137,14 @@
                 </td>
                 <td class="hide-md" th:text="${bg.donViTinh}">Giờ</td>
                 <td class="num col-end nowrap" style="font-weight:500" th:text="${bg.donGia != null ? #numbers.formatDecimal(bg.donGia, 0, 'POINT', 0, 'COMMA') + ' đ' : '—'}">120.000 đ</td>
-                <td class="hide-md nowrap tabular cell-empty" th:text="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'dd/MM/yyyy') : '—'}">01/01/2026</td>
+                <td class="hide-md nowrap tabular cell-empty" th:text="${(bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'HH:mm dd/MM/yyyy') : '—') + (bg.ngayKetThuc != null ? ' → ' + #temporals.format(bg.ngayKetThuc, 'HH:mm dd/MM/yyyy') : '')}">01/01/2026</td>
                 <td class="hide-sm nowrap">
-                  <span class="badge badge-success" th:if="${bg.trangThai == 'DangApDung'}">Đang áp dụng</span>
-                  <span class="badge badge-secondary" th:unless="${bg.trangThai == 'DangApDung'}">Hết hạn</span>
+                  <th:block th:with="tt=${trangThaiHienThi.get(bg.id)}">
+                    <span class="badge badge-success" th:if="${tt == 'DangApDung'}">Đang áp dụng</span>
+                    <span class="badge badge-info" th:if="${tt == 'ChuaApDung'}">Sắp áp dụng</span>
+                    <span class="badge badge-secondary" th:if="${tt == 'HetHan'}">Hết hạn</span>
+                  </th:block>
+                  <span class="badge badge-warning" th:if="${giaHienHanh.contains(bg.id)}" title="Giá đang tính cho khách hôm nay">Giá hiện hành</span>
                 </td>
                 <td>
                   <div class="dropdown" style="display:inline-block">
@@ -151,10 +156,15 @@
                               th:data-loaihinh="${bg.loaiHinhDat}"
                               th:data-donvitinh="${bg.donViTinh}"
                               th:data-dongia="${bg.donGia}"
-                              th:data-ngayapdung="${bg.ngayApDung}"
-                              th:data-ngayketthuc="${bg.ngayKetThuc}"
+                              th:data-ngayapdung="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'yyyy-MM-dd') : ''}"
+                              th:data-gioapdung="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'HH:mm') : ''}"
+                              th:data-ngayketthuc="${bg.ngayKetThuc != null ? #temporals.format(bg.ngayKetThuc, 'yyyy-MM-dd') : ''}"
+                              th:data-gioketthuc="${bg.ngayKetThuc != null ? #temporals.format(bg.ngayKetThuc, 'HH:mm') : ''}"
                               th:data-trangthai="${bg.trangThai}"
-                              onclick="DropdownManager.closeAll(); openEditPriceModal(this)"><i class="ti ti-edit"></i>Sửa gói giá</button>
+                              onclick="DropdownManager.closeAll(); openEditPriceModal(this)"><i class="ti ti-edit"></i>Sửa thông tin gói</button>
+                      <button type="button" class="dropdown-item menu-btn"
+                              th:attr="data-id=${bg.id},data-ten=${bg.dichVu != null ? bg.dichVu.tenDichVu : bg.maBangGia},data-ma=${bg.maBangGia},data-dongia=${bg.donGia}"
+                              onclick="DropdownManager.closeAll(); openCapNhatGia(this)"><i class="ti ti-currency-dong"></i>Cập nhật giá</button>
                       <form th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post">
                         <input type="hidden" name="id" th:value="${bg.id}">
                         <input type="hidden" name="dichVuId" th:value="${bg.dichVu != null ? bg.dichVu.id : ''}">
@@ -250,12 +260,26 @@
             <span id="bulkValueSuffix">%</span>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="bulkNgayApDung">Ngày áp dụng mới</label>
-          <input type="date" class="form-control" name="ngayApDung" id="bulkNgayApDung">
-        </div>
       </div>
       <label class="check-row"><input type="checkbox" id="bulkRound" checked> Làm tròn đến 1.000 đ</label>
+
+      <!-- Thời gian áp dụng của bảng giá mới: ngày bắt đầu và ngày kết thúc cùng một hàng -->
+      <div class="form-row" style="margin-top:0.75rem">
+        <div class="form-group">
+          <label class="form-label" for="bulkNgayApDung">Áp dụng từ</label>
+          <div class="ngay-gio">
+            <input class="form-control" type="date" name="ngayApDung" id="bulkNgayApDung" data-min-today>
+            <input class="form-control gio" type="time" name="gioApDung" id="bulkGioApDung" value="00:00" step="60" aria-label="Giờ – Áp dụng từ">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="bulkNgayKetThuc">Đến</label>
+          <div class="ngay-gio">
+            <input class="form-control" type="date" name="ngayKetThuc" id="bulkNgayKetThuc" data-min-today data-min-from="bulkNgayApDung">
+            <input class="form-control gio" type="time" name="gioKetThuc" id="bulkGioKetThuc" value="23:59" step="60" aria-label="Giờ – Đến">
+          </div>
+        </div>
+      </div>
 
       <div class="bulk-preview">
         <div class="bulk-preview-head">
@@ -263,7 +287,7 @@
         </div>
         <div id="bulkPreviewRows"></div>
       </div>
-      <p class="form-hint">Mỗi gói một giá: gõ thẳng vào ô "Giá mới" của từng dòng. Ô đã gõ tay giữ nguyên khi đổi cách tính ở trên. Để trống ngày áp dụng thì giữ ngày cũ của từng gói.</p>
+      <p class="form-hint">Mỗi gói một giá: gõ thẳng vào ô "Giá mới" của từng dòng. Ô đã gõ tay giữ nguyên khi đổi cách tính ở trên. Mỗi gói được tạo một bảng giá mới, bảng giá cũ giữ nguyên. Để trống "Áp dụng từ" = từ hôm nay; để trống "Đến ngày" = không thời hạn. Hết thời hạn, giá tự quay về bảng giá trước đó.</p>
       <p class="form-error" id="bulkError" hidden></p>
 
       <div class="modal-footer">
@@ -311,13 +335,19 @@
             <input class="form-control" type="number" name="donGia" placeholder="VD: 150000" min="0" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Ngày áp dụng</label>
-            <input class="form-control" type="date" name="ngayApDung">
+          <label class="form-label" for="addBgNgayApDung">Áp dụng từ</label>
+          <div class="ngay-gio">
+            <input class="form-control" type="date" name="ngayApDung" id="addBgNgayApDung" data-min-today>
+            <input class="form-control gio" type="time" name="gioApDung" id="addBgGioApDung" value="00:00" step="60" aria-label="Giờ – Áp dụng từ">
           </div>
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Ngày kết thúc (Để trống nếu áp dụng vĩnh viễn)</label>
-          <input class="form-control" type="date" name="ngayKetThuc">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="addBgNgayKetThuc">Đến (để trống nếu áp dụng lâu dài)</label>
+          <div class="ngay-gio">
+            <input class="form-control" type="date" name="ngayKetThuc" id="addBgNgayKetThuc" data-min-today data-min-from="addBgNgayApDung">
+            <input class="form-control gio" type="time" name="gioKetThuc" id="addBgGioKetThuc" value="23:59" step="60" aria-label="Giờ – Đến (để trống nếu áp dụng lâu dài)">
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -362,7 +392,9 @@
         <div class="form-row" style="margin-bottom:1rem">
           <div class="form-group">
             <label class="form-label">Đơn giá niêm yết (VNĐ) *</label>
-            <input class="form-control" type="number" name="donGia" id="editBgDonGia" required min="0">
+            <input class="form-control" type="number" name="donGia" id="editBgDonGia" required min="0" readonly
+                   title="Đổi giá bằng mục Cập nhật giá để giữ lịch sử giá">
+            <div class="form-hint">Đổi giá: dùng "Cập nhật giá" (tạo bảng giá mới, giữ giá cũ).</div>
           </div>
           <div class="form-group">
             <label class="form-label">Trạng thái</label>
@@ -374,13 +406,19 @@
         </div>
         <div class="form-row" style="margin-bottom:0">
           <div class="form-group">
-            <label class="form-label">Ngày áp dụng</label>
-            <input class="form-control" type="date" name="ngayApDung" id="editBgNgayApDung">
+          <label class="form-label" for="editBgNgayApDung">Áp dụng từ</label>
+          <div class="ngay-gio">
+            <input class="form-control" type="date" name="ngayApDung" id="editBgNgayApDung" data-min-today>
+            <input class="form-control gio" type="time" name="gioApDung" id="editBgGioApDung" value="00:00" step="60" aria-label="Giờ – Áp dụng từ">
           </div>
+        </div>
           <div class="form-group">
-            <label class="form-label">Ngày kết thúc</label>
-            <input class="form-control" type="date" name="ngayKetThuc" id="editBgNgayKetThuc">
+          <label class="form-label" for="editBgNgayKetThuc">Đến</label>
+          <div class="ngay-gio">
+            <input class="form-control" type="date" name="ngayKetThuc" id="editBgNgayKetThuc" data-min-today data-min-from="editBgNgayApDung">
+            <input class="form-control gio" type="time" name="gioKetThuc" id="editBgGioKetThuc" value="23:59" step="60" aria-label="Giờ – Đến">
           </div>
+        </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -391,9 +429,102 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: CẬP NHẬT GIÁ (tạo bảng giá mới có thời hạn)
+     ============================================================ -->
+<div class="modal-overlay" id="capNhatGiaModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2 class="modal-title">Cập nhật giá</h2>
+      <button class="modal-close" data-modal-close="capNhatGiaModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
+    </div>
+    <form th:action="@{/hcns/dich-vu-bang-gia/cap-nhat-gia}" method="post">
+      <input type="hidden" name="id" id="cngId">
+      <dl class="desc-list" style="margin-bottom:1rem">
+        <dt>Dịch vụ</dt><dd id="cngTen">—</dd>
+        <dt>Giá hiện tại</dt><dd class="tabular" id="cngGiaCu">—</dd>
+      </dl>
+      <div class="form-group">
+        <label class="form-label" for="cngDonGia">Giá mới (VNĐ) *</label>
+        <input class="form-control" type="number" name="donGia" id="cngDonGia" min="0" step="1000" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="cngTu">Áp dụng từ *</label>
+          <div class="ngay-gio">
+            <input class="form-control" type="date" name="ngayApDung" id="cngTu" required data-min-today>
+            <input class="form-control gio" type="time" name="gioApDung" id="cngGioTu" value="00:00" step="60" aria-label="Giờ – Áp dụng từ *">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cngDen">Đến</label>
+          <div class="ngay-gio">
+            <input class="form-control" type="date" name="ngayKetThuc" id="cngDen" data-min-today data-min-from="cngTu">
+            <input class="form-control gio" type="time" name="gioKetThuc" id="cngGioDen" value="23:59" step="60" aria-label="Giờ – Đến">
+          </div>
+        </div>
+      </div>
+      <p class="form-hint">Tạo bảng giá mới, bảng giá cũ giữ nguyên. Để trống "Đến ngày" nếu giá mới áp dụng lâu dài.
+        Có ngày kết thúc thì sau ngày đó giá tự quay về bảng giá chưa kết thúc mới nhất.</p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-modal-close="capNhatGiaModal">Huỷ</button>
+        <button type="submit" class="btn btn-primary">Tạo bảng giá mới</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 
+<style>
+  /* Ô ngày + ô giờ trên cùng một dòng */
+  .ngay-gio { display: flex; gap: 0.5rem; }
+  .ngay-gio > :first-child, .ngay-gio .lich-alt { flex: 1; min-width: 0; }
+  .ngay-gio .gio { flex: 0 0 7.5rem; }
+</style>
 <script>
+  // Giờ gần nhất làm tròn lên 5 phút (mặc định cho "áp dụng từ" hôm nay)
+  function gioSapToi() {
+    const d = new Date(Date.now() + 5 * 60000);
+    d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  // Trước khi gửi: thời điểm bắt đầu (ngày + giờ) không ở quá khứ, kết thúc sau bắt đầu.
+  // Máy chủ kiểm tra lại (BangGiaService.kiemTraKhoang).
+  document.addEventListener('submit', (e) => {
+    const f = e.target;
+    const ngayTu = f.querySelector('input[name="ngayApDung"]'), gioTu = f.querySelector('input[name="gioApDung"]');
+    if (!ngayTu || !gioTu || ngayTu.type === 'hidden' && !ngayTu._flatpickr) return;
+    const ngayDen = f.querySelector('input[name="ngayKetThuc"]'), gioDen = f.querySelector('input[name="gioKetThuc"]');
+    const luc = (n, g) => n && n.value ? new Date(n.value + 'T' + ((g && g.value) || '00:00')) : null;
+    const tu = luc(ngayTu, gioTu), den = luc(ngayDen, gioDen);
+    let msg = '';
+    const giuNguyen = ngayTu.dataset.original && ngayTu.value === ngayTu.dataset.original && gioTu.dataset.original === gioTu.value;
+    if (tu && tu < new Date(Date.now() - 60000) && !giuNguyen) msg = 'Thời điểm áp dụng không được ở quá khứ.';
+    else if (tu && den && den <= tu) msg = 'Thời điểm kết thúc phải sau thời điểm áp dụng.';
+    if (msg) {
+      e.preventDefault();
+      gioTu.setCustomValidity(msg);
+      gioTu.reportValidity();
+      gioTu.addEventListener('input', () => gioTu.setCustomValidity(''), { once: true });
+    }
+  });
+
+  function openCapNhatGia(btn) {
+    document.getElementById('cngId').value = btn.dataset.id;
+    document.getElementById('cngTen').textContent = btn.dataset.ten + ' · ' + btn.dataset.ma;
+    const cu = Math.round(parseFloat(btn.dataset.dongia) || 0);
+    document.getElementById('cngGiaCu').textContent = cu.toLocaleString('vi-VN') + ' đ';
+    document.getElementById('cngDonGia').value = cu;
+    DateRules.fill('cngTu', DateRules.today());
+    DateRules.fill('cngDen', '');
+    document.getElementById('cngGioTu').value = gioSapToi();
+    document.getElementById('cngGioDen').value = '23:59';
+    ModalManager.open('capNhatGiaModal');
+    setTimeout(() => { const i = document.getElementById('cngDonGia'); i.focus(); i.select(); }, 50);
+  }
+
   function openEditPriceModal(btn) {
     document.getElementById('editBgId').value = btn.dataset.id;
     if (btn.dataset.dichvuid) {
@@ -404,8 +535,11 @@
     }
     document.getElementById('editBgDonViTinh').value = btn.dataset.donvitinh || '';
     document.getElementById('editBgDonGia').value = btn.dataset.dongia ? Math.round(btn.dataset.dongia) : '';
-    document.getElementById('editBgNgayApDung').value = btn.dataset.ngayapdung || '';
-    document.getElementById('editBgNgayKetThuc').value = btn.dataset.ngayketthuc || '';
+    DateRules.fill('editBgNgayApDung', btn.dataset.ngayapdung);
+    DateRules.fill('editBgNgayKetThuc', btn.dataset.ngayketthuc);
+    document.getElementById('editBgGioApDung').value = btn.dataset.gioapdung || '00:00';
+    document.getElementById('editBgGioApDung').dataset.original = btn.dataset.gioapdung || '00:00';
+    document.getElementById('editBgGioKetThuc').value = btn.dataset.gioketthuc || '23:59';
     if (btn.dataset.trangthai) {
       document.getElementById('editBgTrangThai').value = btn.dataset.trangthai;
     }
@@ -427,6 +561,7 @@
     if (params.get('q')) chips.push({ keys: ['q'], label: 'Từ khoá: "' + params.get('q') + '"' });
     if (params.get('loaiDichVuId')) chips.push({ keys: ['loaiDichVuId'], label: 'Danh mục: ' + optText('loaiDichVuId', params.get('loaiDichVuId')) });
     if (params.get('dichVuId')) chips.push({ keys: ['dichVuId'], label: 'Dịch vụ: ' + optText('dichVuId', params.get('dichVuId')) });
+    if (params.get('maDichVu')) chips.push({ keys: ['maDichVu'], label: 'Dịch vụ: ' + optText('maDichVu', params.get('maDichVu')) });
     if (params.get('loaiHinhDat')) chips.push({ keys: ['loaiHinhDat'], label: optText('loaiHinhDat', params.get('loaiHinhDat')) });
     if (params.get('giaTu') || params.get('giaDen')) {
       const a = params.get('giaTu'), b = params.get('giaDen');
@@ -495,14 +630,36 @@
     if (!table || !toolbar) return;
     const master = document.getElementById('selectAllPrices');
     const checks = () => [...table.querySelectorAll('.price-check')];
-    const selectedRows = () => checks().filter(c => c.checked).map(c => c.closest('tr'));
     const fmt = (n) => Math.round(n).toLocaleString('vi-VN') + ' đ';
+
+    // Danh sách gói đã chọn giữ qua các trang (phân trang tải lại trang nên lưu vào sessionStorage)
+    const STORE_KEY = 'hcns.bangGia.daChon';
+    const selected = new Map();
+    try {
+      (JSON.parse(sessionStorage.getItem(STORE_KEY)) || []).forEach(it => selected.set(String(it.id), it));
+    } catch (e) { /* trình duyệt chặn storage: chỉ nhớ trong trang hiện tại */ }
+    function persist() {
+      try { sessionStorage.setItem(STORE_KEY, JSON.stringify([...selected.values()])); } catch (e) {}
+    }
+    const rowInfo = (tr) => ({ id: tr.dataset.id, name: tr.dataset.name, code: tr.dataset.code, unit: tr.dataset.unit, price: tr.dataset.price });
+    function setChecked(c, on) {
+      c.checked = on;
+      const tr = c.closest('tr');
+      if (on) selected.set(String(tr.dataset.id), rowInfo(tr)); else selected.delete(String(tr.dataset.id));
+    }
+    // Đánh dấu lại các dòng đã chọn ở lần xem trước, cập nhật giá mới nhất của dòng đang hiển thị
+    checks().forEach(c => {
+      const tr = c.closest('tr');
+      if (selected.has(String(tr.dataset.id))) setChecked(c, true);
+    });
+    persist();
 
     function refreshSelection() {
       const all = checks();
-      const n = all.filter(c => c.checked).length;
-      master.checked = n > 0 && n === all.length;
-      master.indeterminate = n > 0 && n < all.length;
+      const onPage = all.filter(c => c.checked).length;
+      const n = selected.size;
+      master.checked = onPage > 0 && onPage === all.length;
+      master.indeterminate = onPage > 0 && onPage < all.length;
       master.hidden = all.length === 0;
       toolbar.querySelector('.bulk-default').hidden = n > 0;
       toolbar.querySelector('.bulk-active').hidden = n === 0;
@@ -510,9 +667,14 @@
       document.querySelector('#bulkEditBtn span').textContent = 'Sửa giá ' + n + ' gói';
       all.forEach(c => c.closest('tr').classList.toggle('is-selected', c.checked));
     }
-    master.addEventListener('change', () => { checks().forEach(c => { c.checked = master.checked; }); refreshSelection(); });
-    table.addEventListener('change', (e) => { if (e.target.classList.contains('price-check')) refreshSelection(); });
-    document.getElementById('bulkClear').addEventListener('click', () => { checks().forEach(c => { c.checked = false; }); refreshSelection(); });
+    master.addEventListener('change', () => { checks().forEach(c => setChecked(c, master.checked)); persist(); refreshSelection(); });
+    table.addEventListener('change', (e) => {
+      if (e.target.classList.contains('price-check')) { setChecked(e.target, e.target.checked); persist(); refreshSelection(); }
+    });
+    document.getElementById('bulkClear').addEventListener('click', () => {
+      checks().forEach(c => { c.checked = false; });
+      selected.clear(); persist(); refreshSelection();
+    });
     refreshSelection();
 
     // ---- Modal ----
@@ -566,13 +728,13 @@
     }
 
     document.getElementById('bulkEditBtn').addEventListener('click', () => {
-      const rows = selectedRows();
+      const rows = [...selected.values()];
       if (!rows.length) return;
       document.getElementById('bulkModalCount').textContent = rows.length;
       document.getElementById('bulkSubmit').textContent = 'Lưu giá mới cho ' + rows.length + ' gói';
       rowsBox.innerHTML = '';
-      rows.forEach(tr => {
-        const base = parseFloat(tr.dataset.price) || 0;
+      rows.forEach(it => {
+        const base = parseFloat(it.price) || 0;
         const row = document.createElement('div');
         row.className = 'bulk-row';
         row.dataset.base = base;
@@ -584,17 +746,20 @@
             <input type="number" name="donGia" class="form-control num" min="0" step="1000" required>
             <span class="bulk-delta"></span>
           </div>`;
-        row.querySelector('.bulk-name').textContent = tr.dataset.name;
-        row.querySelector('.bulk-meta').textContent = tr.dataset.code + ' · ' + tr.dataset.unit;
+        row.querySelector('.bulk-name').textContent = it.name;
+        row.querySelector('.bulk-meta').textContent = it.code + ' · ' + it.unit;
         row.querySelector('.bulk-old').textContent = fmt(base);
-        row.querySelector('input[name="ids"]').value = tr.dataset.id;
+        row.querySelector('input[name="ids"]').value = it.id;
         const priceInput = row.querySelector('input[name="donGia"]');
-        priceInput.setAttribute('aria-label', 'Giá mới của ' + tr.dataset.name);
+        priceInput.setAttribute('aria-label', 'Giá mới của ' + it.name);
         priceInput.addEventListener('input', () => { priceInput.dataset.manual = '1'; recalc(); });
         rowsBox.appendChild(row);
       });
       valueInput.value = '';
-      document.getElementById('bulkNgayApDung').value = '';
+      DateRules.fill('bulkNgayApDung', '');
+      DateRules.fill('bulkNgayKetThuc', '');
+      document.getElementById('bulkGioApDung').value = '00:00';
+      document.getElementById('bulkGioKetThuc').value = '23:59';
       recalc();
       ModalManager.open('bulkPriceModal');
       setTimeout(() => valueInput.focus(), 50);
@@ -608,12 +773,15 @@
       let msg = '';
       if (inputs.some(i => i.value === '')) msg = 'Còn gói chưa có giá mới. Điền giá cho gói đó.';
       else if (inputs.some(i => parseFloat(i.value) < 0)) msg = 'Có gói bị giảm xuống dưới 0 đ. Giảm ít hơn hoặc sửa tay giá của gói đó.';
-      else if (inputs.every(i => parseFloat(i.value) === parseFloat(i.closest('.bulk-row').dataset.base)) && !document.getElementById('bulkNgayApDung').value) msg = 'Giá mới đang giống hệt giá hiện tại.';
+      else if (inputs.every(i => parseFloat(i.value) === parseFloat(i.closest('.bulk-row').dataset.base))) msg = 'Giá mới đang giống hệt giá hiện tại.';
       if (msg) {
         e.preventDefault();
         errorEl.textContent = msg;
         errorEl.hidden = false;
+        return;
       }
+      // Đã gửi đi: bỏ danh sách chọn để lần sau bắt đầu lại
+      selected.clear(); persist();
     });
   })();
 </script>

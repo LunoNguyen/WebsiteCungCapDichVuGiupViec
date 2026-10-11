@@ -208,7 +208,7 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Số điện thoại *</label>
-            <input type="tel" name="soDienThoai" id="modalSoDienThoai" class="form-control" placeholder="0901234567" required pattern="[0-9]{9,11}">
+            <input type="tel" name="soDienThoai" id="modalSoDienThoai" class="form-control" placeholder="Số điện thoại" required pattern="[0-9]{9,11}">
             <small style="color:var(--text-muted);font-size:0.75rem">Nhập 9-11 chữ số, không khoảng trắng</small>
           </div>
           <div class="form-group">
@@ -228,7 +228,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Ngày sinh</label>
-            <input type="date" name="ngaySinh" id="modalNgaySinh" class="form-control">
+            <input type="date" name="ngaySinh" id="modalNgaySinh" class="form-control" data-min-age="18">
           </div>
         </div>
 
@@ -237,24 +237,27 @@
           <i class="ti ti-map-pin"></i> 2. Địa chỉ &amp; Khu vực
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Tỉnh / Thành phố *</label>
-            <select id="modalTinhThanhSelect" class="form-control" onchange="onProvinceChange()" required>
-              <option value="">-- Đang nạp danh sách Tỉnh/Thành... --</option>
-            </select>
+        <!-- Địa chỉ: tỉnh, phường (provinces.open-api.vn v2); khu vực (quận, huyện) tự suy ra từ phường – /js/dia-chi.js -->
+        <div data-dia-chi-form id="modalDiaChi">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="modalTinh">Tỉnh / Thành phố *</label>
+              <select id="modalTinh" name="maTinh" class="form-control" onchange="updateAddressPreview()" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="modalPhuong">Phường / Xã *</label>
+              <select id="modalPhuong" name="maPhuong" class="form-control" onchange="updateAddressPreview()" required></select>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Phường / Xã / Đơn vị hành chính *</label>
-            <select id="modalPhuongXaSelect" class="form-control" onchange="onWardChange()" required disabled>
-              <option value="">-- Vui lòng chọn Tỉnh/Thành trước --</option>
-            </select>
+          <div class="form-group" data-kv-wrap hidden>
+            <label class="form-label" for="modalKhuVuc">Khu vực *</label>
+            <select id="modalKhuVuc" name="khuVucId" class="form-control" onchange="updateAddressPreview()"></select>
           </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Số nhà, tên đường / Tòa nhà *</label>
-          <input type="text" id="modalSoNha" name="soNhaTenDuong" class="form-control" placeholder="Ví dụ: Số 45 Lê Duẩn, Tòa nhà Diamond Plaza" oninput="updateAddressPreview()" required>
+          <div data-kv-note style="font-size:0.8rem;margin:-0.25rem 0 0.75rem;color:var(--text-muted)"></div>
+          <div class="form-group">
+            <label class="form-label" for="modalSoNha">Số nhà, tên đường / Tòa nhà *</label>
+            <input type="text" id="modalSoNha" name="soNhaTenDuong" class="form-control" maxlength="200" placeholder="Ví dụ: Số 45 Lê Duẩn" oninput="updateAddressPreview()" required>
+          </div>
         </div>
 
         <div class="form-row">
@@ -265,11 +268,6 @@
         </div>
 
         <!-- Hidden input gửi sang Controller -->
-        <input type="hidden" name="tinhThanh" id="hiddenTinhThanh">
-        <input type="hidden" name="quanHuyen" id="hiddenQuanHuyen">
-        <input type="hidden" name="phuongXa" id="hiddenPhuongXa">
-        <input type="hidden" name="maKhuVuc" id="hiddenMaKhuVuc">
-        <input type="hidden" name="diaChiChiTiet" id="hiddenDiaChiChiTiet">
 
         <!-- Live Preview Box -->
         <div id="addressPreviewBox" style="display:none;padding:0.875rem 1rem;background:var(--success-bg);border:1px dashed var(--success);border-radius:var(--radius-md)">
@@ -297,145 +295,37 @@
 </div>
 
 <div th:replace="~{layout/cskh-layout :: cskhScripts}"></div>
+<script src="/js/dia-chi.js"></script>
 <script>
-  let provincesList = [];
 
-  // Tải danh sách Tỉnh/Thành phố từ Open API v2
-  async function loadProvincesData() {
-    const tinhSelect = document.getElementById('modalTinhThanhSelect');
-    if (!tinhSelect) return;
-
-    tinhSelect.innerHTML = '<option value="">-- Đang tải danh sách Tỉnh/Thành phố... --</option>';
-
-    try {
-      // Ưu tiên gọi trực tiếp API v2 (có CORS header)
-      let res = await fetch('https://provinces.open-api.vn/api/v2/p/');
-      if (!res.ok) {
-        // Fallback sang proxy backend nếu mạng ngoài bị chặn
-        res = await fetch('/cskh/api/provinces');
-      }
-      provincesList = await res.json();
-
-      tinhSelect.innerHTML = '<option value="">-- Chọn Tỉnh / Thành phố --</option>' +
-        provincesList.map(p => `<option value="${p.code}" data-name="${p.name}">${p.name}</option>`).join('');
-
-    } catch (err) {
-      console.warn('Không thể tải API ngoài, đang thử proxy backend...', err);
-      try {
-        const fallbackRes = await fetch('/cskh/api/provinces');
-        provincesList = await fallbackRes.json();
-        tinhSelect.innerHTML = '<option value="">-- Chọn Tỉnh / Thành phố --</option>' +
-          provincesList.map(p => `<option value="${p.code}" data-name="${p.name}">${p.name}</option>`).join('');
-      } catch (e2) {
-        console.error('Lỗi nạp danh sách tỉnh thành:', e2);
-        tinhSelect.innerHTML = '<option value="">-- Lỗi tải danh sách. Vui lòng tải lại trang --</option>';
-      }
-    }
+  function chuDaChon(id) {
+    const sel = document.getElementById(id);
+    const opt = sel && sel.value ? sel.options[sel.selectedIndex] : null;
+    return opt ? opt.textContent.trim() : '';
   }
 
-  // Khi chọn Tỉnh/Thành phố -> Nạp Phường/Xã tương ứng
-  async function onProvinceChange() {
-    const tinhSelect = document.getElementById('modalTinhThanhSelect');
-    const phuongSelect = document.getElementById('modalPhuongXaSelect');
-    const selectedCode = tinhSelect.value;
-    const selectedOpt = tinhSelect.options[tinhSelect.selectedIndex];
-    const tinhName = selectedOpt && selectedOpt.value ? selectedOpt.getAttribute('data-name') : '';
-
-    document.getElementById('hiddenTinhThanh').value = tinhName;
-
-    phuongSelect.innerHTML = '<option value="">-- Đang tải danh sách Phường / Xã... --</option>';
-    phuongSelect.disabled = true;
-
-    // Reset ward info
-    document.getElementById('hiddenPhuongXa').value = '';
-    document.getElementById('hiddenQuanHuyen').value = '';
-    document.getElementById('hiddenMaKhuVuc').value = '';
-
-    if (!selectedCode) {
-      phuongSelect.innerHTML = '<option value="">-- Vui lòng chọn Tỉnh/Thành trước --</option>';
-      updateAddressPreview();
-      return;
-    }
-
-    try {
-      let res = await fetch(`https://provinces.open-api.vn/api/v2/w/?province=${selectedCode}`);
-      if (!res.ok) {
-        res = await fetch(`/cskh/api/wards?province=${selectedCode}`);
-      }
-      const wards = await res.json();
-
-      phuongSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>' +
-        wards.map(w => `<option value="${w.code}" data-name="${w.name}">${w.name}</option>`).join('');
-      phuongSelect.disabled = false;
-
-    } catch (err) {
-      console.warn('Lỗi fetch phường xã ngoài, thử proxy...', err);
-      try {
-        const fb = await fetch(`/cskh/api/wards?province=${selectedCode}`);
-        const wards = await fb.json();
-        phuongSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>' +
-          wards.map(w => `<option value="${w.code}" data-name="${w.name}">${w.name}</option>`).join('');
-        phuongSelect.disabled = false;
-      } catch (e2) {
-        console.error('Không thể tải Phường/Xã:', e2);
-        phuongSelect.innerHTML = '<option value="">-- Không thể tải Phường/Xã --</option>';
-        phuongSelect.disabled = false;
-      }
-    }
-
-    updateAddressPreview();
-  }
-
-  // Khi chọn Phường/Xã
-  function onWardChange() {
-    const phuongSelect = document.getElementById('modalPhuongXaSelect');
-    const selectedOpt = phuongSelect.options[phuongSelect.selectedIndex];
-    const wardName = selectedOpt && selectedOpt.value ? selectedOpt.getAttribute('data-name') : '';
-    const wardCode = phuongSelect.value;
-
-    document.getElementById('hiddenPhuongXa').value = wardName;
-    document.getElementById('hiddenQuanHuyen').value = wardName;
-    document.getElementById('hiddenMaKhuVuc').value = wardCode ? ('KV-' + wardCode) : '';
-
-    updateAddressPreview();
-  }
-
-  // Cập nhật xem trước địa chỉ
+  // Xem trước địa chỉ đầy đủ và khu vực (quận, huyện) suy ra từ phường
   function updateAddressPreview() {
     const soNha = document.getElementById('modalSoNha').value.trim();
-    const tinhName = document.getElementById('hiddenTinhThanh').value;
-    const phuongName = document.getElementById('hiddenPhuongXa').value;
-    const maKhuVuc = document.getElementById('hiddenMaKhuVuc').value;
-
-    const parts = [];
-    if (soNha) parts.push(soNha);
-    if (phuongName) parts.push(phuongName);
-    if (tinhName) parts.push(tinhName);
-
-    const full = parts.join(', ');
-    document.getElementById('hiddenDiaChiChiTiet').value = full;
-
+    const tinhName = chuDaChon('modalTinh');
+    const phuongName = chuDaChon('modalPhuong').replace(/^(.*) \((Phường|Xã|Đặc khu|Thị trấn)\)$/, '$2 $1');
+    const parts = [soNha, phuongName, tinhName].filter(Boolean);
     const box = document.getElementById('addressPreviewBox');
     const text = document.getElementById('addressPreviewText');
     const area = document.getElementById('areaPreviewText');
-
-    if (parts.length > 0) {
-      box.style.display = 'block';
-      text.textContent = full;
-      if (phuongName && tinhName) {
-        area.textContent = `Khu vực: ${phuongName}, ${tinhName}`;
-      } else {
-        area.textContent = '';
-      }
-    } else {
-      box.style.display = 'none';
-    }
+    if (parts.length === 0) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    text.textContent = parts.join(', ');
+    // Ghi chú khu vực do /js/dia-chi.js điền (Khu vực: Quận 1 / ngoài khu vực phục vụ)
+    setTimeout(() => {
+      const note = document.querySelector('#modalDiaChi [data-kv-note]');
+      const kvChon = chuDaChon('modalKhuVuc');
+      area.textContent = kvChon && !document.querySelector('#modalDiaChi [data-kv-wrap]').hidden
+        ? 'Khu vực: ' + kvChon : (note ? note.textContent : '');
+    }, 0);
   }
 
   function openCreateCustomerModal() {
-    if (provincesList.length === 0) {
-      loadProvincesData();
-    }
     ModalManager.open('createCustomerModal');
   }
 
@@ -446,8 +336,8 @@
     const form = document.getElementById('createCustomerForm');
     const hoTen = document.getElementById('modalHoTen').value.trim();
     const soDienThoai = document.getElementById('modalSoDienThoai').value.trim();
-    const tinhThanh = document.getElementById('hiddenTinhThanh').value;
-    const phuongXa = document.getElementById('hiddenPhuongXa').value;
+    const tinhThanh = document.getElementById('modalTinh').value;
+    const phuongXa = document.getElementById('modalPhuong').value;
     const soNha = document.getElementById('modalSoNha').value.trim();
 
     if (!hoTen) {
@@ -463,7 +353,7 @@
     }
 
     if (!tinhThanh || !phuongXa) {
-      Toast.show('Vui lòng chọn Tỉnh/Thành phố và Phường/Xã từ danh mục xác thực!', 'error');
+      Toast.show('Vui lòng chọn Tỉnh/Thành phố và Phường/Xã!', 'error');
       return;
     }
 
@@ -546,8 +436,6 @@
 
   // Tìm kiếm và lọc bảng khách hàng
   document.addEventListener('DOMContentLoaded', () => {
-    // Tải trước danh sách tỉnh thành ngay khi tải trang
-    loadProvincesData();
 
     const searchInput = document.getElementById('customerSearchInput');
     const statusFilter = document.getElementById('customerStatusFilter');

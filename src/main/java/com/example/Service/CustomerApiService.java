@@ -26,6 +26,15 @@ public class CustomerApiService {
     private final KhachHangRepository khachHangRepository;
     private final DiaChiKhachHangRepository diaChiKhachHangRepository;
     private final KhuVucRepository khuVucRepository;
+    // Danh sách quận, huyện TP.HCM dùng chung cho mọi form địa chỉ
+    @org.springframework.beans.factory.annotation.Autowired
+    private KhuVucService khuVucService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private BangGiaService bangGiaService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private DanhGiaService danhGiaService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private DiaGioiService diaGioiService;
     private final OTPXacThucRepository otpXacThucRepository;
     private final CongTacVienRepository congTacVienRepository;
     private final DichVuRepository dichVuRepository;
@@ -65,7 +74,7 @@ public class CustomerApiService {
     @Autowired
     private ViTriCtvStore viTriCtvStore;
 
-    @org.springframework.beans.factory.annotation.Value("${app.esms.otp-template:Neatify: Ma xac thuc OTP cua ban la %s. Ma co hieu luc trong 5 phut.}")
+    @org.springframework.beans.factory.annotation.Value("${app.esms.otp-template:bTaskee: Ma xac thuc OTP cua ban la %s. Ma co hieu luc trong 5 phut.}")
     private String otpTemplate;
 
     public CustomerApiService(
@@ -305,8 +314,16 @@ public class CustomerApiService {
                 .build();
         khachHang = khachHangRepository.save(khachHang);
 
-        // 3. Tạo địa chỉ nếu có
-        if (req.getDiaChiChiTiet() != null && !req.getDiaChiChiTiet().isBlank()) {
+        // 3. Địa chỉ nơi ở (nếu có) thành địa chỉ mặc định trong sổ địa chỉ
+        if (req.getMaPhuong() != null) {
+            com.example.DTO.request.AddressRequest dc = new com.example.DTO.request.AddressRequest();
+            dc.setSoNhaTenDuong(req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet());
+            dc.setMaTinh(req.getMaTinh());
+            dc.setMaPhuong(req.getMaPhuong());
+            dc.setKhuVucId(req.getKhuVucId());
+            dc.setLaMacDinh(true);
+            customerAddressService.them(khachHang.getId(), dc);
+        } else if (req.getDiaChiChiTiet() != null && !req.getDiaChiChiTiet().isBlank()) {
             KhuVuc kv = null;
             if (req.getKhuVucId() != null) {
                 kv = khuVucRepository.findById(req.getKhuVucId()).orElse(null);
@@ -605,6 +622,32 @@ public class CustomerApiService {
             throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
         }
 
+        // Địa chỉ nơi ở hiện tại (tỉnh, phường từ API địa giới) – khác với khu vực nhận việc
+        String noiCuTru;
+        List<KhuVuc> khuVucNoiO = List.of();
+        if (req.getMaPhuong() != null) {
+            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinh(req.getSoNhaTenDuong(), req.getMaTinh(), req.getMaPhuong(), null);
+            noiCuTru = x.diaChiDayDu();
+            khuVucNoiO = diaGioiService.khuVucCuaPhuong(req.getMaPhuong());
+        } else if (req.getNoiCuTru() != null && !req.getNoiCuTru().isBlank()) {
+            noiCuTru = req.getNoiCuTru().trim();
+        } else {
+            throw new IllegalArgumentException("Vui lòng nhập địa chỉ nơi ở hiện tại (tỉnh, thành, phường, xã, số nhà).");
+        }
+        if (noiCuTru.length() > 200) {
+            throw new IllegalArgumentException("Địa chỉ nơi ở quá dài (tối đa 200 ký tự).");
+        }
+        // Khu vực nhận việc: 1 đến 5 quận, huyện đang phục vụ
+        List<Integer> khuVucChon = req.getDanhSachKhuVucId() != null
+                ? req.getDanhSachKhuVucId().stream().filter(java.util.Objects::nonNull).distinct().toList() : List.of();
+        if (khuVucChon.size() > KhuVucCtvService.TOI_DA) {
+            throw new IllegalArgumentException("Chọn tối đa " + KhuVucCtvService.TOI_DA + " khu vực nhận việc.");
+        }
+        for (Integer kvId : khuVucChon) khuVucService.layDangPhucVu(kvId);
+        if (khuVucChon.isEmpty() && khuVucNoiO.isEmpty() && (req.getPhuongXa() == null || req.getPhuongXa().isBlank())) {
+            throw new IllegalArgumentException("Vui lòng chọn khu vực (quận, huyện) bạn sẽ nhận việc.");
+        }
+
         String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
         String maTaiKhoan = "TK-CTV-" + suffix;
         String maCongTacVien = "CTV-" + suffix;
@@ -641,7 +684,7 @@ public class CustomerApiService {
                 .hoTen(req.getHoTen().trim())
                 .ngaySinh(req.getNgaySinh())
                 .gioiTinh(req.getGioiTinh() != null ? req.getGioiTinh() : "Khac")
-                .noiCuTru(req.getNoiCuTru().trim())
+                .noiCuTru(noiCuTru)
                 .soDienThoai(soDienThoai)
                 .diemDanhGia(BigDecimal.valueOf(5.0))
                 .capDo("Moi")
@@ -667,15 +710,16 @@ public class CustomerApiService {
         }
 
         // 4. Liên kết Khu vực
-        //    - Ưu tiên khu vực suy ra từ địa chỉ cư trú (tỉnh/thành + phường/xã) mà ứng viên cung cấp
+        //    - Ưu tiên khu vực suy ra từ địa chỉ cư trú (tỉnh/thành + quận/huyện) mà ứng viên cung cấp
         //    - Vẫn nhận danhSachKhuVucId nếu client (ứng dụng di động) gửi kèm
         Set<Integer> khuVucDaGan = new HashSet<>();
-        if (req.getDanhSachKhuVucId() != null) {
-            for (Integer kvId : req.getDanhSachKhuVucId()) {
-                khuVucRepository.findById(kvId).ifPresent(kv -> ganKhuVucChoCtv(savedCtv, kv, khuVucDaGan));
-            }
+        for (Integer kvId : khuVucChon) {
+            khuVucRepository.findById(kvId).ifPresent(kv -> ganKhuVucChoCtv(savedCtv, kv, khuVucDaGan));
         }
-        KhuVuc khuVucTheoDiaChi = timHoacTaoKhuVuc(req.getPhuongXa(), req.getTinhThanh());
+        // Không chọn khu vực: lấy khu vực chứa nơi ở (app cũ: tên quận, huyện gửi trong phuongXa)
+        KhuVuc khuVucTheoDiaChi = khuVucChon.isEmpty()
+                ? (!khuVucNoiO.isEmpty() ? khuVucNoiO.get(0) : timHoacTaoKhuVuc(req.getPhuongXa(), req.getTinhThanh()))
+                : null;
         if (khuVucTheoDiaChi != null) {
             ganKhuVucChoCtv(savedCtv, khuVucTheoDiaChi, khuVucDaGan);
         }
@@ -718,8 +762,8 @@ public class CustomerApiService {
         result.put("maCongTacVien", savedCtv.getMaCongTacVien());
         result.put("hoTen", savedCtv.getHoTen());
         result.put("trangThai", savedCtv.getTrangThai());
-        result.put("khuVuc", khuVucTheoDiaChi != null
-                ? khuVucTheoDiaChi.getTenKhuVuc() + ", " + khuVucTheoDiaChi.getTinhThanh() : null);
+        result.put("khuVuc", String.join(", ", khuVucRepository.findAllById(khuVucDaGan).stream()
+                .map(KhuVuc::getTenKhuVuc).toList()));
         result.put("thoiGianXetDuyetDuKien", "1-3 ngày làm việc");
         result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt, "
                 + "kết quả sẽ được gửi qua tin nhắn tới số " + soDienThoai + ".");
@@ -740,38 +784,19 @@ public class CustomerApiService {
     }
 
     /**
-     * Xác định khu vực từ địa chỉ: tìm khu vực trùng phường/xã + tỉnh/thành, chưa có thì tạo mới
-     * (cùng cách CSKH đang làm khi thêm địa chỉ khách hàng).
+     * Khu vực theo địa chỉ hiện tại của ứng viên: phải là một quận, huyện trong danh sách khu vực phục vụ
+     * (TP.HCM). Không tạo khu vực mới để địa chỉ ứng viên luôn khớp với địa chỉ khách hàng.
      *
-     * @return null nếu không có tỉnh/thành
+     * @return null nếu ứng viên (app cũ) không gửi quận, huyện
      */
     private KhuVuc timHoacTaoKhuVuc(String phuongXa, String tinhThanh) {
-        if (tinhThanh == null || tinhThanh.isBlank()) {
+        if (phuongXa == null || phuongXa.isBlank()) {
             return null;
         }
-        String tinh = tinhThanh.trim();
-        String phuong = phuongXa != null ? phuongXa.trim() : "";
-
-        if (!phuong.isEmpty()) {
-            Optional<KhuVuc> coSan = khuVucRepository.findFirstByQuanHuyenAndTinhThanh(phuong, tinh)
-                    .or(() -> khuVucRepository.findFirstByTenKhuVucAndTinhThanh(phuong, tinh));
-            if (coSan.isPresent()) {
-                return coSan.get();
-            }
-        } else {
-            List<KhuVuc> trongTinh = khuVucRepository.findByTinhThanh(tinh);
-            if (!trongTinh.isEmpty()) {
-                return trongTinh.get(0);
-            }
-        }
-
-        return khuVucRepository.save(KhuVuc.builder()
-                .maKhuVuc(maNgauNhien("KV-"))
-                .tenKhuVuc(!phuong.isEmpty() ? phuong : tinh)
-                .quanHuyen(!phuong.isEmpty() ? phuong : "Chưa xác định")
-                .tinhThanh(tinh)
-                .trangThai("HoatDong")
-                .build());
+        return khuVucService.timTheoTen(phuongXa)
+                .orElseThrow(() -> new IllegalArgumentException("Quận, huyện \"" + phuongXa.trim()
+                        + "\" không thuộc khu vực phục vụ. Hiện bTaskee nhận cộng tác viên tại "
+                        + khuVucService.getTinhThanh() + "."));
     }
 
     /**
@@ -838,6 +863,7 @@ public class CustomerApiService {
             map.put("thoiGianThucHienPhut", dv.getThoiGianThucHien());
             map.put("moTaChiTiet", dv.getMoTaChiTiet());
             map.put("donGiaThamKhao", donGia);
+            map.put("giaGoc", bangGiaService.giaGoc(dv.getId())); // giá trước đợt tăng/giảm tạm, null nếu không có
             if ("GoiThang".equalsIgnoreCase(dv.getLoaiHinhDat())) {
                 map.put("soBuoiGoi", LichGoiThang.soBuoi(dv.getSoBuoi(), dv.getTenDichVu()));
             }
@@ -873,9 +899,11 @@ public class CustomerApiService {
         }
         result.put("soNguoiThucHien", dv.getSoNguoiThucHien());
         result.put("giaHienTai", dv.getGiaHienTai());
+        result.put("giaGoc", bangGiaService.giaGoc(dv.getId()));
 
         // Lịch sử bảng giá
-        List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
+        // Chỉ bảng giá đang áp dụng lúc này (không gồm giá gốc đang bị đợt tạm thay, giá sắp áp dụng)
+        List<BangGiaDichVu> bangGias = bangGiaService.giaApDung(dv.getId(), LocalDateTime.now()).map(List::of).orElse(List.of());
         List<Map<String, Object>> bangGiaMaps = new ArrayList<>();
         for (BangGiaDichVu bg : bangGias) {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -885,6 +913,8 @@ public class CustomerApiService {
             m.put("donViTinh", bg.getDonViTinh());
             m.put("donGia", bg.getDonGia());
             m.put("giaCu", bg.getGiaCu());
+            m.put("giaGoc", bangGiaService.giaGoc(dv.getId())); // giá trước đợt tăng/giảm tạm (gạch ngang), null nếu không có
+            m.put("ngayKetThuc", bg.getNgayKetThuc());
             m.put("khuVucId", bg.getKhuVuc() != null ? bg.getKhuVuc().getId() : null);
             m.put("khuVuc", bg.getKhuVuc() != null ? bg.getKhuVuc().getTenKhuVuc() : null);
             bangGiaMaps.add(m);
@@ -937,9 +967,10 @@ public class CustomerApiService {
         return loaiDichVuRepository.findAll();
     }
 
+    /** Các quận, huyện TP.HCM đang phục vụ (cùng danh sách với web). */
     @Cacheable(value = CacheNames.KHU_VUC, key = "'tatCa'")
     public List<KhuVuc> getAreas() {
-        return khuVucRepository.findAll();
+        return khuVucService.danhSach();
     }
 
     // ==========================================
@@ -952,9 +983,17 @@ public class CustomerApiService {
         String loaiHinh = (req.getLoaiHinhDat() != null && !req.getLoaiHinhDat().isBlank())
                 ? req.getLoaiHinhDat() : dv.getLoaiHinhDat();
 
-        // Tính giá gốc: ưu tiên bangGiaId được truyền vào, rồi đến GiaHienTai trên DichVu
+        // Tính giá gốc: ưu tiên bangGiaId được truyền vào, rồi bảng giá hiệu lực vào ngày làm,
+        // rồi GiaHienTai trên DichVu (giá hôm nay, BangGiaService đồng bộ mỗi ngày)
         BigDecimal chiPhiGoc;
-        if (req.getBangGiaId() != null) {
+        BangGiaDichVu theoNgay = req.getNgayThucHien() != null
+                ? (req.getGioBatDau() != null
+                        ? bangGiaService.giaApDung(dv.getId(), LocalDateTime.of(req.getNgayThucHien(), req.getGioBatDau()))
+                        : bangGiaService.giaApDung(dv.getId(), req.getNgayThucHien())).orElse(null)
+                : null;
+        if (theoNgay != null && theoNgay.getDonGia() != null) {
+            chiPhiGoc = theoNgay.getDonGia();
+        } else if (req.getBangGiaId() != null) {
             BangGiaDichVu bg = bangGiaDichVuRepository.findById(req.getBangGiaId())
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy bảng giá ID: " + req.getBangGiaId()));
             chiPhiGoc = bg.getDonGia();
@@ -1100,8 +1139,21 @@ public class CustomerApiService {
             // Chỉ nhận địa chỉ còn dùng của chính khách hàng đặt đơn
             diaChi = customerAddressService.timDiaChi(khachHang.getId(), req.getDiaChiId());
         }
+        if (diaChi == null && req.getMaPhuong() != null) {
+            // Địa chỉ mới nhập lúc đặt: lưu vào sổ địa chỉ (tỉnh, phường → khu vực)
+            com.example.DTO.request.AddressRequest dcMoi = new com.example.DTO.request.AddressRequest();
+            dcMoi.setSoNhaTenDuong(req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet());
+            dcMoi.setMaTinh(req.getMaTinh());
+            dcMoi.setMaPhuong(req.getMaPhuong());
+            dcMoi.setKhuVucId(req.getKhuVucId());
+            Integer idMoi = (Integer) customerAddressService.them(khachHang.getId(), dcMoi).get("id");
+            diaChi = customerAddressService.timDiaChi(khachHang.getId(), idMoi);
+        }
         if (diaChi == null && req.getDiaChiChiTiet() != null && !req.getDiaChiChiTiet().isBlank()) {
-            KhuVuc kv = req.getKhuVucId() != null ? khuVucRepository.findById(req.getKhuVucId()).orElse(null) : null;
+            if (req.getKhuVucId() == null) {
+                throw new IllegalArgumentException("Vui lòng chọn tỉnh, thành và phường, xã của địa chỉ thực hiện.");
+            }
+            KhuVuc kv = khuVucService.layDangPhucVu(req.getKhuVucId());
             diaChi = DiaChiKhachHang.builder()
                     .maDiaChi(com.example.Service.MaSinh.tao("DC-"))
                     .khachHang(khachHang)
@@ -1122,6 +1174,11 @@ public class CustomerApiService {
             if (!dcs.isEmpty()) diaChi = dcs.get(0);
             else throw new IllegalArgumentException("Vui lòng cung cấp địa chỉ thực hiện dịch vụ.");
         }
+        // Cộng tác viên nhận việc theo khu vực (quận, huyện): địa chỉ phải nằm trong khu vực phục vụ
+        if (diaChi.getKhuVuc() == null) {
+            throw new IllegalArgumentException("Địa chỉ \"" + diaChi.getDiaChiChiTiet()
+                    + "\" nằm ngoài khu vực phục vụ (các quận, huyện TP. Hồ Chí Minh). Vui lòng chọn địa chỉ khác.");
+        }
 
         // Tính giá (không còn goiDichVuId)
         CalculatePriceRequest calcReq = new CalculatePriceRequest();
@@ -1129,6 +1186,8 @@ public class CustomerApiService {
         calcReq.setLoaiHinhDat(req.getLoaiHinhDat());
         calcReq.setBangGiaId(req.getBangGiaId());
         calcReq.setCodeKhuyenMai(req.getCodeKhuyenMai());
+        calcReq.setNgayThucHien(req.getNgayThucHien());
+        calcReq.setGioBatDau(req.getGioBatDau());
         PriceCalculationResult priceResult = calculatePrice(calcReq);
 
         // Khuyến mãi nếu có
@@ -1138,13 +1197,19 @@ public class CustomerApiService {
         }
 
         // Bảng giá snapshot tại thời điểm đặt
-        BangGiaDichVu bg = req.getBangGiaId() != null
+        // Bảng giá có hiệu lực lúc bắt đầu làm; không có ngày thì dùng bangGiaId client gửi
+        BangGiaDichVu bg = req.getNgayThucHien() == null && req.getBangGiaId() != null
                 ? bangGiaDichVuRepository.findById(req.getBangGiaId()).orElse(null)
-                : null;
+                : (req.getNgayThucHien() != null && req.getGioBatDau() != null
+                        ? bangGiaService.giaApDung(dichVu.getId(), LocalDateTime.of(req.getNgayThucHien(), req.getGioBatDau()))
+                        : bangGiaService.giaApDung(dichVu.getId(), req.getNgayThucHien())).orElse(null); // bảng giá lúc bắt đầu làm
 
         // Gói tháng: các thứ trong tuần phải đủ số buổi của gói trong vòng 1 tháng kể từ ngày bắt đầu.
         // Ngày thực hiện của đơn = buổi đầu tiên; thứ được chuẩn hóa ("3,5,7,CN") để tính lại lịch khi xem.
         LocalDate ngayThucHien = req.getNgayThucHien();
+        if (ngayThucHien != null && ngayThucHien.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày thực hiện không được ở quá khứ.");
+        }
         String thuTrongTuan = req.getNgayThucHienTrongTuan();
         if ("GoiThang".equalsIgnoreCase(priceResult.getLoaiHinhDat())) {
             if (ngayThucHien == null) {
@@ -1154,6 +1219,15 @@ public class CustomerApiService {
                     LichGoiThang.soBuoi(dichVu.getSoBuoi(), dichVu.getTenDichVu()));
             ngayThucHien = lich.get(0);
             thuTrongTuan = LichGoiThang.vietThu(LichGoiThang.docThu(thuTrongTuan));
+        }
+        if ("GoiThang".equalsIgnoreCase(priceResult.getLoaiHinhDat())
+                && !"GoiThang".equalsIgnoreCase(dichVu.getLoaiHinhDat())) {
+            throw new IllegalArgumentException("Dịch vụ này không có gói tháng, vui lòng chọn gói tháng trong danh sách.");
+        }
+        // Buổi đầu tiên (gói tháng: ngày đầu khớp thứ đã chọn) phải sau hiện tại ít nhất 1 giờ, giống trên web
+        if (ngayThucHien != null && req.getGioBatDau() != null
+                && LocalDateTime.of(ngayThucHien, req.getGioBatDau()).isBefore(LocalDateTime.now().plusHours(1))) {
+            throw new IllegalArgumentException("Giờ bắt đầu cần sau thời điểm hiện tại ít nhất 1 giờ.");
         }
 
         LocalTime gioKetThuc = req.getGioKetThuc();
@@ -1383,7 +1457,9 @@ public class CustomerApiService {
         });
 
         // Đánh giá nếu có
-        danhGiaRepository.findByDonDat_Id(d.getId()).ifPresent(dg -> result.put("danhGia", dg));
+        // Đánh giá kèm trao đổi giữa khách và CSKH
+        Map<String, Object> danhGia = danhGiaService.cuaDon(d.getId());
+        if (danhGia != null) result.put("danhGia", danhGia);
 
         return result;
     }
@@ -1513,48 +1589,9 @@ public class CustomerApiService {
     // UC-KH07: ĐÁNH GIÁ VÀ PHẢN HỒI DỊCH VỤ
     // ==========================================
     public Map<String, Object> createReview(ReviewCreateRequest req) {
-        DonDatDichVu donDat = donDatDichVuRepository.findById(req.getDonDatId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt ID: " + req.getDonDatId()));
-
-        if (!"HoanThanh".equalsIgnoreCase(donDat.getTrangThai())) {
-            throw new IllegalArgumentException("Chỉ có thể đánh giá khi đơn dịch vụ đã ở trạng thái 'Hoàn thành'.");
-        }
-
-        if (danhGiaRepository.findByDonDat_Id(donDat.getId()).isPresent()) {
-            throw new IllegalArgumentException("Đơn dịch vụ này đã được đánh giá trước đó.");
-        }
-
-        // Tìm CTV phụ trách đơn hàng
-        PhanCongCTV pc = phanCongCTVRepository.findByDonDat_Id(donDat.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên được phân công cho đơn này."));
-
-        CongTacVien ctv = pc.getCongTacVien();
-
-        DanhGia danhGia = DanhGia.builder()
-                .maDanhGia(com.example.Service.MaSinh.tao("DG-"))
-                .donDat(donDat)
-                .khachHang(donDat.getKhachHang())
-                .congTacVien(ctv)
-                .diemChatLuong(req.getDiemChatLuong())
-                .diemThaiDo(req.getDiemThaiDo())
-                .nhanXet(req.getNhanXet())
-                .ngayDanhGia(LocalDateTime.now())
-                .trangThai("DaDuyet")
-                .build();
-        danhGia = danhGiaRepository.save(danhGia);
-
-        // Cập nhật lại điểm trung bình cho CTV
-        List<DanhGia> ctvReviews = danhGiaRepository.findByCongTacVien_Id(ctv.getId());
-        double avg = ctvReviews.stream()
-                .mapToDouble(d -> (d.getDiemChatLuong() + d.getDiemThaiDo()) / 2.0)
-                .average().orElse(5.0);
-        ctv.setDiemDanhGia(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
-        congTacVienRepository.save(ctv);
-
-        Map<String, Object> res = new LinkedHashMap<>();
-        res.put("danhGiaId", danhGia.getId());
-        res.put("maDanhGia", danhGia.getMaDanhGia());
-        res.put("diemDanhGiaMoiCuaCTV", ctv.getDiemDanhGia());
+        Map<String, Object> res = new LinkedHashMap<>(danhGiaService.danhGia(req.getDonDatId(), req.getKhachHangId(),
+                req.getDiemChatLuong(), req.getDiemThaiDo(), req.getNhanXet()));
+        res.put("danhGiaId", res.get("id"));
         res.put("message", "Gửi đánh giá thành công! Cảm ơn bạn đã phản hồi về dịch vụ.");
         return res;
     }

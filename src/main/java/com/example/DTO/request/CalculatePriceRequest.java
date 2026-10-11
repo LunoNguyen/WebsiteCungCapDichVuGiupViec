@@ -19,6 +19,9 @@ public class CalculatePriceRequest {
 
     private String loaiHinhDat; // TheoLan | GoiThang
     private String codeKhuyenMai;
+    // Ngày làm (tùy chọn): có thì tính theo bảng giá hiệu lực vào ngày đó, không thì theo giá hôm nay
+    private java.time.LocalDate ngayThucHien;
+    private java.time.LocalTime gioBatDau; // có cả giờ thì lấy đúng bảng giá tại thời điểm bắt đầu
 
     @JsonIgnore
     public List<ChiTietDonDatRequest> getDanhSachDichVu() {

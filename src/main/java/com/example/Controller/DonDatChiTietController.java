@@ -196,20 +196,7 @@ public class DonDatChiTietController {
         return ten != null ? "CSKH: " + ten : "CSKH";
     }
 
-    /** Ghép "số nhà, đường" với phường/xã và tỉnh/thành của khu vực (bỏ phần đã có sẵn trong địa chỉ). */
     private static String diaChiDayDu(DiaChiKhachHang diaChi) {
-        if (diaChi == null || diaChi.getDiaChiChiTiet() == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder(diaChi.getDiaChiChiTiet().trim());
-        if (diaChi.getKhuVuc() != null) {
-            for (String phan : new String[]{diaChi.getKhuVuc().getQuanHuyen(), diaChi.getKhuVuc().getTinhThanh()}) {
-                if (phan != null && !phan.isBlank() && !"Chưa xác định".equalsIgnoreCase(phan.trim())
-                        && !sb.toString().toLowerCase().contains(phan.trim().toLowerCase())) {
-                    sb.append(", ").append(phan.trim());
-                }
-            }
-        }
-        return sb.toString();
+        return com.example.Service.CustomerAddressService.diaChiDayDu(diaChi);
     }
 }

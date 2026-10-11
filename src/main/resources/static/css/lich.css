@@ -1,0 +1,124 @@
+/* ==========================================================
+   LICH.CSS – Giao diện lịch chọn ngày (flatpickr) và lịch phân công (FullCalendar)
+   Dùng biến màu của trang (--primary, --surface, --line...), có giá trị dự phòng.
+   ========================================================== */
+
+/* ---------- Ô hiển thị ngày (dd/mm/yyyy) ---------- */
+.lich-alt {
+  cursor: pointer;
+  padding-right: 38px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF8228' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='3'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 18px !important;
+}
+
+/* ---------- Hộp lịch bật lên ---------- */
+.flatpickr-calendar {
+  --lich-chinh: var(--primary, #FF8228);
+  --lich-nhat: var(--primary-soft, #FFF1E6);
+  --lich-chu: var(--foreground, #18181B);
+  --lich-mo: var(--muted, #71717A);
+  --lich-vien: var(--line, #ECECEE);
+  --lich-nen: var(--surface, #FFFFFF);
+  width: 308px;
+  padding: 12px;
+  border: 1px solid var(--lich-vien);
+  border-radius: 16px;
+  background: var(--lich-nen);
+  box-shadow: 0 16px 40px rgba(24, 24, 27, .14), 0 2px 6px rgba(24, 24, 27, .06);
+  font-family: inherit;
+  color: var(--lich-chu);
+}
+.flatpickr-calendar.arrowTop::before, .flatpickr-calendar.arrowTop::after,
+.flatpickr-calendar.arrowBottom::before, .flatpickr-calendar.arrowBottom::after { display: none; }
+.flatpickr-calendar.open { z-index: 100000; animation: lich-hien .16s ease-out; }
+@keyframes lich-hien { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.flatpickr-months { align-items: center; margin-bottom: 6px; }
+.flatpickr-months .flatpickr-month { height: 40px; color: var(--lich-chu); fill: var(--lich-chu); }
+.flatpickr-current-month { left: 0; width: 100%; padding: 0; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; height: 40px; }
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year { font-weight: 700; font-family: inherit; color: var(--lich-chu); border-radius: 8px; padding: 4px 6px; }
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover,
+.flatpickr-current-month input.cur-year:hover { background: var(--lich-nhat); }
+.flatpickr-current-month .numInputWrapper { width: 64px; }
+.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month {
+  top: 12px; height: 40px; width: 36px; padding: 0; display: grid; place-items: center; border-radius: 10px; color: var(--lich-mo); fill: var(--lich-mo);
+}
+.flatpickr-months .flatpickr-prev-month { left: 12px; }
+.flatpickr-months .flatpickr-next-month { right: 12px; }
+.flatpickr-months .flatpickr-prev-month:hover, .flatpickr-months .flatpickr-next-month:hover { background: var(--lich-nhat); }
+.flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: var(--lich-chinh); }
+.flatpickr-months .flatpickr-prev-month svg, .flatpickr-months .flatpickr-next-month svg { width: 12px; height: 12px; }
+
+.flatpickr-weekdays { height: 32px; }
+span.flatpickr-weekday { color: var(--lich-mo); font-size: 12px; font-weight: 600; }
+.flatpickr-days, .dayContainer { width: 282px; min-width: 282px; max-width: 282px; }
+.flatpickr-innerContainer, .flatpickr-rContainer { width: 100%; }
+
+.flatpickr-day {
+  max-width: 38px; height: 38px; line-height: 38px; margin: 1px 0; border: 0; border-radius: 10px;
+  color: var(--lich-chu); font-weight: 500;
+}
+.flatpickr-day:hover, .flatpickr-day:focus { background: var(--lich-nhat); color: var(--lich-chu); }
+.flatpickr-day.today { position: relative; border: 0; color: var(--lich-chinh); font-weight: 700; }
+.flatpickr-day.today::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--lich-chinh); }
+.flatpickr-day.today:hover { background: var(--lich-nhat); color: var(--lich-chinh); }
+.flatpickr-day.selected, .flatpickr-day.selected:hover, .flatpickr-day.selected:focus,
+.flatpickr-day.startRange, .flatpickr-day.endRange {
+  background: var(--lich-chinh); border-color: var(--lich-chinh); color: #fff; font-weight: 700;
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--lich-chinh) 35%, transparent);
+}
+.flatpickr-day.selected.today::after { background: #fff; }
+.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: color-mix(in srgb, var(--lich-mo) 55%, transparent); }
+.flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover {
+  color: color-mix(in srgb, var(--lich-mo) 40%, transparent); background: transparent; text-decoration: line-through; cursor: not-allowed;
+}
+
+/* ---------- Lịch đặt dịch vụ (hiện sẵn trên trang) ---------- */
+.lich-dat .flatpickr-calendar.inline {
+  width: 100%; max-width: 420px; margin: 0; box-shadow: none; animation: none;
+}
+.lich-dat .flatpickr-days, .lich-dat .dayContainer { width: 100%; min-width: 0; max-width: none; }
+.lich-dat .flatpickr-day { max-width: none; flex-basis: 14.2857%; height: 44px; line-height: 44px; font-size: 15px; }
+/* Gói tháng: các buổi sẽ làm theo thứ đã chọn */
+.flatpickr-day.co-buoi { background: var(--lich-nhat); color: var(--lich-chinh); font-weight: 700; }
+.flatpickr-day.co-buoi.selected { background: var(--lich-chinh); color: #fff; }
+.lich-chu-thich { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; color: var(--muted, #71717A); font-size: 13px; }
+.lich-chu-thich span { display: inline-flex; align-items: center; gap: 6px; }
+.lich-chu-thich i { display: inline-block; width: 14px; height: 14px; border-radius: 4px; }
+.lich-chu-thich .cn { background: var(--primary, #FF8228); }
+.lich-chu-thich .cb { background: var(--primary-soft, #FFF1E6); border: 1px solid color-mix(in srgb, var(--primary, #FF8228) 30%, transparent); }
+.lich-chon-hien { margin-top: 10px; font-weight: 600; }
+
+/* ---------- FullCalendar (lịch phân công CSKH) ---------- */
+.fc {
+  --fc-border-color: var(--line, #ECECEE);
+  --fc-page-bg-color: var(--surface, #FFFFFF);
+  --fc-neutral-bg-color: var(--fill-subtle, #FAFAFA);
+  --fc-today-bg-color: color-mix(in srgb, var(--primary, #FF8228) 8%, transparent);
+  --fc-button-text-color: var(--foreground, #18181B);
+  --fc-button-bg-color: var(--surface, #FFFFFF);
+  --fc-button-border-color: var(--line-strong, #D4D4D8);
+  --fc-button-hover-bg-color: var(--fill-hover, #F4F4F5);
+  --fc-button-hover-border-color: var(--line-strong, #D4D4D8);
+  --fc-button-active-bg-color: var(--primary, #FF8228);
+  --fc-button-active-border-color: var(--primary, #FF8228);
+  --fc-event-bg-color: var(--primary, #FF8228);
+  --fc-event-border-color: var(--primary, #FF8228);
+  --fc-now-indicator-color: var(--danger, #EF4444);
+  font-family: inherit;
+}
+.fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; }
+.fc .fc-button { border-radius: 10px; padding: .4rem .8rem; font-weight: 600; font-size: .85rem; box-shadow: none !important; text-transform: none; }
+.fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active { color: #fff; }
+.fc .fc-button-group > .fc-button { border-radius: 0; }
+.fc .fc-button-group > .fc-button:first-child { border-radius: 10px 0 0 10px; }
+.fc .fc-button-group > .fc-button:last-child { border-radius: 0 10px 10px 0; }
+.fc .fc-col-header-cell-cushion { padding: 8px 4px; color: var(--muted, #71717A); font-size: .8rem; font-weight: 600; text-transform: uppercase; }
+.fc .fc-daygrid-day-number { padding: 6px 8px; color: var(--foreground-soft, #3F3F46); font-weight: 500; }
+.fc .fc-day-today .fc-daygrid-day-number { display: inline-grid; place-items: center; min-width: 26px; height: 26px; margin: 4px; padding: 0 6px; border-radius: 13px; background: var(--primary, #FF8228); color: #fff; font-weight: 700; }
+.fc .fc-event { border-radius: 6px; padding: 1px 4px; font-size: .78rem; }
+.fc .fc-timegrid-slot { height: 2.4em; }
+.fc-theme-standard .fc-scrollgrid { border-radius: 12px; overflow: hidden; }

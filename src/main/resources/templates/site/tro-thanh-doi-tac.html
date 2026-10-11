@@ -15,7 +15,7 @@
           <a class="btn btn-line" href="#tra-cuu">Tra cứu kết quả</a>
         </div>
       </div>
-      <div class="leaf"><img src="/images/services/ve-sinh-may-lanh.png" alt="Cộng tác viên bTaskee vệ sinh máy lạnh"></div>
+      <div class="leaf"><img src="/images/btaskee/tasker-nhom.webp" alt="Đội ngũ Tasker bTaskee"></div>
     </div>
   </section>
 
@@ -97,31 +97,41 @@
                 <option value="Khac">Khác</option>
               </select>
             </div>
-            <!-- Nơi cư trú: tỉnh/thành và phường/xã lấy từ https://provinces.open-api.vn/api/v2/ -->
-            <div class="field">
-              <label for="tinhThanh">Tỉnh, thành phố đang sống</label>
-              <select id="tinhThanh" name="tinhThanh" required disabled>
-                <option value="">Đang tải danh sách…</option>
-              </select>
-              <div class="error">Chọn tỉnh, thành phố.</div>
+            <!-- ĐỊA CHỈ nơi ở hiện tại: tỉnh, phường theo provinces.open-api.vn (2 cấp). Khác với KHU VỰC nhận việc bên dưới. -->
+            <div class="field full">
+              <span style="font-weight:600">Địa chỉ hiện tại</span>
+              <div class="hint">Nơi bạn đang sống (không phải địa chỉ thường trú trên CCCD nếu khác).</div>
             </div>
-            <div class="field">
-              <label for="phuongXa">Phường, xã</label>
-              <select id="phuongXa" name="phuongXa" required disabled>
-                <option value="">Chọn tỉnh, thành phố trước</option>
-              </select>
-              <div class="error">Chọn phường, xã.</div>
+            <div data-dia-chi-form style="display:contents">
+              <div class="field">
+                <label for="tinhThanh">Tỉnh, thành phố</label>
+                <select id="tinhThanh" name="maTinh" required></select>
+                <div class="error">Chọn tỉnh, thành phố nơi bạn đang sống.</div>
+              </div>
+              <div class="field">
+                <label for="phuongXa">Phường, xã</label>
+                <select id="phuongXa" name="maPhuong" required></select>
+                <div class="hint" data-kv-note></div>
+                <div class="error">Chọn phường, xã nơi bạn đang sống.</div>
+              </div>
             </div>
             <div class="field full">
               <label for="diaChiChiTiet">Số nhà, tên đường</label>
-              <input type="text" id="diaChiChiTiet" name="diaChiChiTiet" autocomplete="address-line1" required>
-              <div class="hint" id="diaChiHint">bTaskee dùng địa chỉ này để xếp bạn vào khu vực nhận việc gần nơi bạn sống.</div>
-              <div class="error">Nhập số nhà, tên đường.</div>
+              <input type="text" id="diaChiChiTiet" name="soNhaTenDuong" maxlength="140" autocomplete="address-line1" placeholder="VD: 45 Đường số 7" required>
+              <div class="error">Nhập số nhà, tên đường nơi bạn đang sống.</div>
             </div>
-            <div class="alert alert-error full" id="diaChiLoi" role="alert" style="margin:0">
-              Không tải được danh sách tỉnh, thành phố.
-              <button type="button" class="btn btn-line btn-sm" id="diaChiTaiLai" style="margin-left:0.5rem">Tải lại</button>
+          </div>
+        </fieldset>
+
+        <!-- KHU VỰC nhận việc: quận, huyện (lớn hơn phường) – CSKH ưu tiên giao đơn trong các khu vực này -->
+        <fieldset>
+          <legend>Khu vực nhận việc</legend>
+          <div class="field" id="khuVucField">
+            <div class="hint" style="margin-bottom:8px">Chọn 1 đến 5 quận, huyện bạn muốn đi làm. Khu vực gần nhà được chọn sẵn khi bạn chọn phường, xã.</div>
+            <div class="checks checks-sm">
+              <label class="check" th:each="kv : ${khuVucs}"><input type="checkbox" name="khuVucNhanViec" th:value="${kv.id}"> <span th:text="${kv.tenKhuVuc}">Quận 1</span></label>
             </div>
+            <div class="error">Chọn 1 đến 5 quận, huyện nhận việc.</div>
           </div>
         </fieldset>
 

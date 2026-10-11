@@ -30,4 +30,7 @@ public class DichVuView implements Serializable {
     private BigDecimal gia;
     /** Vd: "192.000đ" hoặc "Liên hệ". */
     private String giaText;
+    /** Giá gốc khi đang chạy đợt giá tạm (hiển thị gạch ngang), null nếu không có. */
+    private BigDecimal giaGoc;
+    private String giaGocText;
 }

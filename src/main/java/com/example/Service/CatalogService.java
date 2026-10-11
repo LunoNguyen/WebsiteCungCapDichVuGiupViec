@@ -56,23 +56,26 @@ public class CatalogService {
 
     /** Ảnh mặc định theo mã danh mục, dùng khi danh mục chưa được tải ảnh lên MinIO. */
     private static final Map<String, String> ANH_MAC_DINH = Map.of(
-            "LDV-001", "/images/services/don-dep-nha-cua.png",
-            "LDV-002", "/images/services/ve-sinh-may-lanh.png",
-            "LDV-003", "/images/services/trong-tre.jpg",
-            "LDV-004", "/images/services/nau-an-gia-dinh.jpg",
-            "LDV-005", "/images/services/ve-sinh-van-phong.png");
-    private static final String ANH_DU_PHONG = "/images/services/don-dep-nha-cua.png";
+            "LDV-001", "/images/btaskee/don-dep-nha-cua-tron.webp",
+            "LDV-002", "/images/btaskee/ve-sinh-may-lanh-tron.webp",
+            "LDV-003", "/images/btaskee/trong-tre-tron.webp",
+            "LDV-004", "/images/btaskee/nau-an-gia-dinh-tron.webp",
+            "LDV-005", "/images/btaskee/ve-sinh-van-phong-tron.webp");
+    private static final String ANH_DU_PHONG = "/images/btaskee/don-dep-nha-cua-tron.webp";
 
     /** Dịch vụ phổ biến ở trang chủ: {mã dịch vụ, tên hiển thị, ảnh}. Giá lấy từ CSDL. */
     private static final String[][] NOI_BAT = {
-            {"DV-001", "Dọn dẹp nhà theo giờ", "/images/services/don-dep-nha-cua.png"},
-            {"DV-051", "Vệ sinh máy lạnh", "/images/services/ve-sinh-may-lanh.png"},
-            {"DV-123", "Nấu ăn gia đình", "/images/services/nau-an-gia-dinh.jpg"},
-            {"DV-072", "Trông trẻ tại nhà", "/images/services/trong-tre.jpg"},
-            {"DV-079", "Chăm sóc người cao tuổi", "/images/services/cham-soc-nguoi-cao-tuoi.png"},
-            {"DV-129", "Vệ sinh văn phòng", "/images/services/ve-sinh-van-phong.png"}
+            // Mã nhóm: các biến thể cùng tên dùng chung mã, giá hiển thị là giá thấp nhất của nhóm
+            {"DV101", "Dọn dẹp nhà theo giờ", "/images/btaskee/don-dep-nha-cua-tron.webp"},
+            {"DV201", "Vệ sinh máy lạnh", "/images/btaskee/ve-sinh-may-lanh-tron.webp"},
+            {"DV402", "Nấu ăn gia đình", "/images/btaskee/nau-an-gia-dinh-tron.webp"},
+            {"DV301", "Trông trẻ tại nhà", "/images/btaskee/trong-tre-tron.webp"},
+            {"DV302", "Chăm sóc người cao tuổi", "/images/btaskee/cham-soc-nguoi-cao-tuoi.webp"},
+            {"DV501", "Vệ sinh văn phòng", "/images/btaskee/ve-sinh-van-phong-tron.webp"}
     };
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private BangGiaService bangGiaService;
     private final LoaiDichVuRepository loaiDichVuRepository;
     private final DichVuRepository dichVuRepository;
     private final BangGiaDichVuRepository bangGiaDichVuRepository;
@@ -138,6 +141,7 @@ public class CatalogService {
 
         List<DichVu> dichVus = new ArrayList<>(dichVuRepository.findByTrangThai("HoatDong"));
         dichVus.sort(Comparator.comparing(DichVu::getId));
+        Map<Integer, java.util.Set<String>> maDaDem = new java.util.HashMap<>();
         for (DichVu dv : dichVus) {
             DanhMucView danhMuc = dv.getLoaiDichVu() != null ? theoId.get(dv.getLoaiDichVu().getId()) : null;
             if (danhMuc == null) {
@@ -156,6 +160,8 @@ public class CatalogService {
                     .soNguoiThucHien(dv.getSoNguoiThucHien())
                     .gia(gia)
                     .giaText(dinhDangTien(gia))
+                    .giaGoc(bangGiaService.giaGoc(dv.getId()))
+                    .giaGocText(bangGiaService.giaGoc(dv.getId()) != null ? dinhDangTien(bangGiaService.giaGoc(dv.getId())) : null)
                     .build();
 
             if ("GoiThang".equalsIgnoreCase(dv.getLoaiHinhDat())) {
@@ -163,11 +169,15 @@ public class CatalogService {
             } else {
                 danhMuc.getDichVuTheoLan().add(view);
             }
-            danhMuc.setSoDichVu(danhMuc.getSoDichVu() + 1);
+            // Số dịch vụ của nhóm = số mã dịch vụ khác nhau (biến thể cùng mã chỉ tính một lần)
+            if (maDaDem.computeIfAbsent(danhMuc.getId(), k -> new java.util.HashSet<>()).add(dv.getMaDichVu())) {
+                danhMuc.setSoDichVu(danhMuc.getSoDichVu() + 1);
+            }
             if (danhMuc.getTieuBieu().size() < 4) {
                 String tenNgan = tenNgan(dv.getTenDichVu());
                 if (!danhMuc.getTieuBieu().contains(tenNgan)) {
                     danhMuc.getTieuBieu().add(tenNgan);
+                    danhMuc.getTieuBieuId().put(tenNgan, dv.getId());
                 }
             }
             if (gia.signum() > 0) {
@@ -358,7 +368,9 @@ public class CatalogService {
     @Cacheable(value = CacheNames.THONG_KE, key = "'soLieuCongKhai'")
     public Map<String, Long> getSoLieuCongKhai() {
         Map<String, Long> soLieu = new LinkedHashMap<>();
-        soLieu.put("dichVu", (long) dichVuRepository.findByTrangThai("HoatDong").size());
+        // Đếm theo mã dịch vụ: các biến thể cùng mã (2 giờ, 3 giờ, gói tháng...) là một dịch vụ
+        soLieu.put("dichVu", dichVuRepository.findByTrangThai("HoatDong").stream()
+                .map(dv -> dv.getMaDichVu()).distinct().count());
         soLieu.put("congTacVien", congTacVienRepository.findAll().stream()
                 .filter(ctv -> "HoatDong".equalsIgnoreCase(ctv.getTrangThai())).count());
         soLieu.put("khachHang", khachHangRepository.count());

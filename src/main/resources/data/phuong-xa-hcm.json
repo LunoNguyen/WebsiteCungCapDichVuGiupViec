@@ -1,0 +1,1922 @@
+{
+ "nguon": "https://provinces.open-api.vn/api/v2/p/79?depth=2 (đơn vị hành chính 2 cấp, từ 01/07/2025); quanCu: /api/v2/w/{code}/to-legacies/ (quận, huyện trước sắp xếp)",
+ "tinhThanh": "Thành phố Hồ Chí Minh",
+ "maTinh": 79,
+ "phuongXa": [
+  {
+   "ma": 25747,
+   "ten": "Phường Thủ Dầu Một",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 718
+    }
+   ]
+  },
+  {
+   "ma": 25750,
+   "ten": "Phường Phú Lợi",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 718
+    }
+   ]
+  },
+  {
+   "ma": 25760,
+   "ten": "Phường Bình Dương",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 718
+    },
+    {
+     "tinh": 74,
+     "ma": 723
+    }
+   ]
+  },
+  {
+   "ma": 25768,
+   "ten": "Phường Phú An",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 718
+    },
+    {
+     "tinh": 74,
+     "ma": 721
+    }
+   ]
+  },
+  {
+   "ma": 25771,
+   "ten": "Phường Chánh Hiệp",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 718
+    }
+   ]
+  },
+  {
+   "ma": 25777,
+   "ten": "Xã Dầu Tiếng",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 720
+    }
+   ]
+  },
+  {
+   "ma": 25780,
+   "ten": "Xã Minh Thạnh",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 720
+    }
+   ]
+  },
+  {
+   "ma": 25792,
+   "ten": "Xã Long Hòa",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 720
+    }
+   ]
+  },
+  {
+   "ma": 25807,
+   "ten": "Xã Thanh An",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 720
+    }
+   ]
+  },
+  {
+   "ma": 25813,
+   "ten": "Phường Bến Cát",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 719
+    },
+    {
+     "tinh": 74,
+     "ma": 721
+    }
+   ]
+  },
+  {
+   "ma": 25819,
+   "ten": "Xã Trừ Văn Thố",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 719
+    }
+   ]
+  },
+  {
+   "ma": 25822,
+   "ten": "Xã Bàu Bàng",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 719
+    }
+   ]
+  },
+  {
+   "ma": 25837,
+   "ten": "Phường Chánh Phú Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 719
+    },
+    {
+     "tinh": 74,
+     "ma": 721
+    }
+   ]
+  },
+  {
+   "ma": 25840,
+   "ten": "Phường Long Nguyên",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 721
+    },
+    {
+     "tinh": 74,
+     "ma": 719
+    }
+   ]
+  },
+  {
+   "ma": 25843,
+   "ten": "Phường Tây Nam",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 720
+    },
+    {
+     "tinh": 74,
+     "ma": 721
+    }
+   ]
+  },
+  {
+   "ma": 25846,
+   "ten": "Phường Thới Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 721
+    }
+   ]
+  },
+  {
+   "ma": 25849,
+   "ten": "Phường Hòa Lợi",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 721
+    }
+   ]
+  },
+  {
+   "ma": 25858,
+   "ten": "Xã Phú Giáo",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 722
+    }
+   ]
+  },
+  {
+   "ma": 25864,
+   "ten": "Xã Phước Thành",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 722
+    }
+   ]
+  },
+  {
+   "ma": 25867,
+   "ten": "Xã An Long",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 722
+    }
+   ]
+  },
+  {
+   "ma": 25882,
+   "ten": "Xã Phước Hòa",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 722
+    }
+   ]
+  },
+  {
+   "ma": 25888,
+   "ten": "Phường Tân Uyên",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 723
+    },
+    {
+     "tinh": 74,
+     "ma": 726
+    }
+   ]
+  },
+  {
+   "ma": 25891,
+   "ten": "Phường Tân Khánh",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 723
+    }
+   ]
+  },
+  {
+   "ma": 25906,
+   "ten": "Xã Bắc Tân Uyên",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 726
+    }
+   ]
+  },
+  {
+   "ma": 25909,
+   "ten": "Xã Thường Tân",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 726
+    }
+   ]
+  },
+  {
+   "ma": 25912,
+   "ten": "Phường Vĩnh Tân",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 726
+    },
+    {
+     "tinh": 74,
+     "ma": 723
+    }
+   ]
+  },
+  {
+   "ma": 25915,
+   "ten": "Phường Bình Cơ",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 726
+    },
+    {
+     "tinh": 74,
+     "ma": 723
+    }
+   ]
+  },
+  {
+   "ma": 25920,
+   "ten": "Phường Tân Hiệp",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 723
+    }
+   ]
+  },
+  {
+   "ma": 25942,
+   "ten": "Phường Dĩ An",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 724
+    }
+   ]
+  },
+  {
+   "ma": 25945,
+   "ten": "Phường Tân Đông Hiệp",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 724
+    },
+    {
+     "tinh": 74,
+     "ma": 723
+    }
+   ]
+  },
+  {
+   "ma": 25951,
+   "ten": "Phường Đông Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 724
+    }
+   ]
+  },
+  {
+   "ma": 25966,
+   "ten": "Phường Lái Thiêu",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 725
+    }
+   ]
+  },
+  {
+   "ma": 25969,
+   "ten": "Phường Thuận Giao",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 725
+    }
+   ]
+  },
+  {
+   "ma": 25975,
+   "ten": "Phường An Phú",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 725
+    }
+   ]
+  },
+  {
+   "ma": 25978,
+   "ten": "Phường Thuận An",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 725
+    }
+   ]
+  },
+  {
+   "ma": 25987,
+   "ten": "Phường Bình Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 74,
+     "ma": 725
+    }
+   ]
+  },
+  {
+   "ma": 26506,
+   "ten": "Phường Vũng Tàu",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 747
+    }
+   ]
+  },
+  {
+   "ma": 26526,
+   "ten": "Phường Tam Thắng",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 747
+    }
+   ]
+  },
+  {
+   "ma": 26536,
+   "ten": "Phường Rạch Dừa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 747
+    }
+   ]
+  },
+  {
+   "ma": 26542,
+   "ten": "Phường Phước Thắng",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 747
+    }
+   ]
+  },
+  {
+   "ma": 26545,
+   "ten": "Xã Long Sơn",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 747
+    }
+   ]
+  },
+  {
+   "ma": 26560,
+   "ten": "Phường Bà Rịa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 748
+    }
+   ]
+  },
+  {
+   "ma": 26566,
+   "ten": "Phường Long Hương",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 748
+    }
+   ]
+  },
+  {
+   "ma": 26572,
+   "ten": "Phường Tam Long",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 748
+    }
+   ]
+  },
+  {
+   "ma": 26575,
+   "ten": "Xã Ngãi Giao",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 750
+    }
+   ]
+  },
+  {
+   "ma": 26584,
+   "ten": "Xã Xuân Sơn",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 750
+    }
+   ]
+  },
+  {
+   "ma": 26590,
+   "ten": "Xã Bình Giã",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 750
+    }
+   ]
+  },
+  {
+   "ma": 26596,
+   "ten": "Xã Châu Đức",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 750
+    }
+   ]
+  },
+  {
+   "ma": 26608,
+   "ten": "Xã Kim Long",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 750
+    }
+   ]
+  },
+  {
+   "ma": 26617,
+   "ten": "Xã Nghĩa Thành",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 750
+    }
+   ]
+  },
+  {
+   "ma": 26620,
+   "ten": "Xã Hồ Tràm",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 751
+    }
+   ]
+  },
+  {
+   "ma": 26632,
+   "ten": "Xã Xuyên Mộc",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 751
+    }
+   ]
+  },
+  {
+   "ma": 26638,
+   "ten": "Xã Bàu Lâm",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 751
+    }
+   ]
+  },
+  {
+   "ma": 26641,
+   "ten": "Xã Hòa Hội",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 751
+    }
+   ]
+  },
+  {
+   "ma": 26647,
+   "ten": "Xã Hòa Hiệp",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 751
+    }
+   ]
+  },
+  {
+   "ma": 26656,
+   "ten": "Xã Bình Châu",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 751
+    }
+   ]
+  },
+  {
+   "ma": 26659,
+   "ten": "Xã Long Điền",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 753
+    }
+   ]
+  },
+  {
+   "ma": 26662,
+   "ten": "Xã Long Hải",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 753
+    }
+   ]
+  },
+  {
+   "ma": 26680,
+   "ten": "Xã Đất Đỏ",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 753
+    }
+   ]
+  },
+  {
+   "ma": 26686,
+   "ten": "Xã Phước Hải",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 753
+    }
+   ]
+  },
+  {
+   "ma": 26704,
+   "ten": "Phường Phú Mỹ",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 754
+    }
+   ]
+  },
+  {
+   "ma": 26710,
+   "ten": "Phường Tân Hải",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 754
+    }
+   ]
+  },
+  {
+   "ma": 26713,
+   "ten": "Phường Tân Phước",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 754
+    }
+   ]
+  },
+  {
+   "ma": 26725,
+   "ten": "Phường Tân Thành",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 754
+    }
+   ]
+  },
+  {
+   "ma": 26728,
+   "ten": "Xã Châu Pha",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 77,
+     "ma": 754
+    }
+   ]
+  },
+  {
+   "ma": 26732,
+   "ten": "Đặc khu Côn Đảo",
+   "loai": "đặc khu",
+   "quanCu": []
+  },
+  {
+   "ma": 26737,
+   "ten": "Phường Tân Định",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 760
+    }
+   ]
+  },
+  {
+   "ma": 26740,
+   "ten": "Phường Sài Gòn",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 760
+    }
+   ]
+  },
+  {
+   "ma": 26743,
+   "ten": "Phường Bến Thành",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 760
+    }
+   ]
+  },
+  {
+   "ma": 26758,
+   "ten": "Phường Cầu Ông Lãnh",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 760
+    }
+   ]
+  },
+  {
+   "ma": 26767,
+   "ten": "Phường An Phú Đông",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 761
+    }
+   ]
+  },
+  {
+   "ma": 26773,
+   "ten": "Phường Thới An",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 761
+    }
+   ]
+  },
+  {
+   "ma": 26782,
+   "ten": "Phường Tân Thới Hiệp",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 761
+    }
+   ]
+  },
+  {
+   "ma": 26785,
+   "ten": "Phường Trung Mỹ Tây",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 761
+    }
+   ]
+  },
+  {
+   "ma": 26791,
+   "ten": "Phường Đông Hưng Thuận",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 761
+    }
+   ]
+  },
+  {
+   "ma": 26800,
+   "ten": "Phường Linh Xuân",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26803,
+   "ten": "Phường Tam Bình",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26809,
+   "ten": "Phường Hiệp Bình",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26824,
+   "ten": "Phường Thủ Đức",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26833,
+   "ten": "Phường Long Bình",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26842,
+   "ten": "Phường Tăng Nhơn Phú",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26848,
+   "ten": "Phường Phước Long",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26857,
+   "ten": "Phường Long Phước",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26860,
+   "ten": "Phường Long Trường",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 26876,
+   "ten": "Phường An Nhơn",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 764
+    }
+   ]
+  },
+  {
+   "ma": 26878,
+   "ten": "Phường An Hội Đông",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 764
+    }
+   ]
+  },
+  {
+   "ma": 26882,
+   "ten": "Phường An Hội Tây",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 764
+    }
+   ]
+  },
+  {
+   "ma": 26884,
+   "ten": "Phường Gò Vấp",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 764
+    }
+   ]
+  },
+  {
+   "ma": 26890,
+   "ten": "Phường Hạnh Thông",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 764
+    }
+   ]
+  },
+  {
+   "ma": 26898,
+   "ten": "Phường Thông Tây Hội",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 764
+    }
+   ]
+  },
+  {
+   "ma": 26905,
+   "ten": "Phường Bình Lợi Trung",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 765
+    }
+   ]
+  },
+  {
+   "ma": 26911,
+   "ten": "Phường Bình Quới",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 765
+    }
+   ]
+  },
+  {
+   "ma": 26929,
+   "ten": "Phường Bình Thạnh",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 765
+    }
+   ]
+  },
+  {
+   "ma": 26944,
+   "ten": "Phường Gia Định",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 765
+    }
+   ]
+  },
+  {
+   "ma": 26956,
+   "ten": "Phường Thạnh Mỹ Tây",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 765
+    }
+   ]
+  },
+  {
+   "ma": 26968,
+   "ten": "Phường Tân Sơn Nhất",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 766
+    }
+   ]
+  },
+  {
+   "ma": 26977,
+   "ten": "Phường Tân Sơn Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 766
+    }
+   ]
+  },
+  {
+   "ma": 26983,
+   "ten": "Phường Bảy Hiền",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 766
+    }
+   ]
+  },
+  {
+   "ma": 26995,
+   "ten": "Phường Tân Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 766
+    }
+   ]
+  },
+  {
+   "ma": 27004,
+   "ten": "Phường Tân Bình",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 766
+    }
+   ]
+  },
+  {
+   "ma": 27007,
+   "ten": "Phường Tân Sơn",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 766
+    }
+   ]
+  },
+  {
+   "ma": 27013,
+   "ten": "Phường Tây Thạnh",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 767
+    }
+   ]
+  },
+  {
+   "ma": 27019,
+   "ten": "Phường Tân Sơn Nhì",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 767
+    }
+   ]
+  },
+  {
+   "ma": 27022,
+   "ten": "Phường Phú Thọ Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 767
+    }
+   ]
+  },
+  {
+   "ma": 27028,
+   "ten": "Phường Phú Thạnh",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 767
+    }
+   ]
+  },
+  {
+   "ma": 27031,
+   "ten": "Phường Tân Phú",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 767
+    }
+   ]
+  },
+  {
+   "ma": 27043,
+   "ten": "Phường Đức Nhuận",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 768
+    }
+   ]
+  },
+  {
+   "ma": 27058,
+   "ten": "Phường Cầu Kiệu",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 768
+    }
+   ]
+  },
+  {
+   "ma": 27073,
+   "ten": "Phường Phú Nhuận",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 768
+    }
+   ]
+  },
+  {
+   "ma": 27094,
+   "ten": "Phường An Khánh",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 27097,
+   "ten": "Phường Bình Trưng",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 27112,
+   "ten": "Phường Cát Lái",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 769
+    }
+   ]
+  },
+  {
+   "ma": 27139,
+   "ten": "Phường Xuân Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 770
+    }
+   ]
+  },
+  {
+   "ma": 27142,
+   "ten": "Phường Nhiêu Lộc",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 770
+    }
+   ]
+  },
+  {
+   "ma": 27154,
+   "ten": "Phường Bàn Cờ",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 770
+    }
+   ]
+  },
+  {
+   "ma": 27163,
+   "ten": "Phường Hòa Hưng",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 771
+    }
+   ]
+  },
+  {
+   "ma": 27169,
+   "ten": "Phường Diên Hồng",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 771
+    }
+   ]
+  },
+  {
+   "ma": 27190,
+   "ten": "Phường Vườn Lài",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 771
+    }
+   ]
+  },
+  {
+   "ma": 27211,
+   "ten": "Phường Hòa Bình",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 772
+    }
+   ]
+  },
+  {
+   "ma": 27226,
+   "ten": "Phường Phú Thọ",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 772
+    }
+   ]
+  },
+  {
+   "ma": 27232,
+   "ten": "Phường Bình Thới",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 772
+    }
+   ]
+  },
+  {
+   "ma": 27238,
+   "ten": "Phường Minh Phụng",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 772
+    }
+   ]
+  },
+  {
+   "ma": 27259,
+   "ten": "Phường Xóm Chiếu",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 773
+    }
+   ]
+  },
+  {
+   "ma": 27265,
+   "ten": "Phường Khánh Hội",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 773
+    }
+   ]
+  },
+  {
+   "ma": 27286,
+   "ten": "Phường Vĩnh Hội",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 773
+    }
+   ]
+  },
+  {
+   "ma": 27301,
+   "ten": "Phường Chợ Quán",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 774
+    }
+   ]
+  },
+  {
+   "ma": 27316,
+   "ten": "Phường An Đông",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 774
+    }
+   ]
+  },
+  {
+   "ma": 27343,
+   "ten": "Phường Chợ Lớn",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 774
+    }
+   ]
+  },
+  {
+   "ma": 27349,
+   "ten": "Phường Phú Lâm",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 775
+    }
+   ]
+  },
+  {
+   "ma": 27364,
+   "ten": "Phường Bình Phú",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 775
+    },
+    {
+     "tinh": 79,
+     "ma": 776
+    }
+   ]
+  },
+  {
+   "ma": 27367,
+   "ten": "Phường Bình Tây",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 775
+    }
+   ]
+  },
+  {
+   "ma": 27373,
+   "ten": "Phường Bình Tiên",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 775
+    }
+   ]
+  },
+  {
+   "ma": 27418,
+   "ten": "Phường Chánh Hưng",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 776
+    }
+   ]
+  },
+  {
+   "ma": 27424,
+   "ten": "Phường Bình Đông",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 776
+    },
+    {
+     "tinh": 79,
+     "ma": 785
+    }
+   ]
+  },
+  {
+   "ma": 27427,
+   "ten": "Phường Phú Định",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 776
+    }
+   ]
+  },
+  {
+   "ma": 27439,
+   "ten": "Phường Bình Hưng Hòa",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 777
+    },
+    {
+     "tinh": 79,
+     "ma": 767
+    }
+   ]
+  },
+  {
+   "ma": 27442,
+   "ten": "Phường Bình Tân",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 777
+    }
+   ]
+  },
+  {
+   "ma": 27448,
+   "ten": "Phường Bình Trị Đông",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 777
+    }
+   ]
+  },
+  {
+   "ma": 27457,
+   "ten": "Phường Tân Tạo",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 777
+    },
+    {
+     "tinh": 79,
+     "ma": 785
+    }
+   ]
+  },
+  {
+   "ma": 27460,
+   "ten": "Phường An Lạc",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 777
+    }
+   ]
+  },
+  {
+   "ma": 27475,
+   "ten": "Phường Tân Hưng",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 778
+    }
+   ]
+  },
+  {
+   "ma": 27478,
+   "ten": "Phường Tân Thuận",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 778
+    }
+   ]
+  },
+  {
+   "ma": 27484,
+   "ten": "Phường Phú Thuận",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 778
+    }
+   ]
+  },
+  {
+   "ma": 27487,
+   "ten": "Phường Tân Mỹ",
+   "loai": "phường",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 778
+    }
+   ]
+  },
+  {
+   "ma": 27496,
+   "ten": "Xã Tân An Hội",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 783
+    }
+   ]
+  },
+  {
+   "ma": 27508,
+   "ten": "Xã An Nhơn Tây",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 783
+    }
+   ]
+  },
+  {
+   "ma": 27511,
+   "ten": "Xã Nhuận Đức",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 783
+    }
+   ]
+  },
+  {
+   "ma": 27526,
+   "ten": "Xã Thái Mỹ",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 783
+    }
+   ]
+  },
+  {
+   "ma": 27541,
+   "ten": "Xã Phú Hòa Đông",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 783
+    }
+   ]
+  },
+  {
+   "ma": 27544,
+   "ten": "Xã Bình Mỹ",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 783
+    }
+   ]
+  },
+  {
+   "ma": 27553,
+   "ten": "Xã Củ Chi",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 783
+    }
+   ]
+  },
+  {
+   "ma": 27559,
+   "ten": "Xã Hóc Môn",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 784
+    }
+   ]
+  },
+  {
+   "ma": 27568,
+   "ten": "Xã Đông Thạnh",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 784
+    }
+   ]
+  },
+  {
+   "ma": 27577,
+   "ten": "Xã Xuân Thới Sơn",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 784
+    }
+   ]
+  },
+  {
+   "ma": 27592,
+   "ten": "Xã Bà Điểm",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 784
+    }
+   ]
+  },
+  {
+   "ma": 27595,
+   "ten": "Xã Tân Nhựt",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 785
+    },
+    {
+     "tinh": 79,
+     "ma": 776
+    },
+    {
+     "tinh": 79,
+     "ma": 777
+    }
+   ]
+  },
+  {
+   "ma": 27601,
+   "ten": "Xã Vĩnh Lộc",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 785
+    }
+   ]
+  },
+  {
+   "ma": 27604,
+   "ten": "Xã Tân Vĩnh Lộc",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 785
+    },
+    {
+     "tinh": 79,
+     "ma": 777
+    }
+   ]
+  },
+  {
+   "ma": 27610,
+   "ten": "Xã Bình Lợi",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 785
+    }
+   ]
+  },
+  {
+   "ma": 27619,
+   "ten": "Xã Bình Hưng",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 785
+    },
+    {
+     "tinh": 79,
+     "ma": 776
+    }
+   ]
+  },
+  {
+   "ma": 27628,
+   "ten": "Xã Hưng Long",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 785
+    }
+   ]
+  },
+  {
+   "ma": 27637,
+   "ten": "Xã Bình Chánh",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 785
+    }
+   ]
+  },
+  {
+   "ma": 27655,
+   "ten": "Xã Nhà Bè",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 786
+    }
+   ]
+  },
+  {
+   "ma": 27658,
+   "ten": "Xã Hiệp Phước",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 786
+    }
+   ]
+  },
+  {
+   "ma": 27664,
+   "ten": "Xã Cần Giờ",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 787
+    }
+   ]
+  },
+  {
+   "ma": 27667,
+   "ten": "Xã Bình Khánh",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 787
+    }
+   ]
+  },
+  {
+   "ma": 27673,
+   "ten": "Xã An Thới Đông",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 787
+    }
+   ]
+  },
+  {
+   "ma": 27676,
+   "ten": "Xã Thạnh An",
+   "loai": "xã",
+   "quanCu": [
+    {
+     "tinh": 79,
+     "ma": 787
+    }
+   ]
+  }
+ ]
+}

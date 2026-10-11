@@ -33,4 +33,7 @@ public class DanhMucView implements Serializable {
     /** Vài dịch vụ tiêu biểu để hiện trong menu và thẻ danh mục. */
     @Builder.Default
     private List<String> tieuBieu = new ArrayList<>();
+    /** Tên dịch vụ tiêu biểu → id dịch vụ (biến thể đầu tiên) để menu, thẻ danh mục dẫn tới trang chi tiết. */
+    @Builder.Default
+    private java.util.Map<String, Integer> tieuBieuId = new java.util.LinkedHashMap<>();
 }

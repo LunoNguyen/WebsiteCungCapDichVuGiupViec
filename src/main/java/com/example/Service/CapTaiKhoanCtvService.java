@@ -32,16 +32,19 @@ public class CapTaiKhoanCtvService {
     private final TaiKhoanRepository taiKhoanRepository;
     private final NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository;
     private final SmsSender smsSender;
+    private final UngVienCtvService ungVienCtvService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public CapTaiKhoanCtvService(CongTacVienRepository congTacVienRepository,
                                  TaiKhoanRepository taiKhoanRepository,
                                  NhatKyTaiKhoanRepository nhatKyTaiKhoanRepository,
-                                 SmsSender smsSender) {
+                                 SmsSender smsSender,
+                                 UngVienCtvService ungVienCtvService) {
         this.congTacVienRepository = congTacVienRepository;
         this.taiKhoanRepository = taiKhoanRepository;
         this.nhatKyTaiKhoanRepository = nhatKyTaiKhoanRepository;
         this.smsSender = smsSender;
+        this.ungVienCtvService = ungVienCtvService;
     }
 
     /** daGuiTin = false khi nhà cung cấp SMS lỗi: hồ sơ vẫn được duyệt, HCNS cần báo ứng viên bằng kênh khác. */
@@ -67,6 +70,11 @@ public class CapTaiKhoanCtvService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hồ sơ cộng tác viên."));
         if (!"ChoDuyet".equals(ctv.getTrangThai())) {
             throw new IllegalArgumentException("Hồ sơ này không còn ở trạng thái chờ duyệt.");
+        }
+        // Ứng viên đăng ký qua web/app phải được mời phỏng vấn trước khi duyệt
+        if (ctv.getTaiKhoan() != null && !ungVienCtvService.daGuiLichPhongVan(ctv)) {
+            throw new IllegalArgumentException("Cần gửi lịch phỏng vấn cho ứng viên " + ctv.getHoTen()
+                    + " trước khi phê duyệt.");
         }
 
         TaiKhoan tk = ctv.getTaiKhoan();
@@ -103,11 +111,11 @@ public class CapTaiKhoanCtvService {
 
         String soDienThoai = ctv.getSoDienThoai() != null ? ctv.getSoDienThoai() : tk.getSoDienThoai();
         String noiDung = coGuiMatKhau
-                ? "Neatify: Ho so cong tac vien cua ban da duoc duyet. "
+                ? "bTaskee: Ho so cong tac vien cua ban da duoc duyet. "
                         + "Tai khoan: " + tk.getTenDangNhap() + ", mat khau: " + mk + ". "
-                        + "Vui long dang nhap ung dung Neatify va doi mat khau."
-                : "Neatify: Ho so cong tac vien cua ban da duoc duyet va tai khoan da duoc kich hoat. "
-                        + "Dang nhap ung dung Neatify bang tai khoan " + tk.getTenDangNhap()
+                        + "Vui long dang nhap ung dung bTaskee va doi mat khau."
+                : "bTaskee: Ho so cong tac vien cua ban da duoc duyet va tai khoan da duoc kich hoat. "
+                        + "Dang nhap ung dung bTaskee bang tai khoan " + tk.getTenDangNhap()
                         + " va mat khau ban da dat khi dang ky.";
         // Lỗi SMS không được làm hỏng việc duyệt: tài khoản vẫn kích hoạt, HCNS được báo để liên hệ ứng viên
         String maTin;

@@ -83,7 +83,7 @@ public class GeocodingService {
                     .encode(StandardCharsets.UTF_8)
                     .build().toUri();
             HttpHeaders h = new HttpHeaders();
-            h.set(HttpHeaders.USER_AGENT, "Neatify/1.0 (luan-an)"); // Nominatim yêu cầu User-Agent riêng
+            h.set(HttpHeaders.USER_AGENT, "bTaskee/1.0 (luan-an)"); // Nominatim yêu cầu User-Agent riêng
             h.set(HttpHeaders.ACCEPT_LANGUAGE, "vi");
             List<?> body = http.exchange(uri, HttpMethod.GET, new HttpEntity<>(h), List.class).getBody();
             if (body == null || body.isEmpty()) return null;

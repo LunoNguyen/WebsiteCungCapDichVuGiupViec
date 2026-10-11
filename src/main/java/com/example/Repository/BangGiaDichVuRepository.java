@@ -10,5 +10,7 @@ import java.util.Optional;
 @Repository
 public interface BangGiaDichVuRepository extends JpaRepository<BangGiaDichVu, Integer> {
     List<BangGiaDichVu> findByDichVu_IdAndTrangThai(Integer dichVuId, String trangThai);
+
+    List<BangGiaDichVu> findByDichVu_Id(Integer dichVuId);
     Optional<BangGiaDichVu> findTopByDichVu_IdAndLoaiHinhDatAndTrangThai(Integer dichVuId, String loaiHinhDat, String trangThai);
 }

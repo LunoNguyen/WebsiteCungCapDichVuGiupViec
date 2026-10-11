@@ -56,12 +56,15 @@ public class KhachHangWebController {
     private final AuthService authService;
     private final KhachHangRepository khachHangRepository;
     private final DonDatDichVuRepository donDatDichVuRepository;
+    private final com.example.Service.DanhGiaService danhGiaService;
 
     public KhachHangWebController(CustomerApiService customerApiService,
                                   CustomerAddressService addressService,
                                   AuthService authService,
                                   KhachHangRepository khachHangRepository,
-                                  DonDatDichVuRepository donDatDichVuRepository) {
+                                  DonDatDichVuRepository donDatDichVuRepository,
+                                  com.example.Service.DanhGiaService danhGiaService) {
+        this.danhGiaService = danhGiaService;
         this.customerApiService = customerApiService;
         this.addressService = addressService;
         this.authService = authService;
@@ -85,8 +88,13 @@ public class KhachHangWebController {
                              @RequestParam(required = false) String email,
                              @RequestParam String matKhau,
                              @RequestParam String nhapLaiMatKhau,
+                             @RequestParam(required = false) String soNhaTenDuong,
+                             @RequestParam(required = false) Integer maTinh,
+                             @RequestParam(required = false) Integer maPhuong,
+                             @RequestParam(required = false) Integer khuVucId,
                              RedirectAttributes ra) {
         ra.addFlashAttribute("hoTen", hoTen);
+        ra.addFlashAttribute("soNhaTenDuong", soNhaTenDuong);
         ra.addFlashAttribute("soDienThoai", soDienThoai);
         ra.addFlashAttribute("email", email);
         if (!matKhau.equals(nhapLaiMatKhau)) {
@@ -103,6 +111,15 @@ public class KhachHangWebController {
             req.setSoDienThoai(soDienThoai.replaceAll("\\s+", ""));
             req.setEmail(email != null && !email.isBlank() ? email.trim() : null);
             req.setMatKhau(matKhau);
+            // Địa chỉ nơi ở hiện tại → địa chỉ mặc định (khu vực suy ra từ phường)
+            if (maPhuong == null || soNhaTenDuong == null || soNhaTenDuong.isBlank()) {
+                ra.addFlashAttribute("error", "Vui lòng nhập địa chỉ nơi ở: tỉnh, thành, phường, xã và số nhà, tên đường.");
+                return "redirect:/dang-ky";
+            }
+            req.setSoNhaTenDuong(soNhaTenDuong);
+            req.setMaTinh(maTinh);
+            req.setMaPhuong(maPhuong);
+            req.setKhuVucId(khuVucId);
             Map<String, Object> kq = customerApiService.registerCustomer(req);
             if (Boolean.TRUE.equals(kq.get("canXacThucOtp"))) {
                 ra.addFlashAttribute("info", kq.get("message"));
@@ -265,7 +282,9 @@ public class KhachHangWebController {
                                 @RequestParam Integer dichVuId,
                                 @RequestParam(defaultValue = "TheoLan") String loaiHinhDat,
                                 @RequestParam(required = false) Integer diaChiId,
-                                @RequestParam(required = false) String diaChiChiTiet,
+                                @RequestParam(required = false) String soNhaTenDuong,
+                                @RequestParam(required = false) Integer maTinh,
+                                @RequestParam(required = false) Integer maPhuong,
                                 @RequestParam(required = false) Integer khuVucId,
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ngayThucHien,
                                 @RequestParam(required = false) @DateTimeFormat(pattern = "HH:mm") LocalTime gioBatDau,
@@ -279,6 +298,10 @@ public class KhachHangWebController {
 
         if (ngayThucHien == null || gioBatDau == null) {
             ra.addFlashAttribute("error", "Vui lòng chọn ngày và giờ bắt đầu.");
+            return quayLai;
+        }
+        if (ngayThucHien.isAfter(LocalDate.now().plusDays(60))) {
+            ra.addFlashAttribute("error", "Chỉ đặt được trong vòng 60 ngày tới.");
             return quayLai;
         }
         if (LocalDateTime.of(ngayThucHien, gioBatDau).isBefore(LocalDateTime.now().plusHours(1))) {
@@ -296,8 +319,11 @@ public class KhachHangWebController {
             req.setDichVuId(dichVuId);
             req.setLoaiHinhDat(goiThang ? "GoiThang" : "TheoLan");
             req.setDiaChiId(diaChiId);
-            if (diaChiId == null && diaChiChiTiet != null && !diaChiChiTiet.isBlank()) {
-                req.setDiaChiChiTiet(diaChiChiTiet.trim());
+            if (diaChiId == null && maPhuong != null) {
+                // Địa chỉ mới nhập lúc đặt: tỉnh, phường + số nhà; khu vực suy ra từ phường
+                req.setSoNhaTenDuong(soNhaTenDuong);
+                req.setMaTinh(maTinh);
+                req.setMaPhuong(maPhuong);
                 req.setKhuVucId(khuVucId);
             }
             req.setNgayThucHien(ngayThucHien);
@@ -417,6 +443,37 @@ public class KhachHangWebController {
         return "redirect:/tai-khoan/don-hang/" + id;
     }
 
+    @PostMapping("/tai-khoan/don-hang/{id}/danh-gia/sua")
+    public String suaDanhGia(@PathVariable Integer id,
+                             @RequestParam(required = false) Integer diemChatLuong,
+                             @RequestParam(required = false) Integer diemThaiDo,
+                             @RequestParam(required = false) String nhanXet,
+                             HttpSession session, HttpServletRequest request, RedirectAttributes ra) {
+        Integer khId = khachHangId(session);
+        if (khId == null) return chuyenDangNhap(request);
+        try {
+            danhGiaService.suaDanhGia(id, khId, diemChatLuong, diemThaiDo, nhanXet);
+            ra.addFlashAttribute("success", "Đã cập nhật đánh giá.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/tai-khoan/don-hang/" + id + "#danh-gia";
+    }
+
+    @PostMapping("/tai-khoan/don-hang/{id}/binh-luan")
+    public String binhLuan(@PathVariable Integer id, @RequestParam(required = false) String noiDung,
+                           HttpSession session, HttpServletRequest request, RedirectAttributes ra) {
+        Integer khId = khachHangId(session);
+        if (khId == null) return chuyenDangNhap(request);
+        try {
+            danhGiaService.binhLuanCuaKhach(id, khId, noiDung);
+            ra.addFlashAttribute("success", "Đã gửi bình luận. bTaskee sẽ phản hồi sớm.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/tai-khoan/don-hang/" + id + "#danh-gia";
+    }
+
     // =====================================================================
     // SỔ ĐỊA CHỈ
     // =====================================================================
@@ -439,7 +496,9 @@ public class KhachHangWebController {
     }
 
     @PostMapping("/tai-khoan/dia-chi")
-    public String themDiaChi(@RequestParam String diaChiChiTiet,
+    public String themDiaChi(@RequestParam(required = false) String soNhaTenDuong,
+                             @RequestParam(required = false) Integer maTinh,
+                             @RequestParam(required = false) Integer maPhuong,
                              @RequestParam(required = false) Integer khuVucId,
                              @RequestParam(required = false) BigDecimal dienTichNha,
                              @RequestParam(required = false) String luuYDacBiet,
@@ -450,7 +509,9 @@ public class KhachHangWebController {
         if (khId == null) return chuyenDangNhap(request);
         try {
             AddressRequest req = new AddressRequest();
-            req.setDiaChiChiTiet(diaChiChiTiet.trim());
+            req.setSoNhaTenDuong(soNhaTenDuong);
+            req.setMaTinh(maTinh);
+            req.setMaPhuong(maPhuong);
             req.setKhuVucId(khuVucId);
             req.setDienTichNha(dienTichNha);
             req.setLuuYDacBiet(luuYDacBiet);
@@ -458,6 +519,35 @@ public class KhachHangWebController {
             addressService.them(khId, req);
             ra.addFlashAttribute("success", "Đã thêm địa chỉ.");
             if (quayLai != null && LandingController.laDuongDanNoiBo(quayLai)) return "redirect:" + quayLai;
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/tai-khoan/dia-chi";
+    }
+
+    @PostMapping("/tai-khoan/dia-chi/{id}/sua")
+    public String suaDiaChi(@PathVariable Integer id,
+                            @RequestParam(required = false) String soNhaTenDuong,
+                            @RequestParam(required = false) Integer maTinh,
+                            @RequestParam(required = false) Integer maPhuong,
+                            @RequestParam(required = false) Integer khuVucId,
+                            @RequestParam(required = false) BigDecimal dienTichNha,
+                            @RequestParam(required = false) String luuYDacBiet,
+                            @RequestParam(required = false) Boolean laMacDinh,
+                            HttpSession session, HttpServletRequest request, RedirectAttributes ra) {
+        Integer khId = khachHangId(session);
+        if (khId == null) return chuyenDangNhap(request);
+        try {
+            AddressRequest req = new AddressRequest();
+            req.setSoNhaTenDuong(soNhaTenDuong);
+            req.setMaTinh(maTinh);
+            req.setMaPhuong(maPhuong);
+            req.setKhuVucId(khuVucId);
+            req.setDienTichNha(dienTichNha);
+            req.setLuuYDacBiet(luuYDacBiet);
+            req.setLaMacDinh(Boolean.TRUE.equals(laMacDinh));
+            addressService.sua(khId, id, req);
+            ra.addFlashAttribute("success", "Đã cập nhật địa chỉ.");
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("error", e.getMessage());
         }

@@ -26,7 +26,7 @@
           <li><svg class="ic"><use href="#i-check-circle"/></svg>Giá hiện trước khi đặt</li>
         </ul>
       </div>
-      <div class="ph"><img src="/images/services/don-dep-nha-cua.png" alt="Cộng tác viên bTaskee dọn dẹp phòng khách"></div>
+      <div class="ph"><img src="/images/btaskee/tasker-lam-viec-tron.webp" alt="Tasker bTaskee dọn dẹp phòng khách"></div>
     </div>
   </section>
 
@@ -93,10 +93,12 @@
   <!-- ===== SỐ LIỆU THẬT TỪ CSDL (ẩn mục bằng 0) ===== -->
   <section class="section stats" th:if="${soLieu != null and soLieu['dichVu'] > 0}">
     <div class="wrap">
+     <div class="stats-card">
       <div class="stat"><b th:text="${soLieu['dichVu']}">143</b><span>dịch vụ đang cung cấp</span></div>
       <div class="stat" th:if="${soLieu['congTacVien'] > 0}"><b th:text="${soLieu['congTacVien']}">0</b><span>cộng tác viên đang hoạt động</span></div>
       <div class="stat" th:if="${soLieu['khachHang'] > 0}"><b th:text="${soLieu['khachHang']}">0</b><span>khách hàng thành viên</span></div>
       <div class="stat" th:if="${soLieu['tinhThanh'] > 0}"><b th:text="${soLieu['tinhThanh']}">0</b><span>tỉnh, thành phố phục vụ</span></div>
+     </div>
     </div>
   </section>
 

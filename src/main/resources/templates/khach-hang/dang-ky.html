@@ -18,12 +18,14 @@
       </div>
       <div class="field">
         <label for="soDienThoai">Số điện thoại <span class="req">*</span></label>
-        <input id="soDienThoai" name="soDienThoai" type="tel" class="input" placeholder="0901 234 567" autocomplete="tel" inputmode="tel" pattern="[0-9 ]{9,13}" required th:value="${soDienThoai}">
+        <input id="soDienThoai" name="soDienThoai" type="tel" class="input" placeholder="Số điện thoại" autocomplete="tel" inputmode="tel" pattern="[0-9 ]{9,13}" required th:value="${soDienThoai}">
       </div>
       <div class="field">
         <label for="email">Email</label>
         <input id="email" name="email" type="email" class="input" placeholder="ban@email.com" autocomplete="email" th:value="${email}">
       </div>
+      <!-- Địa chỉ nơi ở hiện tại: lưu làm địa chỉ mặc định trong sổ địa chỉ -->
+      <th:block th:replace="~{layout/dia-chi-form :: truong('dk', null, null, null, ${soNhaTenDuong}, false)}"></th:block>
       <div class="field">
         <label for="matKhau">Mật khẩu <span class="req">*</span></label>
         <div class="pass-wrap">
