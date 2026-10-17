@@ -70,6 +70,21 @@ public class CollaboratorProfileController {
         }
     }
 
+    /** Xử lý ca làm quá hạn sau khi CTV thống nhất với Khách hàng */
+    @PutMapping("/assignments/{id}/resolve-overdue")
+    public ResponseEntity<?> resolveOverdueAssignment(@PathVariable Integer id,
+                                                      @RequestBody Map<String, Object> req) {
+        try {
+            Map<String, Object> data = collaboratorApiService.resolveOverdueAssignment(id, req);
+            String msg = data.get("message") != null ? data.get("message").toString() : "Đã xử lý ca quá hạn thành công!";
+            return ResponseEntity.ok(Map.of("success", true, "message", msg, "data", data));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     /** Từ chối đơn, body tuỳ chọn: { "lyDoTuChoi": "..." } */
     @PutMapping("/assignments/{id}/reject")
     public ResponseEntity<?> rejectAssignment(@PathVariable Integer id,
@@ -124,12 +139,13 @@ public class CollaboratorProfileController {
         return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.updateCollaboratorStatus(id, req.get("trangThai"))));
     }
 
-    /** GPS: app CTV gửi vị trí hiện tại mỗi 5 giây, lưu trên Redis (ViTriCtvStore) */
+    /** GPS: app CTV gửi vị trí hiện tại mỗi 10 giây, lưu trên Redis (ViTriCtvStore) & đồng bộ DB khi đổi khu vực */
     @PutMapping("/{id}/location")
     public ResponseEntity<?> updateLocation(@PathVariable Integer id, @Valid @RequestBody LocationRequest req) {
         try {
             return ResponseEntity.ok(Map.of("success", true, "message", "Đã cập nhật vị trí.",
-                    "data", collaboratorApiService.updateLocation(id, req.getViDo(), req.getKinhDo())));
+                    "data", collaboratorApiService.updateLocation(id, req.getViDo(), req.getKinhDo(),
+                            req.getQuanHuyen(), req.getTinhThanh(), req.getDiaChi())));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         } catch (IllegalStateException e) {

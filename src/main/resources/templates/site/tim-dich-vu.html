@@ -13,46 +13,149 @@
   </section>
 
   <div class="wrap search-layout">
-    <!-- Bộ lọc: đổi lựa chọn là tải lại kết quả -->
+    <!-- Bộ lọc linh hoạt: đổi lựa chọn hoặc kéo thanh trượt giá để lọc kết quả -->
     <details class="filters" open data-filters>
-      <summary><svg class="ic"><use href="#i-grid"/></svg>Bộ lọc</summary>
+      <summary><svg class="ic"><use href="#i-grid"/></svg>Bộ lọc tìm kiếm</summary>
       <form class="filter-body" id="filterForm" action="/tim-dich-vu" method="get" style="display:grid;gap:20px">
-        <input type="hidden" name="q" th:value="${q}">
+        <input type="hidden" name="q" th:value="${q}" id="hiddenQ">
+
         <div class="filter-group">
           <h2>Nhóm dịch vụ</h2>
           <label class="filter-opt"><input type="radio" name="nhom" value="" th:checked="${nhom == null}">Tất cả</label>
           <label class="filter-opt" th:each="dm : ${danhMucs}"><input type="radio" name="nhom" th:value="${dm.id}" th:checked="${nhom != null and nhom == dm.id}"><span th:text="${dm.tenLoaiDichVu}">Dọn dẹp</span></label>
         </div>
+
         <div class="filter-group">
-          <h2>Hình thức</h2>
+          <h2>Hình thức đặt</h2>
           <label class="filter-opt"><input type="radio" name="hinhThuc" value="" th:checked="${hinhThuc == null}">Tất cả</label>
           <label class="filter-opt"><input type="radio" name="hinhThuc" value="TheoLan" th:checked="${hinhThuc == 'TheoLan'}">Theo lần</label>
           <label class="filter-opt"><input type="radio" name="hinhThuc" value="GoiThang" th:checked="${hinhThuc == 'GoiThang'}">Gói tháng</label>
         </div>
+
         <div class="filter-group">
-          <h2>Khoảng giá</h2>
-          <label class="filter-opt"><input type="radio" name="gia" value="" th:checked="${gia == null}">Tất cả</label>
-          <label class="filter-opt"><input type="radio" name="gia" value="duoi-300" th:checked="${gia == 'duoi-300'}">Dưới 300.000đ</label>
-          <label class="filter-opt"><input type="radio" name="gia" value="300-700" th:checked="${gia == '300-700'}">300.000đ – 700.000đ</label>
-          <label class="filter-opt"><input type="radio" name="gia" value="700-2000" th:checked="${gia == '700-2000'}">700.000đ – 2.000.000đ</label>
-          <label class="filter-opt"><input type="radio" name="gia" value="tren-2000" th:checked="${gia == 'tren-2000'}">Trên 2.000.000đ</label>
+          <h2>Khoảng giá (VNĐ)</h2>
+          <input type="hidden" name="giaTu" id="giaTuHidden" th:value="${giaTu != null ? giaTu : ''}">
+          <input type="hidden" name="giaDen" id="giaDenHidden" th:value="${giaDen != null ? giaDen : ''}">
+
+          <!-- 2 Textbox: Giá tối thiểu & Giá tối đa -->
+          <div class="price-inputs">
+            <div class="price-box">
+              <label for="giaTuInput">Giá tối thiểu</label>
+              <div class="price-input-wrap">
+                <input type="text" id="giaTuInput" inputmode="numeric" placeholder="0" autocomplete="off">
+                <span>đ</span>
+              </div>
+            </div>
+            <span class="price-sep">–</span>
+            <div class="price-box">
+              <label for="giaDenInput">Giá tối đa</label>
+              <div class="price-input-wrap">
+                <input type="text" id="giaDenInput" inputmode="numeric" placeholder="10.000.000" autocomplete="off">
+                <span>đ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1 Thanh trượt giá tiền 2 đầu kéo (Dual Range Slider) -->
+          <div class="range-slider-wrap">
+            <div class="range-track-bg"></div>
+            <div class="range-track-fill" id="rangeTrackFill"></div>
+            <input type="range" id="minRange" min="0" max="10000000" step="50000"
+                   th:value="${giaTu != null ? giaTu : 0}" aria-label="Thanh trượt giá tối thiểu">
+            <input type="range" id="maxRange" min="0" max="10000000" step="50000"
+                   th:value="${giaDen != null ? (giaDen > 10000000 ? 10000000 : giaDen) : 10000000}" aria-label="Thanh trượt giá tối đa">
+          </div>
+          <div class="range-labels">
+            <span>0đ</span>
+            <span>5tr</span>
+            <span>10tr+</span>
+          </div>
+
+          <!-- Mức giá gợi ý chọn nhanh -->
+          <div class="price-quick-chips">
+            <button type="button" class="q-chip" data-min="" data-max=""
+                    th:classappend="${giaTu == null and giaDen == null} ? 'is-active'">Tất cả</button>
+            <button type="button" class="q-chip" data-min="0" data-max="300000"
+                    th:classappend="${(giaTu == null or giaTu == 0) and giaDen == 300000} ? 'is-active'">&lt; 300k</button>
+            <button type="button" class="q-chip" data-min="300000" data-max="700000"
+                    th:classappend="${giaTu == 300000 and giaDen == 700000} ? 'is-active'">300k–700k</button>
+            <button type="button" class="q-chip" data-min="700000" data-max="2000000"
+                    th:classappend="${giaTu == 700000 and giaDen == 2000000} ? 'is-active'">700k–2tr</button>
+            <button type="button" class="q-chip" data-min="2000000" data-max=""
+                    th:classappend="${giaTu == 2000000 and giaDen == null} ? 'is-active'">&gt; 2tr</button>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm btn-apply-price" id="btnApplyPrice">Áp dụng khoảng giá</button>
         </div>
-        <a class="link" href="/tim-dich-vu" th:if="${coLoc}">Xóa bộ lọc</a>
+
+        <div class="filter-group">
+          <h2>Thời lượng mỗi buổi</h2>
+          <label class="filter-opt"><input type="radio" name="thoiLuong" value="" th:checked="${thoiLuong == null}">Mọi thời lượng</label>
+          <label class="filter-opt"><input type="radio" name="thoiLuong" value="duoi-2h" th:checked="${thoiLuong == 'duoi-2h'}">≤ 2 giờ</label>
+          <label class="filter-opt"><input type="radio" name="thoiLuong" value="2h-3h" th:checked="${thoiLuong == '2h-3h'}">2 – 3 giờ</label>
+          <label class="filter-opt"><input type="radio" name="thoiLuong" value="tren-3h" th:checked="${thoiLuong == 'tren-3h'}">&gt; 3 giờ</label>
+        </div>
+
+        <div class="filter-group">
+          <h2>Ưu đãi</h2>
+          <label class="filter-opt">
+            <input type="checkbox" name="giamGia" value="true" th:checked="${giamGia == true}">
+            <span>Đang có ưu đãi giảm giá</span>
+          </label>
+        </div>
+
+        <a class="btn btn-outline btn-sm" href="/tim-dich-vu" th:if="${coLoc}" style="text-align:center">Xóa tất cả bộ lọc</a>
         <noscript><button class="btn btn-outline" type="submit">Áp dụng</button></noscript>
       </form>
     </details>
 
     <section>
       <div class="result-bar">
-        <b th:text="${ketQua.size()} + ' dịch vụ'">24 dịch vụ</b>
+        <b th:text="${ketQua.size()} + ' dịch vụ phù hợp'">24 dịch vụ phù hợp</b>
         <label>
           <span class="sr-only">Sắp xếp</span>
           <select name="sapXep" class="select" form="filterForm" data-auto-submit>
             <option value="phu-hop" th:selected="${sapXep == 'phu-hop'}">Phù hợp nhất</option>
             <option value="gia-tang" th:selected="${sapXep == 'gia-tang'}">Giá thấp đến cao</option>
             <option value="gia-giam" th:selected="${sapXep == 'gia-giam'}">Giá cao đến thấp</option>
+            <option value="ten-az" th:selected="${sapXep == 'ten-az'}">Tên dịch vụ A → Z</option>
+            <option value="thoi-luong-tang" th:selected="${sapXep == 'thoi-luong-tang'}">Thời lượng ngắn đến dài</option>
           </select>
         </label>
+      </div>
+
+      <!-- Các tag bộ lọc đang áp dụng (Active Filter Chips) giúp tắt nhanh từng tiêu chí -->
+      <div class="active-filters" th:if="${coLoc}">
+        <span class="af-label">Đang lọc:</span>
+        <button type="button" class="af-chip" th:if="${q != null and !q.isBlank()}" data-clear="q">
+          <span th:text="'Từ khóa: &quot;' + ${q} + '&quot;'">Từ khóa</span>
+          <span aria-hidden="true">×</span>
+        </button>
+        <button type="button" class="af-chip" th:if="${nhom != null}" data-clear="nhom">
+          <span th:text="${tenNhomDangChon != null ? tenNhomDangChon : 'Nhóm dịch vụ'}">Nhóm</span>
+          <span aria-hidden="true">×</span>
+        </button>
+        <button type="button" class="af-chip" th:if="${hinhThuc != null}" data-clear="hinhThuc">
+          <span th:text="${hinhThuc == 'GoiThang' ? 'Gói tháng' : 'Theo lần'}">Theo lần</span>
+          <span aria-hidden="true">×</span>
+        </button>
+        <button type="button" class="af-chip" th:if="${giaTu != null or giaDen != null}" data-clear="price">
+          <span th:if="${giaTu != null and giaDen != null}"
+                th:text="'Giá: ' + ${#numbers.formatDecimal(giaTu, 0, 'POINT', 0, 'COMMA')} + 'đ – ' + ${#numbers.formatDecimal(giaDen, 0, 'POINT', 0, 'COMMA')} + 'đ'">Giá</span>
+          <span th:if="${giaTu != null and giaDen == null}"
+                th:text="'Giá từ ' + ${#numbers.formatDecimal(giaTu, 0, 'POINT', 0, 'COMMA')} + 'đ'">Giá từ</span>
+          <span th:if="${giaTu == null and giaDen != null}"
+                th:text="'Giá đến ' + ${#numbers.formatDecimal(giaDen, 0, 'POINT', 0, 'COMMA')} + 'đ'">Giá đến</span>
+          <span aria-hidden="true">×</span>
+        </button>
+        <button type="button" class="af-chip" th:if="${thoiLuong != null}" data-clear="thoiLuong">
+          <span th:text="${thoiLuong == 'duoi-2h' ? 'Thời lượng: ≤ 2 giờ' : (thoiLuong == '2h-3h' ? 'Thời lượng: 2 – 3 giờ' : 'Thời lượng: > 3 giờ')}">Thời lượng</span>
+          <span aria-hidden="true">×</span>
+        </button>
+        <button type="button" class="af-chip" th:if="${giamGia == true}" data-clear="giamGia">
+          <span>Đang giảm giá</span>
+          <span aria-hidden="true">×</span>
+        </button>
+        <a class="af-reset" href="/tim-dich-vu">Xóa hết</a>
       </div>
 
       <div class="banner banner-error" th:if="${loiTai}" role="alert"><svg class="ic"><use href="#i-alert"/></svg><div><b>Không tải được danh sách dịch vụ.</b> Thử tải lại trang sau ít phút.</div></div>
@@ -71,6 +174,7 @@
               <span th:if="${m['soLuaChon'] != null and m['soLuaChon'] > 1}" th:text="${m['soLuaChon']} + ' lựa chọn'">4 lựa chọn</span>
               <span th:if="${phut != null and phut > 0}" th:text="${phut % 60 == 0} ? ${phut / 60} + ' giờ mỗi buổi' : ${phut} + ' phút mỗi buổi'">3 giờ mỗi buổi</span>
             </p>
+            <p class="result-desc" th:if="${m['moTaChiTiet'] != null and !#strings.isEmpty(m['moTaChiTiet'])}" th:text="${m['moTaChiTiet']}">Mô tả dịch vụ</p>
           </div>
           <div class="result-side">
             <div class="price"><small>từ </small><span th:text="${#numbers.formatDecimal(m.donGiaThamKhao, 0, 'POINT', 0, 'COMMA')} + 'đ'">270.000đ</span>
@@ -86,7 +190,7 @@
       <div class="empty" th:if="${ketQua.isEmpty() and loiTai == null}">
         <span class="badge-ic"><svg class="ic"><use href="#i-search"/></svg></span>
         <h3>Không có dịch vụ khớp</h3>
-        <p>Thử từ khóa ngắn hơn, ví dụ "sofa" thay cho "vệ sinh sofa da 3 ghế", hoặc bỏ bớt bộ lọc.</p>
+        <p>Thử từ khóa ngắn hơn (ví dụ "sofa", "55m²", "216k") hoặc mở rộng khoảng giá trên thanh trượt.</p>
         <a class="btn btn-outline" href="/tim-dich-vu">Xóa bộ lọc</a>
       </div>
     </section>
@@ -98,8 +202,155 @@
 <script>
   (function () {
     var form = document.getElementById('filterForm');
-    form.addEventListener('change', function () { form.submit(); });
-    document.querySelectorAll('[data-auto-submit]').forEach(function (s) { s.addEventListener('change', function () { form.submit(); }); });
+    var minInput = document.getElementById('giaTuInput');
+    var maxInput = document.getElementById('giaDenInput');
+    var minHidden = document.getElementById('giaTuHidden');
+    var maxHidden = document.getElementById('giaDenHidden');
+    var minRange = document.getElementById('minRange');
+    var maxRange = document.getElementById('maxRange');
+    var trackFill = document.getElementById('rangeTrackFill');
+    var MAX_SLIDER = 10000000;
+    var STEP = 50000;
+
+    function formatVN(val) {
+      if (val === '' || val === null || val === undefined || isNaN(val)) return '';
+      var n = Math.max(0, Math.round(Number(val)));
+      return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function parseVN(str) {
+      if (!str) return null;
+      var digits = String(str).replace(/[^\d]/g, '');
+      if (!digits) return null;
+      return parseInt(digits, 10);
+    }
+
+    function updateTrackFill(minV, maxV) {
+      var leftPct = Math.min(100, Math.max(0, (minV / MAX_SLIDER) * 100));
+      var rightPct = Math.min(100, Math.max(0, (maxV / MAX_SLIDER) * 100));
+      if (leftPct > rightPct) { var t = leftPct; leftPct = rightPct; rightPct = t; }
+      trackFill.style.left = leftPct + '%';
+      trackFill.style.width = (rightPct - leftPct) + '%';
+    }
+
+    function syncHiddenInputs(minVal, maxVal) {
+      minHidden.value = (minVal !== null && minVal > 0) ? minVal : '';
+      maxHidden.value = (maxVal !== null && maxVal > 0 && maxVal < MAX_SLIDER) ? maxVal : (maxVal !== null && parseVN(maxInput.value) !== null && parseVN(maxInput.value) >= MAX_SLIDER ? parseVN(maxInput.value) : '');
+    }
+
+    // Khởi tạo giá trị ban đầu cho 2 Textbox và Thanh trượt
+    var initMin = minHidden.value ? parseInt(minHidden.value, 10) : null;
+    var initMax = maxHidden.value ? parseInt(maxHidden.value, 10) : null;
+    minInput.value = initMin !== null ? formatVN(initMin) : '';
+    maxInput.value = initMax !== null ? formatVN(initMax) : '';
+    updateTrackFill(initMin || 0, initMax !== null ? Math.min(MAX_SLIDER, initMax) : MAX_SLIDER);
+
+    // Khi kéo thanh trượt -> cập nhật 2 Textbox ngay lập tức
+    function onSliderInput(e) {
+      var minV = parseInt(minRange.value, 10) || 0;
+      var maxV = parseInt(maxRange.value, 10) || 0;
+      if (minV > maxV - STEP) {
+        if (e.target === minRange) {
+          minV = Math.max(0, maxV - STEP);
+          minRange.value = minV;
+        } else {
+          maxV = Math.min(MAX_SLIDER, minV + STEP);
+          maxRange.value = maxV;
+        }
+      }
+      minInput.value = minV > 0 ? formatVN(minV) : '';
+      maxInput.value = maxV < MAX_SLIDER ? formatVN(maxV) : '';
+      minHidden.value = minV > 0 ? minV : '';
+      maxHidden.value = maxV < MAX_SLIDER ? maxV : '';
+      updateTrackFill(minV, maxV);
+    }
+
+    minRange.addEventListener('input', onSliderInput);
+    maxRange.addEventListener('input', onSliderInput);
+
+    // Khi gõ vào 2 Textbox -> định dạng số và tự động đẩy thanh trượt theo
+    function onTextboxInput() {
+      var rawMin = parseVN(minInput.value);
+      var rawMax = parseVN(maxInput.value);
+      if (document.activeElement === minInput && rawMin !== null) {
+        minInput.value = formatVN(rawMin);
+      }
+      if (document.activeElement === maxInput && rawMax !== null) {
+        maxInput.value = formatVN(rawMax);
+      }
+      var sliderMin = rawMin !== null ? Math.min(MAX_SLIDER, Math.max(0, rawMin)) : 0;
+      var sliderMax = rawMax !== null ? Math.min(MAX_SLIDER, Math.max(0, rawMax)) : MAX_SLIDER;
+      minRange.value = sliderMin;
+      maxRange.value = sliderMax;
+      minHidden.value = rawMin !== null && rawMin > 0 ? rawMin : '';
+      maxHidden.value = rawMax !== null && rawMax > 0 ? rawMax : '';
+      updateTrackFill(sliderMin, sliderMax);
+    }
+
+    minInput.addEventListener('input', onTextboxInput);
+    maxInput.addEventListener('input', onTextboxInput);
+
+    // Nhấn Enter trong 2 Textbox giá -> submit form ngay
+    [minInput, maxInput].forEach(function (inp) {
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          form.submit();
+        }
+      });
+    });
+
+    // Nút áp dụng khoảng giá
+    document.getElementById('btnApplyPrice').addEventListener('click', function () {
+      form.submit();
+    });
+
+    // Các chip chọn nhanh khoảng giá
+    document.querySelectorAll('.q-chip').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mn = btn.getAttribute('data-min');
+        var mx = btn.getAttribute('data-max');
+        minHidden.value = mn && parseInt(mn, 10) > 0 ? mn : '';
+        maxHidden.value = mx && parseInt(mx, 10) > 0 ? mx : '';
+        form.submit();
+      });
+    });
+
+    // Tự động submit khi đổi radio/checkbox hoặc nhả thanh trượt
+    form.addEventListener('change', function (e) {
+      if (e.target === minInput || e.target === maxInput) return;
+      form.submit();
+    });
+    document.querySelectorAll('[data-auto-submit]').forEach(function (s) {
+      s.addEventListener('change', function () { form.submit(); });
+    });
+
+    // Xử lý bấm nút × trên các tag bộ lọc đang bật (Active Filter Chips)
+    document.querySelectorAll('[data-clear]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var target = chip.getAttribute('data-clear');
+        if (target === 'q') {
+          document.getElementById('hiddenQ').value = '';
+        } else if (target === 'nhom') {
+          var rNhom = form.querySelector('input[name="nhom"][value=""]');
+          if (rNhom) rNhom.checked = true;
+        } else if (target === 'hinhThuc') {
+          var rHt = form.querySelector('input[name="hinhThuc"][value=""]');
+          if (rHt) rHt.checked = true;
+        } else if (target === 'price') {
+          minHidden.value = '';
+          maxHidden.value = '';
+        } else if (target === 'thoiLuong') {
+          var rTl = form.querySelector('input[name="thoiLuong"][value=""]');
+          if (rTl) rTl.checked = true;
+        } else if (target === 'giamGia') {
+          var cbGg = form.querySelector('input[name="giamGia"]');
+          if (cbGg) cbGg.checked = false;
+        }
+        form.submit();
+      });
+    });
+
     // Điện thoại: bộ lọc gập lại mặc định
     if (window.matchMedia('(max-width: 1023px)').matches) document.querySelector('[data-filters]').open = false;
   })();

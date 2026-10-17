@@ -126,14 +126,32 @@
   function boDau(s) {
     return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
   }
+  function moRongChuoiHang(text) {
+    var base = boDau(text);
+    // Tìm các cụm số tiền dạng 216.000đ để bổ sung dạng 216000 và 216k
+    var extra = '';
+    var matches = base.match(/\d{1,3}(?:\.\d{3})+/g);
+    if (matches) {
+      matches.forEach(function (m) {
+        var raw = parseInt(m.replace(/\./g, ''), 10);
+        if (!isNaN(raw) && raw > 0) {
+          extra += ' ' + raw + ' ' + Math.round(raw / 1000) + 'k';
+          if (raw >= 1000000) extra += ' ' + (raw / 1000000) + 'tr';
+        }
+      });
+    }
+    return base + extra;
+  }
   var searchInput = document.querySelector('[data-price-search]');
   if (searchInput) {
     searchInput.addEventListener('input', function () {
       var q = boDau(searchInput.value.trim());
+      var tokens = q ? q.split(/\s+/) : [];
       panels.forEach(function (panel) {
         var shown = 0;
         panel.querySelectorAll('tbody tr').forEach(function (row) {
-          var match = !q || boDau(row.textContent).indexOf(q) !== -1;
+          var rowText = moRongChuoiHang(row.textContent);
+          var match = !q || tokens.every(function (tk) { return rowText.indexOf(tk) !== -1; });
           row.hidden = !match;
           if (match) shown++;
         });

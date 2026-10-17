@@ -40,7 +40,7 @@ public class SiteController {
         this.customerApiService = customerApiService;
     }
 
-    /** Khoảng giá dùng cho bộ lọc tìm kiếm: mã → {từ, đến} (null = không giới hạn). */
+    /** Khoảng giá dùng cho bộ lọc tìm kiếm nhanh: mã → {từ, đến} (null = không giới hạn). */
     private static final Map<String, BigDecimal[]> KHOANG_GIA = new LinkedHashMap<>();
     static {
         KHOANG_GIA.put("duoi-300", new BigDecimal[]{null, BigDecimal.valueOf(300_000)});
@@ -50,8 +50,9 @@ public class SiteController {
     }
 
     /**
-     * Tìm và lọc dịch vụ (không cần đăng nhập): từ khóa (không dấu cũng được), nhóm dịch vụ,
-     * hình thức (theo lần / gói tháng), khoảng giá, sắp xếp theo giá.
+     * Tìm và lọc dịch vụ (không cần đăng nhập): từ khóa mở rộng (tên, mô tả, giá tiền, thời lượng...),
+     * nhóm dịch vụ, hình thức (theo lần / gói tháng), khoảng giá linh hoạt (giaTu, giaDen + thanh trượt),
+     * thời lượng thực hiện, ưu đãi giảm giá, sắp xếp đa tiêu chí.
      */
     @GetMapping("/tim-dich-vu")
     @SuppressWarnings("unchecked")
@@ -59,30 +60,96 @@ public class SiteController {
                             @RequestParam(required = false) Integer nhom,
                             @RequestParam(required = false) String hinhThuc,
                             @RequestParam(required = false) String gia,
+                            @RequestParam(required = false) BigDecimal giaTu,
+                            @RequestParam(required = false) BigDecimal giaDen,
+                            @RequestParam(required = false) String thoiLuong,
+                            @RequestParam(required = false) Boolean giamGia,
                             @RequestParam(defaultValue = "phu-hop") String sapXep,
                             Model model) {
         String loaiHinh = "TheoLan".equals(hinhThuc) || "GoiThang".equals(hinhThuc) ? hinhThuc : null;
         BigDecimal[] khoang = gia != null ? KHOANG_GIA.get(gia) : null;
+
+        BigDecimal minP = giaTu != null && giaTu.signum() > 0 ? giaTu : (khoang != null ? khoang[0] : null);
+        BigDecimal maxP = giaDen != null && giaDen.signum() > 0 ? giaDen : (khoang != null ? khoang[1] : null);
+        // Nếu người dùng nhập giá tối thiểu lớn hơn giá tối đa thì tự động đảo lại cho hợp lệ
+        if (minP != null && maxP != null && minP.compareTo(maxP) > 0) {
+            BigDecimal tmp = minP;
+            minP = maxP;
+            maxP = tmp;
+        }
+
+        String tlClean = ("duoi-2h".equals(thoiLuong) || "2h-3h".equals(thoiLuong) || "tren-3h".equals(thoiLuong))
+                ? thoiLuong : null;
+        boolean chiGiamGia = Boolean.TRUE.equals(giamGia);
+
         List<Map<String, Object>> ketQua;
         try {
-            ketQua = new ArrayList<>(customerApiService.getServices(nhom, null, loaiHinh, q,
-                    khoang != null ? khoang[0] : null, khoang != null ? khoang[1] : null));
+            ketQua = new ArrayList<>(customerApiService.getServices(nhom, null, loaiHinh, q, minP, maxP));
         } catch (Exception e) {
             log.warn("Tìm dịch vụ: không tải được: {}", e.getMessage());
             ketQua = new ArrayList<>();
             model.addAttribute("loiTai", true);
         }
+
+        // Lọc linh hoạt theo thời lượng mỗi buổi
+        if (tlClean != null) {
+            ketQua.removeIf(m -> {
+                Integer phut = (Integer) m.get("thoiGianThucHienPhut");
+                if (phut == null || phut <= 0) return true;
+                return switch (tlClean) {
+                    case "duoi-2h" -> phut > 120;
+                    case "2h-3h" -> phut <= 120 || phut > 180;
+                    case "tren-3h" -> phut <= 180;
+                    default -> false;
+                };
+            });
+        }
+
+        // Lọc chỉ lấy dịch vụ đang có ưu đãi giảm giá (giaGoc > donGiaThamKhao)
+        if (chiGiamGia) {
+            ketQua.removeIf(m -> {
+                BigDecimal gGoc = (BigDecimal) m.get("giaGoc");
+                BigDecimal dGia = (BigDecimal) m.get("donGiaThamKhao");
+                return gGoc == null || dGia == null || gGoc.compareTo(dGia) <= 0;
+            });
+        }
+
         // Các biến thể cùng mã (VD "Dọn dẹp nhà theo giờ (2 giờ)", "(3 giờ)"...) gộp thành một dịch vụ
         ketQua = gopTheoMaDichVu(ketQua);
+
         Comparator<Map<String, Object>> theoGia = Comparator.comparing(m -> (BigDecimal) m.get("donGiaThamKhao"),
                 Comparator.nullsLast(Comparator.naturalOrder()));
-        if ("gia-tang".equals(sapXep)) ketQua.sort(theoGia);
-        else if ("gia-giam".equals(sapXep)) ketQua.sort(theoGia.reversed());
+        switch (sapXep) {
+            case "gia-tang" -> ketQua.sort(theoGia);
+            case "gia-giam" -> ketQua.sort(theoGia.reversed());
+            case "ten-az" -> {
+                java.text.Collator collator = java.text.Collator.getInstance(java.util.Locale.forLanguageTag("vi-VN"));
+                ketQua.sort((a, b) -> collator.compare(
+                        String.valueOf(a.getOrDefault("tenDichVu", "")),
+                        String.valueOf(b.getOrDefault("tenDichVu", ""))));
+            }
+            case "thoi-luong-tang" -> ketQua.sort(Comparator.comparing(
+                    m -> (Integer) m.get("thoiGianMinPhut"),
+                    Comparator.nullsLast(Comparator.naturalOrder())));
+            default -> {}
+        }
 
-        // Ảnh nhóm cho từng dòng kết quả
+        // Ảnh nhóm và tên nhóm đang chọn
         Map<Integer, String> anhNhom = new HashMap<>();
+        String tenNhomDangChon = null;
         List<DanhMucView> danhMucs = (List<DanhMucView>) model.getAttribute("danhMucs");
-        if (danhMucs != null) danhMucs.forEach(dm -> anhNhom.put(dm.getId(), dm.getHinhAnhUrl()));
+        if (danhMucs != null) {
+            for (DanhMucView dm : danhMucs) {
+                anhNhom.put(dm.getId(), dm.getHinhAnhUrl());
+                if (nhom != null && nhom.equals(dm.getId())) {
+                    tenNhomDangChon = dm.getTenLoaiDichVu();
+                }
+            }
+        }
+
+        boolean coLocGia = minP != null || maxP != null;
+        boolean coLoc = (q != null && !q.isBlank()) || nhom != null || loaiHinh != null
+                || coLocGia || tlClean != null || chiGiamGia;
 
         model.addAttribute("ketQua", ketQua);
         model.addAttribute("anhNhom", anhNhom);
@@ -90,10 +157,15 @@ public class SiteController {
         model.addAttribute("anhDichVu", CatalogService.anhTheoMaDichVu(danhMucs));
         model.addAttribute("q", q);
         model.addAttribute("nhom", nhom);
+        model.addAttribute("tenNhomDangChon", tenNhomDangChon);
         model.addAttribute("hinhThuc", loaiHinh);
         model.addAttribute("gia", khoang != null ? gia : null);
+        model.addAttribute("giaTu", minP != null ? minP.longValue() : null);
+        model.addAttribute("giaDen", maxP != null ? maxP.longValue() : null);
+        model.addAttribute("thoiLuong", tlClean);
+        model.addAttribute("giamGia", chiGiamGia);
         model.addAttribute("sapXep", sapXep);
-        model.addAttribute("coLoc", (q != null && !q.isBlank()) || nhom != null || loaiHinh != null || khoang != null);
+        model.addAttribute("coLoc", coLoc);
         return "site/tim-dich-vu";
     }
 
@@ -126,6 +198,11 @@ public class SiteController {
             boolean theoLan = bienThe.stream().anyMatch(m -> !"GoiThang".equals(m.get("loaiHinhDat")));
             boolean goiThang = bienThe.stream().anyMatch(m -> "GoiThang".equals(m.get("loaiHinhDat")));
             g.put("loaiHinhText", theoLan && goiThang ? "Theo lần, gói tháng" : goiThang ? "Gói tháng" : "Theo lần");
+            Integer minPhut = bienThe.stream()
+                    .map(m -> (Integer) m.get("thoiGianThucHienPhut"))
+                    .filter(p -> p != null && p > 0)
+                    .min(Comparator.naturalOrder()).orElse(null);
+            g.put("thoiGianMinPhut", minPhut);
             if (bienThe.stream().map(m -> m.get("thoiGianThucHienPhut")).distinct().count() > 1) {
                 g.put("thoiGianThucHienPhut", null); // thời lượng khác nhau giữa các lựa chọn
             }

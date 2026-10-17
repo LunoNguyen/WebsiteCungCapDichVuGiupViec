@@ -212,7 +212,7 @@
               <label class="form-label">Loại giảm giá</label>
               <select name="loaiGiamGia" class="form-control">
                 <option value="PhanTram">Giảm theo phần trăm (%)</option>
-                <option value="SoTien">Giảm theo số tiền cố định (VNĐ)</option>
+                <option value="SoTienCoDinh">Giảm theo số tiền cố định (VNĐ)</option>
               </select>
             </div>
             <div class="form-group">
@@ -289,7 +289,7 @@
               <label class="form-label">Loại giảm giá</label>
               <select name="loaiGiamGia" id="edit-loai" class="form-control">
                 <option value="PhanTram">Giảm theo phần trăm (%)</option>
-                <option value="SoTien">Giảm theo số tiền cố định (VNĐ)</option>
+                <option value="SoTienCoDinh">Giảm theo số tiền cố định (VNĐ)</option>
               </select>
             </div>
             <div class="form-group">
@@ -383,32 +383,17 @@
       document.getElementById('edit-id').value = button.getAttribute('data-id');
       document.getElementById('edit-code').value = button.getAttribute('data-code');
       document.getElementById('edit-ten').value = button.getAttribute('data-ten');
-      document.getElementById('edit-loai').value = button.getAttribute('data-loai');
+      const loai = button.getAttribute('data-loai');
+      document.getElementById('edit-loai').value = (loai === 'SoTien' || loai === 'SoTienCoDinh') ? 'SoTienCoDinh' : 'PhanTram';
       document.getElementById('edit-muc').value = button.getAttribute('data-muc');
       document.getElementById('edit-dk').value = button.getAttribute('data-dk');
       document.getElementById('edit-gioihan').value = button.getAttribute('data-gioihan');
       DateRules.fill('edit-batdau', button.getAttribute('data-batdau'));
       DateRules.fill('edit-ketthuc', button.getAttribute('data-ketthuc'));
-      
-
-      // Tự động tính trạng thái theo ngày khi vừa bật modal lên
-      autoCalculateStatus();
-
-      ModalManager.open('editPromoModal');
-    }
-    function openEditModal(button) {
-      document.getElementById('edit-id').value = button.getAttribute('data-id');
-      document.getElementById('edit-code').value = button.getAttribute('data-code');
-      document.getElementById('edit-ten').value = button.getAttribute('data-ten');
-      document.getElementById('edit-loai').value = button.getAttribute('data-loai');
-      document.getElementById('edit-muc').value = button.getAttribute('data-muc');
-      document.getElementById('edit-dk').value = button.getAttribute('data-dk');
-      document.getElementById('edit-gioihan').value = button.getAttribute('data-gioihan');
-      DateRules.fill('edit-batdau', button.getAttribute('data-batdau'));
-      DateRules.fill('edit-ketthuc', button.getAttribute('data-ketthuc'));
-      document.getElementById('edit-trangthai').value = button.getAttribute('data-trangthai');
-      document.getElementById('edit-toida').value = button.getAttribute('data-toida');
-      document.getElementById('edit-trangthai').value = button.getAttribute('data-trangthai');
+      document.getElementById('edit-toida').value = button.getAttribute('data-toida') || '';
+      if (document.getElementById('edit-trangthai')) {
+        document.getElementById('edit-trangthai').value = button.getAttribute('data-trangthai');
+      }
 
       // Hiển thị trạng thái thông báo: Nếu mã này đã gửi thông báo cho khách hàng thì hiện, ngược lại ẩn
       const dathongbao = button.getAttribute('data-dathongbao') === 'true';

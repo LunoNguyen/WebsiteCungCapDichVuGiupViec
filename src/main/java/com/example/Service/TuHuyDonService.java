@@ -191,17 +191,13 @@ public class TuHuyDonService {
      */
     public static String lyDoQuaHan(DonDatDichVu don, boolean daCoNguoiNhan, boolean daLamBuoiNao, LocalDateTime luc) {
         if (don.getNgayThucHien() == null || don.getGioBatDau() == null || daLamBuoiNao) return null;
-        LocalDateTime batDau = don.getNgayThucHien().atTime(don.getGioBatDau());
-        if (!daCoNguoiNhan) {
-            return luc.isAfter(batDau)
-                    ? "Quá giờ bắt đầu (" + batDau.format(GIO_NGAY) + ") nhưng chưa có cộng tác viên nhận đơn"
-                    : null;
+        if (daCoNguoiNhan) {
+            // Đơn đã có CTV nhận được xử lý qua chức năng "Xử lý quá hạn" của CTV, không tự động hủy ngầm
+            return null;
         }
-        List<LocalDate> buoi = PhanCongService.cacBuoi(don);
-        LocalTime gioKetThuc = PhanCongService.gioKetThuc(don);
-        LocalDateTime ketThuc = buoi.get(buoi.size() - 1).atTime(gioKetThuc);
-        return luc.isAfter(ketThuc)
-                ? "Quá giờ kết thúc (" + ketThuc.format(GIO_NGAY) + ") nhưng cộng tác viên chưa bắt đầu thực hiện"
+        LocalDateTime batDau = don.getNgayThucHien().atTime(don.getGioBatDau());
+        return luc.isAfter(batDau)
+                ? "Quá giờ bắt đầu (" + batDau.format(GIO_NGAY) + ") nhưng chưa có cộng tác viên nhận đơn"
                 : null;
     }
 }

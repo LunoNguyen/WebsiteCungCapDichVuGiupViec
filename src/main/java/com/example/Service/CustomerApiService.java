@@ -841,13 +841,6 @@ public class CustomerApiService {
         for (DichVu dv : allServices) {
             if (loaiDichVuId != null && !loaiDichVuId.equals(dv.getLoaiDichVu().getId())) continue;
             if (loaiHinhDat != null && !loaiHinhDat.equalsIgnoreCase(dv.getLoaiHinhDat())) continue;
-            if (tuKhoa != null && !tuKhoa.isBlank()) {
-                String kw = boDau(tuKhoa.trim());
-                boolean matchName = boDau(dv.getTenDichVu()).contains(kw);
-                boolean matchDesc = boDau(dv.getMoTaChiTiet()).contains(kw);
-                boolean matchNhom = dv.getLoaiDichVu() != null && boDau(dv.getLoaiDichVu().getTenLoaiDichVu()).contains(kw);
-                if (!matchName && !matchDesc && !matchNhom) continue;
-            }
 
             // Giá hiện tại nằm ở DichVu.GiaHienTai; chỉ tra lịch sử bảng giá khi cột này chưa có giá
             BigDecimal donGia = dv.getGiaHienTai();
@@ -855,9 +848,17 @@ public class CustomerApiService {
                 List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
                 donGia = bangGias.isEmpty() ? BigDecimal.ZERO : bangGias.get(0).getDonGia();
             }
+            BigDecimal giaGoc = bangGiaService.giaGoc(dv.getId());
+            Integer soBuoiGoi = "GoiThang".equalsIgnoreCase(dv.getLoaiHinhDat())
+                    ? LichGoiThang.soBuoi(dv.getSoBuoi(), dv.getTenDichVu())
+                    : null;
 
             if (minPrice != null && donGia.compareTo(minPrice) < 0) continue;
             if (maxPrice != null && donGia.compareTo(maxPrice) > 0) continue;
+
+            if (tuKhoa != null && !tuKhoa.isBlank()) {
+                if (!khopTuKhoaMoRong(dv, donGia, giaGoc, soBuoiGoi, tuKhoa)) continue;
+            }
 
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", dv.getId());
@@ -878,6 +879,126 @@ public class CustomerApiService {
             list.add(map);
         }
         return list;
+    }
+
+    /**
+     * Tìm kiếm mở rộng: so khớp từ khóa (hỗ trợ cả đa từ khóa, có dấu/không dấu) với:
+     * - Tên dịch vụ, Mã dịch vụ, Tên nhóm dịch vụ
+     * - Nội dung mô tả chi tiết (diện tích, số phòng, công việc cụ thể...)
+     * - Giá tiền (dạng số nguyên "216000", có dấu chấm/phẩy "216.000", viết tắt "216k", "1.4tr"...)
+     * - Thời lượng ("2 gio", "2h", "120 phut"), số buổi ("8 buoi"), đơn vị tính, hình thức đặt.
+     */
+    private static boolean khopTuKhoaMoRong(DichVu dv, BigDecimal donGia, BigDecimal giaGoc, Integer soBuoiGoi, String tuKhoa) {
+        String kwNorm = boDau(tuKhoa.trim());
+        if (kwNorm.isEmpty()) return true;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(boDau(dv.getTenDichVu())).append(' ');
+        sb.append(boDau(dv.getMaDichVu())).append(' ');
+        sb.append(boDau(dv.getMoTaChiTiet())).append(' ');
+        sb.append(boDau(dv.getDonViTinh())).append(' ');
+        if (dv.getLoaiDichVu() != null) {
+            sb.append(boDau(dv.getLoaiDichVu().getTenLoaiDichVu())).append(' ');
+            sb.append(boDau(dv.getLoaiDichVu().getMoTa())).append(' ');
+        }
+        if ("GoiThang".equalsIgnoreCase(dv.getLoaiHinhDat())) {
+            sb.append("goi thang dinh ky theo thang ");
+        } else {
+            sb.append("theo lan theo gio dat le ");
+        }
+        if (dv.getThoiGianThucHien() != null && dv.getThoiGianThucHien() > 0) {
+            int phut = dv.getThoiGianThucHien();
+            sb.append(phut).append(" phut ").append(phut).append("p ");
+            if (phut % 60 == 0) {
+                int gio = phut / 60;
+                sb.append(gio).append(" gio ").append(gio).append("h ").append(gio).append("g ");
+            } else {
+                double gioLe = phut / 60.0;
+                String gioStr = String.format(java.util.Locale.US, "%.1f", gioLe);
+                sb.append(gioStr).append(" gio ").append(gioStr.replace('.', ',')).append(" gio ");
+            }
+        }
+        if (soBuoiGoi != null && soBuoiGoi > 0) {
+            sb.append(soBuoiGoi).append(" buoi ");
+        }
+        appendPriceTokens(sb, donGia);
+        appendPriceTokens(sb, giaGoc);
+
+        String fullText = sb.toString();
+        if (fullText.contains(kwNorm)) return true;
+
+        // Nếu người dùng nhập một mức giá (VD: "200k", "300.000đ", "1.5tr"), kiểm tra khớp giá trực tiếp
+        BigDecimal parsedKwPrice = parseSearchPrice(kwNorm);
+        if (parsedKwPrice != null && donGia != null && donGia.signum() > 0) {
+            if (donGia.compareTo(parsedKwPrice) == 0) return true;
+            if (giaGoc != null && giaGoc.compareTo(parsedKwPrice) == 0) return true;
+        }
+
+        // So khớp đa từ khóa (multi-token): mọi từ trong câu tìm kiếm đều xuất hiện trong dữ liệu dịch vụ
+        String[] tokens = kwNorm.split("\\s+");
+        for (String token : tokens) {
+            if (token.isEmpty()) continue;
+            if (fullText.contains(token)) continue;
+            // Hỗ trợ token là mức giá viết tắt (VD: "vệ sinh 216k")
+            BigDecimal tokenPrice = parseSearchPrice(token);
+            if (tokenPrice != null && donGia != null &&
+                    (donGia.compareTo(tokenPrice) == 0 || (giaGoc != null && giaGoc.compareTo(tokenPrice) == 0))) {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /** Đưa các biến thể viết giá (216000, 216.000, 216,000, 216k, 1.4tr...) vào chuỗi tìm kiếm */
+    private static void appendPriceTokens(StringBuilder sb, BigDecimal price) {
+        if (price == null || price.signum() <= 0) return;
+        long v = price.longValue();
+        sb.append(v).append(' ').append(v).append("d ").append(v).append("vnd ");
+        String dotFormatted = String.format(java.util.Locale.US, "%,d", v).replace(',', '.');
+        String commaFormatted = String.format(java.util.Locale.US, "%,d", v);
+        sb.append(dotFormatted).append(' ').append(dotFormatted).append("d ");
+        sb.append(commaFormatted).append(' ');
+        if (v >= 1_000) {
+            long k = v / 1_000;
+            sb.append(k).append("k ").append(k).append(" nghin ").append(k).append(" ngan ");
+        }
+        if (v >= 1_000_000) {
+            double tr = v / 1_000_000.0;
+            if (v % 1_000_000 == 0) {
+                long trInt = v / 1_000_000;
+                sb.append(trInt).append("tr ").append(trInt).append(" trieu ");
+            } else {
+                String trStr = String.format(java.util.Locale.US, "%.2f", tr).replaceAll("0+$", "").replaceAll("\\.$", "");
+                sb.append(trStr).append("tr ").append(trStr.replace('.', ',')).append("tr ");
+                sb.append(trStr).append(" trieu ");
+            }
+        }
+    }
+
+    /** Chuyển chuỗi giá người dùng gõ (VD "216k", "216.000đ", "1.4tr", "216000") thành BigDecimal */
+    private static BigDecimal parseSearchPrice(String token) {
+        if (token == null) return null;
+        String clean = token.trim().toLowerCase()
+                .replace("vnd", "").replace("đ", "").replace("d", "").trim();
+        if (clean.isEmpty()) return null;
+        try {
+            if (clean.endsWith("k")) {
+                String numPart = clean.substring(0, clean.length() - 1).replace(',', '.').trim();
+                return new BigDecimal(numPart).multiply(BigDecimal.valueOf(1_000)).setScale(0, java.math.RoundingMode.HALF_UP);
+            }
+            if (clean.endsWith("tr") || clean.endsWith("trieu")) {
+                String numPart = clean.replace("trieu", "").replace("tr", "").replace(',', '.').trim();
+                return new BigDecimal(numPart).multiply(BigDecimal.valueOf(1_000_000)).setScale(0, java.math.RoundingMode.HALF_UP);
+            }
+            // Dạng 216.000 hoặc 216000
+            String digitsOnly = clean.replace(".", "").replace(",", "");
+            if (digitsOnly.matches("\\d{4,9}")) {
+                return new BigDecimal(digitsOnly);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     /** Chữ thường, bỏ dấu tiếng Việt: "Dọn dẹp" → "don dep", để tìm "don dep" cũng ra. */
