@@ -1,0 +1,27 @@
+{
+  "ghiChu": "Toạ độ tâm (gần đúng) của 22 quận, huyện cũ TP.HCM (trước sắp xếp 01/07/2025), tên khớp bảng KhuVuc. Dùng để xác định khu vực nhận việc của CTV theo GPS: chọn quận có tâm gần nhất; CTV đứng sát ranh giới có thể bị xếp sang quận bên cạnh.",
+  "quanHuyen": [
+    { "ten": "Quận 1", "viDo": 10.7769, "kinhDo": 106.7009 },
+    { "ten": "Quận 3", "viDo": 10.7843, "kinhDo": 106.6844 },
+    { "ten": "Quận 4", "viDo": 10.7578, "kinhDo": 106.7013 },
+    { "ten": "Quận 5", "viDo": 10.7540, "kinhDo": 106.6634 },
+    { "ten": "Quận 6", "viDo": 10.7480, "kinhDo": 106.6352 },
+    { "ten": "Quận 7", "viDo": 10.7340, "kinhDo": 106.7215 },
+    { "ten": "Quận 8", "viDo": 10.7240, "kinhDo": 106.6286 },
+    { "ten": "Quận 10", "viDo": 10.7746, "kinhDo": 106.6670 },
+    { "ten": "Quận 11", "viDo": 10.7629, "kinhDo": 106.6505 },
+    { "ten": "Quận 12", "viDo": 10.8672, "kinhDo": 106.6413 },
+    { "ten": "Quận Bình Thạnh", "viDo": 10.8106, "kinhDo": 106.7091 },
+    { "ten": "Quận Bình Tân", "viDo": 10.7653, "kinhDo": 106.6036 },
+    { "ten": "Quận Gò Vấp", "viDo": 10.8387, "kinhDo": 106.6653 },
+    { "ten": "Quận Phú Nhuận", "viDo": 10.7991, "kinhDo": 106.6803 },
+    { "ten": "Quận Tân Bình", "viDo": 10.8015, "kinhDo": 106.6527 },
+    { "ten": "Quận Tân Phú", "viDo": 10.7901, "kinhDo": 106.6281 },
+    { "ten": "Thành phố Thủ Đức", "viDo": 10.8231, "kinhDo": 106.7710 },
+    { "ten": "Huyện Bình Chánh", "viDo": 10.6874, "kinhDo": 106.5939 },
+    { "ten": "Huyện Cần Giờ", "viDo": 10.4113, "kinhDo": 106.9547 },
+    { "ten": "Huyện Củ Chi", "viDo": 11.0067, "kinhDo": 106.5135 },
+    { "ten": "Huyện Hóc Môn", "viDo": 10.8862, "kinhDo": 106.5923 },
+    { "ten": "Huyện Nhà Bè", "viDo": 10.6950, "kinhDo": 106.7400 }
+  ]
+}

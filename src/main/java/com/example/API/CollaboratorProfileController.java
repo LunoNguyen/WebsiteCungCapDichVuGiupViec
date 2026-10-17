@@ -27,15 +27,11 @@ public class CollaboratorProfileController {
                 "data", com.example.Service.KhuVucCtvService.toMap(khuVucCtvService.dangNhan(id))));
     }
 
-    /** Đặt lại khu vực nhận việc, body: { "khuVucIds": [1, 2] } (1 đến 5 quận, huyện). */
+    /** Khu vực nhận việc không còn chọn tay: tự cập nhật theo quận CTV đang đứng (PUT /{id}/location). */
     @PutMapping("/{id}/areas")
-    public ResponseEntity<?> updateAreas(@PathVariable Integer id, @RequestBody Map<String, java.util.List<Integer>> req) {
-        try {
-            return ResponseEntity.ok(Map.of("success", true, "message", "Đã cập nhật khu vực nhận việc.",
-                    "data", com.example.Service.KhuVucCtvService.toMap(khuVucCtvService.capNhat(id, req.get("khuVucIds")))));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
-        }
+    public ResponseEntity<?> updateAreas(@PathVariable Integer id) {
+        return ResponseEntity.badRequest().body(Map.of("success", false,
+                "message", "Khu vực nhận việc tự cập nhật theo vị trí GPS."));
     }
 
     /** Lấy danh sách đơn hàng */

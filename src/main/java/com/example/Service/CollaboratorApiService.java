@@ -39,6 +39,8 @@ public class CollaboratorApiService {
 
     @org.springframework.beans.factory.annotation.Autowired
     private ViTriCtvStore viTriCtvStore;
+    @org.springframework.beans.factory.annotation.Autowired
+    private TamQuanHcm tamQuanHcm;
 
     public CollaboratorApiService(
             PhanCongCTVRepository phanCongCTVRepository,
@@ -194,11 +196,11 @@ public class CollaboratorApiService {
     }
 
     /**
-     * CTV gửi vị trí GPS từ ứng dụng (chu kỳ 10 giây/lần).
-     * - Lưu ngay vị trí tức thời lên Redis Cache (ViTriCtvStore).
-     * - Kiểm tra biến động khu vực: Nếu CTV di chuyển sang khu vực mới (khác với khu vực đang lưu trên DB),
-     *   mới đồng bộ khu vực mới vào bảng KhuVucCTV có sẵn trên DB.
-     * - Nếu vẫn ở cùng khu vực: KHÔNG ghi DB (0 thao tác I/O trên DB).
+     * CTV gửi vị trí GPS từ ứng dụng (5 giây/lần), kèm quận/huyện app tra từ toạ độ.
+     * - Mỗi lần: chỉ lưu vị trí lên Redis (ViTriCtvStore), không ghi CSDL.
+     * - Quận lưu trên Redis là tên khu vực đã khớp (bảng KhuVuc). Khi CTV sang quận khác
+     *   (VD Quận Bình Thạnh → Quận Tân Phú) mới ghi CSDL: thay toàn bộ khu vực nhận việc (KhuVucCTV)
+     *   bằng đúng quận đang đứng. Không tra được quận thì giữ quận cũ trên Redis, không đổi gì.
      */
     @Transactional
     public Map<String, Object> updateLocation(Integer congTacVienId, java.math.BigDecimal viDo, java.math.BigDecimal kinhDo,
@@ -215,39 +217,38 @@ public class CollaboratorApiService {
         }
         final Integer resolvedCtvId = ctv.getId();
 
-        // 1. Lưu vị trí GPS lên Redis Cache
-        ViTriCtvStore.ViTri vt = viTriCtvStore.update(resolvedCtvId, viDo, kinhDo, quanHuyen, tinhThanh, diaChi);
-
-        // 2. Kiểm tra biến động khu vực (Quận/Huyện)
-        String targetQuan = (quanHuyen != null && !quanHuyen.isBlank()) ? quanHuyen : "";
+        // 1. Xác định quận: tên quận app gửi lên, không khớp thì theo toạ độ (tâm quận gần nhất),
+        //    cuối cùng mới đoán từ địa chỉ. Geocoder của máy thường không còn trả tên quận.
         Optional<KhuVuc> kvOpt = Optional.empty();
-        if (!targetQuan.isBlank() && khuVucService != null) {
-            kvOpt = khuVucService.timTheoTen(targetQuan);
-        }
-        if (kvOpt.isEmpty() && diaChi != null && !diaChi.isBlank() && khuVucService != null) {
-            kvOpt = khuVucService.doanQuan(diaChi, khuVucService.danhSach());
-        }
-
-        boolean daDongBoDB = false;
-        String tenKhuVucHienTai = "";
-
-        if (kvOpt.isPresent() && khuVucCtvService != null) {
-            KhuVuc kvMoi = kvOpt.get();
-            tenKhuVucHienTai = kvMoi.getTenKhuVuc();
-
-            // Lấy danh sách quận hiện tại của CTV trong DB (bảng KhuVucCTV sẵn có)
-            List<KhuVuc> khuVucDangNhan = khuVucCtvService.dangNhan(resolvedCtvId);
-            boolean daCoTrongDb = khuVucDangNhan.stream().anyMatch(k -> k.getId().equals(kvMoi.getId()));
-
-            // Nếu khu vực KHÁC với trong DB (hoặc CTV chưa có khu vực nào) -> Đồng bộ DB bảng KhuVucCTV
-            if (!daCoTrongDb) {
-                khuVucCtvService.capNhat(resolvedCtvId, List.of(kvMoi.getId()));
-                daDongBoDB = true;
+        if (khuVucService != null) {
+            if (quanHuyen != null && !quanHuyen.isBlank()) {
+                kvOpt = khuVucService.timTheoTen(quanHuyen);
             }
-        } else if (khuVucCtvService != null) {
-            List<KhuVuc> ds = khuVucCtvService.dangNhan(resolvedCtvId);
-            if (!ds.isEmpty()) {
-                tenKhuVucHienTai = ds.get(0).getTenKhuVuc();
+            if (kvOpt.isEmpty() && tamQuanHcm != null && viDo != null && kinhDo != null) {
+                String quanTheoToaDo = tamQuanHcm.quanCua(viDo.doubleValue(), kinhDo.doubleValue());
+                if (quanTheoToaDo != null) kvOpt = khuVucService.timTheoTen(quanTheoToaDo);
+            }
+            if (kvOpt.isEmpty() && diaChi != null && !diaChi.isBlank()) {
+                kvOpt = khuVucService.doanQuan(diaChi, khuVucService.danhSach());
+            }
+        }
+
+        // 2. Quận lần trước trên Redis (đọc trước khi ghi đè)
+        String quanTruoc = viTriCtvStore.get(resolvedCtvId).map(ViTriCtvStore.ViTri::quanHuyen).orElse("");
+        String quanMoi = kvOpt.map(KhuVuc::getTenKhuVuc).orElse("");
+
+        // 3. Lưu vị trí lên Redis; không tra được quận thì giữ quận cũ để lần sau còn so sánh
+        ViTriCtvStore.ViTri vt = viTriCtvStore.update(resolvedCtvId, viDo, kinhDo,
+                quanMoi.isBlank() ? quanTruoc : quanMoi, tinhThanh, diaChi);
+
+        // 4. Chỉ đọc / ghi CSDL khi sang quận khác (hoặc lần đầu ghi nhận quận)
+        boolean daDongBoDB = false;
+        if (kvOpt.isPresent() && khuVucCtvService != null && quanDaDoi(quanTruoc, quanMoi)) {
+            Integer idMoi = kvOpt.get().getId();
+            List<Integer> dangNhan = khuVucCtvService.dangNhan(resolvedCtvId).stream().map(KhuVuc::getId).toList();
+            if (canGhiKhuVuc(dangNhan, idMoi)) {
+                khuVucCtvService.capNhat(resolvedCtvId, List.of(idMoi));
+                daDongBoDB = true;
             }
         }
 
@@ -257,10 +258,24 @@ public class CollaboratorApiService {
         result.put("kinhDo", vt.kinhDo());
         result.put("quanHuyen", vt.quanHuyen());
         result.put("tinhThanh", vt.tinhThanh());
-        result.put("khuVucHienTai", tenKhuVucHienTai);
+        result.put("khuVucHienTai", vt.quanHuyen());
         result.put("dongBoDatabase", daDongBoDB);
         result.put("thoiGianCapNhatViTri", vt.thoiGian());
         return result;
+    }
+
+    /** Có quận mới và khác quận lần trước (lần đầu chưa có quận trước cũng tính là đổi). */
+    static boolean quanDaDoi(String quanTruoc, String quanMoi) {
+        if (quanMoi == null || quanMoi.isBlank()) return false;
+        if (quanTruoc == null || quanTruoc.isBlank()) return true;
+        return !quanTruoc.trim().equalsIgnoreCase(quanMoi.trim());
+    }
+
+    /**
+     * Khu vực nhận việc chỉ theo GPS: thay toàn bộ bằng quận đang đứng, trừ khi danh sách đã đúng là quận đó.
+     */
+    static boolean canGhiKhuVuc(List<Integer> dangNhan, Integer idMoi) {
+        return !(dangNhan.size() == 1 && dangNhan.contains(idMoi));
     }
 
     /** Overload tương thích ngược */

@@ -336,11 +336,8 @@
           </div>
         </div>
         <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label">Khu vực nhận việc * <span style="font-weight:400;color:var(--text-muted)">(1 đến 5 quận, huyện)</span></label>
-          <div class="kv-grid" id="addCtvKhuVuc">
-            <label th:each="kv : ${khuVucs}"><input type="checkbox" name="khuVucIds" th:value="${kv.id}"> <span th:text="${kv.tenKhuVuc}">Quận 1</span></label>
-          </div>
-          <div class="kv-loi" style="display:none;color:var(--danger);font-size:0.825rem;margin-top:0.35rem;font-weight:500">Chọn 1 đến 5 quận, huyện nhận việc.</div>
+          <label class="form-label">Khu vực nhận việc</label>
+          <div style="font-size:0.85rem;color:var(--text-muted)">Tự xác định: ban đầu là quận nơi ở, sau đó theo vị trí GPS khi cộng tác viên dùng ứng dụng.</div>
         </div>
         <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Trạng thái hồ sơ</label>
@@ -433,11 +430,8 @@
           </div>
         </div>
         <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label">Khu vực nhận việc * <span style="font-weight:400;color:var(--text-muted)">(1 đến 5 quận, huyện)</span></label>
-          <div class="kv-grid" id="editCtvKhuVuc">
-            <label th:each="kv : ${khuVucs}"><input type="checkbox" name="khuVucIds" th:value="${kv.id}"> <span th:text="${kv.tenKhuVuc}">Quận 1</span></label>
-          </div>
-          <div class="kv-loi" style="display:none;color:var(--danger);font-size:0.825rem;margin-top:0.35rem;font-weight:500">Chọn 1 đến 5 quận, huyện nhận việc.</div>
+          <label class="form-label">Khu vực nhận việc</label>
+          <div style="font-size:0.85rem;color:var(--text-muted)">Tự xác định: ban đầu là quận nơi ở, sau đó theo vị trí GPS khi cộng tác viên dùng ứng dụng.</div>
         </div>
         <div class="form-row" style="margin-bottom:0">
           <div class="form-group">
@@ -992,20 +986,6 @@
     }
   }
 
-  // Khu vực nhận việc: 1 đến 5 quận, huyện
-  function kiemTraKhuVucCtv(form) {
-    const grid = form.querySelector('.kv-grid');
-    if (!grid) return true;
-    const n = grid.querySelectorAll('input[name="khuVucIds"]:checked').length;
-    const loi = grid.parentElement.querySelector('.kv-loi');
-    const ok = n >= 1 && n <= 5;
-    loi.style.display = ok ? 'none' : 'block';
-    if (!ok) grid.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    return ok;
-  }
-  document.querySelectorAll('#addCtvForm, #editCtvForm').forEach(f => f.addEventListener('submit', e => {
-    if (!kiemTraKhuVucCtv(f)) { e.preventDefault(); e.stopImmediatePropagation(); }
-  }, true));
 
   function openEditCtvModal(btn) {
     document.getElementById('editCtvId').value = btn.dataset.id;
@@ -1015,8 +995,6 @@
     document.getElementById('editCtvSoNha').value = btn.dataset.sonha || '';
     document.getElementById('editCtvNoiCuCu').textContent = btn.dataset.maphuong ? '' : 'Địa chỉ đang lưu: ' + (btn.dataset.noicutru || '—') + '. Hãy chọn lại tỉnh, phường.';
     DiaChi.datGiaTri(document.getElementById('editCtvNoiO'), btn.dataset.matinh, btn.dataset.maphuong);
-    const kvDangChon = (btn.dataset.khuvuc || '').split(',').filter(Boolean);
-    document.querySelectorAll('#editCtvKhuVuc input[name="khuVucIds"]').forEach(cb => { cb.checked = kvDangChon.includes(cb.value); });
     if (btn.dataset.capdo) {
       document.getElementById('editCtvCapDo').value = btn.dataset.capdo;
     }

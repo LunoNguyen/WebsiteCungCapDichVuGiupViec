@@ -644,15 +644,9 @@ public class CustomerApiService {
         if (noiCuTru.length() > 200) {
             throw new IllegalArgumentException("Địa chỉ nơi ở quá dài (tối đa 200 ký tự).");
         }
-        // Khu vực nhận việc: 1 đến 5 quận, huyện đang phục vụ
-        List<Integer> khuVucChon = req.getDanhSachKhuVucId() != null
-                ? req.getDanhSachKhuVucId().stream().filter(java.util.Objects::nonNull).distinct().toList() : List.of();
-        if (khuVucChon.size() > KhuVucCtvService.TOI_DA) {
-            throw new IllegalArgumentException("Chọn tối đa " + KhuVucCtvService.TOI_DA + " khu vực nhận việc.");
-        }
-        for (Integer kvId : khuVucChon) khuVucService.layDangPhucVu(kvId);
-        if (khuVucChon.isEmpty() && khuVucNoiO.isEmpty() && (req.getPhuongXa() == null || req.getPhuongXa().isBlank())) {
-            throw new IllegalArgumentException("Vui lòng chọn khu vực (quận, huyện) bạn sẽ nhận việc.");
+        // Khu vực nhận việc không còn chọn tay: ban đầu là quận của nơi ở, sau đó theo GPS của app CTV
+        if (khuVucNoiO.isEmpty() && (req.getPhuongXa() == null || req.getPhuongXa().isBlank())) {
+            throw new IllegalArgumentException("Vui lòng chọn phường, xã nơi ở để xác định khu vực nhận việc ban đầu.");
         }
 
         String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
@@ -716,17 +710,11 @@ public class CustomerApiService {
             }
         }
 
-        // 4. Liên kết Khu vực
-        //    - Ưu tiên khu vực suy ra từ địa chỉ cư trú (tỉnh/thành + quận/huyện) mà ứng viên cung cấp
-        //    - Vẫn nhận danhSachKhuVucId nếu client (ứng dụng di động) gửi kèm
+        // 4. Khu vực nhận việc ban đầu: quận chứa nơi ở (app cũ: tên quận, huyện gửi trong phuongXa).
+        //    Khi CTV mở app, khu vực đổi theo quận đang đứng (GPS). danhSachKhuVucId gửi kèm bị bỏ qua.
         Set<Integer> khuVucDaGan = new HashSet<>();
-        for (Integer kvId : khuVucChon) {
-            khuVucRepository.findById(kvId).ifPresent(kv -> ganKhuVucChoCtv(savedCtv, kv, khuVucDaGan));
-        }
-        // Không chọn khu vực: lấy khu vực chứa nơi ở (app cũ: tên quận, huyện gửi trong phuongXa)
-        KhuVuc khuVucTheoDiaChi = khuVucChon.isEmpty()
-                ? (!khuVucNoiO.isEmpty() ? khuVucNoiO.get(0) : timHoacTaoKhuVuc(req.getPhuongXa(), req.getTinhThanh()))
-                : null;
+        KhuVuc khuVucTheoDiaChi = !khuVucNoiO.isEmpty()
+                ? khuVucNoiO.get(0) : timHoacTaoKhuVuc(req.getPhuongXa(), req.getTinhThanh());
         if (khuVucTheoDiaChi != null) {
             ganKhuVucChoCtv(savedCtv, khuVucTheoDiaChi, khuVucDaGan);
         }

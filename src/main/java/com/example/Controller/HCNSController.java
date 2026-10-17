@@ -365,16 +365,6 @@ public class HCNSController {
         return kq;
     }
 
-    /** Khu vực nhận việc gửi từ form: 1 đến 5 quận, huyện. Trả về thông báo lỗi, null nếu hợp lệ. */
-    private static String loiKhuVuc(List<Integer> khuVucIds) {
-        int n = khuVucIds == null ? 0 : (int) khuVucIds.stream().filter(java.util.Objects::nonNull).distinct().count();
-        if (n == 0) return "Chọn ít nhất 1 quận, huyện nhận việc cho cộng tác viên!";
-        if (n > com.example.Service.KhuVucCtvService.TOI_DA) {
-            return "Chọn tối đa " + com.example.Service.KhuVucCtvService.TOI_DA + " quận, huyện nhận việc!";
-        }
-        return null;
-    }
-
     /** Địa chỉ phỏng vấn điền sẵn (application.properties: app.phong-van.dia-chi). */
     @org.springframework.beans.factory.annotation.Value("${app.phong-van.dia-chi:}")
     private String diaChiPhongVanMacDinh;
@@ -459,14 +449,8 @@ public class HCNSController {
             @RequestParam(required = false, defaultValue = "Nam") String gioiTinh,
             @RequestParam(required = false, defaultValue = "Moi") String capDo,
             @RequestParam(required = false, defaultValue = "HoatDong") String trangThai,
-            @RequestParam(required = false) List<Integer> khuVucIds,
             RedirectAttributes redirectAttributes) {
         try {
-            String loiKv = loiKhuVuc(khuVucIds);
-            if (loiKv != null) {
-                redirectAttributes.addFlashAttribute("errorMessage", loiKv);
-                return "redirect:/hcns/cong-tac-vien";
-            }
             if (hoTen == null || hoTen.trim().isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Họ tên CTV không được để trống!");
                 return "redirect:/hcns/cong-tac-vien";
@@ -515,7 +499,12 @@ public class HCNSController {
             ctv.setNgayDangKy(LocalDate.now());
 
             congTacVienRepository.save(ctv);
-            khuVucCtvService.capNhat(ctv.getId(), khuVucIds);
+            // Khu vực nhận việc ban đầu: quận của nơi ở; sau đó tự đổi theo GPS khi CTV dùng app
+            if (maPhuong != null) {
+                List<Integer> kvNoiO = diaGioiService.khuVucCuaPhuong(maPhuong).stream()
+                        .map(com.example.Model.KhuVuc::getId).limit(1).toList();
+                if (!kvNoiO.isEmpty()) khuVucCtvService.capNhat(ctv.getId(), kvNoiO);
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Thêm Cộng tác viên thành công (Mã: " + ctv.getMaCongTacVien() + ")!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thêm CTV: " + e.getMessage());
@@ -535,15 +524,9 @@ public class HCNSController {
             @RequestParam(required = false) String ngaySinh,
             @RequestParam String capDo,
             @RequestParam String trangThai,
-            @RequestParam(required = false) List<Integer> khuVucIds,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         try {
-            String loiKv = loiKhuVuc(khuVucIds);
-            if (loiKv != null) {
-                redirectAttributes.addFlashAttribute("errorMessage", loiKv);
-                return "redirect:/hcns/cong-tac-vien";
-            }
             var ctvOpt = congTacVienRepository.findById(id);
             if (ctvOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy cộng tác viên!");
@@ -574,7 +557,6 @@ public class HCNSController {
             ctv.setSoDienThoai(soDienThoai.trim());
             ctv.setNoiCuTru(noiOCtv(noiCuTru, soNhaTenDuong, maTinh, maPhuong));
             ctv.setCapDo(capDo);
-            khuVucCtvService.capNhat(id, khuVucIds);
 
             // Chờ duyệt -> Hoạt động = duyệt hồ sơ: kích hoạt tài khoản và gửi tin nhắn như nút "Duyệt"
             if ("ChoDuyet".equals(ctv.getTrangThai()) && "HoatDong".equals(trangThai)) {

@@ -505,6 +505,8 @@ a.chip:hover { background: var(--primary-soft); color: var(--primary-ink); }
 .field.has-error input, .field.has-error select { border-color: var(--danger); }
 .field.has-error .error { display: block; }
 .field + .field { margin-top: 16px; }
+/* Trong lưới, khoảng cách do gap lo: bỏ lề trên để hai ô cùng hàng thẳng nhau (VD Tỉnh / Phường) */
+.form-grid .field + .field { margin-top: 0; }
 .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
 .checks-sm { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 .check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font-size: 15px; cursor: pointer; }

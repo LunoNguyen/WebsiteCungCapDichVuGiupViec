@@ -144,9 +144,6 @@
       }
     }
 
-    var soKhuVuc = form.querySelectorAll('input[name="khuVucNhanViec"]:checked').length;
-    if (mark(document.getElementById('khuVucField'), soKhuVuc < 1 || soKhuVuc > 5)) bad = true;
-
     var coDichVu = form.querySelectorAll('input[name="loaiDichVu"]:checked').length > 0;
     if (mark(document.getElementById('dichVuField'), !coDichVu)) bad = true;
 
@@ -163,21 +160,6 @@
     });
   });
 
-  // Chọn phường nơi ở: tự tích khu vực gần nhà nếu chưa chọn khu vực nào
-  form.addEventListener('diachi:khuvuc', function (e) {
-    var kvs = e.detail || [];
-    if (!kvs.length || form.querySelector('input[name="khuVucNhanViec"]:checked')) return;
-    var cb = form.querySelector('input[name="khuVucNhanViec"][value="' + kvs[0].id + '"]');
-    if (cb) { cb.checked = true; document.getElementById('khuVucField').classList.remove('has-error'); }
-  });
-  // Tối đa 5 khu vực
-  form.addEventListener('change', function (e) {
-    if (e.target.name !== 'khuVucNhanViec' || !e.target.checked) return;
-    if (form.querySelectorAll('input[name="khuVucNhanViec"]:checked').length > 5) {
-      e.target.checked = false;
-      document.getElementById('khuVucField').classList.add('has-error');
-    }
-  });
 
   function checkedValues(name) {
     return Array.prototype.map.call(form.querySelectorAll('input[name="' + name + '"]:checked'),
@@ -230,11 +212,10 @@
           matKhau: document.getElementById('matKhau') ? document.getElementById('matKhau').value : null,
           ngaySinh: document.getElementById('ngaySinh').value,
           gioiTinh: document.getElementById('gioiTinh').value,
-          // Địa chỉ nơi ở: số nhà + mã tỉnh, phường (máy chủ ghép tên); khu vực nhận việc chọn riêng
+          // Địa chỉ nơi ở: số nhà + mã tỉnh, phường (máy chủ ghép tên và lấy quận làm khu vực nhận việc ban đầu)
           soNhaTenDuong: document.getElementById('diaChiChiTiet').value.trim(),
           maTinh: parseInt(tinhSelect.value, 10),
           maPhuong: parseInt(phuongSelect.value, 10),
-          danhSachKhuVucId: checkedValues('khuVucNhanViec'),
           danhSachDichVuId: dichVuIds,
           danhSachHoSo: hoSo,
           danhSachChungChi: chungChi
