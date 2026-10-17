@@ -796,16 +796,21 @@ public class HCNSController {
             @RequestParam String maDichVu,
             @RequestParam(value = "hinhAnhFile", required = false) org.springframework.web.multipart.MultipartFile hinhAnhFile,
             @RequestParam(defaultValue = "false") boolean datMacDinh,
+            @RequestParam(defaultValue = "") String quayVe,
             RedirectAttributes redirectAttributes) {
+        // Chỉ quay về một trong hai trang HCNS đã biết (không nhận đường dẫn tuỳ ý)
+        String veTrang = "bang-gia".equals(quayVe)
+                ? "redirect:/hcns/dich-vu-bang-gia"
+                : "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
         List<DichVu> bienThe = dichVuRepository.findByMaDichVu(maDichVu);
         if (bienThe.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy dịch vụ mã " + maDichVu + ".");
-            return "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
+            return veTrang;
         }
         boolean coFile = hinhAnhFile != null && !hinhAnhFile.isEmpty();
         if (!datMacDinh && !coFile) {
             redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ảnh mới cho dịch vụ " + maDichVu + ".");
-            return "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
+            return veTrang;
         }
         String keyMoi = null;
         if (!datMacDinh) {
@@ -813,7 +818,7 @@ public class HCNSController {
                 keyMoi = minioService.uploadImage(hinhAnhFile, com.example.Service.MinioService.Folder.DICH_VU);
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Chưa tải được ảnh: " + e.getMessage());
-                return "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
+                return veTrang;
             }
         }
         java.util.Set<String> anhCu = new java.util.HashSet<>();
@@ -838,7 +843,7 @@ public class HCNSController {
         redirectAttributes.addFlashAttribute("successMessage", datMacDinh
                 ? "Dịch vụ " + maDichVu + " đã chuyển về dùng ảnh của danh mục."
                 : "Đã cập nhật ảnh đại diện cho " + bienThe.size() + " dịch vụ mã " + maDichVu + ".");
-        return "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
+        return veTrang;
     }
 
         /**
@@ -1047,7 +1052,15 @@ public class HCNSController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalItems", (long) totalItems);
         model.addAttribute("pageSize", pageSize);
-        model.addAttribute("dichVus", dichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
+        List<DichVu> dsDichVu = dichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        model.addAttribute("dichVus", dsDichVu);
+        // Ảnh đại diện từng dịch vụ (null = dùng ảnh danh mục) cho khung "Ảnh dịch vụ" ở cửa sổ sửa gói giá
+        java.util.Map<Integer, String> anhDichVu = new java.util.HashMap<>();
+        for (DichVu dv : dsDichVu) {
+            String url = minioService.getViewUrl(dv.getHinhAnh());
+            if (url != null) anhDichVu.put(dv.getId(), url);
+        }
+        model.addAttribute("anhDichVu", anhDichVu);
         model.addAttribute("loaiDichVus", loaiDichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "thuTuHienThi").and(Sort.by(Sort.Direction.ASC, "id"))));
 
         model.addAttribute("demTatCa", truocTrangThai.size());

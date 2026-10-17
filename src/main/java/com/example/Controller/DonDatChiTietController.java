@@ -191,6 +191,46 @@ public class DonDatChiTietController {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.QuanLyDonService quanLyDonService;
+
+    /** CSKH đổi trạng thái đơn theo luồng hợp lệ (hủy cần lý do); kèm ghi chú nội bộ nếu có. */
+    @org.springframework.web.bind.annotation.PostMapping("/cskh/don-dat-dich-vu/{id}/trang-thai")
+    public ResponseEntity<Map<String, Object>> doiTrangThai(@PathVariable Integer id,
+                                                            @org.springframework.web.bind.annotation.RequestParam(required = false) String trangThai,
+                                                            @org.springframework.web.bind.annotation.RequestParam(required = false) String lyDo,
+                                                            @org.springframework.web.bind.annotation.RequestParam(required = false) String ghiChu,
+                                                            jakarta.servlet.http.HttpSession session) {
+        try {
+            DonDatDichVu don = donDatDichVuRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn."));
+            boolean doiTt = trangThai != null && !trangThai.isBlank() && !trangThai.equals(don.getTrangThai());
+            if (doiTt) quanLyDonService.doiTrangThai(id, trangThai, lyDo, nguoiDangNhap(session));
+            if (ghiChu != null) quanLyDonService.capNhatGhiChu(id, ghiChu);
+            return ResponseEntity.ok(Map.of("success", true,
+                    "message", doiTt ? "Đã cập nhật trạng thái đơn." : "Đã lưu thay đổi."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(409).body(Map.of("success", false,
+                    "message", "Dữ liệu vừa được người khác thay đổi. Tải lại rồi thử lại."));
+        }
+    }
+
+    /** Xóa hẳn đơn chưa phát sinh (chưa thanh toán, chưa phân công, chưa đánh giá / khiếu nại). */
+    @org.springframework.web.bind.annotation.PostMapping("/cskh/don-dat-dich-vu/{id}/xoa")
+    public ResponseEntity<Map<String, Object>> xoaDon(@PathVariable Integer id) {
+        try {
+            String ma = quanLyDonService.xoaDon(id);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đã xóa đơn " + ma + "."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(409).body(Map.of("success", false,
+                    "message", "Không xóa được đơn vì còn dữ liệu liên quan. Hãy chuyển sang Đã hủy."));
+        }
+    }
+
     private static String nguoiDangNhap(jakarta.servlet.http.HttpSession session) {
         Object ten = session.getAttribute("authenticatedFullName");
         return ten != null ? "CSKH: " + ten : "CSKH";

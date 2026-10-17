@@ -111,10 +111,16 @@
             </div>
             <p style="margin-top:8px" th:if="${dg.nhanXet != null}" th:text="${dg.nhanXet}">Nhận xét</p>
             <p class="hint" style="margin:4px 0 0" th:text="'Gửi lúc ' + ${#temporals.format(dg.ngayDanhGia, 'HH:mm dd/MM/yyyy')}">Gửi lúc 10:00 01/10/2026</p>
+            <p class="hint" style="margin:2px 0 0" th:switch="${dg.trangThai}">
+              <th:block th:case="'ChoDuyet'">Đang chờ bTaskee duyệt</th:block>
+              <th:block th:case="'HienThi'">Đang hiển thị công khai</th:block>
+              <th:block th:case="'An'">Không hiển thị công khai</th:block>
+            </p>
 
             <details class="dg-sua" th:if="${dg.coTheSua}">
               <summary th:text="'Sửa đánh giá (tới ' + ${#temporals.format(dg.hanSua, 'HH:mm dd/MM')} + ')'">Sửa đánh giá</summary>
               <form method="post" th:action="@{/tai-khoan/don-hang/{id}/danh-gia/sua(id=${don.id})}">
+                <p class="hint" style="margin:0 0 8px" th:if="${dg.trangThai == 'HienThi'}">Sau khi sửa, đánh giá sẽ chờ duyệt lại trước khi hiển thị công khai.</p>
                 <span class="label" style="margin-top:0">Chất lượng công việc</span>
                 <div class="rating">
                   <th:block th:each="i : ${#numbers.sequence(1,5)}">

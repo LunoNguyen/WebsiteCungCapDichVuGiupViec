@@ -69,6 +69,10 @@ public class CustomerApiService {
     @Autowired
     private MinioService minioService;
 
+    /** Hạn chuyển khoản / hạn có người nhận: đồng hồ ở chi tiết đơn trên app. */
+    @Autowired
+    private HanNhanDonService hanNhanDonService;
+
     @Autowired
     private CustomerAddressService customerAddressService;
 
@@ -867,6 +871,7 @@ public class CustomerApiService {
             map.put("moTaChiTiet", dv.getMoTaChiTiet());
             map.put("donGiaThamKhao", donGia);
             map.put("giaGoc", bangGiaService.giaGoc(dv.getId())); // giá trước đợt tăng/giảm tạm, null nếu không có
+            map.put("hinhAnhUrl", minioService.getViewUrl(dv.getHinhAnh())); // ảnh HCNS đặt, null = dùng ảnh danh mục
             if ("GoiThang".equalsIgnoreCase(dv.getLoaiHinhDat())) {
                 map.put("soBuoiGoi", LichGoiThang.soBuoi(dv.getSoBuoi(), dv.getTenDichVu()));
             }
@@ -924,27 +929,14 @@ public class CustomerApiService {
         }
         result.put("bangGias", bangGiaMaps);
 
-        // Đánh giá từ khách hàng (tìm qua chiTietDonDat → donDat)
-        List<DanhGia> danhGias = getReviewsByService(dv.getId());
+        // Đánh giá công khai (đã duyệt) kèm phản hồi mới nhất của bTaskee
+        List<Map<String, Object>> danhGias = getReviewsByService(dv.getId());
         result.put("soLuongDanhGia", danhGias.size());
         double avgScore = danhGias.stream()
-                .mapToInt(d -> (d.getDiemChatLuong() + d.getDiemThaiDo()) / 2)
+                .mapToDouble(d -> ((Number) d.get("diem")).doubleValue())
                 .average().orElse(5.0);
         result.put("diemDanhGiaTrungBinh", BigDecimal.valueOf(avgScore).setScale(1, RoundingMode.HALF_UP));
-        List<Map<String, Object>> danhGiaMaps = new ArrayList<>();
-        danhGias.stream()
-                .sorted(Comparator.comparing(DanhGia::getNgayDanhGia, Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(10)
-                .forEach(dg -> {
-                    Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("id", dg.getId());
-                    m.put("khachHang", dg.getKhachHang() != null ? dg.getKhachHang().getHoTen() : null);
-                    m.put("diem", (dg.getDiemChatLuong() + dg.getDiemThaiDo()) / 2.0);
-                    m.put("nhanXet", dg.getNhanXet());
-                    m.put("ngayDanhGia", dg.getNgayDanhGia());
-                    danhGiaMaps.add(m);
-                });
-        result.put("danhGias", danhGiaMaps);
+        result.put("danhGias", danhGias.stream().limit(10).toList());
         result.put("soLuotDat", chiTietDonDatRepository.countByDichVu_Id(dv.getId()));
 
         // Danh sách CTV thực hiện dịch vụ này
@@ -1102,7 +1094,7 @@ public class CustomerApiService {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("codeKhuyenMai", mkm.getCodeKhuyenMai());
             m.put("tenChuongTrinh", ct.getTenChuongTrinh());
-            m.put("moTa", ct.getMoTa());
+            m.put("moTa", KhuyenMaiHienThi.moTaChoKhach(ct.getMoTa()));
             m.put("loaiGiam", ct.getLoaiGiam());
             m.put("giaTriGiam", ct.getGiaTriGiam());
             m.put("soTienGiamToiDa", ct.getSoTienGiamToiDa());
@@ -1143,7 +1135,7 @@ public class CustomerApiService {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", ct.getId());
             m.put("tenChuongTrinh", ct.getTenChuongTrinh());
-            m.put("moTa", ct.getMoTa());
+            m.put("moTa", KhuyenMaiHienThi.moTaChoKhach(ct.getMoTa()));
             m.put("loaiGiam", ct.getLoaiGiam());
             m.put("giaTriGiam", ct.getGiaTriGiam());
             m.put("soTienGiamToiDa", ct.getSoTienGiamToiDa());
@@ -1443,6 +1435,10 @@ public class CustomerApiService {
             item.put("gioKetThuc", d.getGioKetThuc());
             item.put("thanhTien", d.getThanhTien());
             item.put("trangThai", d.getTrangThai());
+            // Đơn chuyển khoản chưa thanh toán: app hiện "Chờ thanh toán" thay vì "Đang tìm CTV"
+            item.put("soGiayConLaiThanhToan", "ChoDuyet".equals(d.getTrangThai())
+                    ? HanNhanDonService.soGiayConLai(hanNhanDonService.hanThanhToanNeuDangCho(d.getId()), LocalDateTime.now())
+                    : null);
             item.put("diaChi", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
 
             // Thông tin CTV phụ trách nếu đã phân công
@@ -1464,6 +1460,14 @@ public class CustomerApiService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt ID: " + donDatId));
 
         Map<String, Object> result = new LinkedHashMap<>();
+        // Đồng hồ cho app: hạn chuyển khoản (đơn chờ thanh toán) và hạn có người nhận (đơn đã phát hành)
+        LocalDateTime bayGio = LocalDateTime.now();
+        result.put("soGiayConLaiThanhToan",
+                HanNhanDonService.soGiayConLai(hanNhanDonService.hanThanhToanNeuDangCho(donDatId), bayGio));
+        result.put("soGiayConLaiNhan",
+                HanNhanDonService.soGiayConLai(hanNhanDonService.hanNhanNeuDangCho(donDatId), bayGio));
+        result.put("soPhutNhanDon", hanNhanDonService.soPhut());
+        result.put("soPhutThanhToan", hanNhanDonService.soPhutThanhToan());
         result.put("id", d.getId());
         result.put("maDonDat", d.getMaDonDat());
         // Lấy danh sách dịch vụ trong đơn
@@ -1533,17 +1537,9 @@ public class CustomerApiService {
             result.put("hoaDon", hdMap);
         });
 
-        // Đánh giá nếu có
-        danhGiaRepository.findByDonDat_Id(d.getId()).ifPresent(dg -> {
-            Map<String, Object> dgMap = new LinkedHashMap<>();
-            dgMap.put("id", dg.getId());
-            dgMap.put("maDanhGia", dg.getMaDanhGia());
-            dgMap.put("diemChatLuong", dg.getDiemChatLuong());
-            dgMap.put("diemThaiDo", dg.getDiemThaiDo());
-            dgMap.put("nhanXet", dg.getNhanXet());
-            dgMap.put("ngayDanhGia", dg.getNgayDanhGia());
-            result.put("danhGia", dgMap);
-        });
+        // Đánh giá nếu có (kèm trạng thái duyệt, hạn sửa và trao đổi với bTaskee)
+        Map<String, Object> danhGia = danhGiaService.cuaDon(d.getId());
+        if (danhGia != null) result.put("danhGia", danhGia);
 
         return result;
     }
@@ -1729,14 +1725,9 @@ public class CustomerApiService {
         return res;
     }
 
-    public List<DanhGia> getReviewsByService(Integer dichVuId) {
-        // Lọc đánh giá theo dịch vụ qua chiTietDonDat
-        return danhGiaRepository.findAll().stream()
-                .filter(dg -> dg.getDonDat() != null
-                        && dg.getDonDat().getChiTietList() != null
-                        && dg.getDonDat().getChiTietList().stream()
-                            .anyMatch(ct -> dichVuId.equals(ct.getDichVu().getId())))
-                .toList();
+    /** Đánh giá công khai của một dịch vụ (chỉ đánh giá đã duyệt). */
+    public List<Map<String, Object>> getReviewsByService(Integer dichVuId) {
+        return danhGiaService.congKhaiTheoDichVu(dichVuId);
     }
 
     // ==========================================

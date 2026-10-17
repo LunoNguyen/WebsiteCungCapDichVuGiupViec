@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Thẻ vé khuyến mãi dùng chung: trang chủ (Ưu đãi đang chạy) và trang /khuyen-mai -->
+<div class="ticket-card" th:fragment="the(km)">
+  <!-- Cuống vé bên trái: Mức giảm -->
+  <div class="ticket-left">
+    <div class="ticket-circle-icon">🎁</div>
+    <div class="ticket-discount-val" th:text="${km.mucGiamText}">Giảm 20%</div>
+    <span class="ticket-badge-sub">VOUCHER</span>
+  </div>
+
+  <!-- Rãnh xé vé đục lỗ -->
+  <div class="ticket-divider">
+    <span class="notch notch-top"></span>
+    <div class="dashed-line"></div>
+    <span class="notch notch-bottom"></span>
+  </div>
+
+  <!-- Thân vé bên phải: Chi tiết & Nút hành động -->
+  <div class="ticket-right">
+    <div class="ticket-header">
+      <span class="ticket-tag">Dịch vụ gia đình</span>
+      <span class="ticket-expiry" th:text="${km.hanText}">đến hết 31/12/2026</span>
+    </div>
+
+    <h3 class="ticket-title" th:text="${km.tenChuongTrinh}">Tên chương trình ưu đãi</h3>
+    <p class="ticket-desc" th:if="${km.moTa != null and !km.moTa.isEmpty()}" th:text="${km.moTa}">Mô tả chi tiết chương trình khuyến mãi.</p>
+
+    <div class="ticket-condition" th:if="${km.dieuKienText != null and !km.dieuKienText.isEmpty()}">
+      <span class="cond-icon">ℹ</span>
+      <span th:text="${km.dieuKienText}">Đơn từ 150.000đ, Tối đa 50.000đ</span>
+    </div>
+
+    <!-- Khối Mã & Nút sao chép -->
+    <div class="ticket-footer" th:if="${km.code != null}">
+      <div class="ticket-code-box">
+        <span class="code-label">MÃ:</span>
+        <strong class="code-val" th:text="${km.code}">CHAOBANMOI</strong>
+      </div>
+      <div class="ticket-actions">
+        <button type="button" class="btn-ticket-copy" th:attr="data-copy=${km.code}" title="Sao chép mã">
+          <span>Sao chép</span>
+        </button>
+        <a href="/dich-vu" class="btn-ticket-use">Dùng ngay</a>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

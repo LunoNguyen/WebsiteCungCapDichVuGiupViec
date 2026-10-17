@@ -177,4 +177,28 @@
     });
   }
   initThreeUITilt();
+
+  /* ---------- Slider lướt ngang (đánh giá trang chủ): nút mũi tên, ẩn nút ở hai đầu ---------- */
+  document.querySelectorAll('[data-slider]').forEach(function (slider) {
+    var track = slider.querySelector('[data-slider-track]');
+    var prev = slider.querySelector('[data-slider-prev]');
+    var next = slider.querySelector('[data-slider-next]');
+    if (!track || !prev || !next) return;
+
+    function buoc() {
+      var the = track.firstElementChild;
+      var gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+      return the ? the.getBoundingClientRect().width + gap : track.clientWidth;
+    }
+    function capNhatNut() {
+      var max = track.scrollWidth - track.clientWidth - 2;
+      prev.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft >= max;
+    }
+    prev.addEventListener('click', function () { track.scrollBy({ left: -buoc(), behavior: 'smooth' }); });
+    next.addEventListener('click', function () { track.scrollBy({ left: buoc(), behavior: 'smooth' }); });
+    track.addEventListener('scroll', capNhatNut, { passive: true });
+    window.addEventListener('resize', capNhatNut);
+    capNhatNut();
+  });
 })();

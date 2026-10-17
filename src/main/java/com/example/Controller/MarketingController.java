@@ -32,6 +32,8 @@ public class MarketingController {
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepository;
     private final ThongBaoPhatService thongBaoPhatService;
     private final DanhGiaRepository danhGiaRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.DanhGiaService danhGiaService;
     private final LichSuSuDungKhuyenMaiRepository lichSuSuDungKhuyenMaiRepository;
 
     public MarketingController(
@@ -317,13 +319,17 @@ public String dashboard(
 
         return "marketing/danh-gia";
     }
-    // Xử lý nút Ghim/Bỏ ghim đánh giá lên trang chủ
+    // Hiển thị / Ẩn đánh giá trên website (cùng trạng thái với trang CSKH)
     @PostMapping("/danh-gia/cap-nhat-trang-thai")
-    public String capNhatTrangThaiDanhGia(@RequestParam Integer id, @RequestParam String trangThai) {
-        danhGiaRepository.findById(id).ifPresent(dg -> {
-            dg.setTrangThai(trangThai);
-            danhGiaRepository.save(dg);
-        });
+    public String capNhatTrangThaiDanhGia(@RequestParam Integer id, @RequestParam String trangThai,
+                                          RedirectAttributes redirectAttributes) {
+        try {
+            danhGiaService.doiTrangThai(List.of(id), trangThai);
+            redirectAttributes.addFlashAttribute("success",
+                    "HienThi".equals(trangThai) ? "Đã hiển thị đánh giá trên website." : "Đã ẩn đánh giá.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/marketing/danh-gia";
     }
 @PostMapping("/thong-bao/tao-moi")

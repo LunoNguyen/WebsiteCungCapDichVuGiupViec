@@ -122,6 +122,12 @@ public class HanNhanDonService {
     }
 
     /** Số giây còn lại để nhận đơn (0 nếu đã hết hạn, null nếu không xác định). */
+    /** Số giây còn lại tới [han] tính từ [bayGio]; null nếu không có hạn, 0 nếu đã quá hạn. */
+    public static Long soGiayConLai(LocalDateTime han, LocalDateTime bayGio) {
+        if (han == null) return null;
+        return Math.max(0, Duration.between(bayGio, han).getSeconds());
+    }
+
     public Long soGiayConLai(DonDatDichVu don) {
         LocalDateTime han = hanNhan(don);
         if (han == null) return null;

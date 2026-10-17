@@ -48,6 +48,10 @@
           <div class="review-item" th:each="r : ${dv.danhGias}">
             <div class="top"><b th:text="${r.khachHang != null ? r.khachHang : 'Khách hàng'}">Nguyễn An</b><span th:text="'★ ' + ${r.diem} + (${r.ngayDanhGia != null} ? ' · ' + ${#temporals.format(r.ngayDanhGia, 'dd/MM/yyyy')} : '')">★ 5.0 · 01/10/2026</span></div>
             <p th:text="${r.nhanXet != null and !#strings.isEmpty(r.nhanXet)} ? ${r.nhanXet} : 'Không để lại nhận xét.'">Làm kỹ, đúng giờ.</p>
+            <div class="review-reply" th:if="${r.phanHoi != null}">
+              <b>Phản hồi từ bTaskee</b>
+              <p th:text="${r.phanHoi.noiDung}">Cảm ơn bạn đã tin dùng bTaskee.</p>
+            </div>
           </div>
           <p class="hint" style="margin:0" th:if="${dv.danhGias.isEmpty()}">Dịch vụ chưa có đánh giá.</p>
         </section>

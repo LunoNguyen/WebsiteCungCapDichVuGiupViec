@@ -9,7 +9,7 @@
   <section class="hero">
     <div class="wrap">
       <div>
-        <h1>Việc nhà có <em>bTaskee</em> lo, bạn có thêm thời gian <span class="nowrap">cho gia đình</span></h1>
+        <h1><span class="nowrap">Việc nhà có <em>bTaskee</em> lo,</span> <span class="nowrap">bạn có thêm thời gian</span> <span class="nowrap">cho gia đình</span></h1>
         <p class="hero-lead">Đặt người giúp việc theo giờ, vệ sinh máy lạnh, nấu ăn, trông trẻ. Chọn dịch vụ, chọn giờ, biết giá <span class="nowrap">trước khi đặt.</span></p>
         <div style="margin-top:28px">
           <form th:replace="~{layout/site-layout :: finder(null, null)}"></form>
@@ -95,18 +95,8 @@
         <h2>Ưu đãi đang chạy</h2>
         <a class="link" href="/khuyen-mai">Xem tất cả</a>
       </div>
-      <div class="promos">
-        <div class="promo" th:each="km, st : ${khuyenMais}" th:if="${st.index < 3}">
-          <span class="badge-ic"><svg class="ic"><use href="#i-ticket"/></svg></span>
-          <div>
-            <h3 th:text="${km.tenChuongTrinh + ': ' + km.mucGiamText}">Giảm 20.000đ cho đơn đầu tiên</h3>
-            <p><span th:if="${!km.dieuKienText.isEmpty()}" th:text="${km.dieuKienText} + ', '">Đơn từ 300.000đ, </span><span th:text="${km.hanText}">đến 31/10</span></p>
-            <span class="promo-code" th:if="${km.code != null}">
-              <span th:text="${km.code}">BTASKEE20</span>
-              <button type="button" th:attr="data-copy=${km.code}">Sao chép</button>
-            </span>
-          </div>
-        </div>
+      <div class="tickets-grid">
+        <th:block th:each="km, st : ${khuyenMais}" th:if="${st.index < 4}"><div th:replace="~{fragments/khuyen-mai :: the(${km})}"></div></th:block>
       </div>
     </div>
   </section>
@@ -137,9 +127,11 @@
         </div>
       </div>
 
-      <!-- 1. Khi CSDL đã có đánh giá thật: Hiển thị các thẻ đánh giá -->
-      <div class="reviews-grid" th:if="${danhGias != null and !danhGias.isEmpty()}">
-        <div class="review-card" th:each="dg, st : ${danhGias}" th:if="${st.index < 3}">
+      <!-- 1. Khi CSDL đã có đánh giá thật: thẻ đánh giá lướt ngang bằng nút mũi tên -->
+      <div class="reviews-slider" th:if="${danhGias != null and !danhGias.isEmpty()}" data-slider>
+        <button class="slider-nav prev" type="button" aria-label="Đánh giá trước" data-slider-prev><svg class="ic"><use href="#i-left"/></svg></button>
+        <div class="reviews-track" data-slider-track>
+        <div class="review-card" th:each="dg : ${danhGias}">
           <div class="review-card-top">
             <div class="review-author">
               <span class="author-avatar" th:text="${dg.chuCaiDau}">T</span>
@@ -155,11 +147,17 @@
           <p class="review-content" th:text="${'&ldquo;' + dg.nhanXet + '&rdquo;'}">
             "Bạn giúp việc đến đúng giờ, dọn dẹp rất tỉ mỉ và chu đáo."
           </p>
+          <div class="review-reply" th:if="${dg.phanHoi != null}">
+            <b>Phản hồi từ bTaskee</b>
+            <p th:text="${dg.phanHoi}">Cảm ơn bạn đã tin dùng bTaskee.</p>
+          </div>
           <div class="review-verified">
             <svg class="ic" style="width:14px;height:14px;color:#10B981;"><use href="#i-check-circle"/></svg>
             <span>Đã xác nhận sử dụng dịch vụ</span>
           </div>
         </div>
+        </div>
+        <button class="slider-nav next" type="button" aria-label="Đánh giá tiếp theo" data-slider-next><svg class="ic"><use href="#i-right"/></svg></button>
       </div>
 
       <!-- 2. Khi CSDL chưa có đánh giá nào: Hiện khung thông báo rõ ràng -->
@@ -188,7 +186,7 @@
     <div class="wrap">
       <div class="app-band">
         <div>
-          <h2>Đặt nhanh hơn trên ứng dụng bTaskee</h2>
+          <h2><span class="nowrap">Đặt nhanh hơn</span> <span class="nowrap">trên ứng dụng bTaskee</span></h2>
           <p>Theo dõi cộng tác viên, nhận thông báo và ưu đãi riêng trên điện thoại.</p>
         </div>
         <div class="btns">

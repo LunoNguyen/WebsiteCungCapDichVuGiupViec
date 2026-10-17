@@ -2,7 +2,6 @@ package com.example.API;
 
 import com.example.DTO.request.ReviewCreateRequest;
 import com.example.DTO.response.ApiResponse;
-import com.example.Model.DanhGia;
 import com.example.Service.CustomerApiService;
 import com.example.Service.DanhGiaService;
 import jakarta.validation.Valid;
@@ -80,9 +79,9 @@ public class ReviewApiController {
      * Xem các đánh giá công khai của một dịch vụ
      */
     @GetMapping("/service/{dichVuId}")
-    public ResponseEntity<ApiResponse<List<DanhGia>>> getReviewsByService(@PathVariable Integer dichVuId) {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getReviewsByService(@PathVariable Integer dichVuId) {
         try {
-            List<DanhGia> list = customerApiService.getReviewsByService(dichVuId);
+            List<Map<String, Object>> list = customerApiService.getReviewsByService(dichVuId);
             return ResponseEntity.ok(ApiResponse.ok(list));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi lấy danh sách đánh giá: " + e.getMessage()));

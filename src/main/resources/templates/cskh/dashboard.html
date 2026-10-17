@@ -43,7 +43,8 @@
           <div class="stat-icon"><i class="ti ti-star"></i></div>
           <div class="stat-value" th:text="${#numbers.formatDecimal(diemDanhGiaTB, 1, 'POINT', 1, 'COMMA')}">4,8</div>
           <div class="stat-label">Đánh giá trung bình</div>
-          <div class="kpi-compare"><span class="arrow-up">Mức độ hài lòng cao</span></div>
+          <div class="kpi-compare"><a th:href="@{/cskh/danh-gia(trangThai='ChoDuyet')}" style="color:var(--cskh-primary)"
+               th:text="${danhGiaChoDuyet + ' đánh giá chờ duyệt'}">0 đánh giá chờ duyệt</a></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon"><i class="ti ti-users"></i></div>

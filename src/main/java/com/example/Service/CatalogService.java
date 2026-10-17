@@ -76,6 +76,8 @@ public class CatalogService {
 
     @org.springframework.beans.factory.annotation.Autowired
     private BangGiaService bangGiaService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Repository.PhanHoiDanhGiaRepository phanHoiDanhGiaRepository;
     private final LoaiDichVuRepository loaiDichVuRepository;
     private final DichVuRepository dichVuRepository;
     private final BangGiaDichVuRepository bangGiaDichVuRepository;
@@ -337,7 +339,7 @@ public class CatalogService {
 
             ketQua.add(KhuyenMaiView.builder()
                     .tenChuongTrinh(ct.getTenChuongTrinh())
-                    .moTa(ct.getMoTa())
+                    .moTa(KhuyenMaiHienThi.moTaChoKhach(ct.getMoTa()))
                     .mucGiamText(mucGiam)
                     .dieuKienText(String.join(", ", dieuKien))
                     .hanText("đến hết " + ct.getNgayKetThuc().format(NGAY))
@@ -351,7 +353,7 @@ public class CatalogService {
     // ĐÁNH GIÁ CỦA KHÁCH HÀNG
     // =========================================================================
 
-    /** Tối đa 6 đánh giá đã duyệt hiển thị, có nhận xét, mới nhất trước. */
+    /** Tối đa 8 đánh giá đã duyệt hiển thị, có nhận xét, mới nhất trước. */
     @Cacheable(value = CacheNames.DANH_GIA, key = "'noiBat'")
     public List<DanhGiaView> getDanhGiaNoiBat() {
         List<DanhGia> danhGias = new ArrayList<>(danhGiaRepository.findAll());
@@ -362,19 +364,22 @@ public class CatalogService {
 
         List<DanhGiaView> ketQua = new ArrayList<>();
         for (DanhGia dg : danhGias) {
-            if (ketQua.size() >= 6) {
+            if (ketQua.size() >= 8) {
                 break;
             }
             String ten = dg.getKhachHang() != null && dg.getKhachHang().getHoTen() != null
                     ? dg.getKhachHang().getHoTen().trim() : "Khách hàng";
             int chatLuong = dg.getDiemChatLuong() != null ? dg.getDiemChatLuong() : 5;
             int thaiDo = dg.getDiemThaiDo() != null ? dg.getDiemThaiDo() : chatLuong;
+            var phanHoi = DanhGiaService.phanHoiMoiNhatCuaNhanVien(
+                    phanHoiDanhGiaRepository.findByDanhGia_IdOrderByThoiGianAscIdAsc(dg.getId()));
             ketQua.add(DanhGiaView.builder()
                     .tenKhachHang(ten)
                     .chuCaiDau(ten.isEmpty() ? "K" : ten.substring(0, 1).toUpperCase())
                     .soSao(Math.max(1, Math.min(5, Math.round((chatLuong + thaiDo) / 2.0f))))
                     .nhanXet(dg.getNhanXet().trim())
                     .ngayText(dg.getNgayDanhGia().format(NGAY))
+                    .phanHoi(phanHoi == null ? null : phanHoi.getNoiDung())
                     .build());
         }
         return ketQua;

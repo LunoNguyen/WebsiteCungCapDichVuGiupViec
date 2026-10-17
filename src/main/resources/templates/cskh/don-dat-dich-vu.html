@@ -244,10 +244,9 @@
     <div style="margin-top:1rem">
       <div class="form-section-label">Đổi trạng thái nhanh</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:0.5rem">
-        <button class="btn btn-warning btn-sm" onclick="CSKH.toast('Đã chuyển sang Chờ duyệt','info')">Chờ duyệt</button>
-        <button class="btn btn-primary btn-sm" onclick="CSKH.toast('Đang thực hiện','info')">Đang thực hiện</button>
-        <button class="btn btn-success btn-sm" onclick="CSKH.toast('Đã hoàn thành!')">Hoàn thành</button>
-        <button class="btn btn-danger btn-sm" onclick="CSKH.toast('Đã hủy đơn','error')">Hủy đơn</button>
+        <button class="btn btn-primary btn-sm" type="button" onclick="doiTrangThaiNhanh('DangThucHien')">Đang thực hiện</button>
+        <button class="btn btn-success btn-sm" type="button" onclick="doiTrangThaiNhanh('HoanThanh')">Hoàn thành</button>
+        <button class="btn btn-danger btn-sm" type="button" onclick="doiTrangThaiNhanh('DaHuy')">Hủy đơn</button>
       </div>
     </div>
   </div>
@@ -384,18 +383,13 @@
       </div>
       <div class="form-group">
         <label class="form-label">Dịch vụ</label>
-        <select class="form-control" id="e-dv">
-          <option>Dọn dẹp nhà</option>
-          <option>Giặt ủi</option>
-          <option>Nấu ăn gia đình</option>
-          <option>Trông trẻ</option>
-          <option>Chăm sóc người cao tuổi</option>
-        </select>
+        <input type="text" class="form-control" id="e-dv" readonly style="opacity:0.6">
       </div>
       <div class="form-group">
         <label class="form-label">Trạng thái</label>
         <select class="form-control" id="e-tt">
           <option value="ChoDuyet">Chờ duyệt</option>
+          <option value="DaXacNhan">Đã xác nhận</option>
           <option value="DangThucHien">Đang thực hiện</option>
           <option value="HoanThanh">Hoàn thành</option>
           <option value="DaHuy">Đã hủy</option>
@@ -403,19 +397,23 @@
       </div>
       <div class="form-group">
         <label class="form-label">Ngày thực hiện</label>
-        <input type="date" class="form-control" id="e-ngay" data-min-today>
+        <input type="date" class="form-control" id="e-ngay" readonly style="opacity:0.6">
       </div>
       <div class="form-group">
         <label class="form-label">Giờ bắt đầu</label>
-        <input type="time" class="form-control" id="e-giobatdau">
+        <input type="time" class="form-control" id="e-giobatdau" readonly style="opacity:0.6">
       </div>
       <div class="form-group">
         <label class="form-label">Giờ kết thúc</label>
-        <input type="time" class="form-control" id="e-gioketthuc">
+        <input type="time" class="form-control" id="e-gioketthuc" readonly style="opacity:0.6">
       </div>
       <div class="form-group">
         <label class="form-label">Thành tiền (đ)</label>
-        <input type="number" class="form-control" id="e-tien">
+        <input type="number" class="form-control" id="e-tien" readonly style="opacity:0.6">
+      </div>
+      <div class="form-group" id="e-lydo-wrap" style="grid-column:span 2;display:none">
+        <label class="form-label" for="e-lydo">Lý do hủy <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-control" id="e-lydo" maxlength="255" placeholder="VD: Khách báo bận, đổi lịch khác">
       </div>
       <div class="form-group" style="grid-column:span 2">
         <label class="form-label">Ghi chú</label>
@@ -447,7 +445,7 @@
     </div>
     <div style="padding:1rem 2rem 0.5rem">
       <h3 style="font-weight:700;margin-bottom:0.5rem">Xác nhận xóa đơn?</h3>
-      <p style="color:var(--text-muted);font-size:0.875rem">Đơn <strong id="deleteTargetCode">---</strong> sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.</p>
+      <p style="color:var(--text-muted);font-size:0.875rem">Đơn <strong id="deleteTargetCode">---</strong> sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác. Chỉ xóa được đơn Chờ duyệt / Đã hủy chưa thanh toán, chưa phân công.</p>
     </div>
     <div class="modal-footer" style="justify-content:center;gap:0.75rem">
       <button class="btn btn-secondary" data-modal-close="deleteConfirmModal">Hủy bỏ</button>
@@ -514,17 +512,79 @@
     updateBulkBar();
   }
 
+  // ── Gọi máy chủ: đổi trạng thái / xóa đơn (QuanLyDonService kiểm luồng hợp lệ) ──
+  function guiDon(url, thamSo) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+      body: new URLSearchParams(thamSo || {})
+    })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; })
+          .then(function (b) { return { ok: res.ok && b.success !== false, message: b.message }; });
+      })
+      .catch(function () { return { ok: false, message: 'Không kết nối được máy chủ. Thử lại sau.' }; });
+  }
+
+  function taiLaiSau(thongBao) {
+    CSKH.toast(thongBao, 'success');
+    setTimeout(function () { location.reload(); }, 700);
+  }
+
+  // Đơn được chọn trong bảng: id và mã lấy từ nút sửa của dòng
+  function donDaChon() {
+    return [...document.querySelectorAll('.row-checkbox:checked')].map(function (cb) {
+      var nut = cb.closest('tr').querySelector('[data-id]');
+      return nut ? { id: nut.dataset.id, ma: nut.dataset.ma || ('#' + nut.dataset.id) } : null;
+    }).filter(Boolean);
+  }
+
+  // Làm lần lượt từng đơn; báo số đơn được và lý do của đơn đầu tiên không được
+  function lamHangLoat(ds, url, thamSo, viec) {
+    var duoc = 0, loi = null;
+    return ds.reduce(function (p, d) {
+      return p.then(function () {
+        return guiDon(url(d.id), thamSo).then(function (r) {
+          if (r.ok) duoc++;
+          else if (!loi) loi = d.ma + ': ' + (r.message || 'không thực hiện được');
+        });
+      });
+    }, Promise.resolve()).then(function () {
+      if (loi) CSKH.toast(viec + ' ' + duoc + '/' + ds.length + ' đơn. ' + loi, duoc ? 'info' : 'error');
+      if (duoc) setTimeout(function () { location.reload(); }, loi ? 2500 : 700);
+      else clearBulk();
+      if (duoc && !loi) CSKH.toast(viec + ' ' + duoc + ' đơn.', 'success');
+    });
+  }
+
   function bulkChangeStatus(status) {
-    const checked = [...document.querySelectorAll('.row-checkbox:checked')].length;
-    CSKH.toast(`Đã cập nhật trạng thái ${checked} đơn thành "${status}"`);
-    clearBulk();
+    const ds = donDaChon();
+    if (!ds.length) return;
+    lamHangLoat(ds, function (id) { return '/cskh/don-dat-dich-vu/' + id + '/trang-thai'; },
+      { trangThai: status }, 'Đã cập nhật trạng thái');
   }
 
   function bulkDelete() {
-    const checked = [...document.querySelectorAll('.row-checkbox:checked')].length;
-    cskhConfirmDelete(`Bạn có chắc muốn xóa ${checked} đơn đã chọn không?`, () => {
-      CSKH.toast(`Đã xóa ${checked} đơn thành công`, 'success');
-      clearBulk();
+    const ds = donDaChon();
+    if (!ds.length) return;
+    cskhConfirmDelete('Xóa vĩnh viễn ' + ds.length + ' đơn đã chọn? Chỉ đơn Chờ duyệt / Đã hủy chưa thanh toán, chưa phân công mới xóa được.', () => {
+      lamHangLoat(ds, function (id) { return '/cskh/don-dat-dich-vu/' + id + '/xoa'; }, {}, 'Đã xóa');
+    });
+  }
+
+  // Nút đổi trạng thái nhanh ở khung chi tiết; hủy đơn cần lý do
+  function doiTrangThaiNhanh(trangThai) {
+    if (!currentOrderId) return;
+    var thamSo = { trangThai: trangThai };
+    if (trangThai === 'DaHuy') {
+      var lyDo = window.prompt('Lý do hủy đơn:');
+      if (lyDo === null) return;
+      if (!lyDo.trim()) { CSKH.toast('Vui lòng nhập lý do hủy đơn.', 'error'); return; }
+      thamSo.lyDo = lyDo.trim();
+    }
+    guiDon('/cskh/don-dat-dich-vu/' + currentOrderId + '/trang-thai', thamSo).then(function (r) {
+      if (r.ok) taiLaiSau(r.message || 'Đã cập nhật trạng thái đơn.');
+      else CSKH.toast(r.message || 'Không đổi được trạng thái.', 'error');
     });
   }
 
@@ -916,21 +976,46 @@
     document.getElementById('e-tien').value = btn.dataset.tien || '';
     document.getElementById('e-ghichu').value = btn.dataset.ghichu || '';
     const ttSel = document.getElementById('e-tt');
+    ttSel.dataset.cu = btn.dataset.tt || '';
     for (let opt of ttSel.options) { opt.selected = opt.value === btn.dataset.tt; }
-    const dvSel = document.getElementById('e-dv');
-    for (let opt of dvSel.options) { opt.selected = opt.text === btn.dataset.dv; }
+    document.getElementById('e-dv').value = btn.dataset.dv || '';
+    document.getElementById('e-lydo').value = '';
+    hienLyDoHuy();
     ModalManager.open('editOrderModal');
   }
 
+  function hienLyDoHuy() {
+    const tt = document.getElementById('e-tt');
+    document.getElementById('e-lydo-wrap').style.display =
+      tt.value === 'DaHuy' && tt.dataset.cu !== 'DaHuy' ? '' : 'none';
+  }
+  document.getElementById('e-tt').addEventListener('change', hienLyDoHuy);
+
   function saveEditOrder() {
-    if (!DateRules.validate(document.getElementById('editOrderModal'))) return;
-    ModalManager.close('editOrderModal');
-    CSKH.toast('Cập nhật đơn #' + document.getElementById('e-ma').value + ' thành công!');
+    const tt = document.getElementById('e-tt');
+    const thamSo = { ghiChu: document.getElementById('e-ghichu').value };
+    if (tt.value !== tt.dataset.cu) {
+      thamSo.trangThai = tt.value;
+      if (tt.value === 'DaHuy') {
+        const lyDo = document.getElementById('e-lydo').value.trim();
+        if (!lyDo) { CSKH.toast('Vui lòng nhập lý do hủy đơn.', 'error'); return; }
+        thamSo.lyDo = lyDo;
+      }
+    }
+    const nut = document.getElementById('editSaveBtn');
+    nut.disabled = true;
+    guiDon('/cskh/don-dat-dich-vu/' + currentEditId + '/trang-thai', thamSo).then(function (r) {
+      nut.disabled = false;
+      if (!r.ok) { CSKH.toast(r.message || 'Không lưu được thay đổi.', 'error'); return; }
+      ModalManager.close('editOrderModal');
+      taiLaiSau(r.message || 'Đã lưu thay đổi.');
+    });
   }
 
   function deleteCurrentEditOrder() {
     const ma = document.getElementById('e-ma').value;
     ModalManager.close('editOrderModal');
+    currentDeleteId = currentEditId;
     currentDeleteCode = ma;
     document.getElementById('deleteTargetCode').textContent = ma;
     ModalManager.open('deleteConfirmModal');
@@ -945,10 +1030,17 @@
   }
 
   function executeDelete() {
-    ModalManager.close('deleteConfirmModal');
-    CSKH.toast('Đã xóa đơn ' + currentDeleteCode + ' thành công!', 'success');
-    currentDeleteId = null;
-    currentDeleteCode = '';
+    if (!currentDeleteId) return;
+    const nut = document.getElementById('confirmDeleteBtn');
+    nut.disabled = true;
+    guiDon('/cskh/don-dat-dich-vu/' + currentDeleteId + '/xoa').then(function (r) {
+      nut.disabled = false;
+      ModalManager.close('deleteConfirmModal');
+      currentDeleteId = null;
+      currentDeleteCode = '';
+      if (r.ok) taiLaiSau(r.message || 'Đã xóa đơn.');
+      else CSKH.toast(r.message || 'Không xóa được đơn.', 'error');
+    });
   }
 </script>
 </body>

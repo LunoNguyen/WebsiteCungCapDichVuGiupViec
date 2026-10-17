@@ -80,7 +80,7 @@
           <div class="card-header" style="padding:1.25rem 1.5rem">
             <div>
               <div class="card-title">Đánh giá 5 sao nổi bật có thể dùng làm tư liệu truyền thông</div>
-              <div class="card-subtitle">Lọc từ khách hàng thực tế sau khi sử dụng dịch vụ bTaskee</div>
+              <div class="card-subtitle">Lọc từ khách hàng thực tế sau khi sử dụng dịch vụ bTaskee. Trang chủ hiện 8 đánh giá đang hiển thị mới nhất có nhận xét.</div>
             </div>
           </div>
           <div class="table-container">
@@ -91,7 +91,7 @@
                   <th>Dịch vụ sử dụng</th>
                   <th>Xếp hạng</th>
                   <th>Nội dung cảm nhận nổi bật</th>
-                  <th>Hiển thị trang chủ</th>
+                  <th>Trạng thái</th>
                   <th style="text-align:right">Thao tác</th>
                 </tr>
               </thead>
@@ -114,27 +114,25 @@
                   <td style="max-width:340px;line-height:1.4"
                     th:text="${dg.nhanXet != null ? '&quot;' + dg.nhanXet + '&quot;' : 'Đánh giá tốt'}">Nội dung</td>
                   <td>
-                    <span th:if="${dg.trangThai == 'HienThi'}" class="badge badge-success">Đang ghim trang chủ</span>
-                    <span th:if="${dg.trangThai != 'HienThi'}" class="badge badge-secondary">Chưa ghim</span>
+                    <span th:if="${dg.trangThai == 'ChoDuyet'}" class="badge badge-warning">Chờ duyệt</span>
+                    <span th:if="${dg.trangThai == 'HienThi'}" class="badge badge-success">Đang hiển thị</span>
+                    <span th:if="${dg.trangThai == 'An'}" class="badge badge-secondary">Đã ẩn</span>
                   </td>
                   <td style="text-align:right">
-                    <!-- Nút Bỏ Ghim (nếu đang ghim) -->
+                    <!-- Ẩn (nếu đang hiển thị) -->
                     <form th:if="${dg.trangThai == 'HienThi'}" th:action="@{/marketing/danh-gia/cap-nhat-trang-thai}"
                       method="post" style="display:inline;">
                       <input type="hidden" name="id" th:value="${dg.id}">
                       <input type="hidden" name="trangThai" value="An">
-                      <button type="submit" class="btn btn-outline btn-sm"
-                        onclick="Toast.show('Đã gỡ khỏi trang chủ!')"><i class="ti ti-x"></i> Bỏ ghim</button>
+                      <button type="submit" class="btn btn-outline btn-sm"><i class="ti ti-eye-off"></i> Ẩn</button>
                     </form>
 
-                    <!-- Nút Ghim (nếu chưa ghim) -->
+                    <!-- Hiển thị (nếu chờ duyệt hoặc đã ẩn) -->
                     <form th:if="${dg.trangThai != 'HienThi'}" th:action="@{/marketing/danh-gia/cap-nhat-trang-thai}"
                       method="post" style="display:inline;">
                       <input type="hidden" name="id" th:value="${dg.id}">
                       <input type="hidden" name="trangThai" value="HienThi">
-                      <button type="submit" class="btn btn-primary btn-sm"
-                        onclick="Toast.show('Đã ghim đánh giá lên trang chủ!')"><i class="ti ti-pin"></i> Ghim
-                        ngay</button>
+                      <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-eye"></i> Hiển thị</button>
                     </form>
                   </td>
                 </tr>
@@ -154,6 +152,12 @@
 
   <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
   <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+      var successMsg = /*[[${success}]]*/ null;
+      if (successMsg) Toast.show(successMsg);
+      var errorMsg = /*[[${error}]]*/ null;
+      if (errorMsg) alert(errorMsg);
+    });
     document.addEventListener('DOMContentLoaded', () => {
       if (typeof Chart === 'undefined') return;
 

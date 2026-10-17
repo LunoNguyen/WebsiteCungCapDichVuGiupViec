@@ -367,13 +367,34 @@
       <h2 class="modal-title">Sửa gói giá</h2>
       <button class="modal-close" data-modal-close="editPriceModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
+    <!-- Ảnh đại diện của dịch vụ (theo mã dịch vụ, áp cho mọi biến thể); form riêng, gửi ngay khi bấm Lưu ảnh -->
+    <form th:action="@{/hcns/danh-muc-dich-vu/anh-dich-vu}" method="post" enctype="multipart/form-data" id="bgAnhForm"
+          style="display:flex;gap:1rem;align-items:center;padding:0.75rem 0 1rem;margin-bottom:1rem;border-bottom:1px solid var(--border)">
+      <input type="hidden" name="maDichVu" id="bgAnhMa">
+      <input type="hidden" name="datMacDinh" id="bgAnhMacDinh" value="false">
+      <input type="hidden" name="quayVe" value="bang-gia">
+      <div style="width:84px;height:84px;flex:none;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;place-items:center;background:var(--bg-secondary, #f4f4f5)">
+        <img id="bgAnhXemTruoc" alt="Ảnh dịch vụ" style="width:100%;height:100%;object-fit:cover;display:none">
+        <i id="bgAnhTrong" class="ti ti-photo-off" style="font-size:1.5rem;color:var(--text-muted)"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <label class="form-label" for="bgAnhFile">Ảnh dịch vụ <span id="bgAnhMaNhan" style="color:var(--text-muted);font-weight:400"></span></label>
+        <input class="form-control" type="file" name="hinhAnhFile" id="bgAnhFile" accept="image/jpeg,image/png,image/webp,image/gif">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">Áp dụng cho mọi thời lượng / gói cùng mã dịch vụ. Chưa đặt ảnh thì dùng ảnh danh mục.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;flex:none">
+        <button type="submit" class="btn btn-primary btn-sm" id="bgAnhLuu" disabled><i class="ti ti-upload"></i> Lưu ảnh</button>
+        <button type="button" class="btn btn-outline btn-sm" id="bgAnhBoRieng"><i class="ti ti-arrow-back-up"></i> Dùng ảnh danh mục</button>
+      </div>
+    </form>
     <form th:action="@{/hcns/dich-vu-bang-gia/sua}" method="post">
       <input type="hidden" name="id" id="editBgId">
       <div>
         <div class="form-group" style="margin-bottom:1rem">
           <label class="form-label">Dịch vụ áp dụng *</label>
           <select class="form-control" name="dichVuId" id="editBgDichVuId" required>
-            <option th:each="dv : ${dichVus}" th:value="${dv.id}" th:text="${dv.tenDichVu + ' (' + dv.maDichVu + ')'}">Dịch vụ</option>
+            <option th:each="dv : ${dichVus}" th:value="${dv.id}" th:text="${dv.tenDichVu + ' (' + dv.maDichVu + ')'}"
+                    th:data-ma="${dv.maDichVu}" th:data-anh="${anhDichVu != null ? anhDichVu.get(dv.id) : null}">Dịch vụ</option>
           </select>
         </div>
         <div class="form-row" style="margin-bottom:1rem">
@@ -543,8 +564,43 @@
     if (btn.dataset.trangthai) {
       document.getElementById('editBgTrangThai').value = btn.dataset.trangthai;
     }
+    hienAnhDichVu();
     ModalManager.open('editPriceModal');
   }
+
+  // ── Ảnh dịch vụ trong cửa sổ sửa gói giá: theo dịch vụ đang chọn ──
+  function hienAnhDichVu() {
+    const opt = document.getElementById('editBgDichVuId').selectedOptions[0];
+    const ma = opt ? opt.dataset.ma || '' : '';
+    const anh = opt ? opt.dataset.anh || '' : '';
+    document.getElementById('bgAnhMa').value = ma;
+    document.getElementById('bgAnhMaNhan').textContent = ma ? '(' + ma + ')' : '';
+    document.getElementById('bgAnhFile').value = '';
+    document.getElementById('bgAnhLuu').disabled = true;
+    document.getElementById('bgAnhMacDinh').value = 'false';
+    document.getElementById('bgAnhBoRieng').style.display = anh ? '' : 'none';
+    xemTruocAnh(anh);
+  }
+
+  function xemTruocAnh(url) {
+    const img = document.getElementById('bgAnhXemTruoc');
+    img.style.display = url ? '' : 'none';
+    if (url) img.src = url; else img.removeAttribute('src');
+    document.getElementById('bgAnhTrong').style.display = url ? 'none' : '';
+  }
+
+  document.getElementById('editBgDichVuId').addEventListener('change', hienAnhDichVu);
+  document.getElementById('bgAnhFile').addEventListener('change', function () {
+    const f = this.files && this.files[0];
+    document.getElementById('bgAnhLuu').disabled = !f;
+    if (f) xemTruocAnh(URL.createObjectURL(f));
+  });
+  document.getElementById('bgAnhBoRieng').addEventListener('click', function () {
+    if (!confirm('Bỏ ảnh riêng của dịch vụ này và dùng ảnh của danh mục?')) return;
+    document.getElementById('bgAnhMacDinh').value = 'true';
+    document.getElementById('bgAnhFile').value = '';
+    document.getElementById('bgAnhForm').submit();
+  });
 
   // ===================== BỘ LỌC =====================
   (function () {

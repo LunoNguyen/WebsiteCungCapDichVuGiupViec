@@ -106,6 +106,22 @@ public class CustomerBookingController {
     /**
      * Dòng sự kiện 4-5 (UC-KH05): Xem chi tiết đơn đặt dịch vụ
      */
+    /**
+     * Khách xác nhận đã chuyển khoản trên ứng dụng: cùng hàm với website (và webhook VietQR sau này).
+     * Đơn chuyển khoản chỉ được phát hành cho cộng tác viên sau bước này.
+     */
+    @PostMapping("/customer/bookings/{id}/confirm-transfer")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> confirmTransfer(@PathVariable Integer id) {
+        try {
+            Map<String, Object> res = customerApiService.xacNhanThanhToanChuyenKhoan(id, "Khách xác nhận trên ứng dụng");
+            return ResponseEntity.ok(ApiResponse.ok("Đã ghi nhận thanh toán.", res));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi xác nhận thanh toán: " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/customer/bookings/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getBookingDetail(@PathVariable Integer id) {
         try {

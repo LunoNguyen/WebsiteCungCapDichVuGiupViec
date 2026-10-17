@@ -13,8 +13,10 @@ import com.example.Repository.DonDatDichVuRepository;
 import com.example.Repository.NhanVienRepository;
 import com.example.Repository.PhanCongCTVRepository;
 import com.example.Repository.PhanHoiDanhGiaRepository;
+import com.example.SuKien.SuKienDanhGia;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +44,7 @@ public class DanhGiaService {
     public static final int SO_NGAY_SUA = 7;
     private static final int TOI_DA_NHAN_XET = 1000;
     private static final int TOI_DA_BINH_LUAN = 1000;
+    public static final java.util.Set<String> TRANG_THAI = java.util.Set.of("ChoDuyet", "HienThi", "An");
 
     private final DanhGiaRepository danhGiaRepository;
     private final PhanHoiDanhGiaRepository phanHoiRepository;
@@ -50,11 +53,12 @@ public class DanhGiaService {
     private final CongTacVienRepository congTacVienRepository;
     private final NhanVienRepository nhanVienRepository;
     private final CacheManager cacheManager;
+    private final ApplicationEventPublisher publisher;
 
     public DanhGiaService(DanhGiaRepository danhGiaRepository, PhanHoiDanhGiaRepository phanHoiRepository,
                           DonDatDichVuRepository donDatRepository, PhanCongCTVRepository phanCongRepository,
                           CongTacVienRepository congTacVienRepository, NhanVienRepository nhanVienRepository,
-                          CacheManager cacheManager) {
+                          CacheManager cacheManager, ApplicationEventPublisher publisher) {
         this.danhGiaRepository = danhGiaRepository;
         this.phanHoiRepository = phanHoiRepository;
         this.donDatRepository = donDatRepository;
@@ -62,6 +66,7 @@ public class DanhGiaService {
         this.congTacVienRepository = congTacVienRepository;
         this.nhanVienRepository = nhanVienRepository;
         this.cacheManager = cacheManager;
+        this.publisher = publisher;
     }
 
     // =========================================================================
@@ -109,6 +114,7 @@ public class DanhGiaService {
         dg.setDiemChatLuong(diemChatLuong);
         dg.setDiemThaiDo(diemThaiDo);
         dg.setNhanXet(nhanXet(nhanXet));
+        dg.setTrangThai(trangThaiSauKhiSua(dg.getTrangThai()));
         danhGiaRepository.save(dg);
         capNhatDiemCtv(dg.getCongTacVien());
         xoaCache();
@@ -156,7 +162,60 @@ public class DanhGiaService {
                 .noiDung(noiDungBinhLuan(noiDung))
                 .thoiGian(LocalDateTime.now())
                 .build());
+        publisher.publishEvent(new SuKienDanhGia.PhanHoiMoi(dg.getId()));
         return toMap(dg);
+    }
+
+    /** CSKH / Marketing duyệt, ẩn hoặc đưa về chờ duyệt (một hoặc nhiều đánh giá). Trả về số đánh giá đã đổi. */
+    public int doiTrangThai(List<Integer> ids, String trangThai) {
+        String loi = loiDoiTrangThai(ids, trangThai);
+        if (loi != null) {
+            throw new IllegalArgumentException(loi);
+        }
+        List<DanhGia> ds = danhGiaRepository.findAllById(ids);
+        ds.forEach(dg -> dg.setTrangThai(trangThai));
+        danhGiaRepository.saveAll(ds);
+        xoaCache();
+        return ds.size();
+    }
+
+    @Transactional(readOnly = true)
+    public long demChoDuyet() {
+        return danhGiaRepository.countByTrangThai("ChoDuyet");
+    }
+
+    /** Phản hồi mới nhất của bTaskee dưới một đánh giá: {noiDung, thoiGian}, null nếu chưa có. */
+    @Transactional(readOnly = true)
+    public Map<String, Object> phanHoiCongKhai(Integer danhGiaId) {
+        PhanHoiDanhGia ph = phanHoiMoiNhatCuaNhanVien(phanHoiRepository.findByDanhGia_IdOrderByThoiGianAscIdAsc(danhGiaId));
+        if (ph == null) return null;
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("noiDung", ph.getNoiDung());
+        m.put("thoiGian", ph.getThoiGian());
+        return m;
+    }
+
+    /** Đánh giá công khai (đã duyệt) của một dịch vụ, mới nhất trước, kèm phản hồi mới nhất của bTaskee. */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> congKhaiTheoDichVu(Integer dichVuId) {
+        List<Map<String, Object>> ketQua = new ArrayList<>();
+        danhGiaRepository.findAll().stream()
+                .filter(DanhGiaService::laCongKhai)
+                .filter(dg -> dg.getDonDat() != null && dg.getDonDat().getChiTietList() != null
+                        && dg.getDonDat().getChiTietList().stream()
+                            .anyMatch(ct -> ct.getDichVu() != null && dichVuId.equals(ct.getDichVu().getId())))
+                .sorted(Comparator.comparing(DanhGia::getNgayDanhGia, Comparator.nullsLast(Comparator.reverseOrder())))
+                .forEach(dg -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", dg.getId());
+                    m.put("khachHang", dg.getKhachHang() != null ? dg.getKhachHang().getHoTen() : null);
+                    m.put("diem", (dg.getDiemChatLuong() + dg.getDiemThaiDo()) / 2.0);
+                    m.put("nhanXet", dg.getNhanXet());
+                    m.put("ngayDanhGia", dg.getNgayDanhGia());
+                    m.put("phanHoi", phanHoiCongKhai(dg.getId()));
+                    ketQua.add(m);
+                });
+        return ketQua;
     }
 
     /** Id các đánh giá đã có nhân viên trả lời (cột "Phản hồi" của trang CSKH). */
@@ -176,6 +235,34 @@ public class DanhGiaService {
     public static boolean conSuaDuoc(DanhGia dg) {
         return dg.getNgayDanhGia() != null
                 && !LocalDateTime.now().isAfter(dg.getNgayDanhGia().plusDays(SO_NGAY_SUA));
+    }
+
+    /** null nếu trạng thái hợp lệ, ngược lại là thông báo lỗi. */
+    static String loiTrangThai(String trangThai) {
+        return trangThai != null && TRANG_THAI.contains(trangThai) ? null : "Trạng thái không hợp lệ.";
+    }
+
+    static String loiDoiTrangThai(List<Integer> ids, String trangThai) {
+        if (ids == null || ids.isEmpty()) return "Chưa chọn đánh giá nào.";
+        return loiTrangThai(trangThai);
+    }
+
+    /** Khách sửa đánh giá đang công khai thì phải chờ duyệt lại; Ẩn vẫn giữ Ẩn. */
+    static String trangThaiSauKhiSua(String cu) {
+        return "HienThi".equals(cu) ? "ChoDuyet" : cu;
+    }
+
+    static boolean laCongKhai(DanhGia dg) {
+        return "HienThi".equals(dg.getTrangThai());
+    }
+
+    /** Phản hồi mới nhất của nhân viên (bỏ qua bình luận của khách), null nếu chưa có. */
+    static PhanHoiDanhGia phanHoiMoiNhatCuaNhanVien(List<PhanHoiDanhGia> traoDoi) {
+        return traoDoi.stream()
+                .filter(ph -> ph.getNhanVien() != null)
+                .max(Comparator.comparing(PhanHoiDanhGia::getThoiGian, Comparator.nullsFirst(Comparator.naturalOrder()))
+                        .thenComparing(PhanHoiDanhGia::getId, Comparator.nullsFirst(Comparator.naturalOrder())))
+                .orElse(null);
     }
 
     private DonDatDichVu donCuaKhach(Integer donDatId, Integer khachHangId) {

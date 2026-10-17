@@ -118,6 +118,7 @@ public class CSKHController {
         model.addAttribute("donHoanThanhCount",     donStats.getHoanThanhCount());
         model.addAttribute("donDangThucHienCount",  donStats.getDangThucHienCount());
         model.addAttribute("diemDanhGiaTB",   thongKeService.getDiemDanhGiaTrungBinh());
+        model.addAttribute("danhGiaChoDuyet", danhGiaService.demChoDuyet());
         model.addAttribute("recentOrders",    thongKeService.getDonHangGanDay(8));
         model.addAttribute("recentComplaints",thongKeService.getKhieuNaiGanDay(5));
         model.addAttribute("phanBoDon",       thongKeService.getPhanBoTrangThaiDon());
@@ -366,9 +367,9 @@ public class CSKHController {
 
     // ── UC-CSKH04 – Quản lý đánh giá (CRUD + trả lời) ───────────────
     @GetMapping("/danh-gia")
-    public String danhGia(Model model) {
-        var danhGiaList = danhGiaRepository.findAll();
-        var phanHoiList = phanHoiDanhGiaRepository.findAll();
+    public String danhGia(Model model, @RequestParam(required = false) String trangThai) {
+        var danhGiaList = new java.util.ArrayList<>(danhGiaRepository.findAll());
+        danhGiaList.sort((a, b) -> Integer.compare(b.getId(), a.getId()));
 
         long lowRating = danhGiaList.stream()
                 .filter(dg -> (dg.getDiemChatLuong() + dg.getDiemThaiDo()) / 2.0 < 3)
@@ -378,14 +379,25 @@ public class CSKHController {
         long replied = daTraLoi.size();
 
         model.addAttribute("danhGias",       danhGiaList);
-        model.addAttribute("phanHoiList",    phanHoiList);
         model.addAttribute("diemDanhGiaTB",  thongKeService.getDiemDanhGiaTrungBinh());
         model.addAttribute("lowRatingCount", lowRating);
         model.addAttribute("repliedCount",   replied);
         model.addAttribute("daTraLoi",       daTraLoi);
-        model.addAttribute("congTacViens",   congTacVienRepository.findAll());
-        model.addAttribute("khachHangs",     khachHangRepository.findAll());
+        model.addAttribute("choDuyetCount",  danhGiaService.demChoDuyet());
+        model.addAttribute("trangThaiLoc",   trangThai != null && com.example.Service.DanhGiaService.TRANG_THAI.contains(trangThai) ? trangThai : null);
         return "cskh/danh-gia";
+    }
+
+    /** Duyệt (HienThi), ẩn (An) hoặc đưa về chờ duyệt (ChoDuyet) một hoặc nhiều đánh giá. */
+    @PostMapping("/danh-gia/trang-thai")
+    @ResponseBody
+    public ResponseEntity<?> doiTrangThaiDanhGia(@RequestParam(required = false) java.util.List<Integer> ids,
+                                                 @RequestParam String trangThai) {
+        try {
+            return ResponseEntity.ok(Map.of("soLuong", danhGiaService.doiTrangThai(ids, trangThai)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     /** Đánh giá kèm trao đổi giữa khách và CSKH (mở hộp thoại "Phản hồi đánh giá"). */

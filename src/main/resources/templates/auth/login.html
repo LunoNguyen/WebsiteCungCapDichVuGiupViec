@@ -7,7 +7,7 @@
 <main class="auth">
   <!-- Cộng tác viên: bắt buộc dùng ứng dụng -->
   <div class="auth-card app-gate" th:if="${ctvApp}">
-    <h1>Cộng tác viên dùng ứng dụng</h1>
+    <h1><span class="nowrap">Cộng tác viên</span> <span class="nowrap">dùng ứng dụng</span></h1>
     <p class="sub" style="margin:0">Tài khoản cộng tác viên chỉ đăng nhập trên ứng dụng bTaskee Partner: nhận việc, xem lịch làm và thu nhập ngay trên điện thoại.</p>
     <div class="btns">
       <a th:if="${appDownloadUrl != null and !appDownloadUrl.isEmpty()}" th:href="${appDownloadUrl}" rel="noopener" aria-label="Tải ứng dụng bTaskee Partner" style="justify-self:center"><img src="/images/btaskee-partner-app.svg" alt="bTaskee Partner – tải ứng dụng" width="216" height="60"></a>

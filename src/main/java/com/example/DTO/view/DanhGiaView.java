@@ -20,4 +20,6 @@ public class DanhGiaView implements Serializable {
     private int soSao;
     private String nhanXet;
     private String ngayText;
+    /** Phản hồi mới nhất của bTaskee, null nếu chưa có. */
+    private String phanHoi;
 }

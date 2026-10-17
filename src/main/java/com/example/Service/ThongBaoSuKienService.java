@@ -2,6 +2,7 @@ package com.example.Service;
 
 import com.example.Model.*;
 import com.example.Repository.*;
+import com.example.SuKien.SuKienDanhGia;
 import com.example.SuKien.SuKienDon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import java.util.*;
  *
  * Khách hàng: đặt đơn, có cộng tác viên nhận đơn, đơn đổi trạng thái (bắt đầu làm, hoàn thành, hủy,
  *             quay lại tìm CTV), đơn đổi ngày / giờ / địa chỉ, ưu đãi mới ({@link #uuDaiMoi}).
+ *             bTaskee trả lời đánh giá của khách ({@link #khiCoPhanHoiDanhGia}).
  * Cộng tác viên: được phân công / mời nhận đơn, có đơn mới trong khu vực + dịch vụ đã đăng ký,
  *             đơn đã nhận bị khách hủy (hoặc bị hủy), đơn đã nhận đổi ngày / giờ / địa chỉ.
  *
@@ -43,6 +45,10 @@ public class ThongBaoSuKienService {
     /** Đơn chuyển khoản chưa thanh toán thì chưa báo cộng tác viên (chưa phát hành). */
     @org.springframework.beans.factory.annotation.Autowired
     private HanNhanDonService hanNhanDonService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private DanhGiaRepository danhGiaRepo;
+    @org.springframework.beans.factory.annotation.Autowired
+    private PhanHoiDanhGiaRepository phanHoiDanhGiaRepo;
 
     public ThongBaoSuKienService(DonDatDichVuRepository donRepo, PhanCongCTVRepository phanCongRepo,
                                  KhuVucCTVRepository khuVucCtvRepo, DichVuCTVRepository dichVuCtvRepo,
@@ -238,6 +244,30 @@ public class ThongBaoSuKienService {
     @Transactional
     public void uuDaiMoi(String tieuDe, String noiDung) {
         thongBaoService.gui(tieuDe, noiDung, "KhachHang", null, "Phòng Marketing");
+    }
+
+    // =========================================================================
+    // PHẢN HỒI ĐÁNH GIÁ: báo khách khi bTaskee trả lời
+    // =========================================================================
+
+    @Async("taskExecutor")
+    @TransactionalEventListener(fallbackExecution = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void khiCoPhanHoiDanhGia(SuKienDanhGia.PhanHoiMoi e) {
+        DanhGia dg = danhGiaRepo.findById(e.danhGiaId()).orElse(null);
+        if (dg == null || dg.getDonDat() == null) return;
+        PhanHoiDanhGia ph = DanhGiaService.phanHoiMoiNhatCuaNhanVien(
+                phanHoiDanhGiaRepo.findByDanhGia_IdOrderByThoiGianAscIdAsc(dg.getId()));
+        if (ph == null) return;
+        DonDatDichVu don = dg.getDonDat();
+        guiKhach(don, "bTaskee đã phản hồi đánh giá đơn " + don.getMaDonDat(), noiDungPhanHoiDanhGia(ph.getNoiDung()));
+    }
+
+    /** Trích phản hồi (tối đa 200 ký tự) kèm lời nhắc xem trong đơn. */
+    static String noiDungPhanHoiDanhGia(String phanHoi) {
+        String t = phanHoi == null ? "" : phanHoi.trim();
+        if (t.length() > 200) t = t.substring(0, 200) + "…";
+        return t + " Xem chi tiết trong đơn hàng của bạn.";
     }
 
     // =========================================================================

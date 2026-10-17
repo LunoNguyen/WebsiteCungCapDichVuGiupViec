@@ -43,6 +43,13 @@ class HanNhanDonServiceTest {
     }
 
     @Test
+    void soGiayConLaiTuHanVaBayGio() {
+        assertNull(HanNhanDonService.soGiayConLai(null, TAO));
+        assertEquals(907L, HanNhanDonService.soGiayConLai(TAO.plusSeconds(907), TAO));
+        assertEquals(0L, HanNhanDonService.soGiayConLai(TAO.minusSeconds(5), TAO));
+    }
+
+    @Test
     void khongCoHoaDonThiTinhTuLucTao() {
         assertEquals(TAO, HanNhanDonService.tinhLucPhatHanh(null, TAO, null, null, null));
     }

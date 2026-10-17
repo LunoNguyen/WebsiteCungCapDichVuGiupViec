@@ -24,7 +24,7 @@
     <div class="banner banner-error" role="alert" data-price-error hidden><svg class="ic"><use href="#i-alert"/></svg><div><b>Chưa tính được giá.</b> Máy chủ không phản hồi, thử lại sau ít phút.</div></div>
 
     <!-- Thanh bước: bước đã qua bấm được để quay lại, bước chưa tới bị khoá -->
-    <ol class="steps" aria-label="Các bước đặt dịch vụ">
+    <ol class="book-steps" aria-label="Các bước đặt dịch vụ">
       <li><button type="button" data-toi-buoc="1"><span>1</span>Dịch vụ</button></li>
       <li><button type="button" data-toi-buoc="2"><span>2</span>Hình thức</button></li>
       <li><button type="button" data-toi-buoc="3"><span>3</span>Thời gian</button></li>
@@ -685,7 +685,7 @@
     if (n === 3) { locBienThe(); tinhLich(); if (fpDat) fpDat.redraw(); }
     capNhatTomTat();
     veThanhBuoc();
-    if (cuon !== false) form.querySelector('.steps').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (cuon !== false) form.querySelector('.book-steps').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function tiep() {
