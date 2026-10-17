@@ -89,11 +89,26 @@
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var code = btn.getAttribute('data-copy');
-      var done = function () { window.siteToast('Đã sao chép mã ' + code); };
+      var originalHtml = btn.innerHTML;
+      
+      var showSuccess = function () {
+        btn.classList.add('copied');
+        btn.innerHTML = '<span>✓ Đã chép!</span>';
+        if (typeof window.siteToast === 'function') {
+          window.siteToast('Đã sao chép mã ' + code);
+        }
+        setTimeout(function () {
+          btn.classList.remove('copied');
+          btn.innerHTML = originalHtml;
+        }, 2000);
+      };
+
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(code).then(done, function () { window.siteToast('Mã: ' + code); });
+        navigator.clipboard.writeText(code).then(showSuccess, function () {
+          showSuccess();
+        });
       } else {
-        window.siteToast('Mã: ' + code);
+        showSuccess();
       }
     });
   });
