@@ -31,6 +31,6 @@ public class RealtimeController {
         // Không cho proxy (nginx...) gom/đệm dữ liệu, để sự kiện tới trình duyệt ngay
         response.setHeader("Cache-Control", "no-cache");
         response.setHeader("X-Accel-Buffering", "no");
-        return ResponseEntity.ok(realtimeService.dangKy());
+        return ResponseEntity.ok(realtimeService.dangKy(s));
     }
 }

@@ -757,7 +757,88 @@ public class HCNSController {
             }
         }
         model.addAttribute("anhDanhMuc", anhDanhMuc);
+
+        // Ảnh đại diện theo mã dịch vụ: mỗi mã một thẻ, ảnh dùng chung cho mọi biến thể cùng mã
+        Map<String, Map<String, Object>> nhomAnh = new java.util.LinkedHashMap<>();
+        for (DichVu dv : dichVuRepository.findAll(Sort.by(Sort.Direction.ASC, "maDichVu").and(Sort.by(Sort.Direction.ASC, "id")))) {
+            Map<String, Object> g = nhomAnh.computeIfAbsent(dv.getMaDichVu(), ma -> {
+                Map<String, Object> m = new java.util.LinkedHashMap<>();
+                m.put("maDichVu", ma);
+                m.put("tenNhom", dv.getTenDichVu() != null ? dv.getTenDichVu().replaceFirst("\\s*\\(.*\\)\\s*$", "") : ma);
+                m.put("loaiDichVuId", dv.getLoaiDichVu() != null ? dv.getLoaiDichVu().getId() : null);
+                m.put("tenLoaiDichVu", dv.getLoaiDichVu() != null ? dv.getLoaiDichVu().getTenLoaiDichVu() : "");
+                m.put("soBienThe", 0);
+                return m;
+            });
+            g.put("soBienThe", (Integer) g.get("soBienThe") + 1);
+            if (g.get("anhUrl") == null) {
+                String url = minioService.getViewUrl(dv.getHinhAnh());
+                if (url != null) g.put("anhUrl", url);
+            }
+        }
+        for (Map<String, Object> g : nhomAnh.values()) {
+            g.put("coAnhRieng", g.get("anhUrl") != null);
+            if (g.get("anhUrl") == null && g.get("loaiDichVuId") != null) {
+                g.put("anhUrl", anhDanhMuc.get((Integer) g.get("loaiDichVuId"))); // đang dùng ảnh danh mục
+            }
+        }
+        model.addAttribute("nhomAnhDichVu", new java.util.ArrayList<>(nhomAnh.values()));
         return "hcns/danh-muc-dich-vu";
+    }
+
+    /**
+     * Đổi ảnh đại diện của một dịch vụ theo mã: tải ảnh lên MinIO một lần rồi gán cho mọi biến thể cùng mã
+     * (VD DV101: 2 giờ, 3 giờ, 4 giờ, gói tháng). datMacDinh = true thì bỏ ảnh riêng, dùng ảnh danh mục.
+     * Ảnh cũ trên MinIO bị xoá khi không còn dịch vụ nào dùng.
+     */
+    @PostMapping("/danh-muc-dich-vu/anh-dich-vu")
+    public String doiAnhDichVu(
+            @RequestParam String maDichVu,
+            @RequestParam(value = "hinhAnhFile", required = false) org.springframework.web.multipart.MultipartFile hinhAnhFile,
+            @RequestParam(defaultValue = "false") boolean datMacDinh,
+            RedirectAttributes redirectAttributes) {
+        List<DichVu> bienThe = dichVuRepository.findByMaDichVu(maDichVu);
+        if (bienThe.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy dịch vụ mã " + maDichVu + ".");
+            return "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
+        }
+        boolean coFile = hinhAnhFile != null && !hinhAnhFile.isEmpty();
+        if (!datMacDinh && !coFile) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ảnh mới cho dịch vụ " + maDichVu + ".");
+            return "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
+        }
+        String keyMoi = null;
+        if (!datMacDinh) {
+            try {
+                keyMoi = minioService.uploadImage(hinhAnhFile, com.example.Service.MinioService.Folder.DICH_VU);
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Chưa tải được ảnh: " + e.getMessage());
+                return "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
+            }
+        }
+        java.util.Set<String> anhCu = new java.util.HashSet<>();
+        for (DichVu dv : bienThe) {
+            if (dv.getHinhAnh() != null && !dv.getHinhAnh().isBlank()) anhCu.add(dv.getHinhAnh());
+            dv.setHinhAnh(keyMoi);
+        }
+        dichVuRepository.saveAll(bienThe);
+
+        // Xoá ảnh cũ trên MinIO (bỏ qua ảnh tĩnh /images/... và ảnh ngoài) nếu không còn dịch vụ nào dùng
+        java.util.Set<String> conDung = new java.util.HashSet<>();
+        dichVuRepository.findAll().forEach(dv -> { if (dv.getHinhAnh() != null) conDung.add(dv.getHinhAnh()); });
+        for (String key : anhCu) {
+            if (key.equals(keyMoi) || conDung.contains(key) || key.startsWith("/") || key.startsWith("http")) continue;
+            try {
+                minioService.deleteFile(key);
+            } catch (Exception e) {
+                org.slf4j.LoggerFactory.getLogger(HCNSController.class)
+                        .warn("Không xoá được ảnh cũ {} của dịch vụ {}: {}", key, maDichVu, e.getMessage());
+            }
+        }
+        redirectAttributes.addFlashAttribute("successMessage", datMacDinh
+                ? "Dịch vụ " + maDichVu + " đã chuyển về dùng ảnh của danh mục."
+                : "Đã cập nhật ảnh đại diện cho " + bienThe.size() + " dịch vụ mã " + maDichVu + ".");
+        return "redirect:/hcns/danh-muc-dich-vu#anh-dich-vu";
     }
 
         /**

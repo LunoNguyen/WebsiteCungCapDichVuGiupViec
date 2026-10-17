@@ -23,4 +23,7 @@ public final class SuKienDon {
 
     /** Phân công đổi trạng thái (VD ChoPhanCong → DaXacNhan khi CTV nhận đơn). */
     public record PhanCongDoiTrangThai(Integer phanCongId, String cu, String moi) { }
+
+    /** Đơn chuyển khoản vừa được thanh toán: từ lúc này mới phát hành cho cộng tác viên. */
+    public record DaPhatHanh(Integer donId) { }
 }

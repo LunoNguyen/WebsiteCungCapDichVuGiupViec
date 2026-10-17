@@ -28,6 +28,8 @@ public class RealtimeService {
     private static final Logger log = LoggerFactory.getLogger(RealtimeService.class);
 
     private final List<SseEmitter> ketNoi = new CopyOnWriteArrayList<>();
+    /** Vai trò (ROLE_CSKH, ROLE_HCNS...) của từng kết nối trang quản trị: để gửi thông báo cho riêng một bộ phận. */
+    private final Map<SseEmitter, String> vaiTroKetNoi = new ConcurrentHashMap<>();
 
     /** Kết nối của ứng dụng di động theo tài khoản (một tài khoản có thể mở trên nhiều máy). */
     private record KetNoiApp(Integer taiKhoanId, String vaiTro, SseEmitter emitter) { }
@@ -94,15 +96,71 @@ public class RealtimeService {
         }
     }
 
-    /** Đăng ký một trình duyệt mới vào danh sách nhận sự kiện. */
-    public SseEmitter dangKy() {
-        SseEmitter emitter = new SseEmitter(0L); // không tự hết hạn; trình duyệt đóng thì gỡ khỏi danh sách
+    /** Đăng ký một trình duyệt mới (đã đăng nhập với vai trò vaiTro) vào danh sách nhận sự kiện. */
+    public SseEmitter dangKy(String vaiTro) {
+        // không tự hết hạn; trình duyệt đóng thì gỡ khỏi danh sách
+        return dangKy(vaiTro, new SseEmitter(0L));
+    }
+
+    SseEmitter dangKy(String vaiTro, SseEmitter emitter) {
         ketNoi.add(emitter);
-        emitter.onCompletion(() -> ketNoi.remove(emitter));
-        emitter.onTimeout(() -> ketNoi.remove(emitter));
-        emitter.onError(e -> ketNoi.remove(emitter));
+        if (vaiTro != null) vaiTroKetNoi.put(emitter, vaiTro);
+        emitter.onCompletion(() -> go(emitter));
+        emitter.onTimeout(() -> go(emitter));
+        emitter.onError(e -> go(emitter));
         gui(emitter, "san-sang", "ok");
         return emitter;
+    }
+
+    private void go(SseEmitter emitter) {
+        ketNoi.remove(emitter);
+        vaiTroKetNoi.remove(emitter);
+    }
+
+    /**
+     * Gửi sự kiện có nội dung (JSON) cho các trang quản trị của những vai trò trong tập,
+     * VD "don-moi" cho ROLE_CSKH (realtime.js hiện thẻ thông báo).
+     */
+    public void guiNhanVien(java.util.Set<String> vaiTro, String tenSuKien, String duLieuJson) {
+        String duLieu = duLieuJson == null ? "" : duLieuJson.replaceAll("[\r\n]", " ");
+        for (SseEmitter emitter : ketNoi) {
+            String vt = vaiTroKetNoi.get(emitter);
+            if (vt != null && vaiTro.contains(vt)) gui(emitter, tenSuKien, duLieu);
+        }
+    }
+
+    /**
+     * Dữ liệu sự kiện đơn cho nhân viên: chỉ thông tin tóm tắt, không có số điện thoại / địa chỉ chi tiết của khách.
+     *
+     * @param loai don-moi | da-thanh-toan | tu-huy
+     */
+    public static String jsonDon(String loai, com.example.Model.DonDatDichVu don, String hinhThuc,
+                                 boolean daThanhToan, String ghiChu) {
+        try {
+            String tenDichVu = don.getChiTietList() != null && !don.getChiTietList().isEmpty()
+                    && don.getChiTietList().get(0).getDichVu() != null
+                    ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ";
+            String ngayGio = (don.getNgayThucHien() != null
+                    ? don.getNgayThucHien().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "")
+                    + (don.getGioBatDau() != null
+                    ? " " + don.getGioBatDau().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) : "");
+            String khuVuc = don.getDiaChi() != null && don.getDiaChi().getKhuVuc() != null
+                    ? don.getDiaChi().getKhuVuc().getTenKhuVuc() : "";
+            Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("loai", loai);
+            m.put("donId", don.getId());
+            m.put("maDonDat", don.getMaDonDat());
+            m.put("tenDichVu", tenDichVu);
+            m.put("ngayGio", ngayGio.trim());
+            m.put("khuVuc", khuVuc);
+            m.put("hinhThucThanhToan", hinhThuc);
+            m.put("daThanhToan", daThanhToan);
+            m.put("ghiChu", ghiChu);
+            m.put("url", "/cskh/don-dat-dich-vu?moDon=" + don.getId());
+            return JSON.writeValueAsString(m);
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 
     /** Báo cho mọi trang đang mở biết dữ liệu vừa thay đổi. */
@@ -137,7 +195,7 @@ public class RealtimeService {
             emitter.send(SseEmitter.event().name(tenSuKien).data(duLieu));
         } catch (Exception e) {
             // Trình duyệt đã đóng tab hoặc mất mạng
-            ketNoi.remove(emitter);
+            go(emitter);
             try {
                 emitter.completeWithError(e);
             } catch (Exception ignored) {

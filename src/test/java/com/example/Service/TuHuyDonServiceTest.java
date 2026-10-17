@@ -50,6 +50,28 @@ class TuHuyDonServiceTest {
     }
 
     @Test
+    void chuaAiNhanThiHuySau15PhutPhatHanh() {
+        LocalDateTime phatHanh = LocalDateTime.of(2026, 10, 10, 9, 0);
+        LocalDateTime han = phatHanh.plusMinutes(15);
+        assertNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, phatHanh.plusMinutes(14), 15));   // còn hạn
+        assertNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, han, 15));                         // đúng hạn: chưa hủy
+        assertNotNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, han.plusSeconds(1), 15));       // quá hạn
+        assertNull(TuHuyDonService.lyDoHetHanNhan(han, true, false, han.plusHours(1), 15));             // đã có người nhận
+        assertNull(TuHuyDonService.lyDoHetHanNhan(null, false, false, han.plusHours(1), 15));           // không rõ lúc phát hành
+    }
+
+    @Test
+    void quaHanThanhToanThiHuy() {
+        LocalDateTime tao = LocalDateTime.of(2026, 10, 16, 9, 0);
+        assertNull(TuHuyDonService.lyDoQuaHanThanhToan("ChuyenKhoan", "ChuaThanhToan", tao, tao.plusMinutes(15), 15));
+        String lyDo = TuHuyDonService.lyDoQuaHanThanhToan("ChuyenKhoan", "ChuaThanhToan", tao, tao.plusMinutes(15).plusSeconds(1), 15);
+        assertNotNull(lyDo);
+        assertTrue(lyDo.contains("chưa thanh toán"), lyDo);
+        assertNull(TuHuyDonService.lyDoQuaHanThanhToan("ChuyenKhoan", "DaThanhToan", tao, tao.plusHours(1), 15));
+        assertNull(TuHuyDonService.lyDoQuaHanThanhToan("TienMat", "ChuaThanhToan", tao, tao.plusHours(1), 15));
+    }
+
+    @Test
     void goiThangTinhTheoBuoiCuoi() {
         DonDatDichVu d = don("GoiThang", "2,4,6", 12);                                         // buổi cuối 06/11
         assertNull(TuHuyDonService.lyDoQuaHan(d, true, false, LocalDateTime.of(2026, 10, 20, 12, 0)));

@@ -15,7 +15,24 @@
         <span class="badge" th:classappend="'badge-' + ${don.toneTrangThai}" th:text="${don.nhanTrangThai}">Đang tìm người làm</span>
       </div>
       <div th:replace="~{layout/account-layout :: flash}"></div>
-      <div class="banner banner-warn" th:if="${don.toneTrangThai == 'warning'}" role="status">
+      <!-- Đơn chuyển khoản chưa thanh toán: đếm ngược hạn chuyển khoản -->
+      <div class="banner banner-warn" th:if="${don['choThanhToan'] == true}" role="timer"
+           th:attr="data-con-lai=${don['soGiayConLaiThanhToan']}" data-han-tt>
+        <svg class="ic"><use href="#i-clock"/></svg>
+        <div><b data-han-tt-text>Chờ thanh toán chuyển khoản</b>
+          <div style="margin-top:4px">Thanh toán xong, bTaskee mới bắt đầu tìm cộng tác viên. Quá hạn chưa thanh toán, đơn sẽ tự hủy.</div>
+        </div>
+        <a class="btn btn-primary btn-sm" th:href="@{/tai-khoan/don-hang/{id}/thanh-toan(id=${don.id})}">Thanh toán ngay</a>
+      </div>
+      <!-- Đơn đã phát hành, đang chờ nhận: đếm ngược thời gian nhận đơn (hết giờ chưa ai nhận thì hệ thống tự hủy) -->
+      <div class="banner banner-ok" th:if="${don['soGiayConLaiNhan'] != null and don.toneTrangThai != 'warning'}" role="timer"
+           th:attr="data-con-lai=${don['soGiayConLaiNhan']},data-so-phut=${don['soPhutNhanDon']}" data-han-nhan>
+        <svg class="ic"><use href="#i-clock"/></svg>
+        <div><b data-han-nhan-text>Đang tìm cộng tác viên</b>
+          <div style="margin-top:4px" th:text="'Cộng tác viên trong khu vực đang được mời nhận đơn. Nếu sau ' + ${don['soPhutNhanDon']} + ' phút chưa có ai nhận, đơn sẽ tự hủy và bạn không mất phí.'">Nếu sau 15 phút chưa có ai nhận, đơn sẽ tự hủy.</div>
+        </div>
+      </div>
+      <div class="banner banner-warn" th:if="${don.toneTrangThai == 'warning' and don['choThanhToan'] != true}" role="status">
         <svg class="ic"><use href="#i-clock"/></svg><div><b>Đã quá giờ hẹn mà chưa có cộng tác viên nhận.</b> Gọi 1900 1234 để được hỗ trợ ngay.</div>
       </div>
 
@@ -29,6 +46,14 @@
               <dd th:text="${don.ngayThucHien != null ? thu[don.ngayThucHien.dayOfWeek.value - 1] + ', ' + #temporals.format(don.ngayThucHien, 'dd/MM/yyyy') : '—'} + (${don.gioBatDau != null} ? ' · ' + ${#temporals.format(don.gioBatDau, 'HH:mm')} + (${don['gioKetThuc'] != null} ? '–' + ${#temporals.format(don['gioKetThuc'], 'HH:mm')} : '') : '')">T5, 09/10/2026 · 09:00–12:00</dd>
               <dt>Địa chỉ</dt><dd th:text="${don.diaChi}">45 Đường số 7, Q. Bình Tân</dd>
               <dt>Hình thức</dt><dd th:text="${don.loaiHinhDat == 'GoiThang'} ? 'Gói tháng' : 'Theo lần'">Theo lần</dd>
+              <th:block th:if="${don['hoaDon'] != null}" th:with="hd=${don['hoaDon']}">
+                <dt>Thanh toán</dt>
+                <dd th:text="${hd.hinhThucThanhToan == 'ChuyenKhoan'}
+                      ? 'Chuyển khoản – ' + (${hd.trangThaiThanhToan == 'DaThanhToan'} ? 'Đã thanh toán' : (${hd.trangThaiThanhToan == 'HoanTien'} ? 'Đã hoàn tiền' : 'Chưa thanh toán'))
+                      : 'Tiền mặt – trả cho cộng tác viên sau buổi làm'">Tiền mặt</dd>
+                <dt th:if="${don.trangThai == 'DaHuy' and hd.trangThaiThanhToan == 'DaThanhToan'}">Hoàn tiền</dt>
+                <dd th:if="${don.trangThai == 'DaHuy' and hd.trangThaiThanhToan == 'DaThanhToan'}">bTaskee sẽ liên hệ hoàn tiền trong 1–3 ngày làm việc.</dd>
+              </th:block>
               <th:block th:if="${don['lichBuoi'] != null}">
                 <dt>Thứ trong tuần</dt><dd th:text="${don['thuTrongTuanText']}">T3, T5, T7, CN</dd>
                 <dt th:text="'Lịch ' + ${don['lichBuoi'].size()} + ' buổi'">Lịch 13 buổi</dt>
@@ -154,6 +179,50 @@
     </form>
   </dialog>
 </main>
+<script>
+(function () {
+  'use strict';
+  // Hạn thanh toán chuyển khoản
+  var tt = document.querySelector('[data-han-tt]');
+  if (tt) {
+    var hetTt = Date.now() + Number(tt.getAttribute('data-con-lai')) * 1000;
+    var txtTt = tt.querySelector('[data-han-tt-text]');
+    var tTt = null;
+    var veTt = function () {
+      var con = Math.max(0, Math.round((hetTt - Date.now()) / 1000));
+      if (con <= 0) {
+        txtTt.textContent = 'Đã hết thời gian thanh toán. Đang cập nhật…';
+        clearInterval(tTt);
+        setTimeout(function () { location.reload(); }, 65000);
+        return;
+      }
+      txtTt.textContent = 'Chờ thanh toán chuyển khoản · còn ' + String(Math.floor(con / 60)).padStart(2, '0') + ':' + String(con % 60).padStart(2, '0');
+    };
+    veTt();
+    tTt = setInterval(veTt, 1000);
+  }
+})();
+(function () {
+  'use strict';
+  var el = document.querySelector('[data-han-nhan]');
+  if (!el) return;
+  var het = Date.now() + Number(el.getAttribute('data-con-lai')) * 1000;
+  var txt = el.querySelector('[data-han-nhan-text]');
+  var t = null;
+  function ve() {
+    var con = Math.max(0, Math.round((het - Date.now()) / 1000));
+    if (con <= 0) {
+      txt.textContent = 'Đã hết thời gian chờ nhận đơn. Đang cập nhật…';
+      clearInterval(t);
+      setTimeout(function () { location.reload(); }, 65000); // hệ thống quét mỗi phút
+      return;
+    }
+    txt.textContent = 'Đang tìm cộng tác viên · còn ' + String(Math.floor(con / 60)).padStart(2, '0') + ':' + String(con % 60).padStart(2, '0');
+  }
+  ve();
+  t = setInterval(ve, 1000);
+})();
+</script>
 
 <footer th:replace="~{layout/site-layout :: footer}"></footer>
 <div th:replace="~{layout/site-layout :: scripts}"></div>

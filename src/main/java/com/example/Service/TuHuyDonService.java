@@ -17,7 +17,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Tự hủy đơn quá hạn (chạy 5 phút một lần):
+ * Tự hủy đơn quá hạn (chạy mỗi phút):
+ * - Đơn CHƯA có cộng tác viên nhận: hết thời gian nhận đơn (HanNhanDonService, mặc định 15 phút kể từ lúc
+ *   đơn được phát hành cho CTV) thì hủy. Trong thời gian đó CTV tự nhận đơn hoặc nhân viên phân công.
  * - Đơn CHƯA có cộng tác viên nhận (chờ duyệt, hoặc lời mời chưa ai xác nhận): quá giờ bắt đầu thì hủy.
  * - Đơn ĐÃ có cộng tác viên nhận nhưng chưa bắt đầu làm (vẫn "Đã xác nhận", chưa buổi nào được làm):
  *   quá giờ kết thúc (gói tháng: giờ kết thúc buổi cuối) thì hủy.
@@ -41,16 +43,25 @@ public class TuHuyDonService {
     private final ThongBaoRepository thongBaoRepo;
     private final ThongBaoNguoiDungRepository thongBaoNguoiDungRepo;
     private final RealtimeService realtimeService;
+    private final HanNhanDonService hanNhanDon;
     private final TransactionTemplate giaoDich;
 
     /** Bật / tắt tự hủy (application.properties: app.don.tu-huy=false để tắt). */
     @Value("${app.don.tu-huy:true}")
     private boolean bat;
 
+    /** Hạn thanh toán chuyển khoản (phút, tính từ lúc tạo đơn): quá hạn chưa trả thì hủy. */
+    @Value("${app.don.han-thanh-toan-phut:15}")
+    private long hanThanhToanPhut;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private HoaDonRepository hoaDonRepo;
+
     public TuHuyDonService(DonDatDichVuRepository donRepo, PhanCongCTVRepository phanCongRepo,
                            LichLamViecRepository lichRepo, LichSuTrangThaiDonRepository lichSuRepo,
                            ThongBaoRepository thongBaoRepo, ThongBaoNguoiDungRepository thongBaoNguoiDungRepo,
-                           RealtimeService realtimeService, PlatformTransactionManager tm) {
+                           RealtimeService realtimeService, HanNhanDonService hanNhanDon,
+                           PlatformTransactionManager tm) {
         this.donRepo = donRepo;
         this.phanCongRepo = phanCongRepo;
         this.lichRepo = lichRepo;
@@ -58,18 +69,25 @@ public class TuHuyDonService {
         this.thongBaoRepo = thongBaoRepo;
         this.thongBaoNguoiDungRepo = thongBaoNguoiDungRepo;
         this.realtimeService = realtimeService;
+        this.hanNhanDon = hanNhanDon;
         this.giaoDich = new TransactionTemplate(tm);
     }
 
-    @Scheduled(cron = "0 */5 * * * *")
+    // Mỗi phút: đơn hết 15 phút chờ nhận được hủy đúng hạn (trễ tối đa 1 phút)
+    @Scheduled(cron = "0 * * * * *")
     public void quetDinhKy() {
         if (bat) quet(LocalDateTime.now());
     }
 
     /** Hủy mọi đơn quá hạn tại thời điểm [luc]; trả về số đơn đã hủy. */
     public int quet(LocalDateTime luc) {
-        List<Integer> ungVien = giaoDich.execute(t ->
-                donRepo.findChuaLamDenNgay(luc.toLocalDate()).stream().map(DonDatDichVu::getId).toList());
+        // Đơn tới ngày làm (quá giờ) + mọi đơn đang chờ nhận (hết thời gian nhận đơn)
+        List<Integer> ungVien = giaoDich.execute(t -> {
+            java.util.Set<Integer> ids = new java.util.LinkedHashSet<>();
+            donRepo.findChuaLamDenNgay(luc.toLocalDate()).forEach(d -> ids.add(d.getId()));
+            donRepo.findByTrangThaiOrderByNgayTaoDesc("ChoDuyet").forEach(d -> ids.add(d.getId()));
+            return new java.util.ArrayList<>(ids);
+        });
         int daHuy = 0;
         for (Integer id : ungVien == null ? List.<Integer>of() : ungVien) {
             try {
@@ -99,7 +117,14 @@ public class TuHuyDonService {
         boolean daLamBuoiNao = lichs.stream()
                 .anyMatch(l -> "DangThucHien".equals(l.getTrangThai()) || "HoanThanh".equals(l.getTrangThai()));
 
-        String lyDo = lyDoQuaHan(don, daCoNguoiNhan, daLamBuoiNao, luc);
+        // Chưa có người nhận: quá hạn thanh toán chuyển khoản → hết 15 phút nhận đơn → quá giờ bắt đầu
+        HoaDon hd = hoaDonRepo.findByDonDat_Id(id).orElse(null);
+        String lyDo = daCoNguoiNhan || daLamBuoiNao || hd == null ? null
+                : lyDoQuaHanThanhToan(hd.getHinhThucThanhToan(), hd.getTrangThaiThanhToan(), don.getNgayTao(), luc,
+                        hanThanhToanPhut);
+        if (lyDo == null) lyDo = lyDoHetHanNhan(hanNhanDon.hanNhan(don), daCoNguoiNhan, daLamBuoiNao, luc,
+                hanNhanDon.soPhut());
+        if (lyDo == null) lyDo = lyDoQuaHan(don, daCoNguoiNhan, daLamBuoiNao, luc);
         if (lyDo == null) return false;
 
         String trangThaiCu = don.getTrangThai();
@@ -132,6 +157,30 @@ public class TuHuyDonService {
         String ma = don.getMaDonDat();
         log.info("Tự hủy đơn {}: {}", ma, lyDo);
         return true;
+    }
+
+    /**
+     * Lý do hủy vì đơn chuyển khoản quá hạn thanh toán (tính từ lúc tạo đơn); null nếu không phải
+     * chuyển khoản, đã thanh toán hoặc còn hạn.
+     */
+    public static String lyDoQuaHanThanhToan(String hinhThuc, String trangThaiThanhToan, LocalDateTime ngayTao,
+                                             LocalDateTime luc, long soPhut) {
+        if (!"ChuyenKhoan".equalsIgnoreCase(hinhThuc) || !"ChuaThanhToan".equalsIgnoreCase(trangThaiThanhToan)
+                || ngayTao == null) return null;
+        LocalDateTime han = ngayTao.plusMinutes(soPhut);
+        if (!luc.isAfter(han)) return null;
+        return "Quá " + soPhut + " phút chưa thanh toán chuyển khoản (hạn " + han.format(GIO_NGAY) + ")";
+    }
+
+    /**
+     * Lý do hủy vì hết thời gian nhận đơn; null nếu đã có người nhận, đã làm hoặc còn hạn.
+     *
+     * @param han hạn nhận đơn (HanNhanDonService.hanNhan; null = chưa phát hành)
+     */
+    public static String lyDoHetHanNhan(LocalDateTime han, boolean daCoNguoiNhan, boolean daLamBuoiNao,
+                                        LocalDateTime luc, long soPhut) {
+        if (han == null || daCoNguoiNhan || daLamBuoiNao || !luc.isAfter(han)) return null;
+        return "Hết " + soPhut + " phút chờ (hạn " + han.format(GIO_NGAY) + ") nhưng chưa có cộng tác viên nhận đơn";
     }
 
     /**

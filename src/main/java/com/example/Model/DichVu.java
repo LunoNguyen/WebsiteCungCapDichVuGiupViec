@@ -26,6 +26,10 @@ public class DichVu {
     @Column(name = "MoTaChiTiet", columnDefinition = "TEXT")
     private String moTaChiTiet;
 
+    // Object key MinIO hoặc đường dẫn ảnh tĩnh (/images/...); NULL = dùng ảnh của danh mục
+    @Column(name = "HinhAnh", length = 255)
+    private String hinhAnh;
+
     // Thời gian thực hiện mỗi buổi (phút)
     @Column(name = "ThoiGianThucHien")
     private Integer thoiGianThucHien;

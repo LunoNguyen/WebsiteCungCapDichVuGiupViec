@@ -86,6 +86,8 @@ public class SiteController {
 
         model.addAttribute("ketQua", ketQua);
         model.addAttribute("anhNhom", anhNhom);
+        // Ảnh riêng theo mã dịch vụ (ưu tiên hơn ảnh nhóm)
+        model.addAttribute("anhDichVu", CatalogService.anhTheoMaDichVu(danhMucs));
         model.addAttribute("q", q);
         model.addAttribute("nhom", nhom);
         model.addAttribute("hinhThuc", loaiHinh);
@@ -150,6 +152,15 @@ public class SiteController {
 
             // Các lựa chọn khác của cùng dịch vụ (cùng mã): theo lần trước, rồi theo giá
             Object ma = dv.get("maDichVu");
+
+            // Ảnh đại diện: ảnh riêng của mã dịch vụ, chưa có thì ảnh danh mục
+            List<DanhMucView> danhMucs = (List<DanhMucView>) model.getAttribute("danhMucs");
+            String anh = ma != null ? CatalogService.anhTheoMaDichVu(danhMucs).get(ma.toString()) : null;
+            if (anh == null && dv.get("loaiDichVuId") instanceof Integer loaiId) {
+                DanhMucView dm = CatalogService.timDanhMuc(danhMucs, loaiId);
+                if (dm != null) anh = dm.getHinhAnhUrl();
+            }
+            model.addAttribute("anhDichVu", anh);
             if (ma != null) {
                 List<com.example.Model.DichVu> bienThe = new ArrayList<>(
                         dichVuRepository.findByMaDichVuAndTrangThai(ma.toString(), "HoatDong"));

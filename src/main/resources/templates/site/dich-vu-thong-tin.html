@@ -14,6 +14,7 @@
     <div class="detail-layout">
       <div class="stack">
         <section class="panel">
+          <img class="svc-photo" th:if="${anhDichVu != null}" th:src="${anhDichVu}" th:alt="${dv.tenDichVu}">
           <h1 th:text="${dv.tenDichVu}">Dọn dẹp nhà theo diện tích 3 giờ</h1>
           <div class="svc-facts">
             <span class="badge badge-primary" th:text="${goi} ? 'Gói tháng' : 'Theo lần'">Theo lần</span>

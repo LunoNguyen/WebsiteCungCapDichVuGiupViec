@@ -36,7 +36,7 @@ public class AuthService {
 
     public AuthenticationResult authenticate(String tenDangNhap, String matKhau) {
         if (isBlank(tenDangNhap) || isBlank(matKhau)) {
-            return AuthenticationResult.failure("Vui lÃ²ng nháº­p tÃªn Ä‘Äƒng nháº­p vÃ  máº­t kháº©u.");
+            return AuthenticationResult.failure("Vui lòng nhập tên đăng nhập và mật khẩu.");
         }
 
         String loginIdentifier = tenDangNhap.trim();
@@ -44,10 +44,10 @@ public class AuthService {
                 .or(() -> taiKhoanRepository.findBySoDienThoai(loginIdentifier))
                 .orElse(null);
         if (taiKhoan == null || !passwordMatches(matKhau, taiKhoan.getMatKhau())) {
-            return AuthenticationResult.failure("TÃªn Ä‘Äƒng nháº­p hoáº·c máº­t kháº©u khÃ´ng chÃ­nh xÃ¡c.");
+            return AuthenticationResult.failure("Tên đăng nhập hoặc mật khẩu không chính xác.");
         }
         if (!"HoatDong".equalsIgnoreCase(taiKhoan.getTrangThai())) {
-            return AuthenticationResult.failure("TÃ i khoáº£n chÆ°a Ä‘Æ°á»£c kÃ­ch hoáº¡t hoáº·c Ä‘Ã£ bá»‹ khÃ³a.");
+            return AuthenticationResult.failure("Tài khoản chưa được kích hoạt hoặc đã bị khóa.");
         }
 
         return resolveUserRoleAndRedirect(taiKhoan);
@@ -73,7 +73,7 @@ public class AuthService {
                 if ("CV-GD".equalsIgnoreCase(maChucVu) || "PB-BGD".equalsIgnoreCase(maPhongBan)) {
                     role = "ROLE_GIAM_DOC";
                     redirectUrl = "/giam-doc/dashboard";
-                    avatar = "GÄ";
+                    avatar = "GĐ";
                 } else if ("PB-HCNS".equalsIgnoreCase(maPhongBan) || "CV-TPHC".equalsIgnoreCase(maChucVu)
                         || "CV-NVNS".equalsIgnoreCase(maChucVu)) {
                     role = "ROLE_HCNS";
@@ -96,7 +96,7 @@ public class AuthService {
                 if ("giamdoc".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_GIAM_DOC";
                     redirectUrl = "/giam-doc/dashboard";
-                    avatar = "GÄ";
+                    avatar = "GĐ";
                 } else if ("hanhnt".equalsIgnoreCase(taiKhoan.getTenDangNhap())) {
                     role = "ROLE_HCNS";
                     redirectUrl = "/hcns/dashboard";
@@ -153,11 +153,11 @@ public class AuthService {
         if (storedPassword == null || input == null) {
             return false;
         }
-        // 1. So khá»›p trá»±c tiáº¿p (trÆ°á»ng há»£p dá»¯ liá»‡u máº«u plain-text)
+        // 1. So khớp trực tiếp (trường hợp dữ liệu mẫu plain-text)
         if (input.equals(storedPassword)) {
             return true;
         }
-        // 2. So khá»›p BCrypt
+        // 2. So khớp BCrypt
         try {
             if (passwordEncoder.matches(input, storedPassword)) {
                 return true;

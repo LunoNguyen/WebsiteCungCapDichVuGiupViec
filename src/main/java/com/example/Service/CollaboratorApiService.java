@@ -22,6 +22,8 @@ public class CollaboratorApiService {
     @org.springframework.beans.factory.annotation.Autowired
     private KhuVucCtvService khuVucCtvService;
     private final PhanCongCTVRepository phanCongCTVRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private HanNhanDonService hanNhanDonService;
     private final DonDatDichVuRepository donDatDichVuRepository;
     private final LichLamViecRepository lichLamViecRepository;
     private final CongTacVienRepository congTacVienRepository;
@@ -161,6 +163,11 @@ public class CollaboratorApiService {
         if (!"DaXacNhan".equalsIgnoreCase(pc.getTrangThai()) && don.getNgayThucHien() != null && don.getGioBatDau() != null
                 && LocalDateTime.of(don.getNgayThucHien(), don.getGioBatDau()).isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Đơn này đã quá giờ bắt đầu, không nhận được nữa.");
+        }
+        // Đơn chưa có ai nhận: chỉ nhận được trong thời gian nhận đơn
+        if (!"DaXacNhan".equalsIgnoreCase(pc.getTrangThai()) && phanCongCTVRepository.findAllByDonDat_Id(don.getId()).stream()
+                .noneMatch(x -> "DaXacNhan".equalsIgnoreCase(x.getTrangThai()) || "HoanThanh".equalsIgnoreCase(x.getTrangThai()))) {
+            hanNhanDonService.kiemTraConHan(don);
         }
 
         // CTV tự nhận đơn cũng phải theo quy tắc xếp lịch: không trùng giờ, cách việc khác ít nhất 1 tiếng,
@@ -823,9 +830,15 @@ public class CollaboratorApiService {
         List<DonDatDichVu> donList = donDatDichVuRepository.findByTrangThaiOrderByNgayTaoDesc("ChoDuyet");
 
         List<Map<String, Object>> result = new ArrayList<>();
+        LocalDateTime bayGio = LocalDateTime.now();
         for (DonDatDichVu don : donList) {
+            LocalDateTime hanNhan = hanNhanDonService.hanNhan(don);
+            // Chưa phát hành (chờ khách chuyển khoản) hoặc đã hết thời gian nhận thì không hiện cho CTV
+            if (hanNhan == null || bayGio.isAfter(hanNhan)) continue;
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("donDatId", don.getId());
+            item.put("hanNhan", hanNhan);
+            item.put("soGiayConLai", hanNhan == null ? null : Math.max(0, java.time.Duration.between(bayGio, hanNhan).getSeconds()));
             item.put("maDonDat", don.getMaDonDat());
             String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty())
                     ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ";
@@ -868,6 +881,8 @@ public class CollaboratorApiService {
 
         DonDatDichVu don = donDatDichVuRepository.findById(donDatId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn ID: " + donDatId));
+        // Hết thời gian nhận đơn (15 phút kể từ lúc phát hành): báo lỗi, giao dịch hoàn tác lệnh nhận ở trên
+        hanNhanDonService.kiemTraConHan(don);
 
         // Tạo 1 bản ghi PhanCongCTV duy nhất khi nhận việc
         PhanCongCTV pc = PhanCongCTV.builder()

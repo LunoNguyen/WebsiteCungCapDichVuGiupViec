@@ -59,8 +59,9 @@
 
       <div class="results" th:if="${!ketQua.isEmpty()}">
         <article class="result" th:each="m : ${ketQua}" th:with="phut=${m.thoiGianThucHienPhut}">
-          <div class="ph" th:classappend="${anhNhom[m.loaiDichVuId] == null} ? 'ph-empty'">
-            <img th:if="${anhNhom[m.loaiDichVuId] != null}" th:src="${anhNhom[m.loaiDichVuId]}" alt="" loading="lazy">
+          <div class="ph" th:with="anh=${anhDichVu[m.maDichVu] != null ? anhDichVu[m.maDichVu] : anhNhom[m.loaiDichVuId]}"
+               th:classappend="${anh == null} ? 'ph-empty'">
+            <img th:if="${anh != null}" th:src="${anh}" alt="" loading="lazy">
           </div>
           <div style="min-width:0">
             <h3><a th:href="@{/dich-vu/chi-tiet/{id}(id=${m.id})}" th:text="${m.tenDichVu}">Dọn dẹp nhà 3 giờ</a></h3>

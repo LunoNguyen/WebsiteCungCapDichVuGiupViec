@@ -44,6 +44,21 @@ public class CustomerBookingController {
     }
 
     /**
+     * Các mã khuyến mãi đang còn hiệu lực cho dịch vụ đang chọn (bảng "Áp dụng khuyến mãi" ở trang đặt):
+     * mã dùng được kèm số tiền giảm, mã chưa đủ điều kiện kèm lý do.
+     */
+    @PostMapping("/bookings/available-promotions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> availablePromotions(@RequestBody CalculatePriceRequest request) {
+        try {
+            return ResponseEntity.ok(ApiResponse.ok(customerApiService.getUsablePromotions(request)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi tải khuyến mãi: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Kiểm tra tính hợp lệ của mã khuyến mại
      */
     @PostMapping("/promotions/validate")

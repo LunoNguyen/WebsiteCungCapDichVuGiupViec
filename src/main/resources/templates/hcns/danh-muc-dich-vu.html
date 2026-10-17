@@ -76,6 +76,42 @@
           </div>
         </div>
       </div>
+
+      <!-- Ảnh đại diện theo mã dịch vụ: đổi một lần cho mọi biến thể cùng mã -->
+      <section id="anh-dich-vu" style="scroll-margin-top:80px">
+        <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.5rem;margin-bottom:0.75rem">
+          <h2 style="font-size:1.15rem;font-weight:700;margin:0">Ảnh đại diện dịch vụ</h2>
+          <span style="font-size:0.85rem;color:var(--text-muted)">Mỗi mã dịch vụ một ảnh, dùng chung cho mọi lựa chọn (2 giờ, 3 giờ, gói tháng...). Chưa có ảnh riêng thì dùng ảnh danh mục.</span>
+        </div>
+        <div style="margin-bottom:0.75rem;max-width:320px">
+          <select class="form-control" id="locAnhDanhMuc" aria-label="Lọc theo danh mục">
+            <option value="">Tất cả danh mục</option>
+            <option th:each="ldv : ${loaiDichVus}" th:value="${ldv.id}" th:text="${ldv.tenLoaiDichVu}">Dọn dẹp</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:1rem">
+          <div th:each="g : ${nhomAnhDichVu}" class="anh-dv-the" th:data-loai="${g.loaiDichVuId}"
+               style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column">
+            <div style="position:relative;aspect-ratio:4/3;background:var(--bg-secondary, #f4f4f5)">
+              <img th:if="${g.anhUrl != null}" th:src="${g.anhUrl}" th:alt="${g.tenNhom}" loading="lazy"
+                   style="width:100%;height:100%;object-fit:cover;display:block">
+              <div th:if="${g.anhUrl == null}" style="position:absolute;inset:0;display:grid;place-items:center;font-size:2rem;color:var(--text-muted)"><i class="ti ti-photo-off"></i></div>
+              <span class="badge" th:classappend="${g.coAnhRieng} ? 'badge-success' : 'badge-secondary'"
+                    style="position:absolute;top:0.5rem;left:0.5rem" th:text="${g.coAnhRieng} ? 'Ảnh riêng' : 'Ảnh danh mục'">Ảnh riêng</span>
+            </div>
+            <div style="padding:0.85rem 1rem;display:flex;flex-direction:column;gap:0.35rem;flex:1">
+              <div style="font-weight:700;overflow-wrap:anywhere" th:text="${g.tenNhom}">Dọn dẹp nhà theo giờ</div>
+              <div style="font-size:0.8rem;color:var(--text-muted)">
+                <strong th:text="${g.maDichVu}">DV101</strong> · <span th:text="${g.tenLoaiDichVu}">Dọn dẹp</span> · <span th:text="${g.soBienThe} + ' lựa chọn'">4 lựa chọn</span>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" style="margin-top:auto"
+                      th:data-ma="${g.maDichVu}" th:data-ten="${g.tenNhom}" th:data-anh="${g.anhUrl}"
+                      th:data-rieng="${g.coAnhRieng}" th:data-so="${g.soBienThe}"
+                      onclick="openAnhDichVuModal(this)"><i class="ti ti-photo-edit"></i> Đổi ảnh</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 </div>
@@ -174,6 +210,41 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: ĐỔI ẢNH ĐẠI DIỆN DỊCH VỤ (THEO MÃ)
+     ============================================================ -->
+<div class="modal-overlay" id="anhDichVuModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title"><i class="ti ti-photo-edit"></i> Ảnh đại diện dịch vụ</h2>
+        <div id="anhDvTieuDe" style="font-size:0.8rem;color:var(--text-muted);margin-top:2px"></div>
+      </div>
+      <button class="modal-close" data-modal-close="anhDichVuModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
+    </div>
+    <form th:action="@{/hcns/danh-muc-dich-vu/anh-dich-vu}" method="post" enctype="multipart/form-data" id="anhDvForm">
+      <input type="hidden" name="maDichVu" id="anhDvMa">
+      <input type="hidden" name="datMacDinh" id="anhDvMacDinh" value="false">
+      <div style="padding:1.5rem">
+        <div style="aspect-ratio:4/3;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg-secondary, #f4f4f5);margin-bottom:1rem;display:grid;place-items:center">
+          <img id="anhDvXemTruoc" alt="Ảnh đại diện" style="width:100%;height:100%;object-fit:cover;display:none">
+          <i id="anhDvTrong" class="ti ti-photo-off" style="font-size:2rem;color:var(--text-muted)"></i>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="anhDvFile">Chọn ảnh mới (lưu trên MinIO)</label>
+          <input class="form-control" type="file" name="hinhAnhFile" id="anhDvFile" accept="image/jpeg,image/png,image/webp,image/gif">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.35rem">jpg, png, webp hoặc gif, tối đa 20 MB. Nên dùng ảnh ngang tỉ lệ 4:3.</div>
+        </div>
+      </div>
+      <div class="modal-footer" style="flex-wrap:wrap">
+        <button type="button" class="btn btn-outline" id="anhDvBoRieng" style="margin-right:auto"><i class="ti ti-arrow-back-up"></i> Dùng ảnh danh mục</button>
+        <button type="button" class="btn btn-secondary" data-modal-close="anhDichVuModal">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="anhDvLuu" disabled><i class="ti ti-device-floppy"></i> Lưu ảnh</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 
 <script>
@@ -195,6 +266,46 @@
     }
     ModalManager.open('editCategoryModal');
   }
+
+  // ---- Ảnh đại diện dịch vụ theo mã ----
+  var anhDvAnhGoc = null;
+  function hienAnhDv(src) {
+    var img = document.getElementById('anhDvXemTruoc');
+    var trong = document.getElementById('anhDvTrong');
+    if (src) { img.src = src; img.style.display = 'block'; trong.style.display = 'none'; }
+    else { img.removeAttribute('src'); img.style.display = 'none'; trong.style.display = ''; }
+  }
+  function openAnhDichVuModal(btn) {
+    document.getElementById('anhDvMa').value = btn.dataset.ma;
+    document.getElementById('anhDvMacDinh').value = 'false';
+    document.getElementById('anhDvFile').value = '';
+    document.getElementById('anhDvLuu').disabled = true;
+    document.getElementById('anhDvTieuDe').textContent = btn.dataset.ma + ' · ' + btn.dataset.ten +
+      ' · áp dụng cho ' + btn.dataset.so + ' lựa chọn';
+    document.getElementById('anhDvBoRieng').style.display = btn.dataset.rieng === 'true' ? '' : 'none';
+    anhDvAnhGoc = btn.dataset.anh || null;
+    hienAnhDv(anhDvAnhGoc);
+    ModalManager.open('anhDichVuModal');
+  }
+  document.getElementById('anhDvFile').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    var luu = document.getElementById('anhDvLuu');
+    if (f && f.type.indexOf('image/') !== 0) { alert('Vui lòng chọn tệp ảnh.'); this.value = ''; f = null; }
+    luu.disabled = !f;
+    hienAnhDv(f ? URL.createObjectURL(f) : anhDvAnhGoc); // xem trước trước khi lưu
+  });
+  document.getElementById('anhDvBoRieng').addEventListener('click', function () {
+    if (!confirm('Bỏ ảnh riêng của dịch vụ này và dùng ảnh của danh mục?')) return;
+    document.getElementById('anhDvMacDinh').value = 'true';
+    document.getElementById('anhDvFile').value = '';
+    document.getElementById('anhDvForm').submit();
+  });
+  document.getElementById('locAnhDanhMuc').addEventListener('change', function () {
+    var loai = this.value;
+    document.querySelectorAll('.anh-dv-the').forEach(function (el) {
+      el.style.display = !loai || el.dataset.loai === loai ? '' : 'none';
+    });
+  });
 </script>
 </body>
 </html>

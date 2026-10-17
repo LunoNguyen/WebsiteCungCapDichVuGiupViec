@@ -391,6 +391,7 @@ public class MinioService {
         /** Mọi thứ dưới thư mục này đều xem được không cần đăng nhập. */
         public static final String CONG_KHAI         = "cong-khai/";
         public static final String LOAI_DICH_VU      = "cong-khai/loai-dich-vu/";
+        public static final String DICH_VU           = "cong-khai/dich-vu/";
 
         public static final String CTV_HO_SO         = "ctv/ho-so/";
         public static final String CTV_CHUNG_CHI     = "ctv/chung-chi/";

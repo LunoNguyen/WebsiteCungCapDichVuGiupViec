@@ -34,13 +34,13 @@
   <div class="wrap" id="dat-dich-vu">
     <div class="svc-panel">
       <div class="svc-icons" th:if="${danhMucs != null and !danhMucs.isEmpty()}">
-        <a class="svc-icon" th:each="dm : ${danhMucs}" th:href="@{/tim-dich-vu(nhom=${dm.id})}"
-           th:with="ten=${#strings.toLowerCase(dm.tenLoaiDichVu)}">
-          <span class="badge-ic">
-            <svg class="ic"><use th:href="${#strings.contains(ten,'máy') or #strings.contains(ten,'điện') ? '#i-air'
-              : (#strings.contains(ten,'nấu') ? '#i-chef'
-              : (#strings.contains(ten,'chăm sóc') or #strings.contains(ten,'trẻ') or #strings.contains(ten,'gia đình') ? '#i-heart'
-              : (#strings.contains(ten,'văn phòng') or #strings.contains(ten,'doanh nghiệp') ? '#i-building' : '#i-sparkles')))}" href="#i-sparkles"/></svg>
+        <a class="svc-icon" th:each="dm : ${danhMucs}" th:href="@{/tim-dich-vu(nhom=${dm.id})}">
+          <!-- Ảnh của loại dịch vụ (tải lên ở HCNS, chưa có thì dùng ảnh mặc định theo mã) -->
+          <span class="svc-anh" th:if="${dm.hinhAnhUrl != null}">
+            <img th:src="${dm.hinhAnhUrl}" alt="" loading="lazy" width="72" height="72">
+          </span>
+          <span class="badge-ic" th:if="${dm.hinhAnhUrl == null}">
+            <svg class="ic"><use href="#i-sparkles"/></svg>
           </span>
           <b th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</b>
           <small th:text="${dm.giaTuText}">từ 192.000đ</small>

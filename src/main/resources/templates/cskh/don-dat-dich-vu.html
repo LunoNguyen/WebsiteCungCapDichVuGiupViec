@@ -270,6 +270,7 @@
       <button class="modal-close" data-modal-close="assignModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
     <div style="max-height:65vh;overflow:auto">
+      <div id="pcHanNhan" role="timer" style="display:none;margin-bottom:0.75rem;padding:0.6rem 0.8rem;border-radius:var(--radius-md);font-size:0.875rem"></div>
       <div id="pcThongBao" role="status" style="display:none;margin-bottom:0.75rem;padding:0.6rem 0.8rem;border-radius:var(--radius-md);font-weight:600;font-size:0.875rem"></div>
 
       <div class="form-section-label">Đang phụ trách đơn này</div>
@@ -563,6 +564,32 @@
       .catch(function () { pcBao('Không kết nối được máy chủ. Thử lại sau.', false); nut.disabled = false; });
   }
 
+  // Đếm ngược thời gian nhận đơn: hết giờ mà chưa có ai nhận thì hệ thống tự hủy đơn
+  var pcDemNguoc = null;
+  function hienHanNhan(soGiay, soPhut) {
+    var el = document.getElementById('pcHanNhan');
+    if (pcDemNguoc) { clearInterval(pcDemNguoc); pcDemNguoc = null; }
+    if (soGiay == null) { el.style.display = 'none'; return; }
+    var het = Date.now() + soGiay * 1000;
+    function ve() {
+      var con = Math.max(0, Math.round((het - Date.now()) / 1000));
+      el.style.display = '';
+      if (con <= 0) {
+        el.style.background = 'var(--danger-bg, #fde8ec)'; el.style.color = 'var(--danger, #c70036)';
+        el.textContent = 'Đã hết ' + soPhut + ' phút nhận đơn. Đơn sẽ được hệ thống tự hủy, không phân công được nữa.';
+        clearInterval(pcDemNguoc); pcDemNguoc = null;
+        return;
+      }
+      var mm = String(Math.floor(con / 60)).padStart(2, '0'), ss = String(con % 60).padStart(2, '0');
+      el.style.background = con <= 180 ? 'var(--warning-bg, #fff4e5)' : 'var(--info-bg, #eef4ff)';
+      el.style.color = 'inherit';
+      el.innerHTML = '<b>Còn ' + mm + ':' + ss + '</b> để có người nhận đơn. Cộng tác viên đang tự nhận trên ứng dụng; ' +
+        'hết thời gian mà chưa ai nhận, đơn sẽ tự hủy.';
+    }
+    ve();
+    pcDemNguoc = setInterval(ve, 1000);
+  }
+
   function taiGoiY() {
     var goiY = document.getElementById('pcGoiY');
     goiY.textContent = 'Đang tính gợi ý…';
@@ -570,6 +597,7 @@
       .then(function (res) { if (!res.ok) throw new Error(); return res.json(); })
       .then(function (d) {
         document.getElementById('pcTomTat').textContent = d.maDonDat + ' · ' + d.ngay + ' · ' + d.gio + (d.khuVuc ? ' · ' + d.khuVuc : '');
+        hienHanNhan(d.soGiayConLai, d.soPhutNhanDon);
         document.getElementById('pcQuyTac').textContent = 'Mỗi cộng tác viên: cách việc khác ít nhất ' + d.khoangCachPhut +
           ' phút, tối đa ' + d.toiDaDonMoiNgay + ' việc và ' + d.toiDaGioMoiNgay + ' giờ mỗi ngày.';
 

@@ -52,6 +52,8 @@ public class KhachHangWebController {
     private static final Logger log = LoggerFactory.getLogger(KhachHangWebController.class);
 
     private final CustomerApiService customerApiService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.HanNhanDonService hanNhanDonService;
     private final CustomerAddressService addressService;
     private final AuthService authService;
     private final KhachHangRepository khachHangRepository;
@@ -274,7 +276,46 @@ public class KhachHangWebController {
         for (int i = 0; i < 7; i++) ngays.add(LocalDate.now().plusDays(i));
         model.addAttribute("ngays", ngays);
         model.addAttribute("gios", List.of("07:00", "08:00", "09:00", "10:00", "13:00", "14:00", "15:00", "16:00", "17:00"));
+        // Lịch: theo lần trong vòng 1 tháng, gói tháng bắt đầu trong vòng 3 tháng (RangBuocNgayDat)
+        model.addAttribute("ngayToiDaTheoLan", com.example.Service.RangBuocNgayDat.ngayToiDa("TheoLan", LocalDate.now()));
+        model.addAttribute("ngayToiDaGoiThang", com.example.Service.RangBuocNgayDat.ngayToiDa("GoiThang", LocalDate.now()));
+        model.addAttribute("nhomDichVu", nhomDichVu(danhMuc));
+        model.addAttribute("phutThanhToan", hanNhanDonService.soPhutThanhToan());
+        model.addAttribute("phutNhanDon", hanNhanDonService.soPhut());
         return "khach-hang/dat-dich-vu";
+    }
+
+    /**
+     * Bước 1 của trang đặt: các dịch vụ (theo mã) trong danh mục, mỗi mã một thẻ:
+     * {ma, ten (bỏ phần biến thể trong ngoặc), giaTu, coTheoLan, coGoiThang, anh}.
+     */
+    private static List<Map<String, Object>> nhomDichVu(DanhMucView danhMuc) {
+        Map<String, Map<String, Object>> theoMa = new LinkedHashMap<>();
+        List<com.example.DTO.view.DichVuView> tatCa = new ArrayList<>(danhMuc.getDichVuTheoLan());
+        tatCa.addAll(danhMuc.getDichVuGoiThang());
+        for (com.example.DTO.view.DichVuView dv : tatCa) {
+            String ma = dv.getMaDichVu() != null ? dv.getMaDichVu() : String.valueOf(dv.getId());
+            Map<String, Object> g = theoMa.computeIfAbsent(ma, k -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("ma", k);
+                String ten = dv.getTenDichVu() != null ? dv.getTenDichVu() : k;
+                int ngoac = ten.indexOf(" (");
+                m.put("ten", ngoac > 0 ? ten.substring(0, ngoac) : ten);
+                m.put("coTheoLan", false);
+                m.put("coGoiThang", false);
+                m.put("anh", dv.getHinhAnhUrl());
+                return m;
+            });
+            g.put("GoiThang".equals(dv.getLoaiHinhDat()) ? "coGoiThang" : "coTheoLan", true);
+            if (g.get("anh") == null) g.put("anh", dv.getHinhAnhUrl());
+            java.math.BigDecimal gia = dv.getGia();
+            java.math.BigDecimal tu = (java.math.BigDecimal) g.get("giaTu");
+            if (gia != null && gia.signum() > 0 && (tu == null || gia.compareTo(tu) < 0)) {
+                g.put("giaTu", gia);
+                g.put("giaTuText", dv.getGiaText());
+            }
+        }
+        return new ArrayList<>(theoMa.values());
     }
 
     @PostMapping("/dat-dich-vu/{danhMucId}")
@@ -291,24 +332,20 @@ public class KhachHangWebController {
                                 @RequestParam(required = false) List<String> ngayTrongTuan,
                                 @RequestParam(required = false) String codeKhuyenMai,
                                 @RequestParam(required = false) String yeuCauDacBiet,
+                                @RequestParam(defaultValue = "TienMat") String hinhThucThanhToan,
                                 HttpSession session, HttpServletRequest request, RedirectAttributes ra) {
         Integer khId = khachHangId(session);
         if (khId == null) return chuyenDangNhap(request);
         String quayLai = "redirect:/dat-dich-vu/" + danhMucId + "?dv=" + dichVuId;
 
-        if (ngayThucHien == null || gioBatDau == null) {
-            ra.addFlashAttribute("error", "Vui lòng chọn ngày và giờ bắt đầu.");
-            return quayLai;
-        }
-        if (ngayThucHien.isAfter(LocalDate.now().plusDays(60))) {
-            ra.addFlashAttribute("error", "Chỉ đặt được trong vòng 60 ngày tới.");
-            return quayLai;
-        }
-        if (LocalDateTime.of(ngayThucHien, gioBatDau).isBefore(LocalDateTime.now().plusHours(1))) {
-            ra.addFlashAttribute("error", "Giờ bắt đầu cần sau thời điểm hiện tại ít nhất 1 giờ.");
-            return quayLai;
-        }
         boolean goiThang = "GoiThang".equals(loaiHinhDat);
+        // Theo lần: trong vòng 1 tháng; gói tháng: bắt đầu trong vòng 3 tháng; sau hiện tại ít nhất 1 giờ
+        String loiNgay = com.example.Service.RangBuocNgayDat.loiNgayDat(goiThang ? "GoiThang" : "TheoLan",
+                ngayThucHien, gioBatDau, LocalDateTime.now());
+        if (loiNgay != null) {
+            ra.addFlashAttribute("error", loiNgay);
+            return quayLai;
+        }
         if (goiThang && (ngayTrongTuan == null || ngayTrongTuan.isEmpty())) {
             ra.addFlashAttribute("error", "Gói tháng cần chọn ít nhất một ngày trong tuần.");
             return quayLai;
@@ -331,10 +368,14 @@ public class KhachHangWebController {
             if (goiThang) req.setNgayThucHienTrongTuan(String.join(",", ngayTrongTuan));
             if (codeKhuyenMai != null && !codeKhuyenMai.isBlank()) req.setCodeKhuyenMai(codeKhuyenMai.trim().toUpperCase());
             if (yeuCauDacBiet != null && !yeuCauDacBiet.isBlank()) req.setYeuCauDacBiet(yeuCauDacBiet.trim());
+            req.setHinhThucThanhToan(hinhThucThanhToan);
             Map<String, Object> kq = customerApiService.createBooking(req);
             Object id = kq.get("donDatId") != null ? kq.get("donDatId") : kq.get("id");
+            if (id == null) return "redirect:/tai-khoan/don-hang";
+            // Chuyển khoản: sang trang mã VietQR; tiền mặt: đơn đã phát hành, về trang theo dõi đơn
+            if ("ChuyenKhoan".equals(kq.get("hinhThucThanhToan"))) return "redirect:/tai-khoan/don-hang/" + id + "/thanh-toan";
             ra.addFlashAttribute("success", "Đã đặt dịch vụ. bTaskee đang tìm cộng tác viên cho bạn.");
-            return id != null ? "redirect:/tai-khoan/don-hang/" + id : "redirect:/tai-khoan/don-hang";
+            return "redirect:/tai-khoan/don-hang/" + id;
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("error", e.getMessage());
         } catch (Exception e) {
@@ -374,6 +415,10 @@ public class KhachHangWebController {
             }
             if (nhom.equals(tab)) {
                 Map<String, Object> m = new LinkedHashMap<>(d);
+                if ("ChoDuyet".equals(tt) && m.get("id") instanceof Integer donId
+                        && hanNhanDonService.hanThanhToanNeuDangCho(donId) != null) {
+                    m.put("choThanhToan", true);
+                }
                 ganTrangThai(m);
                 donTheoTab.add(m);
             }
@@ -394,10 +439,62 @@ public class KhachHangWebController {
         if (!laDonCuaKhach(id, khId)) return "redirect:/tai-khoan/don-hang";
 
         Map<String, Object> don = new LinkedHashMap<>(customerApiService.getBookingDetail(id));
+        // Đơn chuyển khoản chưa thanh toán: thời gian còn lại để chuyển khoản (quá hạn thì tự hủy)
+        LocalDateTime hanThanhToan = hanNhanDonService.hanThanhToanNeuDangCho(id);
+        if (hanThanhToan != null) {
+            don.put("choThanhToan", true);
+            don.put("soGiayConLaiThanhToan", Math.max(0, java.time.Duration.between(LocalDateTime.now(), hanThanhToan).getSeconds()));
+        }
         ganTrangThai(don);
+        // Đơn đang chờ nhận: thời gian còn lại trước khi tự hủy (đếm ngược trên trang)
+        LocalDateTime hanNhan = hanNhanDonService.hanNhanNeuDangCho(id);
+        if (hanNhan != null) {
+            don.put("soGiayConLaiNhan", Math.max(0, java.time.Duration.between(LocalDateTime.now(), hanNhan).getSeconds()));
+            don.put("soPhutNhanDon", hanNhanDonService.soPhut());
+        }
         model.addAttribute("don", don);
         model.addAttribute("active", "don-hang");
         return "khach-hang/don-chi-tiet";
+    }
+
+    // =====================================================================
+    // THANH TOÁN CHUYỂN KHOẢN (mã VietQR; xác nhận tạm bằng nút, sau này nối API VietQR)
+    // =====================================================================
+
+    @GetMapping("/tai-khoan/don-hang/{id}/thanh-toan")
+    public String trangThanhToan(@PathVariable Integer id, HttpSession session, HttpServletRequest request, Model model) {
+        Integer khId = khachHangId(session);
+        if (khId == null) return chuyenDangNhap(request);
+        if (!laDonCuaKhach(id, khId)) return "redirect:/tai-khoan/don-hang";
+        LocalDateTime han = hanNhanDonService.hanThanhToanNeuDangCho(id);
+        if (han == null) return "redirect:/tai-khoan/don-hang/" + id; // không còn chờ chuyển khoản
+        Map<String, Object> hoaDon;
+        try {
+            hoaDon = customerApiService.getInvoiceInfo(id);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/tai-khoan/don-hang/" + id;
+        }
+        model.addAttribute("hoaDon", hoaDon);
+        model.addAttribute("donId", id);
+        model.addAttribute("soGiayConLaiThanhToan", Math.max(0, java.time.Duration.between(LocalDateTime.now(), han).getSeconds()));
+        model.addAttribute("soPhutThanhToan", hanNhanDonService.soPhutThanhToan());
+        model.addAttribute("active", "don-hang");
+        return "khach-hang/thanh-toan";
+    }
+
+    @PostMapping("/tai-khoan/don-hang/{id}/thanh-toan")
+    public String xacNhanThanhToan(@PathVariable Integer id, HttpSession session, HttpServletRequest request,
+                                   RedirectAttributes ra) {
+        Integer khId = khachHangId(session);
+        if (khId == null) return chuyenDangNhap(request);
+        if (!laDonCuaKhach(id, khId)) return "redirect:/tai-khoan/don-hang";
+        try {
+            customerApiService.xacNhanThanhToanChuyenKhoan(id, "Khách xác nhận trên website");
+            ra.addFlashAttribute("success", "Đã ghi nhận thanh toán. bTaskee đang tìm cộng tác viên cho bạn.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/tai-khoan/don-hang/" + id;
     }
 
     @PostMapping("/tai-khoan/don-hang/{id}/huy")
@@ -704,7 +801,10 @@ public class KhachHangWebController {
             case "DaHuy" -> { nhan = "Đã hủy"; tone = "danger"; }
             default -> { nhan = tt; tone = "neutral"; }
         }
-        if (("ChoDuyet".equals(tt) || "DangTimCTV".equals(tt))
+        if (Boolean.TRUE.equals(d.get("choThanhToan"))) {
+            nhan = "Chờ thanh toán";
+            tone = "warning";
+        } else if (("ChoDuyet".equals(tt) || "DangTimCTV".equals(tt))
                 && d.get("ngayThucHien") instanceof LocalDate ngay && d.get("gioBatDau") instanceof LocalTime gio
                 && LocalDateTime.of(ngay, gio).isBefore(LocalDateTime.now())) {
             nhan = "Quá giờ, chưa có người nhận";

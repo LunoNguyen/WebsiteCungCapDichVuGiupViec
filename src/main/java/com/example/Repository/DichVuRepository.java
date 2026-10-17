@@ -12,5 +12,7 @@ public interface DichVuRepository extends JpaRepository<DichVu, Integer> {
 
     /** Các biến thể của một dịch vụ (cùng mã, VD DV101: 2 giờ, 3 giờ, 4 giờ, gói tháng). */
     List<DichVu> findByMaDichVuAndTrangThai(String maDichVu, String trangThai);
+    /** Mọi biến thể của một mã dịch vụ (kể cả đang ẩn): dùng khi đổi ảnh đại diện theo mã. */
+    List<DichVu> findByMaDichVu(String maDichVu);
     List<DichVu> findByLoaiDichVu_IdAndTrangThai(Integer loaiDichVuId, String trangThai);
 }

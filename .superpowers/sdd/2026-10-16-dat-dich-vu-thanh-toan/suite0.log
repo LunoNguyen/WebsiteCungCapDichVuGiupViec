@@ -1,0 +1,147 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------< com.example:WebsiteCungCapDichVuGiupViec >--------------
+[INFO] Building Neatify Home Cleaning and Tasks 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ WebsiteCungCapDichVuGiupViec ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 83 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ WebsiteCungCapDichVuGiupViec ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ WebsiteCungCapDichVuGiupViec ---
+[INFO] skip non existing resourceDirectory D:\2026\HK1_Nam4\LuanAn\SourceCode\WebsiteCungCapDichVuGiupViec\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ WebsiteCungCapDichVuGiupViec ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ WebsiteCungCapDichVuGiupViec ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.Service.BangGiaServiceTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.169 s -- in com.example.Service.BangGiaServiceTest
+[INFO] Running com.example.Service.KhuVucServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.292 s -- in com.example.Service.KhuVucServiceTest
+[INFO] Running com.example.Service.PhanCongServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in com.example.Service.PhanCongServiceTest
+[INFO] Running com.example.Service.TuHuyDonServiceTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in com.example.Service.TuHuyDonServiceTest
+[INFO] Running com.example.WebsiteCungCapDichVuGiupViec.MobileApiApplicationTests
+20:57:45.008 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.WebsiteCungCapDichVuGiupViec.MobileApiApplicationTests]: MobileApiApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+20:57:45.136 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplication for test class com.example.WebsiteCungCapDichVuGiupViec.MobileApiApplicationTests
+20:57:45.214 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.WebsiteCungCapDichVuGiupViec.MobileApiApplicationTests]: MobileApiApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+20:57:45.215 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplication for test class com.example.WebsiteCungCapDichVuGiupViec.MobileApiApplicationTests
+20:57:45.294 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-10-16T20:57:45.613+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] c.e.W.MobileApiApplicationTests          : Starting MobileApiApplicationTests using Java 26 with PID 31820 (started by User in D:\2026\HK1_Nam4\LuanAn\SourceCode\WebsiteCungCapDichVuGiupViec)
+2026-10-16T20:57:45.615+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] c.e.W.MobileApiApplicationTests          : No active profile set, falling back to 1 default profile: "default"
+2026-10-16T20:57:47.640+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-10-16T20:57:47.641+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-16T20:57:48.093+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 433 ms. Found 38 JPA repository interfaces.
+2026-10-16T20:57:48.896+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-10-16T20:57:48.900+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-10-16T20:57:48.951+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 21 ms. Found 0 Redis repository interfaces.
+2026-10-16T20:57:50.557+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-10-16T20:57:50.703+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-10-16T20:57:51.626+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-16T20:57:51.695+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-16T20:57:52.043+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@43efe064
+2026-10-16T20:57:52.047+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-16T20:57:52.168+07:00  WARN 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-10-16T20:57:52.204+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/GiupViecDB?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&useUnicode=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 26.7
+	Default catalog/schema: GiupViecDB/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-16T20:57:55.213+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-16T20:57:55.385+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-16T20:57:55.658+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-10-16T20:57:59.613+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] com.example.Config.RedisConfig           : Redis cache: 7 vùng cache, ti?n t? key 'neatify:'
+2026-10-16T20:58:02.299+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page template: index
+2026-10-16T20:58:03.417+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] c.e.W.MobileApiApplicationTests          : Started MobileApiApplicationTests in 18.139 seconds (process running for 19.952)
+2026-10-16T20:58:04.221+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] com.example.Service.MinioService         : MinIO s?n sàng: http://localhost:9000 (bucket 'giup-viec-storage')
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\User\.m2\repository\net\bytebuddy\byte-buddy-agent\1.18.11\byte-buddy-agent-1.18.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-10-16T20:58:05.055+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] com.example.Service.MockSmsSender        : [SMS mô ph?ng SMS-90A0D0F2] G?i t?i 09884786: 630713 la ma xac minh dang ky bTaskee cua ban
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 21.42 s <<< FAILURE! -- in com.example.WebsiteCungCapDichVuGiupViec.MobileApiApplicationTests
+[ERROR] com.example.WebsiteCungCapDichVuGiupViec.MobileApiApplicationTests.testMobileApiCustomerAndCollaboratorFlows -- Time elapsed: 2.090 s <<< ERROR!
+java.lang.IllegalArgumentException: Vui lòng ch?n t?nh, thành và ph??ng, xã c?a ??a ch? th?c hi?n.
+	at com.example.Service.CustomerApiService.createBooking(CustomerApiService.java:1228)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158)
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:133)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:371)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:130)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719)
+	at com.example.Service.CustomerApiService$$SpringCGLIB$$0.createBooking(<generated>)
+	at com.example.WebsiteCungCapDichVuGiupViec.MobileApiApplicationTests.testMobileApiCustomerAndCollaboratorFlows(MobileApiApplicationTests.java:78)
+
+[INFO] Running com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplicationTests
+2026-10-16T20:58:06.354+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplicationTests]: WebsiteCungCapDichVuGiupViecApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-16T20:58:06.357+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplication for test class com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplicationTests
+2026-10-16T20:58:06.360+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplicationTests]: WebsiteCungCapDichVuGiupViecApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-16T20:58:06.361+07:00  INFO 31820 --- [WebsiteCungCapDichVuGiupViec] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplication for test class com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplicationTests
+=== GIAMDOC FOUND: TenDangNhap=giamdoc, MatKhau=$2a$10$ZfJusconk1TM/8AWU8.5Z.eD.8GlUkbdRe74q6xAs.ni92DM7e42W, TrangThai=HoatDong, LoaiTaiKhoan=NhanVien ===
+GD AUTH RESULT: success=true, message=null
+GD Auth OK: Nguy?n V?n An -> ROLE_GIAM_DOC -> /giam-doc/dashboard
+HCNS Auth OK: Nguy?n Th? H?nh -> ROLE_HCNS -> /hcns/dashboard
+CSKH Auth OK: Hoàng Th? Dung -> ROLE_CSKH -> /cskh/dashboard
+MKT Auth OK: Ph?m V?n Minh -> ROLE_MARKETING -> /marketing/dashboard
+Thong ke Database OK: Tong don=14, KH=8, Doanh thu=0.7 tr
+Security Interceptor Tests OK: All URL protections verified!
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.732 s -- in com.example.WebsiteCungCapDichVuGiupViec.WebsiteCungCapDichVuGiupViecApplicationTests
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Errors: 
+[ERROR]   MobileApiApplicationTests.testMobileApiCustomerAndCollaboratorFlows:78 » IllegalArgument Vui lòng ch?n t?nh, thành và ph??ng, xã c?a ??a ch? th?c hi?n.
+[INFO] 
+[ERROR] Tests run: 20, Failures: 0, Errors: 1, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  28.372 s
+[INFO] Finished at: 2026-10-16T20:58:07+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project WebsiteCungCapDichVuGiupViec: 
+[ERROR] 
+[ERROR] See D:\2026\HK1_Nam4\LuanAn\SourceCode\WebsiteCungCapDichVuGiupViec\target\surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

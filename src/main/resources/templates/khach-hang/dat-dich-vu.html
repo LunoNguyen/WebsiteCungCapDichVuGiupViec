@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout/site-layout :: head('Đặt ' + ${danhMuc.tenLoaiDichVu}, 'Chọn dịch vụ, ngày giờ và địa chỉ, biết giá trước khi đặt.')}"></head>
+<head th:replace="~{layout/site-layout :: head('Đặt ' + ${danhMuc.tenLoaiDichVu}, 'Chọn dịch vụ, hình thức, thời gian và phương thức thanh toán, biết giá trước khi đặt.')}"></head>
 <body>
 <header th:replace="~{layout/site-layout :: header('dich-vu')}"></header>
 
@@ -8,140 +8,247 @@
       th:with="thu=${ {'T2','T3','T4','T5','T6','T7','CN'} },
                coTheoLan=${!danhMuc.dichVuTheoLan.isEmpty()},
                coGoiThang=${!danhMuc.dichVuGoiThang.isEmpty()}">
-  <form class="wrap" method="post" th:action="@{/dat-dich-vu/{id}(id=${danhMuc.id})}" id="bookForm">
+  <!-- novalidate: các bước đang ẩn có ô bắt buộc; mỗi bước tự kiểm tra trước khi sang bước sau -->
+  <form class="wrap" method="post" th:action="@{/dat-dich-vu/{id}(id=${danhMuc.id})}" id="bookForm" novalidate>
     <div class="crumb"><a href="/dich-vu">Dịch vụ</a><svg class="ic"><use href="#i-right"/></svg><a th:href="@{/dich-vu/{id}(id=${danhMuc.id})}" th:text="${danhMuc.tenLoaiDichVu}">Dọn dẹp nhà</a></div>
-    <h1 th:text="'Đặt ' + ${#strings.toLowerCase(danhMuc.tenLoaiDichVu)}">Đặt dọn dẹp nhà theo giờ</h1>
+    <div class="book-head">
+      <h1 th:text="'Đặt ' + ${#strings.toLowerCase(danhMuc.tenLoaiDichVu)}">Đặt dọn dẹp nhà theo giờ</h1>
+      <div class="book-back">
+        <!-- Mặc định về trang dịch vụ của nhóm; JS đổi thành trang vừa xem (xem / tìm dịch vụ) nếu có -->
+        <a class="btn btn-outline" th:href="@{/dich-vu/{id}(id=${danhMuc.id})}" data-quay-lai><svg class="ic"><use href="#i-left"/></svg><span data-quay-lai-text>Quay lại xem dịch vụ</span></a>
+        <a class="btn btn-ghost" href="/tim-dich-vu"><svg class="ic"><use href="#i-search"/></svg>Tìm dịch vụ khác</a>
+      </div>
+    </div>
 
     <div th:replace="~{layout/account-layout :: flash}"></div>
     <div class="banner banner-error" role="alert" data-price-error hidden><svg class="ic"><use href="#i-alert"/></svg><div><b>Chưa tính được giá.</b> Máy chủ không phản hồi, thử lại sau ít phút.</div></div>
 
+    <!-- Thanh bước: bước đã qua bấm được để quay lại, bước chưa tới bị khoá -->
+    <ol class="steps" aria-label="Các bước đặt dịch vụ">
+      <li><button type="button" data-toi-buoc="1"><span>1</span>Dịch vụ</button></li>
+      <li><button type="button" data-toi-buoc="2"><span>2</span>Hình thức</button></li>
+      <li><button type="button" data-toi-buoc="3"><span>3</span>Thời gian</button></li>
+      <li><button type="button" data-toi-buoc="4"><span>4</span>Xác nhận</button></li>
+      <li><button type="button" data-toi-buoc="5"><span>5</span>Thanh toán</button></li>
+    </ol>
+
+    <input type="hidden" name="loaiHinhDat" th:value="${coTheoLan} ? 'TheoLan' : 'GoiThang'" data-loai-input>
+
     <div class="book-layout">
       <div>
-        <!-- 1. Địa chỉ -->
-        <section class="panel">
-          <h2>Địa chỉ làm việc</h2>
-          <p class="hint">Cộng tác viên đến đúng địa chỉ này.</p>
-          <div class="addr-list" th:if="${!diaChis.isEmpty()}">
-            <label class="addr addr-opt" th:each="dc, st : ${diaChis}">
-              <input type="radio" name="diaChiId" th:value="${dc.id}"
-                     th:checked="${dc.khuVucId != null and (dc.laMacDinh or (st.first and !#lists.contains(diaChis.![laMacDinh], true)))}"
-                     th:disabled="${dc.khuVucId == null}"
-                     th:attr="data-dia-chi=${dc.diaChiChiTiet}">
-              <div>
-                <b th:text="${dc.laMacDinh} ? 'Mặc định' : ('Địa chỉ ' + ${st.count})">Nhà riêng</b>
-                <span th:text="${dc.diaChiChiTiet}">45 Đường số 7, Phường Bình Trị Đông, Thành phố Hồ Chí Minh</span>
-                <span th:if="${dc.khuVuc != null}" class="hint" style="display:block;margin:0" th:text="'Khu vực: ' + ${dc.khuVuc}">Khu vực: Quận Bình Tân</span>
-                <span th:if="${dc.khuVuc == null}" style="display:block;color:var(--danger)">Ngoài khu vực phục vụ</span>
-              </div>
-            </label>
-            <a class="link addr-more" th:href="@{/tai-khoan/dia-chi(quay-lai=${'/dat-dich-vu/' + danhMuc.id})}"><svg class="ic"><use href="#i-plus"/></svg>Thêm địa chỉ khác</a>
+        <!-- ===================== BƯỚC 1: DỊCH VỤ ===================== -->
+        <div data-buoc="1">
+          <section class="panel">
+            <h2>Chọn dịch vụ</h2>
+            <p class="hint">Giá đã gồm công cộng tác viên.</p>
+            <div class="opt-grid nhom-grid" th:if="${!nhomDichVu.isEmpty()}">
+              <label class="opt nhom-opt" th:each="g : ${nhomDichVu}">
+                <input type="radio" name="maNhom" th:value="${g.ma}"
+                       th:attr="data-ten=${g.ten},data-co-theo-lan=${g.coTheoLan},data-co-goi=${g.coGoiThang}">
+                <img th:src="${g.anh != null ? g.anh : danhMuc.hinhAnhUrl}" alt="" loading="lazy">
+                <b th:text="${g.ten}">Dọn dẹp nhà theo giờ</b>
+                <span th:text="${g.coTheoLan and g.coGoiThang} ? 'Theo lần hoặc gói tháng' : (${g.coGoiThang} ? 'Gói tháng' : 'Theo lần')">Theo lần hoặc gói tháng</span>
+                <strong th:if="${g.giaTuText != null}" th:text="'Từ ' + ${g.giaTuText}">Từ 216.000đ</strong>
+              </label>
+            </div>
+            <div class="empty" th:if="${nhomDichVu.isEmpty()}" style="border:0;padding:24px 0">
+              <h3>Nhóm này chưa có dịch vụ đang mở</h3>
+              <p>Bạn chọn nhóm khác hoặc quay lại sau.</p>
+              <a class="btn btn-outline" href="/#dat-dich-vu">Xem nhóm khác</a>
+            </div>
+          </section>
+          <div class="step-nav">
+            <button class="btn btn-primary btn-lg" type="button" data-tiep th:disabled="${nhomDichVu.isEmpty()}">Tiếp tục</button>
           </div>
-          <div th:if="${diaChis.isEmpty()}" class="form-grid">
-            <th:block th:replace="~{layout/dia-chi-form :: truong('dat', null, null, null, null, true)}"></th:block>
-            <p class="hint full" style="margin:0">Địa chỉ này được lưu vào sổ địa chỉ của bạn.</p>
-          </div>
-        </section>
+        </div>
 
-        <!-- 2. Dịch vụ -->
-        <section class="panel">
-          <h2>Chọn dịch vụ</h2>
-          <p class="hint">Giá đã gồm công cộng tác viên.</p>
-          <div class="seg" role="group" aria-label="Hình thức" th:if="${coTheoLan and coGoiThang}" style="margin-bottom:16px">
-            <button type="button" aria-pressed="true" data-loai="TheoLan">Theo lần</button>
-            <button type="button" aria-pressed="false" data-loai="GoiThang">Gói tháng</button>
+        <!-- ===================== BƯỚC 2: HÌNH THỨC ===================== -->
+        <div data-buoc="2" hidden>
+          <section class="panel">
+            <h2>Đặt theo lần hay gói tháng?</h2>
+            <p class="hint" data-ten-nhom-chon>Dịch vụ đã chọn</p>
+            <div class="opt-grid loai-grid">
+              <label class="opt">
+                <input type="radio" name="_loai" value="TheoLan">
+                <b>Theo lần</b>
+                <span>Một buổi làm, chọn ngày trong vòng 1 tháng tới.</span>
+              </label>
+              <label class="opt">
+                <input type="radio" name="_loai" value="GoiThang">
+                <b>Gói tháng</b>
+                <span>Nhiều buổi trong 1 tháng theo các thứ cố định, rẻ hơn đặt lẻ. Bắt đầu trong vòng 3 tháng tới.</span>
+              </label>
+            </div>
+          </section>
+          <div class="step-nav">
+            <button class="btn btn-outline btn-lg" type="button" data-lui>Quay lại</button>
+            <button class="btn btn-primary btn-lg" type="button" data-tiep>Tiếp tục</button>
           </div>
-          <input type="hidden" name="loaiHinhDat" th:value="${coTheoLan} ? 'TheoLan' : 'GoiThang'" data-loai-input>
-          <div class="search" style="max-width:none;margin-bottom:12px" th:if="${danhMuc.dichVuTheoLan.size() > 6 or danhMuc.dichVuGoiThang.size() > 6}">
-            <svg class="ic"><use href="#i-search"/></svg>
-            <input type="search" placeholder="Tìm dịch vụ, ví dụ: sofa, 3 giờ" aria-label="Tìm dịch vụ" data-svc-search>
-          </div>
+        </div>
 
-          <div class="opt-grid" data-group="TheoLan" th:if="${coTheoLan}">
-            <label class="opt" th:each="dv, st : ${danhMuc.dichVuTheoLan}">
-              <input type="radio" name="dichVuId" th:value="${dv.id}"
-                     th:checked="${dvChon != null ? dvChon == dv.id : st.first}"
-                     th:attr="data-ten=${dv.tenDichVu},data-gia=${dv.gia},data-gia-text=${dv.giaText}">
-              <b th:text="${dv.tenDichVu}">Dọn dẹp nhà 3 giờ</b>
-              <span th:if="${dv.thoiGianText != null and !#strings.contains(dv.tenDichVu, dv.thoiGianText)}" th:text="${dv.thoiGianText}">3 giờ</span>
-              <strong th:text="${dv.giaText}">270.000đ</strong>
-              <s class="gia-goc" th:if="${dv.giaGocText != null}" th:text="${dv.giaGocText}">300.000đ</s>
-            </label>
-          </div>
-          <div class="opt-grid" data-group="GoiThang" th:if="${coGoiThang}" th:hidden="${coTheoLan}">
-            <label class="opt" th:each="dv, st : ${danhMuc.dichVuGoiThang}">
-              <input type="radio" name="dichVuId" th:value="${dv.id}"
-                     th:checked="${dvChon != null ? dvChon == dv.id : (!coTheoLan and st.first)}" th:disabled="${coTheoLan}"
-                     th:attr="data-ten=${dv.tenDichVu},data-gia=${dv.gia},data-gia-text=${dv.giaText},data-so-buoi=${soBuoiGoi[dv.id]}">
-              <b th:text="${dv.tenDichVu}">Gói dọn dẹp 4 buổi</b>
-              <span th:text="${soBuoiGoi[dv.id] + ' buổi trong 1 tháng' + (dv.thoiGianText != null ? ' · ' + dv.thoiGianText + ' mỗi buổi' : '')}">13 buổi trong 1 tháng · 3 giờ mỗi buổi</span>
-              <strong th:text="${dv.giaText}">1.040.000đ</strong>
-              <s class="gia-goc" th:if="${dv.giaGocText != null}" th:text="${dv.giaGocText}">1.200.000đ</s>
-            </label>
-          </div>
-          <p class="hint" data-svc-none hidden style="margin:12px 0 0">Không có dịch vụ khớp. Thử từ khóa khác.</p>
-          <button class="btn btn-outline btn-block" type="button" style="margin-top:12px" data-svc-more hidden>Xem tất cả dịch vụ</button>
-          <div class="empty" th:if="${!coTheoLan and !coGoiThang}" style="border:0;padding:24px 0">
-            <h3>Nhóm này chưa có dịch vụ đang mở</h3>
-            <p>Bạn chọn nhóm khác hoặc quay lại sau.</p>
-            <a class="btn btn-outline" href="/#dat-dich-vu">Xem nhóm khác</a>
-          </div>
-        </section>
+        <!-- ===================== BƯỚC 3: THỜI GIAN THỰC HIỆN ===================== -->
+        <div data-buoc="3" hidden>
+          <section class="panel">
+            <h2 data-tieu-de-bien-the>Thời lượng / quy mô</h2>
+            <p class="hint">Chọn gói phù hợp với nhà bạn.</p>
+            <div class="opt-grid" data-group="TheoLan" th:if="${coTheoLan}">
+              <label class="opt" th:each="dv, st : ${danhMuc.dichVuTheoLan}" th:attr="data-ma=${dv.maDichVu}">
+                <input type="radio" name="dichVuId" th:value="${dv.id}"
+                       th:checked="${dvChon != null ? dvChon == dv.id : st.first}"
+                       th:attr="data-ten=${dv.tenDichVu},data-gia=${dv.gia},data-gia-text=${dv.giaText}">
+                <b th:text="${dv.tenDichVu}">Dọn dẹp nhà 3 giờ</b>
+                <span th:if="${dv.thoiGianText != null and !#strings.contains(dv.tenDichVu, dv.thoiGianText)}" th:text="${dv.thoiGianText}">3 giờ</span>
+                <strong th:text="${dv.giaText}">270.000đ</strong>
+                <s class="gia-goc" th:if="${dv.giaGocText != null}" th:text="${dv.giaGocText}">300.000đ</s>
+              </label>
+            </div>
+            <div class="opt-grid" data-group="GoiThang" th:if="${coGoiThang}">
+              <label class="opt" th:each="dv, st : ${danhMuc.dichVuGoiThang}" th:attr="data-ma=${dv.maDichVu}">
+                <input type="radio" name="dichVuId" th:value="${dv.id}"
+                       th:checked="${dvChon != null ? dvChon == dv.id : (!coTheoLan and st.first)}"
+                       th:attr="data-ten=${dv.tenDichVu},data-gia=${dv.gia},data-gia-text=${dv.giaText},data-so-buoi=${soBuoiGoi[dv.id]}">
+                <b th:text="${dv.tenDichVu}">Gói dọn dẹp 4 buổi</b>
+                <span th:text="${soBuoiGoi[dv.id] + ' buổi trong 1 tháng' + (dv.thoiGianText != null ? ' · ' + dv.thoiGianText + ' mỗi buổi' : '')}">13 buổi trong 1 tháng · 3 giờ mỗi buổi</span>
+                <strong th:text="${dv.giaText}">1.040.000đ</strong>
+                <s class="gia-goc" th:if="${dv.giaGocText != null}" th:text="${dv.giaGocText}">1.200.000đ</s>
+              </label>
+            </div>
+          </section>
 
-        <!-- 3. Ngày giờ -->
-        <section class="panel">
-          <h2 data-tieu-de-ngay>Ngày và giờ bắt đầu</h2>
-          <p class="hint" data-goi-an>Giờ bắt đầu cần sau hiện tại ít nhất 1 giờ.</p>
-          <p class="hint" data-goi-hien hidden>Ngày bắt đầu gói và giờ làm của mỗi buổi.</p>
-          <!-- Lịch chọn ngày (lich.css): từ hôm nay đến 60 ngày tới; gói tháng tô sẵn các buổi sẽ làm -->
-          <div class="lich-dat" aria-label="Chọn ngày làm">
-            <input type="hidden" data-lich-dat>
-            <input type="radio" name="ngayThucHien" checked hidden data-ngay-chon
-                   th:value="${ngays[1]}" th:attr="data-nhan=${thu[ngays[1].dayOfWeek.value - 1] + ' ' + #temporals.format(ngays[1], 'dd/MM')}">
-          </div>
-          <div class="lich-chu-thich">
-            <span><i class="cn"></i>Ngày đang chọn</span>
-            <span data-chu-thich-buoi hidden><i class="cb"></i>Các buổi của gói tháng</span>
-          </div>
-          <p class="lich-chon-hien" data-ngay-chon-text></p>
-          <div class="times" role="radiogroup" aria-label="Giờ bắt đầu">
-            <label class="time" th:each="gio : ${gios}">
-              <input type="radio" name="gioBatDau" th:value="${gio}" th:checked="${gio == '09:00'}">
-              <span th:text="${gio}">09:00</span>
-            </label>
-          </div>
-        </section>
+          <section class="panel">
+            <h2 data-tieu-de-ngay>Ngày và giờ bắt đầu</h2>
+            <p class="hint" data-goi-an>Đặt theo lần: chọn ngày trong vòng 1 tháng tới. Giờ bắt đầu cần sau hiện tại ít nhất 1 giờ.</p>
+            <p class="hint" data-goi-hien hidden>Gói tháng: ngày bắt đầu gói trong vòng 3 tháng tới, và giờ làm của mỗi buổi.</p>
+            <!-- Lịch chọn ngày (lich.css): theo lần tới hết 1 tháng, gói tháng tới hết 3 tháng; gói tô sẵn các buổi sẽ làm -->
+            <div class="lich-dat" aria-label="Chọn ngày làm"
+                 th:attr="data-max-theo-lan=${ngayToiDaTheoLan},data-max-goi=${ngayToiDaGoiThang}">
+              <input type="hidden" data-lich-dat>
+              <input type="radio" name="ngayThucHien" checked hidden data-ngay-chon
+                     th:value="${ngays[1]}" th:attr="data-nhan=${thu[ngays[1].dayOfWeek.value - 1] + ' ' + #temporals.format(ngays[1], 'dd/MM')}">
+            </div>
+            <div class="lich-chu-thich">
+              <span><i class="cn"></i>Ngày đang chọn</span>
+              <span data-chu-thich-buoi hidden><i class="cb"></i>Các buổi của gói tháng</span>
+            </div>
+            <p class="lich-chon-hien" data-ngay-chon-text></p>
+            <div class="times" role="radiogroup" aria-label="Giờ bắt đầu">
+              <label class="time" th:each="gio : ${gios}">
+                <input type="radio" name="gioBatDau" th:value="${gio}" th:checked="${gio == '09:00'}">
+                <span th:text="${gio}">09:00</span>
+              </label>
+            </div>
+          </section>
 
-        <!-- 3b. Gói tháng: các thứ trong tuần, đủ số buổi trong 1 tháng -->
-        <section class="panel" data-goi-panel th:if="${coGoiThang}" hidden>
-          <h2>Các thứ trong tuần</h2>
-          <p class="hint">Chọn thứ để đủ <b data-so-buoi-text>13</b> buổi trong vòng 1 tháng kể từ ngày bắt đầu.</p>
-          <div class="finder-chips" style="margin:0 0 12px" aria-label="Chọn nhanh">
-            <a href="#" data-mau-thu="2,4,6">T2 · T4 · T6</a>
-            <a href="#" data-mau-thu="3,5,7">T3 · T5 · T7</a>
-            <a href="#" data-mau-thu="3,5,7,CN">T3 · T5 · T7 · CN</a>
-            <a href="#" data-mau-thu="2,4,6,CN">T2 · T4 · T6 · CN</a>
-            <a href="#" data-mau-thu="2,3,4,5,6">T2 → T6</a>
-            <a href="#" data-mau-thu="2,3,4,5,6,7,CN">Cả tuần</a>
-          </div>
-          <div class="times" style="margin:0" role="group" aria-label="Thứ trong tuần">
-            <label class="wday" th:each="t, st : ${thu}">
-              <input type="checkbox" name="ngayTrongTuan" th:value="${st.last} ? 'CN' : ${st.count + 1}" disabled>
-              <span th:text="${t}">T2</span>
-            </label>
-          </div>
-          <div class="banner banner-ok" style="margin:16px 0 0" data-lich-ok hidden><svg class="ic"><use href="#i-calendar"/></svg><div><b data-lich-tom-tat>13 buổi, từ 09/10 đến 05/11</b><div data-lich-ngay style="margin-top:4px"></div></div></div>
-          <div class="banner banner-warn" style="margin:16px 0 0" data-lich-thieu hidden><svg class="ic"><use href="#i-alert"/></svg><span data-lich-loi>Chọn thêm thứ.</span></div>
-        </section>
+          <!-- Gói tháng: các thứ trong tuần, đủ số buổi trong 1 tháng -->
+          <section class="panel" data-goi-panel th:if="${coGoiThang}" hidden>
+            <h2>Các thứ trong tuần</h2>
+            <p class="hint">Chọn thứ để đủ <b data-so-buoi-text>13</b> buổi trong vòng 1 tháng kể từ ngày bắt đầu.</p>
+            <div class="finder-chips" style="margin:0 0 12px" aria-label="Chọn nhanh">
+              <a href="#" data-mau-thu="2,4,6">T2 · T4 · T6</a>
+              <a href="#" data-mau-thu="3,5,7">T3 · T5 · T7</a>
+              <a href="#" data-mau-thu="3,5,7,CN">T3 · T5 · T7 · CN</a>
+              <a href="#" data-mau-thu="2,4,6,CN">T2 · T4 · T6 · CN</a>
+              <a href="#" data-mau-thu="2,3,4,5,6">T2 → T6</a>
+              <a href="#" data-mau-thu="2,3,4,5,6,7,CN">Cả tuần</a>
+            </div>
+            <div class="times" style="margin:0" role="group" aria-label="Thứ trong tuần">
+              <label class="wday" th:each="t, st : ${thu}">
+                <input type="checkbox" name="ngayTrongTuan" th:value="${st.last} ? 'CN' : ${st.count + 1}" disabled>
+                <span th:text="${t}">T2</span>
+              </label>
+            </div>
+            <div class="banner banner-ok" style="margin:16px 0 0" data-lich-ok hidden><svg class="ic"><use href="#i-calendar"/></svg><div><b data-lich-tom-tat>13 buổi, từ 09/10 đến 05/11</b><div data-lich-ngay style="margin-top:4px"></div></div></div>
+            <div class="banner banner-warn" style="margin:16px 0 0" data-lich-thieu hidden><svg class="ic"><use href="#i-alert"/></svg><span data-lich-loi>Chọn thêm thứ.</span></div>
+          </section>
 
-        <!-- 4. Ghi chú -->
-        <section class="panel">
-          <h2>Ghi chú cho cộng tác viên</h2>
-          <p class="hint">Không bắt buộc.</p>
-          <textarea name="yeuCauDacBiet" class="textarea" maxlength="500" placeholder="Ví dụ: chìa khóa gửi bảo vệ, ưu tiên lau bếp" aria-label="Ghi chú cho cộng tác viên"></textarea>
-        </section>
+          <section class="panel" data-panel-dia-chi>
+            <h2>Địa chỉ làm việc</h2>
+            <p class="hint">Cộng tác viên đến đúng địa chỉ này.</p>
+            <div class="addr-list" th:if="${!diaChis.isEmpty()}">
+              <label class="addr addr-opt" th:each="dc, st : ${diaChis}">
+                <input type="radio" name="diaChiId" th:value="${dc.id}"
+                       th:checked="${dc.khuVucId != null and (dc.laMacDinh or (st.first and !#lists.contains(diaChis.![laMacDinh], true)))}"
+                       th:disabled="${dc.khuVucId == null}"
+                       th:attr="data-dia-chi=${dc.diaChiChiTiet}">
+                <div>
+                  <b th:text="${dc.laMacDinh} ? 'Mặc định' : ('Địa chỉ ' + ${st.count})">Nhà riêng</b>
+                  <span th:text="${dc.diaChiChiTiet}">45 Đường số 7, Phường Bình Trị Đông, Thành phố Hồ Chí Minh</span>
+                  <span th:if="${dc.khuVuc != null}" class="hint" style="display:block;margin:0" th:text="'Khu vực: ' + ${dc.khuVuc}">Khu vực: Quận Bình Tân</span>
+                  <span th:if="${dc.khuVuc == null}" style="display:block;color:var(--danger)">Ngoài khu vực phục vụ</span>
+                </div>
+              </label>
+              <a class="link addr-more" th:href="@{/tai-khoan/dia-chi(quay-lai=${'/dat-dich-vu/' + danhMuc.id})}"><svg class="ic"><use href="#i-plus"/></svg>Thêm địa chỉ khác</a>
+            </div>
+            <div th:if="${diaChis.isEmpty()}" class="form-grid">
+              <th:block th:replace="~{layout/dia-chi-form :: truong('dat', null, null, null, null, true)}"></th:block>
+              <p class="hint full" style="margin:0">Địa chỉ này được lưu vào sổ địa chỉ của bạn.</p>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Ghi chú cho cộng tác viên</h2>
+            <p class="hint">Không bắt buộc.</p>
+            <textarea name="yeuCauDacBiet" class="textarea" maxlength="500" placeholder="Ví dụ: chìa khóa gửi bảo vệ, ưu tiên lau bếp" aria-label="Ghi chú cho cộng tác viên"></textarea>
+          </section>
+          <div class="step-nav">
+            <button class="btn btn-outline btn-lg" type="button" data-lui>Quay lại</button>
+            <button class="btn btn-primary btn-lg" type="button" data-tiep>Tiếp tục</button>
+          </div>
+        </div>
+
+        <!-- ===================== BƯỚC 4: XÁC NHẬN ===================== -->
+        <div data-buoc="4" hidden>
+          <section class="panel">
+            <h2 style="margin-bottom:16px">Kiểm tra lại đơn</h2>
+            <dl class="dl">
+              <dt>Dịch vụ</dt><dd data-xn-ten>—</dd>
+              <dt>Hình thức</dt><dd data-xn-loai>—</dd>
+              <dt>Thời gian</dt><dd data-xn-gio>—</dd>
+              <dt data-xn-lich-dt hidden>Lịch</dt><dd data-xn-lich hidden>—</dd>
+              <dt>Địa chỉ</dt><dd data-xn-dia-chi>—</dd>
+              <dt>Ghi chú</dt><dd data-xn-ghi-chu>—</dd>
+              <dt>Tổng thanh toán</dt><dd><b data-sum-tong>0đ</b></dd>
+            </dl>
+          </section>
+          <!-- Ưu đãi trên điện thoại (khung tóm tắt bên phải bị ẩn) -->
+          <section class="panel promo-mobile">
+            <h2>Ưu đãi</h2>
+            <p class="hint" data-km-mobile-text>Chưa áp dụng mã ưu đãi.</p>
+            <button class="btn btn-outline btn-block" type="button" data-mo-km><svg class="ic"><use href="#i-ticket"/></svg>Áp dụng khuyến mãi</button>
+          </section>
+          <div class="step-nav">
+            <button class="btn btn-outline btn-lg" type="button" data-lui>Quay lại</button>
+            <button class="btn btn-primary btn-lg" type="button" data-tiep>Đặt dịch vụ</button>
+          </div>
+        </div>
+
+        <!-- ===================== BƯỚC 5: THANH TOÁN ===================== -->
+        <div data-buoc="5" hidden>
+          <section class="panel">
+            <h2>Phương thức thanh toán</h2>
+            <p class="hint">Đơn được gửi tới cộng tác viên sau bước này.</p>
+            <div class="opt-grid pay-opts">
+              <label class="opt">
+                <input type="radio" name="hinhThucThanhToan" value="TienMat">
+                <b>Tiền mặt</b>
+                <span>Trả cho cộng tác viên sau buổi làm. bTaskee tìm người làm ngay.</span>
+              </label>
+              <label class="opt">
+                <input type="radio" name="hinhThucThanhToan" value="ChuyenKhoan">
+                <b>Chuyển khoản</b>
+                <span th:text="'Quét mã VietQR, cần thanh toán trong ' + ${phutThanhToan} + ' phút. Thanh toán xong bTaskee mới tìm người làm.'">Quét mã VietQR, cần thanh toán trong 15 phút.</span>
+              </label>
+            </div>
+            <p class="hint" style="margin:16px 0 0" th:text="'Sau khi gửi tới cộng tác viên, nếu ' + ${phutNhanDon} + ' phút không có ai nhận đơn, đơn sẽ tự hủy và bạn không mất phí.'">Nếu 15 phút không có ai nhận đơn, đơn sẽ tự hủy.</p>
+          </section>
+          <div class="step-nav">
+            <button class="btn btn-outline btn-lg" type="button" data-lui>Quay lại</button>
+            <button class="btn btn-primary btn-lg" type="submit" data-nut-gui>Xác nhận đặt</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Tóm tắt đơn -->
+      <!-- Tóm tắt đơn (màn rộng) -->
       <aside class="panel summary">
         <h2>Tóm tắt đơn</h2>
         <div class="sum-rows">
@@ -150,6 +257,7 @@
           <div class="sum-row" data-sum-lich-row hidden><span>Lịch</span><b data-sum-lich>Chưa chọn thứ</b></div>
           <div class="sum-row"><span>Tạm tính</span><b data-sum-goc>0đ</b></div>
           <div class="sum-row" data-sum-giam-row hidden><span>Ưu đãi</span><b class="minus" data-sum-giam>−0đ</b></div>
+          <div class="sum-row"><span>Thanh toán</span><b data-sum-pttt>Chưa chọn</b></div>
         </div>
         <label class="label" for="codeKhuyenMai" style="margin-top:0">Mã ưu đãi</label>
         <div class="promo-row">
@@ -157,17 +265,32 @@
           <button class="btn btn-outline" type="button" data-apply-code>Áp dụng</button>
         </div>
         <p class="promo-msg" data-promo-msg hidden></p>
+        <button class="btn btn-ghost promo-pick" type="button" data-mo-km><svg class="ic"><use href="#i-ticket"/></svg>Chọn khuyến mãi có thể dùng</button>
         <div class="sum-total"><span>Tổng thanh toán</span><b data-sum-tong>0đ</b></div>
-        <button class="btn btn-primary btn-lg btn-block" type="submit" th:disabled="${!coTheoLan and !coGoiThang}">Đặt dịch vụ</button>
-        <p class="sum-note">Trả tiền mặt hoặc chuyển khoản sau buổi làm.</p>
       </aside>
     </div>
 
     <div class="mobile-bar">
       <div class="price"><b data-sum-tong>0đ</b><span data-sum-gio-ngan>Chưa chọn giờ</span></div>
-      <button class="btn btn-primary btn-lg" type="submit" th:disabled="${!coTheoLan and !coGoiThang}">Đặt dịch vụ</button>
+      <button class="btn btn-primary btn-lg" type="button" data-tiep-mobile>Tiếp tục</button>
     </div>
   </form>
+
+  <!-- Bảng khuyến mãi khách có thể dùng cho dịch vụ đang chọn -->
+  <dialog class="modal km-dialog" id="kmDialog" aria-labelledby="kmTieuDe">
+    <div class="km-head">
+      <div>
+        <h2 id="kmTieuDe">Khuyến mãi có thể dùng</h2>
+        <p data-km-dich-vu>Cho dịch vụ đang chọn</p>
+      </div>
+      <button class="btn btn-ghost km-close" type="button" data-km-dong aria-label="Đóng">✕</button>
+    </div>
+    <div class="km-list" data-km-list><p class="hint">Đang tải khuyến mãi…</p></div>
+    <div class="actions">
+      <button class="btn btn-outline" type="button" data-km-bo hidden>Bỏ mã đang dùng</button>
+      <button class="btn btn-outline" type="button" data-km-dong>Đóng</button>
+    </div>
+  </dialog>
 </main>
 
 <footer th:replace="~{layout/site-layout :: footer}"></footer>
@@ -178,37 +301,82 @@
   var form = document.getElementById('bookForm');
   var tien = function (n) { return Math.round(Number(n) || 0).toLocaleString('vi-VN').replace(/,/g, '.') + 'đ'; };
   var all = function (sel) { return form.querySelectorAll(sel); };
+  var toast = function (t) { if (window.siteToast) window.siteToast(t); };
   var giam = 0;
 
-  // Theo lần / Gói tháng: nhóm đang ẩn thì tắt input để không gửi lên
-  var loaiInput = form.querySelector('[data-loai-input]');
-  all('[data-loai]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var loai = btn.getAttribute('data-loai');
-      all('[data-loai]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
-      loaiInput.value = loai;
-      all('[data-group]').forEach(function (g) {
-        var on = g.getAttribute('data-group') === loai;
-        g.hidden = !on;
-        g.querySelectorAll('input').forEach(function (i) { i.disabled = !on; });
-      });
-      var goi = loai === 'GoiThang';
-      var pg = form.querySelector('[data-goi-panel]');
-      if (pg) { pg.hidden = !goi; pg.querySelectorAll('input').forEach(function (i) { i.disabled = !goi; }); }
-      // Gói tháng chưa chọn thứ nào: chọn sẵn T3, T5, T7, CN (sửa được)
-      if (goi && pg && !pg.querySelector('input[name="ngayTrongTuan"]:checked')) {
-        pg.querySelectorAll('input[name="ngayTrongTuan"]').forEach(function (i) { i.checked = ['3', '5', '7', 'CN'].indexOf(i.value) !== -1; });
+  // Nút quay lại: về đúng trang xem / tìm dịch vụ khách vừa mở (cùng site), giữ bộ lọc tìm kiếm
+  (function () {
+    var nut = document.querySelector('[data-quay-lai]');
+    if (!nut || !document.referrer) return;
+    try {
+      var tu = new URL(document.referrer);
+      if (tu.origin !== location.origin) return;
+      if (tu.pathname.indexOf('/tim-dich-vu') === 0) {
+        nut.href = tu.pathname + tu.search;
+        nut.querySelector('[data-quay-lai-text]').textContent = 'Quay lại kết quả tìm kiếm';
+      } else if (tu.pathname.indexOf('/dich-vu') === 0) {
+        nut.href = tu.pathname + tu.search;
       }
-      form.querySelector('[data-tieu-de-ngay]').textContent = goi ? 'Ngày bắt đầu và giờ làm' : 'Ngày và giờ bắt đầu';
-      form.querySelector('[data-goi-an]').hidden = goi;
-      form.querySelector('[data-goi-hien]').hidden = !goi;
-      form.querySelector('[data-sum-lich-row]').hidden = !goi;
-      var first = form.querySelector('[data-group="' + loai + '"] input[name="dichVuId"]');
-      if (first && !form.querySelector('[data-group="' + loai + '"] input[name="dichVuId"]:checked')) first.checked = true;
-      tinhLich(); // tô / bỏ tô các buổi gói tháng trên lịch
-      tinhGia();
+    } catch (e) { /* referrer không hợp lệ: giữ đường dẫn mặc định */ }
+  })();
+
+  var loaiInput = form.querySelector('[data-loai-input]');
+  function maChon() { var r = form.querySelector('input[name="maNhom"]:checked'); return r ? r.value : null; }
+  function nhomChon() { return form.querySelector('input[name="maNhom"]:checked'); }
+
+  // ---- Bước 3: chỉ hiện biến thể của dịch vụ + hình thức đã chọn; biến thể ẩn bị tắt để không gửi lên ----
+  function locBienThe() {
+    var ma = maChon(), loai = loaiInput.value;
+    all('[data-group]').forEach(function (g) {
+      var dungLoai = g.getAttribute('data-group') === loai;
+      g.hidden = !dungLoai;
+      g.querySelectorAll('label.opt').forEach(function (l) {
+        var hien = dungLoai && l.getAttribute('data-ma') === ma;
+        l.hidden = !hien;
+        l.querySelector('input').disabled = !hien;
+      });
     });
-  });
+    var dangChon = form.querySelector('input[name="dichVuId"]:checked');
+    if (!dangChon || dangChon.disabled) {
+      if (dangChon) dangChon.checked = false;
+      var dau = form.querySelector('input[name="dichVuId"]:not(:disabled)');
+      if (dau) dau.checked = true;
+    }
+    form.querySelector('[data-tieu-de-bien-the]').textContent = loai === 'GoiThang' ? 'Chọn gói tháng' : 'Thời lượng / quy mô';
+  }
+
+  // ---- Lịch: giới hạn ngày theo hình thức (theo lần 1 tháng, gói tháng 3 tháng) ----
+  var lichEl = form.querySelector('.lich-dat');
+  function ngayToiDa() { return lichEl.getAttribute(loaiInput.value === 'GoiThang' ? 'data-max-goi' : 'data-max-theo-lan'); }
+
+  function apDungLoai(loai, imLang) {
+    loaiInput.value = loai;
+    var goi = loai === 'GoiThang';
+    var pg = form.querySelector('[data-goi-panel]');
+    if (pg) { pg.hidden = !goi; pg.querySelectorAll('input').forEach(function (i) { i.disabled = !goi; }); }
+    // Gói tháng chưa chọn thứ nào: chọn sẵn T3, T5, T7, CN (sửa được)
+    if (goi && pg && !pg.querySelector('input[name="ngayTrongTuan"]:checked')) {
+      pg.querySelectorAll('input[name="ngayTrongTuan"]').forEach(function (i) { i.checked = ['3', '5', '7', 'CN'].indexOf(i.value) !== -1; });
+    }
+    form.querySelector('[data-tieu-de-ngay]').textContent = goi ? 'Ngày bắt đầu và giờ làm' : 'Ngày và giờ bắt đầu';
+    form.querySelector('[data-goi-an]').hidden = goi;
+    form.querySelector('[data-goi-hien]').hidden = !goi;
+    form.querySelector('[data-sum-lich-row]').hidden = !goi;
+    locBienThe();
+    if (fpDat) {
+      var max = ngayToiDa();
+      fpDat.set('maxDate', max);
+      if (radioNgay.value > max) {
+        fpDat.setDate(max, true);
+        if (!imLang) {
+          var p = max.split('-');
+          toast('Đã đổi ngày về ' + p[2] + '/' + p[1] + ' vì ' + (goi ? 'gói tháng chỉ bắt đầu trong 3 tháng.' : 'đặt theo lần chỉ trong 1 tháng.'));
+        }
+      }
+    }
+    tinhLich();
+    tinhGia();
+  }
 
   // Giờ đã qua (hôm nay, chưa đủ 1 giờ) thì khóa
   function khoaGio() {
@@ -230,7 +398,6 @@
   var lichDu = true;
   var buoiDau = null; // nhãn buổi đầu tiên của gói, vd "T5 08/10"
   function dd(d) { return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0'); }
-  // ---- Lịch chọn ngày (flatpickr, hiện sẵn) ----
   var radioNgay = form.querySelector('[data-ngay-chon]');
   var lichBuoi = {}; // các ngày có buổi của gói tháng: tô trên lịch
   function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -244,7 +411,7 @@
     inline: true,
     dateFormat: 'Y-m-d',
     minDate: 'today',
-    maxDate: new Date().fp_incr(60),
+    maxDate: ngayToiDa(),
     defaultDate: radioNgay.value,
     disableMobile: true,
     onDayCreate: function (a, b, fp, el) { if (lichBuoi[iso(el.dateObj)]) el.classList.add('co-buoi'); },
@@ -312,11 +479,23 @@
     });
   });
 
+  function moTaDiaChi() {
+    var dc = form.querySelector('input[name="diaChiId"]:checked');
+    if (dc) return dc.getAttribute('data-dia-chi');
+    var soNha = form.querySelector('[name="soNhaTenDuong"]');
+    return soNha && soNha.value.trim() ? soNha.value.trim() + ' (địa chỉ mới)' : '—';
+  }
+  function moTaPttt() {
+    var r = form.querySelector('input[name="hinhThucThanhToan"]:checked');
+    return r ? (r.value === 'ChuyenKhoan' ? 'Chuyển khoản' : 'Tiền mặt') : 'Chưa chọn';
+  }
+
   function capNhatTomTat() {
     var dv = form.querySelector('input[name="dichVuId"]:checked');
     var ngay = form.querySelector('input[name="ngayThucHien"]:checked');
     var gio = form.querySelector('input[name="gioBatDau"]:checked');
-    form.querySelector('[data-sum-ten]').textContent = dv ? dv.getAttribute('data-ten') : 'Chưa chọn';
+    var ten = dv ? dv.getAttribute('data-ten') : 'Chưa chọn';
+    form.querySelector('[data-sum-ten]').textContent = ten;
     var tg = ngay && gio ? (buoiDau ? 'Từ ' + buoiDau : ngay.getAttribute('data-nhan')) + ' · ' + gio.value : 'Chưa chọn';
     form.querySelector('[data-sum-gio]').textContent = tg;
     form.querySelector('[data-sum-gio-ngan]').textContent = ngay && gio ? tg : 'Chưa chọn giờ';
@@ -325,15 +504,31 @@
     form.querySelector('[data-sum-giam-row]').hidden = !giam;
     form.querySelector('[data-sum-giam]').textContent = '−' + tien(giam);
     all('[data-sum-tong]').forEach(function (el) { el.textContent = tien(Math.max(goc - giam, 0)); });
+    form.querySelector('[data-sum-pttt]').textContent = moTaPttt();
+    // Bước 4: bảng xác nhận
+    var goi = loaiInput.value === 'GoiThang';
+    form.querySelector('[data-xn-ten]').textContent = ten;
+    form.querySelector('[data-xn-loai]').textContent = goi ? 'Gói tháng' : 'Theo lần';
+    form.querySelector('[data-xn-gio]').textContent = tg;
+    form.querySelector('[data-xn-lich-dt]').hidden = !goi;
+    form.querySelector('[data-xn-lich]').hidden = !goi;
+    form.querySelector('[data-xn-lich]').textContent = form.querySelector('[data-sum-lich]').textContent;
+    form.querySelector('[data-xn-dia-chi]').textContent = moTaDiaChi();
+    var gc = form.querySelector('[name="yeuCauDacBiet"]').value.trim();
+    form.querySelector('[data-xn-ghi-chu]').textContent = gc || 'Không có';
+    // Bước 5: chữ trên nút gửi theo phương thức
+    var pttt = form.querySelector('input[name="hinhThucThanhToan"]:checked');
+    form.querySelector('[data-nut-gui]').textContent = pttt && pttt.value === 'ChuyenKhoan' ? 'Thanh toán' : 'Xác nhận đặt';
   }
 
   // Giá và mã ưu đãi tính ở máy chủ (/v1/bookings/calculate-price), cùng logic với ứng dụng
   var msg = form.querySelector('[data-promo-msg]');
   var loiGia = document.querySelector('[data-price-error]');
+  function ganKmMobile(t) { var el = form.querySelector('[data-km-mobile-text]'); if (el) el.textContent = t; }
   function tinhGia(coMa) {
     var dv = form.querySelector('input[name="dichVuId"]:checked');
     var ma = form.querySelector('#codeKhuyenMai').value.trim();
-    if (!dv || !ma) { giam = 0; msg.hidden = true; capNhatTomTat(); return; }
+    if (!dv || !ma) { giam = 0; msg.hidden = true; ganKmMobile('Chưa áp dụng mã ưu đãi.'); capNhatTomTat(); return; }
     fetch('/v1/bookings/calculate-price', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ dichVuId: Number(dv.value), loaiHinhDat: loaiInput.value, codeKhuyenMai: ma })
@@ -345,6 +540,7 @@
       msg.hidden = false;
       msg.className = 'promo-msg ' + (giam > 0 ? 'ok' : 'err');
       msg.textContent = giam > 0 ? 'Đã giảm ' + tien(giam) : (kq.thongDiepKMDuocApDung || 'Mã không dùng được cho dịch vụ này.');
+      ganKmMobile(giam > 0 ? 'Mã ' + ma.toUpperCase() + ': giảm ' + tien(giam) : msg.textContent);
       capNhatTomTat();
     }).catch(function () {
       giam = 0; capNhatTomTat();
@@ -352,60 +548,210 @@
     });
   }
 
+  // ---- Bảng "Áp dụng khuyến mãi": các mã còn hiệu lực, tính sẵn số tiền giảm cho dịch vụ đang chọn ----
+  var kmDialog = document.getElementById('kmDialog');
+  var kmList = kmDialog.querySelector('[data-km-list]');
+  var kmBo = kmDialog.querySelector('[data-km-bo]');
+  var oMa = form.querySelector('#codeKhuyenMai');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function moTaGiam(k) {
+    if (k.loaiGiam === 'PhanTram') {
+      return 'Giảm ' + Number(k.giaTriGiam).toLocaleString('vi-VN') + '%' + (k.soTienGiamToiDa ? ', tối đa ' + tien(k.soTienGiamToiDa) : '');
+    }
+    return 'Giảm ' + tien(k.giaTriGiam);
+  }
+  function ngayVN(s) { if (!s) return ''; var p = String(s).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s; }
+  function veKhuyenMai(ds) {
+    if (!ds.length) { kmList.innerHTML = '<p class="hint">Hiện chưa có khuyến mãi nào đang diễn ra.</p>'; return; }
+    var dangDung = oMa.value.trim().toUpperCase();
+    kmList.innerHTML = ds.map(function (k) {
+      var chon = dangDung && dangDung === String(k.codeKhuyenMai).toUpperCase();
+      return '<div class="km-item' + (k.dungDuoc ? '' : ' is-off') + (chon ? ' is-on' : '') + '">' +
+        '<div class="km-info">' +
+          '<b>' + esc(k.tenChuongTrinh) + '</b>' +
+          '<span class="km-code">' + esc(k.codeKhuyenMai) + '</span>' +
+          '<span>' + esc(moTaGiam(k)) + (Number(k.dieuKienToiThieu) > 0 ? ' · đơn từ ' + tien(k.dieuKienToiThieu) : '') + '</span>' +
+          (k.moTa ? '<span class="km-mo-ta">' + esc(k.moTa) + '</span>' : '') +
+          '<span class="km-han">HSD ' + esc(ngayVN(k.ngayKetThuc)) + (k.soLuotConLai != null ? ' · còn ' + k.soLuotConLai + ' lượt' : '') + '</span>' +
+          (k.lyDo ? '<span class="km-ly-do">' + esc(k.lyDo) + '</span>' : '') +
+        '</div>' +
+        '<div class="km-act">' +
+          (k.dungDuoc ? '<strong>−' + tien(k.soTienGiam) + '</strong>' : '') +
+          '<button class="btn ' + (chon ? 'btn-outline' : 'btn-primary') + '" type="button" data-km-chon="' + esc(k.codeKhuyenMai) + '"' + (k.dungDuoc && !chon ? '' : ' disabled') + '>' + (chon ? 'Đang dùng' : 'Áp dụng') + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  function moKhuyenMai() {
+    var dv = form.querySelector('input[name="dichVuId"]:checked');
+    if (!dv) { toast('Vui lòng chọn dịch vụ trước.'); return; }
+    var ngay = form.querySelector('input[name="ngayThucHien"]:checked');
+    var gio = form.querySelector('input[name="gioBatDau"]:checked');
+    kmDialog.querySelector('[data-km-dich-vu]').textContent = 'Cho: ' + dv.getAttribute('data-ten');
+    kmBo.hidden = !oMa.value.trim();
+    kmList.innerHTML = '<p class="hint">Đang tải khuyến mãi…</p>';
+    if (typeof kmDialog.showModal === 'function') kmDialog.showModal(); else kmDialog.setAttribute('open', '');
+    fetch('/v1/bookings/available-promotions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dichVuId: Number(dv.value), loaiHinhDat: loaiInput.value,
+        ngayThucHien: ngay ? ngay.value : null, gioBatDau: gio ? gio.value : null })
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (!res.success) throw new Error(res.message);
+      veKhuyenMai(res.data || []);
+    }).catch(function () {
+      kmList.innerHTML = '<p class="hint" style="color:var(--danger)">Chưa tải được khuyến mãi. Thử lại sau ít phút.</p>';
+    });
+  }
+  function dongKhuyenMai() { if (kmDialog.open) kmDialog.close(); }
+  document.querySelectorAll('[data-mo-km]').forEach(function (b) { b.addEventListener('click', moKhuyenMai); });
+  kmDialog.querySelectorAll('[data-km-dong]').forEach(function (b) { b.addEventListener('click', dongKhuyenMai); });
+  kmDialog.addEventListener('click', function (e) { if (e.target === kmDialog) dongKhuyenMai(); }); // bấm ra ngoài để đóng
+  kmList.addEventListener('click', function (e) {
+    var nut = e.target.closest('[data-km-chon]');
+    if (!nut || nut.disabled) return;
+    oMa.value = nut.getAttribute('data-km-chon');
+    dongKhuyenMai();
+    tinhGia(true);
+  });
+  kmBo.addEventListener('click', function () { oMa.value = ''; dongKhuyenMai(); tinhGia(); });
   form.querySelector('[data-apply-code]').addEventListener('click', function () { tinhGia(true); });
-  form.querySelector('#codeKhuyenMai').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); tinhGia(true); } });
+  oMa.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); tinhGia(true); } });
+
+  // =================== CÁC BƯỚC ===================
+  var buoc = 1, daToi = 1;
+  var SO_BUOC = 5;
+  function loaiCoTheChon() {
+    var g = nhomChon();
+    if (!g) return [];
+    var ds = [];
+    if (g.getAttribute('data-co-theo-lan') === 'true') ds.push('TheoLan');
+    if (g.getAttribute('data-co-goi') === 'true') ds.push('GoiThang');
+    return ds;
+  }
+  function boQuaBuoc2() { return loaiCoTheChon().length === 1; }
+
+  function capNhatBuoc2() {
+    var g = nhomChon();
+    var ds = loaiCoTheChon();
+    form.querySelector('[data-ten-nhom-chon]').textContent = g ? g.getAttribute('data-ten') : '';
+    all('input[name="_loai"]').forEach(function (r) {
+      var co = ds.indexOf(r.value) !== -1;
+      r.disabled = !co;
+      r.closest('label').classList.toggle('is-off', !co);
+      r.checked = co && r.value === loaiInput.value;
+    });
+    if (ds.indexOf(loaiInput.value) === -1 && ds.length) apDungLoai(ds[0], true);
+  }
+
+  /** Lỗi của bước n (null nếu được sang bước sau). */
+  function loiBuoc(n) {
+    if (n === 1 && !maChon()) return 'Vui lòng chọn dịch vụ.';
+    if (n === 2 && loaiCoTheChon().indexOf(loaiInput.value) === -1) return 'Vui lòng chọn theo lần hoặc gói tháng.';
+    if (n === 3) {
+      if (!form.querySelector('input[name="dichVuId"]:checked:not(:disabled)')) return 'Vui lòng chọn thời lượng / gói.';
+      if (!form.querySelector('input[name="gioBatDau"]:checked')) return 'Vui lòng chọn giờ bắt đầu.';
+      if (loaiInput.value === 'GoiThang' && !lichDu) return 'Các thứ đã chọn chưa đủ số buổi của gói.';
+      var panelDc = form.querySelector('[data-panel-dia-chi]');
+      if (form.querySelector('input[name="diaChiId"]')) {
+        if (!form.querySelector('input[name="diaChiId"]:not(:disabled)')) return 'Các địa chỉ đã lưu nằm ngoài khu vực phục vụ. Vui lòng thêm địa chỉ khác.';
+        if (!form.querySelector('input[name="diaChiId"]:checked')) return 'Vui lòng chọn địa chỉ làm việc.';
+      } else {
+        var thieu = [].filter.call(panelDc.querySelectorAll('input, select'), function (i) { return !i.disabled && !i.checkValidity(); });
+        if (thieu.length) { thieu[0].reportValidity(); return 'Vui lòng nhập đủ địa chỉ làm việc.'; }
+      }
+    }
+    if (n === 5 && !form.querySelector('input[name="hinhThucThanhToan"]:checked')) return 'Vui lòng chọn phương thức thanh toán.';
+    return null;
+  }
+
+  function veThanhBuoc() {
+    all('[data-toi-buoc]').forEach(function (b) {
+      var n = Number(b.getAttribute('data-toi-buoc'));
+      var li = b.parentElement;
+      li.classList.toggle('is-current', n === buoc);
+      li.classList.toggle('is-done', n < buoc);
+      li.classList.toggle('is-skip', n === 2 && boQuaBuoc2());
+      b.disabled = n > daToi || (n === 2 && boQuaBuoc2());
+      if (n === buoc) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    });
+    form.querySelector('[data-tiep-mobile]').textContent = buoc === 4 ? 'Đặt dịch vụ' : buoc === 5 ? form.querySelector('[data-nut-gui]').textContent : 'Tiếp tục';
+  }
+
+  function moBuoc(n, cuon) {
+    buoc = n;
+    daToi = Math.max(daToi, n);
+    all('[data-buoc]').forEach(function (s) { s.hidden = Number(s.getAttribute('data-buoc')) !== n; });
+    if (n === 2) capNhatBuoc2();
+    if (n === 3) { locBienThe(); tinhLich(); if (fpDat) fpDat.redraw(); }
+    capNhatTomTat();
+    veThanhBuoc();
+    if (cuon !== false) form.querySelector('.steps').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function tiep() {
+    var loi = loiBuoc(buoc);
+    if (loi) { toast(loi); return; }
+    if (buoc === SO_BUOC) { guiDon(); return; }
+    var sau = buoc + 1;
+    if (sau === 2 && boQuaBuoc2()) { capNhatBuoc2(); sau = 3; }
+    moBuoc(sau);
+  }
+  function lui() {
+    var truoc = buoc - 1;
+    if (truoc === 2 && boQuaBuoc2()) truoc = 1;
+    if (truoc >= 1) moBuoc(truoc);
+  }
+  function guiDon() {
+    for (var n = 1; n <= SO_BUOC; n++) {
+      var loi = loiBuoc(n);
+      if (loi) { toast(loi); moBuoc(n); return; }
+    }
+    form.querySelector('[data-nut-gui]').disabled = true;
+    form.submit();
+  }
+
+  all('[data-tiep]').forEach(function (b) { b.addEventListener('click', tiep); });
+  all('[data-lui]').forEach(function (b) { b.addEventListener('click', lui); });
+  form.querySelector('[data-tiep-mobile]').addEventListener('click', tiep);
+  all('[data-toi-buoc]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var n = Number(b.getAttribute('data-toi-buoc'));
+      if (n <= daToi && !b.disabled) moBuoc(n);
+    });
+  });
+  // Enter trong ô nhập không gửi đơn khi chưa tới bước cuối
+  form.addEventListener('submit', function (e) { e.preventDefault(); tiep(); });
+
+  // Đổi dịch vụ ở bước 1: các bước sau phải đi lại
+  all('input[name="maNhom"]').forEach(function (r) {
+    r.addEventListener('change', function () { daToi = 1; capNhatBuoc2(); locBienThe(); tinhLich(); tinhGia(); veThanhBuoc(); });
+  });
+  all('input[name="_loai"]').forEach(function (r) {
+    r.addEventListener('change', function () { if (r.checked) { apDungLoai(r.value); daToi = 2; veThanhBuoc(); } });
+  });
   form.addEventListener('change', function (e) {
     if (e.target.name === 'ngayThucHien') khoaGio();
     tinhLich();
     if (e.target.name === 'dichVuId') tinhGia();
     capNhatTomTat();
+    if (buoc === 5) veThanhBuoc();
   });
-  form.addEventListener('submit', function (e) {
-    if (!form.querySelector('input[name="gioBatDau"]:checked')) { e.preventDefault(); window.siteToast('Vui lòng chọn giờ bắt đầu.'); return; }
-    if (loaiInput.value === 'GoiThang' && !lichDu) { e.preventDefault(); window.siteToast('Các thứ đã chọn chưa đủ số buổi của gói.'); form.querySelector('[data-goi-panel]').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-  });
-  // Nhóm nhiều dịch vụ: hiện 6 mục đầu (luôn gồm mục đang chọn), ô tìm lọc theo tên
-  var GIOI_HAN = 6, moRong = false;
-  var oTim = form.querySelector('[data-svc-search]');
-  var nutThem = form.querySelector('[data-svc-more]');
-  var khongCo = form.querySelector('[data-svc-none]');
-  var boDau = function (s) { return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd'); };
-  function locDichVu() {
-    var nhom = form.querySelector('[data-group="' + loaiInput.value + '"]');
-    if (!nhom) return;
-    var q = boDau(oTim ? oTim.value.trim() : '');
-    var the = nhom.querySelectorAll('label.opt');
-    var hien = 0, khop = 0;
-    the.forEach(function (l, i) {
-      var ok = !q || boDau(l.textContent).indexOf(q) !== -1;
-      if (ok) khop++;
-      var chon = l.querySelector('input').checked;
-      var show = ok && (q || moRong || khop <= GIOI_HAN || chon);
-      l.hidden = !show;
-      if (show) hien++;
-    });
-    if (nutThem) {
-      nutThem.hidden = !!q || moRong || the.length <= GIOI_HAN;
-      nutThem.textContent = 'Xem tất cả ' + the.length + ' dịch vụ';
-    }
-    if (khongCo) khongCo.hidden = khop !== 0;
-  }
-  if (oTim) oTim.addEventListener('input', locDichVu);
-  if (nutThem) nutThem.addEventListener('click', function () { moRong = true; locDichVu(); });
-  all('[data-loai]').forEach(function (btn) { btn.addEventListener('click', function () { moRong = false; locDichVu(); }); });
+  form.querySelector('[name="yeuCauDacBiet"]').addEventListener('input', capNhatTomTat);
 
-  // Mở trang bằng ?dv= của một gói tháng thì bật sẵn tab Gói tháng
-  var goiDaChon = form.querySelector('[data-group="GoiThang"] input[name="dichVuId"]:checked');
-  var nutGoi = form.querySelector('[data-loai="GoiThang"]');
-  if (goiDaChon && nutGoi) nutGoi.click();
-  else if (goiDaChon && !nutGoi) {
-    var pg0 = form.querySelector('[data-goi-panel]');
-    if (pg0) { pg0.hidden = false; pg0.querySelectorAll('input').forEach(function (i) { i.disabled = false; i.checked = i.checked || ['3', '5', '7', 'CN'].indexOf(i.value) !== -1; }); }
-    form.querySelector('[data-sum-lich-row]').hidden = false;
-  }
-
+  // ---- Trạng thái ban đầu: mở bằng ?dv= thì chọn sẵn dịch vụ, hình thức và tới thẳng bước 3 ----
+  var dvBanDau = form.querySelector('input[name="dichVuId"]:checked');
+  var maBanDau = dvBanDau ? dvBanDau.closest('label').getAttribute('data-ma') : null;
+  var nhomBanDau = maBanDau && form.querySelector('input[name="maNhom"][value="' + maBanDau + '"]');
+  if (!nhomBanDau) nhomBanDau = form.querySelector('input[name="maNhom"]');
+  if (nhomBanDau) nhomBanDau.checked = true;
+  var loaiBanDau = dvBanDau && dvBanDau.closest('[data-group]') ? dvBanDau.closest('[data-group]').getAttribute('data-group') : loaiInput.value;
+  apDungLoai(loaiBanDau, true);
+  if (dvBanDau && dvBanDau.closest('[data-group]').getAttribute('data-group') === loaiInput.value && !dvBanDau.disabled) dvBanDau.checked = true;
   khoaGio();
-  locDichVu();
+  var coDvChon = /[?&]dv=\d+/.test(location.search);
+  moBuoc(coDvChon ? 3 : 1, false);
+  if (coDvChon) daToi = 3;
+  veThanhBuoc();
   tinhLich();
   capNhatTomTat();
 })();

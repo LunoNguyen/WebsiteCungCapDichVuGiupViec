@@ -20,6 +20,8 @@ public class DichVuView implements Serializable {
     private String maDichVu;
     private String tenDichVu;
     private String moTa;
+    /** Ảnh riêng của dịch vụ, null nếu chưa có (dùng ảnh danh mục). */
+    private String hinhAnhUrl;
     /** TheoLan | GoiThang */
     private String loaiHinhDat;
     private String donViTinh;

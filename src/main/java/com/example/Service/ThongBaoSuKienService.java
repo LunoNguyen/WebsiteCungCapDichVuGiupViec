@@ -40,6 +40,10 @@ public class ThongBaoSuKienService {
     private final LichSuTrangThaiDonRepository lichSuRepo;
     private final ThongBaoService thongBaoService;
 
+    /** Đơn chuyển khoản chưa thanh toán thì chưa báo cộng tác viên (chưa phát hành). */
+    @org.springframework.beans.factory.annotation.Autowired
+    private HanNhanDonService hanNhanDonService;
+
     public ThongBaoSuKienService(DonDatDichVuRepository donRepo, PhanCongCTVRepository phanCongRepo,
                                  KhuVucCTVRepository khuVucCtvRepo, DichVuCTVRepository dichVuCtvRepo,
                                  LichSuTrangThaiDonRepository lichSuRepo, ThongBaoService thongBaoService) {
@@ -61,9 +65,30 @@ public class ThongBaoSuKienService {
     public void khiCoDonMoi(SuKienDon.DonMoi e) {
         DonDatDichVu don = donRepo.findByIdWithDetails(e.donId()).orElse(null);
         if (don == null) return;
+        if (!hanNhanDonService.daPhatHanh(don)) {
+            guiKhach(don, "Đơn " + don.getMaDonDat() + " đang chờ thanh toán",
+                    "Vui lòng chuyển khoản trong 15 phút để bTaskee bắt đầu tìm cộng tác viên.");
+            return;
+        }
         guiKhach(don, "Đã nhận đơn " + don.getMaDonDat(),
                 "bTaskee đã nhận đơn " + moTa(don) + ". Chúng tôi đang tìm cộng tác viên phù hợp và sẽ báo ngay khi có người nhận.");
+        baoCongTacVienKhuVuc(don);
+    }
 
+    /** Đơn chuyển khoản vừa thanh toán: báo khách, rồi báo CTV trong khu vực như đơn mới. */
+    @Async("taskExecutor")
+    @TransactionalEventListener(fallbackExecution = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void khiDaPhatHanh(SuKienDon.DaPhatHanh e) {
+        DonDatDichVu don = donRepo.findByIdWithDetails(e.donId()).orElse(null);
+        if (don == null) return;
+        guiKhach(don, "Đã nhận thanh toán đơn " + don.getMaDonDat(),
+                "bTaskee đã nhận thanh toán đơn " + moTa(don) + ". Chúng tôi đang tìm cộng tác viên phù hợp và sẽ báo ngay khi có người nhận.");
+        baoCongTacVienKhuVuc(don);
+    }
+
+    /** Báo cộng tác viên trong khu vực của đơn, có đăng ký dịch vụ của đơn. */
+    private void baoCongTacVienKhuVuc(DonDatDichVu don) {
         KhuVuc kv = don.getDiaChi() != null ? don.getDiaChi().getKhuVuc() : null;
         if (kv == null || !"ChoDuyet".equals(don.getTrangThai())) return;
         Set<Integer> dichVuCuaDon = new HashSet<>();

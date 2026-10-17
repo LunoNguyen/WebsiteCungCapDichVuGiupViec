@@ -153,6 +153,7 @@ public class CatalogService {
                     .maDichVu(dv.getMaDichVu())
                     .tenDichVu(dv.getTenDichVu())
                     .moTa(dv.getMoTaChiTiet())
+                    .hinhAnhUrl(minioService.getViewUrl(dv.getHinhAnh()))
                     .loaiHinhDat(dv.getLoaiHinhDat())
                     .donViTinh(dv.getDonViTinh())
                     .thoiGianText(dinhDangThoiGian(dv.getThoiGianThucHien()))
@@ -220,6 +221,23 @@ public class CatalogService {
         return null;
     }
 
+    /**
+     * Ảnh đại diện theo mã dịch vụ (HCNS đặt ở trang Danh mục dịch vụ), lấy từ danh sách {@link #getDanhMuc()}.
+     * Mã chưa có ảnh riêng thì không có trong map: nơi hiển thị dùng ảnh danh mục.
+     */
+    public static Map<String, String> anhTheoMaDichVu(List<DanhMucView> danhMucs) {
+        Map<String, String> anh = new java.util.HashMap<>();
+        if (danhMucs == null) return anh;
+        for (DanhMucView danhMuc : danhMucs) {
+            List<DichVuView> tatCa = new ArrayList<>(danhMuc.getDichVuTheoLan());
+            tatCa.addAll(danhMuc.getDichVuGoiThang());
+            for (DichVuView dv : tatCa) {
+                if (dv.getMaDichVu() != null && dv.getHinhAnhUrl() != null) anh.putIfAbsent(dv.getMaDichVu(), dv.getHinhAnhUrl());
+            }
+        }
+        return anh;
+    }
+
     /** Chọn các dịch vụ phổ biến cho trang chủ từ danh sách đã lấy từ {@link #getDanhMuc()}. */
     public static List<DichVuNoiBatView> chonDichVuNoiBat(List<DanhMucView> danhMucs) {
         List<DichVuNoiBatView> ketQua = new ArrayList<>();
@@ -229,6 +247,7 @@ public class CatalogService {
         for (String[] cauHinh : NOI_BAT) {
             BigDecimal min = null;
             Integer danhMucId = null;
+            String anh = null; // ảnh riêng của mã dịch vụ (nếu HCNS đã đặt)
             for (DanhMucView danhMuc : danhMucs) {
                 List<DichVuView> tatCa = new ArrayList<>(danhMuc.getDichVuTheoLan());
                 tatCa.addAll(danhMuc.getDichVuGoiThang());
@@ -237,6 +256,7 @@ public class CatalogService {
                         continue;
                     }
                     danhMucId = danhMuc.getId();
+                    if (anh == null) anh = dv.getHinhAnhUrl();
                     if (dv.getGia() != null && dv.getGia().signum() > 0 && (min == null || dv.getGia().compareTo(min) < 0)) {
                         min = dv.getGia();
                     }
@@ -245,7 +265,7 @@ public class CatalogService {
             if (danhMucId != null) {
                 ketQua.add(DichVuNoiBatView.builder()
                         .ten(cauHinh[1])
-                        .hinhAnhUrl(cauHinh[2])
+                        .hinhAnhUrl(anh != null ? anh : cauHinh[2])
                         .giaTuText(min != null ? "từ " + dinhDangTien(min) : "Liên hệ")
                         .danhMucId(danhMucId)
                         .build());

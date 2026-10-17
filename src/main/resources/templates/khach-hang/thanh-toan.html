@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Thanh toán đơn ' + ${hoaDon.maDonDat}, 'Chuyển khoản để bTaskee bắt đầu tìm cộng tác viên.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('don-hang')}"></header>
+
+<main class="acc" th:with="nh=${hoaDon.thongTinNganHang}">
+  <div class="wrap acc-layout">
+    <nav th:replace="~{layout/account-layout :: nav('don-hang')}"></nav>
+
+    <section>
+      <div class="crumb"><a href="/tai-khoan/don-hang">Đơn của tôi</a><svg class="ic"><use href="#i-right"/></svg>
+        <a th:href="@{/tai-khoan/don-hang/{id}(id=${donId})}" th:text="${hoaDon.maDonDat}">DD-123</a><svg class="ic"><use href="#i-right"/></svg><span>Thanh toán</span></div>
+      <div class="acc-head">
+        <h1>Thanh toán chuyển khoản</h1>
+        <span class="badge badge-warning">Chờ thanh toán</span>
+      </div>
+      <div th:replace="~{layout/account-layout :: flash}"></div>
+
+      <div class="banner banner-warn" role="timer" data-han-tt th:attr="data-con-lai=${soGiayConLaiThanhToan}">
+        <svg class="ic"><use href="#i-clock"/></svg>
+        <div><b data-han-tt-text>Còn 15:00 để thanh toán</b>
+          <div style="margin-top:4px" th:text="'Sau ' + ${soPhutThanhToan} + ' phút chưa nhận được thanh toán, đơn sẽ tự hủy. Thanh toán xong, bTaskee mới bắt đầu tìm cộng tác viên.'">Sau 15 phút chưa nhận được thanh toán, đơn sẽ tự hủy.</div>
+        </div>
+      </div>
+
+      <div class="pay-layout">
+        <section class="panel pay-qr">
+          <h2>Quét mã để chuyển khoản</h2>
+          <p class="hint">Mở ứng dụng ngân hàng, quét mã VietQR. Số tiền và nội dung đã điền sẵn.</p>
+          <img th:src="${nh.qrCodeUrl}" alt="Mã VietQR chuyển khoản" width="280" height="280" loading="eager">
+        </section>
+
+        <section class="panel">
+          <h2 style="margin-bottom:16px">Thông tin chuyển khoản</h2>
+          <dl class="dl">
+            <dt>Số tiền</dt><dd><b class="pay-amount" th:text="${#numbers.formatDecimal(hoaDon.tongThanhToan, 0, 'POINT', 0, 'COMMA')} + 'đ'">270.000đ</b></dd>
+            <dt>Ngân hàng</dt><dd th:text="${nh.nganHang}">MBBank</dd>
+            <dt>Số tài khoản</dt><dd><span th:text="${nh.soTaiKhoan}">0988888888</span>
+              <button class="btn btn-ghost btn-sm" type="button" th:attr="data-sao-chep=${nh.soTaiKhoan}">Sao chép</button></dd>
+            <dt>Chủ tài khoản</dt><dd th:text="${nh.chuTaiKhoan}">CONG TY</dd>
+            <dt>Nội dung</dt><dd><b th:text="${nh.noiDungChuyenKhoan}">THANHTOAN HD-123</b>
+              <button class="btn btn-ghost btn-sm" type="button" th:attr="data-sao-chep=${nh.noiDungChuyenKhoan}">Sao chép</button></dd>
+            <dt>Mã hóa đơn</dt><dd th:text="${hoaDon.maHoaDon}">HD-123</dd>
+          </dl>
+          <p class="hint" style="margin:16px 0 0">Ghi đúng nội dung chuyển khoản để bTaskee đối chiếu nhanh.</p>
+
+          <form method="post" th:action="@{/tai-khoan/don-hang/{id}/thanh-toan(id=${donId})}" class="pay-actions">
+            <button class="btn btn-primary btn-lg" type="submit" data-nut-da-tra>Tôi đã chuyển khoản</button>
+            <button class="btn btn-outline btn-lg" type="button" data-open-dialog="huyDon">Hủy đơn</button>
+          </form>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <dialog class="modal" id="huyDon">
+    <form method="post" th:action="@{/tai-khoan/don-hang/{id}/huy(id=${donId})}">
+      <h2>Hủy đơn này?</h2>
+      <p>Đơn chưa thanh toán sẽ bị hủy. Bạn có thể đặt lại bất cứ lúc nào.</p>
+      <label class="label" for="lyDo">Lý do</label>
+      <input id="lyDo" name="lyDo" class="input" placeholder="Ví dụ: đổi phương thức thanh toán">
+      <div class="actions">
+        <button class="btn btn-outline" type="button" data-close-dialog>Giữ đơn</button>
+        <button class="btn btn-danger" type="submit">Hủy đơn</button>
+      </div>
+    </form>
+  </dialog>
+</main>
+<script>
+(function () {
+  'use strict';
+  // Đếm ngược hạn thanh toán; hết giờ thì khoá nút và tải lại (hệ thống quét đơn quá hạn mỗi phút)
+  var el = document.querySelector('[data-han-tt]');
+  var txt = el.querySelector('[data-han-tt-text]');
+  var nut = document.querySelector('[data-nut-da-tra]');
+  var het = Date.now() + Number(el.getAttribute('data-con-lai')) * 1000;
+  var t = null;
+  function ve() {
+    var con = Math.max(0, Math.round((het - Date.now()) / 1000));
+    if (con <= 0) {
+      txt.textContent = 'Đã hết thời gian thanh toán. Đang cập nhật đơn…';
+      nut.disabled = true;
+      clearInterval(t);
+      setTimeout(function () { location.reload(); }, 65000);
+      return;
+    }
+    txt.textContent = 'Còn ' + String(Math.floor(con / 60)).padStart(2, '0') + ':' + String(con % 60).padStart(2, '0') + ' để thanh toán';
+  }
+  ve();
+  t = setInterval(ve, 1000);
+
+  document.querySelectorAll('[data-sao-chep]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var v = b.getAttribute('data-sao-chep');
+      var xong = function () { if (window.siteToast) window.siteToast('Đã sao chép ' + v); };
+      if (navigator.clipboard) navigator.clipboard.writeText(v).then(xong, xong); else xong();
+    });
+  });
+  // Bấm một lần: tránh gửi xác nhận hai lần
+  nut.form.addEventListener('submit', function () { nut.disabled = true; nut.textContent = 'Đang ghi nhận…'; });
+})();
+</script>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

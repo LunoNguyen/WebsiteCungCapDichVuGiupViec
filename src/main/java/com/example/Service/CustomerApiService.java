@@ -1015,26 +1015,21 @@ public class CustomerApiService {
             MaKhuyenMai mkm = maKhuyenMaiRepository.findByCodeKhuyenMaiIgnoreCase(req.getCodeKhuyenMai().trim())
                     .orElse(null);
 
-            if (mkm != null && "HoatDong".equalsIgnoreCase(mkm.getTrangThai())) {
+            String lyDo = mkm == null ? "Mã ưu đãi không tồn tại." : lyDoMaKhongDungDuoc(mkm, LocalDate.now());
+            if (lyDo != null) {
+                thongDiepKM = lyDo;
+            } else {
                 ChuongTrinhKhuyenMai ctkm = mkm.getChuongTrinhKhuyenMai();
-                if (ctkm != null && "DangHoatDong".equalsIgnoreCase(ctkm.getTrangThai())) {
-                    if (chiPhiGoc.compareTo(ctkm.getDieuKienToiThieu()) >= 0) {
-                        if ("PhanTram".equalsIgnoreCase(ctkm.getLoaiGiam())) {
-                            BigDecimal giam = chiPhiGoc.multiply(ctkm.getGiaTriGiam()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
-                            if (ctkm.getSoTienGiamToiDa() != null && giam.compareTo(ctkm.getSoTienGiamToiDa()) > 0) {
-                                giam = ctkm.getSoTienGiamToiDa();
-                            }
-                            soTienGiam = giam;
-                        } else {
-                            soTienGiam = ctkm.getGiaTriGiam();
-                        }
-                        thongDiepKM = "Áp dụng thành công mã " + mkm.getCodeKhuyenMai() + ": " + ctkm.getTenChuongTrinh();
-                    } else {
-                        thongDiepKM = "Đơn hàng chưa đạt giá trị tối thiểu " + ctkm.getDieuKienToiThieu() + " đ để dùng mã này.";
-                    }
+                if (chiPhiGoc.compareTo(ctkm.getDieuKienToiThieu()) >= 0) {
+                    soTienGiam = tinhSoTienGiam(ctkm, chiPhiGoc);
+                    thongDiepKM = "Áp dụng thành công mã " + mkm.getCodeKhuyenMai() + ": " + ctkm.getTenChuongTrinh();
+                } else {
+                    thongDiepKM = "Đơn hàng chưa đạt giá trị tối thiểu " + dinhDangTien(ctkm.getDieuKienToiThieu()) + " để dùng mã này.";
                 }
             }
         }
+        // Không giảm quá giá trị đơn
+        if (soTienGiam.compareTo(chiPhiGoc) > 0) soTienGiam = chiPhiGoc;
 
         BigDecimal thanhTien = chiPhiGoc.subtract(soTienGiam);
         if (thanhTien.compareTo(BigDecimal.ZERO) < 0) thanhTien = BigDecimal.ZERO;
@@ -1049,6 +1044,82 @@ public class CustomerApiService {
                 .maKhuyenMai(req.getCodeKhuyenMai())
                 .thongDiepKMDuocApDung(thongDiepKM)
                 .build();
+    }
+
+    /** null nếu mã dùng được hôm nay; ngược lại là lý do hiển thị cho khách. */
+    private String lyDoMaKhongDungDuoc(MaKhuyenMai mkm, LocalDate homNay) {
+        if (!"HoatDong".equalsIgnoreCase(mkm.getTrangThai())) return "Mã ưu đãi đã hết hiệu lực.";
+        if (mkm.getSoLuotToiDa() != null && mkm.getSoLuotDaDung() != null
+                && mkm.getSoLuotDaDung() >= mkm.getSoLuotToiDa()) return "Mã ưu đãi đã hết lượt sử dụng.";
+        ChuongTrinhKhuyenMai ct = mkm.getChuongTrinhKhuyenMai();
+        if (ct == null || !"DangHoatDong".equalsIgnoreCase(ct.getTrangThai())) return "Chương trình khuyến mãi không còn diễn ra.";
+        if (ct.getNgayBatDau() != null && ct.getNgayBatDau().isAfter(homNay)) return "Chương trình khuyến mãi chưa bắt đầu.";
+        if (ct.getNgayKetThuc() != null && ct.getNgayKetThuc().isBefore(homNay)) return "Chương trình khuyến mãi đã kết thúc.";
+        return null;
+    }
+
+    private BigDecimal tinhSoTienGiam(ChuongTrinhKhuyenMai ct, BigDecimal chiPhiGoc) {
+        if ("PhanTram".equalsIgnoreCase(ct.getLoaiGiam())) {
+            BigDecimal giam = chiPhiGoc.multiply(ct.getGiaTriGiam()).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+            if (ct.getSoTienGiamToiDa() != null && giam.compareTo(ct.getSoTienGiamToiDa()) > 0) {
+                giam = ct.getSoTienGiamToiDa();
+            }
+            return giam;
+        }
+        return ct.getGiaTriGiam().setScale(0, RoundingMode.HALF_UP);
+    }
+
+    private static String dinhDangTien(BigDecimal so) {
+        if (so == null) return "0đ";
+        return String.format("%,d", so.setScale(0, RoundingMode.HALF_UP).longValue()).replace(',', '.') + "đ";
+    }
+
+    /**
+     * Bảng "Áp dụng khuyến mãi" ở trang đặt dịch vụ: mọi mã đang còn hiệu lực, tính sẵn số tiền giảm
+     * cho dịch vụ (và ngày giờ) đang chọn. Mã dùng được xếp trước, giảm nhiều nhất lên đầu;
+     * mã chưa đủ giá trị đơn tối thiểu vẫn trả về kèm lý do để khách biết.
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getUsablePromotions(CalculatePriceRequest req) {
+        if (req.getDichVuId() == null) throw new IllegalArgumentException("Vui lòng chọn dịch vụ trước.");
+        CalculatePriceRequest khongMa = new CalculatePriceRequest();
+        khongMa.setDichVuId(req.getDichVuId());
+        khongMa.setLoaiHinhDat(req.getLoaiHinhDat());
+        khongMa.setBangGiaId(req.getBangGiaId());
+        khongMa.setNgayThucHien(req.getNgayThucHien());
+        khongMa.setGioBatDau(req.getGioBatDau());
+        BigDecimal chiPhiGoc = calculatePrice(khongMa).getChiPhiGoc();
+
+        LocalDate homNay = LocalDate.now();
+        List<Map<String, Object>> ketQua = new ArrayList<>();
+        for (MaKhuyenMai mkm : maKhuyenMaiRepository.findAll()) {
+            if (lyDoMaKhongDungDuoc(mkm, homNay) != null) continue;
+            ChuongTrinhKhuyenMai ct = mkm.getChuongTrinhKhuyenMai();
+            BigDecimal toiThieu = ct.getDieuKienToiThieu() != null ? ct.getDieuKienToiThieu() : BigDecimal.ZERO;
+            boolean duDieuKien = chiPhiGoc.compareTo(toiThieu) >= 0;
+            BigDecimal giam = duDieuKien ? tinhSoTienGiam(ct, chiPhiGoc).min(chiPhiGoc) : BigDecimal.ZERO;
+
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("codeKhuyenMai", mkm.getCodeKhuyenMai());
+            m.put("tenChuongTrinh", ct.getTenChuongTrinh());
+            m.put("moTa", ct.getMoTa());
+            m.put("loaiGiam", ct.getLoaiGiam());
+            m.put("giaTriGiam", ct.getGiaTriGiam());
+            m.put("soTienGiamToiDa", ct.getSoTienGiamToiDa());
+            m.put("dieuKienToiThieu", toiThieu);
+            m.put("ngayKetThuc", ct.getNgayKetThuc());
+            m.put("soLuotConLai", mkm.getSoLuotToiDa() != null && mkm.getSoLuotDaDung() != null
+                    ? mkm.getSoLuotToiDa() - mkm.getSoLuotDaDung() : null);
+            m.put("dungDuoc", duDieuKien && giam.signum() > 0);
+            m.put("soTienGiam", giam);
+            m.put("lyDo", duDieuKien ? null
+                    : "Cần đơn từ " + dinhDangTien(toiThieu) + " (còn thiếu " + dinhDangTien(toiThieu.subtract(chiPhiGoc)) + ")");
+            ketQua.add(m);
+        }
+        ketQua.sort(Comparator.comparing((Map<String, Object> m) -> !(Boolean) m.get("dungDuoc"))
+                .thenComparing(m -> (BigDecimal) m.get("soTienGiam"), Comparator.reverseOrder())
+                .thenComparing(m -> (BigDecimal) m.get("dieuKienToiThieu")));
+        return ketQua;
     }
 
     /** Chương trình khuyến mãi đang chạy kèm mã còn dùng được: banner "Ưu đãi" trên app. */
@@ -1198,6 +1269,8 @@ public class CustomerApiService {
         if (req.getCodeKhuyenMai() != null && !req.getCodeKhuyenMai().isBlank()) {
             mkm = maKhuyenMaiRepository.findByCodeKhuyenMaiIgnoreCase(req.getCodeKhuyenMai().trim()).orElse(null);
         }
+        // Mã không giảm được (hết hạn, chưa đủ giá trị tối thiểu...) thì không gắn vào đơn
+        if (mkm != null && priceResult.getSoTienGiam().signum() <= 0) mkm = null;
 
         // Bảng giá snapshot tại thời điểm đặt
         // Bảng giá có hiệu lực lúc bắt đầu làm; không có ngày thì dùng bangGiaId client gửi
@@ -1227,11 +1300,11 @@ public class CustomerApiService {
                 && !"GoiThang".equalsIgnoreCase(dichVu.getLoaiHinhDat())) {
             throw new IllegalArgumentException("Dịch vụ này không có gói tháng, vui lòng chọn gói tháng trong danh sách.");
         }
-        // Buổi đầu tiên (gói tháng: ngày đầu khớp thứ đã chọn) phải sau hiện tại ít nhất 1 giờ, giống trên web
-        if (ngayThucHien != null && req.getGioBatDau() != null
-                && LocalDateTime.of(ngayThucHien, req.getGioBatDau()).isBefore(LocalDateTime.now().plusHours(1))) {
-            throw new IllegalArgumentException("Giờ bắt đầu cần sau thời điểm hiện tại ít nhất 1 giờ.");
-        }
+        // Buổi đầu tiên (gói tháng: ngày đầu khớp thứ đã chọn): theo lần trong vòng 1 tháng, gói bắt đầu
+        // trong vòng 3 tháng, sau hiện tại ít nhất 1 giờ – cùng quy tắc với website
+        String loiNgay = RangBuocNgayDat.loiNgayDat(priceResult.getLoaiHinhDat(), ngayThucHien, req.getGioBatDau(),
+                LocalDateTime.now());
+        if (loiNgay != null) throw new IllegalArgumentException(loiNgay);
 
         LocalTime gioKetThuc = req.getGioKetThuc();
         if (gioKetThuc == null && dichVu.getThoiGianThucHien() != null) {
@@ -1312,7 +1385,7 @@ public class CustomerApiService {
                 .donDat(donDat)
                 .khachHang(khachHang)
                 .ngayLap(LocalDateTime.now())
-                .hinhThucThanhToan("ChuyenKhoan")
+                .hinhThucThanhToan(HanNhanDonService.chuanHoaHinhThuc(req.getHinhThucThanhToan()))
                 .tongTienHang(priceResult.getChiPhiGoc())
                 .soTienGiam(priceResult.getSoTienGiam())
                 .tongThanhToan(priceResult.getThanhTien())
@@ -1337,6 +1410,7 @@ public class CustomerApiService {
         result.put("donDatId", donDat.getId());
         result.put("maDonDat", donDat.getMaDonDat());
         result.put("hoaDonId", hoaDon.getId());
+        result.put("hinhThucThanhToan", hoaDon.getHinhThucThanhToan());
         result.put("maHoaDon", hoaDon.getMaHoaDon());
         result.put("tongThanhToan", donDat.getThanhTien());
         result.put("trangThai", donDat.getTrangThai());
@@ -1568,6 +1642,22 @@ public class CustomerApiService {
         return res;
     }
 
+    /**
+     * Điểm vào duy nhất để ghi nhận một khoản chuyển khoản của khách: nút "Tôi đã chuyển khoản" trên website
+     * hôm nay, webhook VietQR sau này. Khoá đơn để không đụng độ với tác vụ tự hủy đơn quá hạn thanh toán.
+     *
+     * @param nguon ghi vào biên lai (người thu tiền), VD "Khách xác nhận trên website", "VietQR"
+     */
+    public Map<String, Object> xacNhanThanhToanChuyenKhoan(Integer donDatId, String nguon) {
+        donDatDichVuRepository.findByIdForUpdate(donDatId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt ID: " + donDatId));
+        PaymentReceiptRequest req = new PaymentReceiptRequest();
+        req.setDonDatId(donDatId);
+        req.setHinhThucThanhToan("ChuyenKhoan");
+        req.setNguoiThuTien(nguon);
+        return createReceipt(req);
+    }
+
     public Map<String, Object> createReceipt(PaymentReceiptRequest req) {
         HoaDon hd = null;
         // Khóa hóa đơn trong lúc ghi nhận thanh toán: hai yêu cầu thanh toán cùng lúc sẽ lần lượt xử lý,
@@ -1584,6 +1674,13 @@ public class CustomerApiService {
         if ("DaThanhToan".equalsIgnoreCase(hd.getTrangThaiThanhToan())) {
             throw new IllegalArgumentException("Hóa đơn này đã được thanh toán.");
         }
+        DonDatDichVu donCuaHd = hd.getDonDat();
+        if (donCuaHd != null && "DaHuy".equalsIgnoreCase(donCuaHd.getTrangThai())) {
+            throw new IllegalArgumentException("Đơn này đã bị hủy, không thanh toán được nữa.");
+        }
+        boolean choPhatHanh = donCuaHd != null && "ChoDuyet".equalsIgnoreCase(donCuaHd.getTrangThai())
+                && "ChuyenKhoan".equalsIgnoreCase(req.getHinhThucThanhToan() != null
+                        ? req.getHinhThucThanhToan() : hd.getHinhThucThanhToan());
 
         hd.setTrangThaiThanhToan("DaThanhToan");
         hd.setNgayThanhToan(LocalDateTime.now());
@@ -1607,6 +1704,9 @@ public class CustomerApiService {
                 .nguoiThuTien(nguoiThu)
                 .build();
         bienLai = bienLaiRepository.save(bienLai);
+
+        // Đơn chuyển khoản chờ thanh toán: từ giờ mới phát hành cho cộng tác viên (báo CTV, CSKH)
+        if (choPhatHanh) com.example.SuKien.BoPhatSuKien.phat(new com.example.SuKien.SuKienDon.DaPhatHanh(donCuaHd.getId()));
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("bienLaiId", bienLai.getId());

@@ -56,6 +56,7 @@ public class CacheInvalidationInterceptor implements HandlerInterceptor {
                 || path.startsWith("/v1/auth/otp")
                 || path.endsWith("/calculate-price")
                 || path.endsWith("/promotions/validate")
+                || path.endsWith("/available-promotions")
                 || path.startsWith("/login");
         if (!khongDoiSoLieu) {
             cacheService.xoaCacheThongKe();

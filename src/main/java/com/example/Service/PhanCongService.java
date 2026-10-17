@@ -69,6 +69,9 @@ public class PhanCongService {
     private final KhuVucCTVRepository khuVucCTVRepository;
     private final LichSuTrangThaiDonRepository lichSuTrangThaiDonRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private HanNhanDonService hanNhanDonService;
+
     @Value("${app.phan-cong.khoang-cach-phut:60}")
     private int khoangCachPhut;
 
@@ -563,6 +566,11 @@ public class PhanCongService {
         ketQua.put("daPhanCong", daPhanCong);
         ketQua.put("phuHop", phuHop);
         ketQua.put("khongPhuHop", khongPhuHop);
+        // Đơn đang chờ nhận: số giây còn lại của thời gian nhận đơn (hết thì hệ thống tự hủy)
+        LocalDateTime hanNhan = hanNhanDonService.hanNhanNeuDangCho(don.getId());
+        ketQua.put("soPhutNhanDon", hanNhanDonService.soPhut());
+        ketQua.put("soGiayConLai", hanNhan == null ? null
+                : Math.max(0, java.time.Duration.between(LocalDateTime.now(), hanNhan).getSeconds()));
         return ketQua;
     }
 
@@ -621,6 +629,10 @@ public class PhanCongService {
         if (!"ChoDuyet".equalsIgnoreCase(don.getTrangThai()) && !"DaXacNhan".equalsIgnoreCase(don.getTrangThai())) {
             throw new IllegalArgumentException("Chỉ phân công được cho đơn đang chờ duyệt hoặc đã xác nhận.");
         }
+        // Đơn chưa có ai nhận chỉ phân công được trong thời gian nhận đơn (15 phút kể từ lúc phát hành)
+        boolean daCoNguoiNhan = phanCongCTVRepository.findAllByDonDat_Id(donDatId).stream()
+                .anyMatch(x -> "DaXacNhan".equalsIgnoreCase(x.getTrangThai()) || "HoanThanh".equalsIgnoreCase(x.getTrangThai()));
+        if (!daCoNguoiNhan) hanNhanDonService.kiemTraConHan(don);
         PhanCongCTV daCo = phanCongCTVRepository.findByDonDat_IdAndCongTacVien_Id(donDatId, ctvId).orElse(null);
         if (daCo != null) {
             throw new IllegalArgumentException("TuChoi".equalsIgnoreCase(daCo.getTrangThai())

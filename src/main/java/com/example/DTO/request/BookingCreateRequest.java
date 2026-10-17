@@ -47,6 +47,7 @@ public class BookingCreateRequest {
     private LocalTime gioKetThuc;
     private String yeuCauDacBiet;
     private String codeKhuyenMai;
+    private String hinhThucThanhToan; // TienMat | ChuyenKhoan, null = TienMat (ứng dụng chưa có bước thanh toán)
     private String ghiChu;
 
     /** Gộp chiTiet và dichVuId thành một danh sách duy nhất cho service dùng */

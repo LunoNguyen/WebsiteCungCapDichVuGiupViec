@@ -22,4 +22,16 @@ public interface MaKhuyenMaiRepository extends JpaRepository<MaKhuyenMai, Intege
          + "m.trangThai = CASE WHEN m.soLuotDaDung + 1 >= m.soLuotToiDa THEN 'HetLuot' ELSE m.trangThai END "
          + "WHERE m.id = :id AND m.trangThai = 'HoatDong' AND m.soLuotDaDung < m.soLuotToiDa")
     int ghiNhanLuotDung(@org.springframework.data.repository.query.Param("id") Integer id);
+
+    /**
+     * Trả lại MỘT lượt dùng khi đơn dùng mã bị hủy (HoanLuotKhuyenMaiService). Mã đang "HetLuot" thì mở lại
+     * "HoatDong" vì đã có lượt trống; mã đã hết hạn (HetHan) giữ nguyên trạng thái.
+     *
+     * @return 1 nếu trả được lượt, 0 nếu mã chưa có lượt nào đã dùng
+     */
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
+    @org.springframework.data.jpa.repository.Query("UPDATE MaKhuyenMai m SET m.soLuotDaDung = m.soLuotDaDung - 1, "
+         + "m.trangThai = CASE WHEN m.trangThai = 'HetLuot' THEN 'HoatDong' ELSE m.trangThai END "
+         + "WHERE m.id = :id AND m.soLuotDaDung > 0")
+    int hoanLuotDung(@org.springframework.data.repository.query.Param("id") Integer id);
 }
