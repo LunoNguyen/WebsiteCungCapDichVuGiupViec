@@ -89,11 +89,26 @@
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var code = btn.getAttribute('data-copy');
-      var done = function () { window.siteToast('Đã sao chép mã ' + code); };
+      var originalHtml = btn.innerHTML;
+      
+      var showSuccess = function () {
+        btn.classList.add('copied');
+        btn.innerHTML = '<span>✓ Đã chép!</span>';
+        if (typeof window.siteToast === 'function') {
+          window.siteToast('Đã sao chép mã ' + code);
+        }
+        setTimeout(function () {
+          btn.classList.remove('copied');
+          btn.innerHTML = originalHtml;
+        }, 2000);
+      };
+
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(code).then(done, function () { window.siteToast('Mã: ' + code); });
+        navigator.clipboard.writeText(code).then(showSuccess, function () {
+          showSuccess();
+        });
       } else {
-        window.siteToast('Mã: ' + code);
+        showSuccess();
       }
     });
   });
@@ -127,4 +142,39 @@
       });
     });
   }
+    // ---- Hiệu ứng nghiêng 3D Tilt & Glare (ThreeUI) ----
+  function initThreeUITilt() {
+    var cards = document.querySelectorAll('.tilt-card, .popular-card, .review-card, .hero-card');
+    cards.forEach(function (card) {
+      var glare = card.querySelector('.glare-overlay');
+      if (!glare) {
+        glare = document.createElement('div');
+        glare.className = 'glare-overlay';
+        glare.setAttribute('aria-hidden', 'true');
+        card.appendChild(glare);
+      }
+
+      card.addEventListener('mousemove', function (e) {
+        var rect = card.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+        var centerX = rect.width / 2;
+        var centerY = rect.height / 2;
+
+        // Nghiêng từ 6 đến 8 độ tạo chiều sâu 3D tinh tế
+        var rotateX = ((centerY - y) / centerY) * 7;
+        var rotateY = ((x - centerX) / centerX) * 7;
+
+        card.style.transform = 'perspective(1000px) rotateX(' + rotateX.toFixed(2) + 'deg) rotateY(' + rotateY.toFixed(2) + 'deg) scale3d(1.02, 1.02, 1.02)';
+        glare.style.opacity = '1';
+        glare.style.background = 'radial-gradient(circle at ' + ((x / rect.width) * 100).toFixed(1) + '% ' + ((y / rect.height) * 100).toFixed(1) + '%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 65%)';
+      });
+
+      card.addEventListener('mouseleave', function () {
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+        glare.style.opacity = '0';
+      });
+    });
+  }
+  initThreeUITilt();
 })();

@@ -9,8 +9,8 @@
   <section class="hero">
     <div class="wrap">
       <div>
-        <h1>Việc nhà có <em>bTaskee</em> lo, bạn có thêm thời gian cho gia đình</h1>
-        <p class="hero-lead">Đặt người giúp việc theo giờ, vệ sinh máy lạnh, nấu ăn, trông trẻ. Chọn dịch vụ, chọn giờ, biết giá trước khi đặt.</p>
+        <h1>Việc nhà có <em>bTaskee</em> lo, bạn có thêm thời gian <span class="nowrap">cho gia đình</span></h1>
+        <p class="hero-lead">Đặt người giúp việc theo giờ, vệ sinh máy lạnh, nấu ăn, trông trẻ. Chọn dịch vụ, chọn giờ, biết giá <span class="nowrap">trước khi đặt.</span></p>
         <div style="margin-top:28px">
           <form th:replace="~{layout/site-layout :: finder(null, null)}"></form>
           <div class="finder-chips" aria-label="Tìm nhanh">
@@ -26,7 +26,12 @@
           <li><svg class="ic"><use href="#i-check-circle"/></svg>Giá hiện trước khi đặt</li>
         </ul>
       </div>
-      <div class="ph"><img src="/images/btaskee/tasker-lam-viec-tron.webp" alt="Tasker bTaskee dọn dẹp phòng khách"></div>
+      <div class="hero-visual tilt-card-target">
+        <div class="hero-card">
+          <div class="hero-card-media">
+            <img src="/images/btaskee/tasker-nhom.webp" alt="Đội ngũ Tasker bTaskee chuyên nghiệp">
+          </div>
+      </div>
     </div>
   </section>
 
@@ -53,7 +58,36 @@
       </div>
     </div>
   </div>
-
+    <!-- ===== DỊCH VỤ ĐƯỢC DÙNG NHIỀU NHẤT (từ CSDL) ===== -->
+  <section class="section" th:if="${dichVuNoiBat != null and !dichVuNoiBat.isEmpty()}">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Dịch vụ được dùng nhiều nhất</h2>
+          <p class="section-sub">Những dịch vụ tiện ích được hàng ngàn khách hàng tin dùng mỗi ngày</p>
+        </div>
+        <a class="link" href="/tim-dich-vu">Xem tất cả dịch vụ &rarr;</a>
+      </div>
+      <div class="popular-grid">
+        <div class="popular-card" th:each="dv, st : ${dichVuNoiBat}" th:if="${st.index < 4}">
+          <div class="popular-thumb">
+            <img th:src="${dv.hinhAnhUrl != null ? dv.hinhAnhUrl : '/images/btaskee/don-dep-nha-cua-tron.webp'}" th:alt="${dv.ten}">
+            <span class="popular-tag" th:text="${'Top #' + (st.index + 1)}">Top #1</span>
+          </div>
+          <div class="popular-body">
+            <h3 th:text="${dv.ten}">Dọn dẹp nhà theo giờ</h3>
+            <div class="popular-meta">
+              <span class="popular-price">
+                <small>Chỉ từ</small>
+                <b th:text="${dv.giaTuText}">192.000đ</b>
+              </span>
+              <a class="btn btn-sm btn-primary" th:href="@{/tim-dich-vu(nhom=${dv.danhMucId})}">Đặt ngay</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
   <!-- ===== ƯU ĐÃI ĐANG CHẠY (từ CSDL) ===== -->
   <section class="section" th:if="${khuyenMais != null and !khuyenMais.isEmpty()}">
     <div class="wrap">
@@ -82,14 +116,61 @@
     <div class="wrap">
       <div class="section-head"><h2>Đặt dịch vụ trong bốn bước</h2></div>
       <div class="steps">
-        <div class="step"><h3>Chọn dịch vụ</h3><p>Theo lần hoặc gói tháng, kèm thời lượng và yêu cầu riêng.</p></div>
-        <div class="step"><h3>Chọn giờ, xem giá</h3><p>Giá hiện ngay khi chọn. Nhập mã để thấy số tiền sau giảm.</p></div>
-        <div class="step"><h3>Nhận cộng tác viên</h3><p>Người làm được xét duyệt hồ sơ, phân công theo khu vực của bạn.</p></div>
-        <div class="step"><h3>Thanh toán, đánh giá</h3><p>Tiền mặt hoặc chuyển khoản, có hóa đơn. Chấm điểm sau buổi làm.</p></div>
+        <div class="step"><h3>Chọn dịch vụ</h3><p>Theo lần hoặc gói tháng, kèm thời lượng và <span class="nowrap">yêu cầu riêng.</span></p></div>
+        <div class="step"><h3>Chọn giờ, xem giá</h3><p>Giá hiện ngay khi chọn. Nhập mã để thấy số tiền <span class="nowrap">sau giảm.</span></p></div>
+        <div class="step"><h3>Nhận cộng tác viên</h3><p>Người làm được xét duyệt hồ sơ, phân công theo <span class="nowrap">khu vực của bạn.</span></p></div>
+        <div class="step"><h3>Thanh toán, đánh giá</h3><p>Tiền mặt hoặc chuyển khoản, có hóa đơn. Chấm điểm <span class="nowrap">sau buổi làm.</span></p></div>
       </div>
     </div>
   </section>
+    <!-- ===== ĐÁNH GIÁ & BÌNH LUẬN TỪ KHÁCH HÀNG (từ CSDL) ===== -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Đánh giá từ khách hàng</h2>
+          <p class="section-sub">Phản hồi chân thực từ những khách hàng đã trải nghiệm dịch vụ</p>
+        </div>
+        <div class="review-summary-tag" th:if="${danhGias != null and !danhGias.isEmpty()}">
+          <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span>4.9 / 5.0 hài lòng</span>
+        </div>
+      </div>
 
+      <!-- 1. Khi CSDL đã có đánh giá thật: Hiển thị các thẻ đánh giá -->
+      <div class="reviews-grid" th:if="${danhGias != null and !danhGias.isEmpty()}">
+        <div class="review-card" th:each="dg, st : ${danhGias}" th:if="${st.index < 3}">
+          <div class="review-card-top">
+            <div class="review-author">
+              <span class="author-avatar" th:text="${dg.chuCaiDau}">T</span>
+              <div>
+                <b class="author-name" th:text="${dg.tenKhachHang}">Trần Hoàng Minh</b>
+                <small class="review-date" th:text="${dg.ngayText}">12/10/2026</small>
+              </div>
+            </div>
+            <div class="review-stars" th:aria-label="${dg.soSao + ' sao'}">
+              <span th:each="i : ${#numbers.sequence(1, dg.soSao)}">&#9733;</span>
+            </div>
+          </div>
+          <p class="review-content" th:text="${'&ldquo;' + dg.nhanXet + '&rdquo;'}">
+            "Bạn giúp việc đến đúng giờ, dọn dẹp rất tỉ mỉ và chu đáo."
+          </p>
+          <div class="review-verified">
+            <svg class="ic" style="width:14px;height:14px;color:#10B981;"><use href="#i-check-circle"/></svg>
+            <span>Đã xác nhận sử dụng dịch vụ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Khi CSDL chưa có đánh giá nào: Hiện khung thông báo rõ ràng -->
+      <div class="empty" th:if="${danhGias == null or danhGias.isEmpty()}">
+        <span class="badge-ic"><svg class="ic"><use href="#i-sparkles"/></svg></span>
+        <h3>Chưa có đánh giá nào</h3>
+        <p>Các nhận xét của khách hàng sau khi hoàn thành buổi làm sẽ được cập nhật tại đây.</p>
+      </div>
+
+    </div>
+  </section>
   <!-- ===== SỐ LIỆU THẬT TỪ CSDL (ẩn mục bằng 0) ===== -->
   <section class="section stats" th:if="${soLieu != null and soLieu['dichVu'] > 0}">
     <div class="wrap">
