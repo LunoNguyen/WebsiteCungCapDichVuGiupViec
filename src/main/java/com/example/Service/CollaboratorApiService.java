@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -21,6 +22,9 @@ public class CollaboratorApiService {
 
     @org.springframework.beans.factory.annotation.Autowired
     private KhuVucCtvService khuVucCtvService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private KhuVucService khuVucService;
     private final PhanCongCTVRepository phanCongCTVRepository;
     private final DonDatDichVuRepository donDatDichVuRepository;
     private final LichLamViecRepository lichLamViecRepository;
@@ -55,6 +59,23 @@ public class CollaboratorApiService {
         this.khachHangRepository = khachHangRepository;
     }
 
+    private static final Comparator<LichLamViec> CHRONO_LLV_COMPARATOR = Comparator
+            .comparing((LichLamViec l) -> l.getNgayLam() != null ? l.getNgayLam() : LocalDate.MAX)
+            .thenComparing(l -> l.getGioBatDau() != null ? l.getGioBatDau() : LocalTime.MIN)
+            .thenComparing(LichLamViec::getId);
+
+    private int tinhBuoiThu(LichLamViec llv, int fallbackIndex) {
+        if (llv != null && llv.getMaLichLamViec() != null) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("-B(\\d+)$").matcher(llv.getMaLichLamViec());
+            if (m.find()) {
+                try {
+                    return Integer.parseInt(m.group(1));
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return fallbackIndex >= 0 ? fallbackIndex + 1 : 1;
+    }
+
     // ==========================================
     // UC-CTV01: QUẢN LÝ ĐƠN ĐƯỢC PHÂN CÔNG
     // ==========================================
@@ -66,6 +87,7 @@ public class CollaboratorApiService {
             list = phanCongCTVRepository.findByCongTacVien_IdOrderByThoiGianPhanCongDesc(congTacVienId);
         }
 
+        LocalDate today = LocalDate.now();
         List<Map<String, Object>> result = new ArrayList<>();
         for (PhanCongCTV pc : list) {
             DonDatDichVu don = pc.getDonDat();
@@ -81,9 +103,83 @@ public class CollaboratorApiService {
             String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty())
                     ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
             item.put("tenDichVu", tenDichVu);
-            item.put("ngayThucHien", don.getNgayThucHien());
-            item.put("gioBatDau", don.getGioBatDau());
-            item.put("gioKetThuc", don.getGioKetThuc());
+
+            List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
+            if (sches.isEmpty()) {
+                sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()));
+            }
+            sches.sort(CHRONO_LLV_COMPARATOR);
+
+            boolean isGoi = "GoiThang".equalsIgnoreCase(don.getLoaiHinhDat()) || sches.size() > 1;
+            int soBuoi = isGoi ? Math.max(sches.size(), LichGoiThang.soBuoi(null, tenDichVu)) : 1;
+
+            LichLamViec targetLlv = null;
+            int targetIdx = -1;
+            // Ưu tiên tìm buổi quá hạn chưa hoàn thành trước, nếu không có thì lấy buổi sắp tới gần nhất theo ngày
+            for (int i = 0; i < sches.size(); i++) {
+                LichLamViec l = sches.get(i);
+                String st = l.getTrangThai() != null ? l.getTrangThai() : "";
+                if (!"HoanThanh".equalsIgnoreCase(st) && !"DaHuy".equalsIgnoreCase(st) && !"Huy".equalsIgnoreCase(st)) {
+                    if (l.getNgayLam() != null && l.getNgayLam().isBefore(today)) {
+                        targetLlv = l;
+                        targetIdx = i;
+                        break;
+                    }
+                    if (targetLlv == null) {
+                        targetLlv = l;
+                        targetIdx = i;
+                    }
+                }
+            }
+            if (targetLlv == null && !sches.isEmpty()) {
+                targetLlv = sches.get(0);
+                targetIdx = 0;
+            }
+
+            LichLamViec nextLlv = null;
+            if (isGoi && targetIdx >= 0) {
+                for (int j = targetIdx + 1; j < sches.size(); j++) {
+                    LichLamViec cand = sches.get(j);
+                    String st = cand.getTrangThai() != null ? cand.getTrangThai() : "";
+                    if (!"DaHuy".equalsIgnoreCase(st) && !"Huy".equalsIgnoreCase(st)) {
+                        nextLlv = cand;
+                        break;
+                    }
+                }
+            }
+
+            int buoiThu = tinhBuoiThu(targetLlv, targetIdx);
+            long soBuoiConLai = sches.stream()
+                    .filter(s -> !"HoanThanh".equalsIgnoreCase(s.getTrangThai())
+                            && !"DaHuy".equalsIgnoreCase(s.getTrangThai())
+                            && !"Huy".equalsIgnoreCase(s.getTrangThai()))
+                    .count();
+
+            boolean isBuoiLamBu = false;
+            if (targetLlv != null && targetLlv.getNgayLam() != null && isGoi) {
+                for (LichLamViec other : sches) {
+                    if (!other.getId().equals(targetLlv.getId()) && other.getNgayLam() != null) {
+                        int otherB = tinhBuoiThu(other, -1);
+                        if (buoiThu < otherB && targetLlv.getNgayLam().isAfter(other.getNgayLam())) {
+                            isBuoiLamBu = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            item.put("lichLamViecId", targetLlv != null ? targetLlv.getId() : null);
+            item.put("ngayThucHien", targetLlv != null && targetLlv.getNgayLam() != null ? targetLlv.getNgayLam() : don.getNgayThucHien());
+            item.put("gioBatDau", targetLlv != null && targetLlv.getGioBatDau() != null ? targetLlv.getGioBatDau() : don.getGioBatDau());
+            item.put("gioKetThuc", targetLlv != null && targetLlv.getGioKetThuc() != null ? targetLlv.getGioKetThuc() : don.getGioKetThuc());
+            item.put("isGoiThang", isGoi);
+            item.put("soBuoi", soBuoi);
+            item.put("buoiThu", buoiThu);
+            item.put("soBuoiConLai", soBuoiConLai);
+            item.put("isBuoiLamBu", isBuoiLamBu);
+            item.put("ngayBuoiTiepTheo", nextLlv != null ? nextLlv.getNgayLam() : null);
+            item.put("gioBuoiTiepTheo", nextLlv != null ? nextLlv.getGioBatDau() : null);
+
             item.put("diaChi", CustomerAddressService.diaChiDayDu(don.getDiaChi()));
             item.put("khuVuc", don.getDiaChi() != null && don.getDiaChi().getKhuVuc() != null ? don.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
             item.put("khachHangTen", don.getKhachHang().getHoTen());
@@ -95,20 +191,80 @@ public class CollaboratorApiService {
         return result;
     }
 
-    /** CTV gửi vị trí hiện tại (GPS) từ ứng dụng. Lưu trên Redis, không thêm cột vào CSDL. */
-    @Transactional(readOnly = true)
-    public Map<String, Object> updateLocation(Integer congTacVienId, java.math.BigDecimal viDo, java.math.BigDecimal kinhDo) {
-        if (!congTacVienRepository.existsById(congTacVienId)) {
-            throw new IllegalArgumentException("Không tìm thấy cộng tác viên.");
+    /**
+     * CTV gửi vị trí GPS từ ứng dụng (chu kỳ 10 giây/lần).
+     * - Lưu ngay vị trí tức thời lên Redis Cache (ViTriCtvStore).
+     * - Kiểm tra biến động khu vực: Nếu CTV di chuyển sang khu vực mới (khác với khu vực đang lưu trên DB),
+     *   mới đồng bộ khu vực mới vào bảng KhuVucCTV có sẵn trên DB.
+     * - Nếu vẫn ở cùng khu vực: KHÔNG ghi DB (0 thao tác I/O trên DB).
+     */
+    @Transactional
+    public Map<String, Object> updateLocation(Integer congTacVienId, java.math.BigDecimal viDo, java.math.BigDecimal kinhDo,
+                                              String quanHuyen, String tinhThanh, String diaChi) {
+        CongTacVien ctv = congTacVienRepository.findById(congTacVienId).orElse(null);
+        if (ctv == null) {
+            TaiKhoan tk = taiKhoanRepository.findById(congTacVienId).orElse(null);
+            if (tk != null) {
+                ctv = congTacVienRepository.findByTaiKhoan_Id(tk.getId()).orElse(null);
+            }
         }
-        ViTriCtvStore.ViTri vt = viTriCtvStore.update(congTacVienId, viDo, kinhDo);
+        if (ctv == null) {
+            throw new IllegalArgumentException("Không tìm thấy cộng tác viên ID: " + congTacVienId);
+        }
+        final Integer resolvedCtvId = ctv.getId();
+
+        // 1. Lưu vị trí GPS lên Redis Cache
+        ViTriCtvStore.ViTri vt = viTriCtvStore.update(resolvedCtvId, viDo, kinhDo, quanHuyen, tinhThanh, diaChi);
+
+        // 2. Kiểm tra biến động khu vực (Quận/Huyện)
+        String targetQuan = (quanHuyen != null && !quanHuyen.isBlank()) ? quanHuyen : "";
+        Optional<KhuVuc> kvOpt = Optional.empty();
+        if (!targetQuan.isBlank() && khuVucService != null) {
+            kvOpt = khuVucService.timTheoTen(targetQuan);
+        }
+        if (kvOpt.isEmpty() && diaChi != null && !diaChi.isBlank() && khuVucService != null) {
+            kvOpt = khuVucService.doanQuan(diaChi, khuVucService.danhSach());
+        }
+
+        boolean daDongBoDB = false;
+        String tenKhuVucHienTai = "";
+
+        if (kvOpt.isPresent() && khuVucCtvService != null) {
+            KhuVuc kvMoi = kvOpt.get();
+            tenKhuVucHienTai = kvMoi.getTenKhuVuc();
+
+            // Lấy danh sách quận hiện tại của CTV trong DB (bảng KhuVucCTV sẵn có)
+            List<KhuVuc> khuVucDangNhan = khuVucCtvService.dangNhan(resolvedCtvId);
+            boolean daCoTrongDb = khuVucDangNhan.stream().anyMatch(k -> k.getId().equals(kvMoi.getId()));
+
+            // Nếu khu vực KHÁC với trong DB (hoặc CTV chưa có khu vực nào) -> Đồng bộ DB bảng KhuVucCTV
+            if (!daCoTrongDb) {
+                khuVucCtvService.capNhat(resolvedCtvId, List.of(kvMoi.getId()));
+                daDongBoDB = true;
+            }
+        } else if (khuVucCtvService != null) {
+            List<KhuVuc> ds = khuVucCtvService.dangNhan(resolvedCtvId);
+            if (!ds.isEmpty()) {
+                tenKhuVucHienTai = ds.get(0).getTenKhuVuc();
+            }
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("congTacVienId", congTacVienId);
+        result.put("congTacVienId", resolvedCtvId);
         result.put("viDo", vt.viDo());
         result.put("kinhDo", vt.kinhDo());
+        result.put("quanHuyen", vt.quanHuyen());
+        result.put("tinhThanh", vt.tinhThanh());
+        result.put("khuVucHienTai", tenKhuVucHienTai);
+        result.put("dongBoDatabase", daDongBoDB);
         result.put("thoiGianCapNhatViTri", vt.thoiGian());
         return result;
+    }
+
+    /** Overload tương thích ngược */
+    @Transactional
+    public Map<String, Object> updateLocation(Integer congTacVienId, java.math.BigDecimal viDo, java.math.BigDecimal kinhDo) {
+        return updateLocation(congTacVienId, viDo, kinhDo, "", "", "");
     }
 
     public Map<String, Object> getAssignmentDetail(Integer phanCongId) {
@@ -319,18 +475,22 @@ public class CollaboratorApiService {
         PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
-        // Không update pc.TrangThai sang DangThucHien vì bảng PhanCongCTV chỉ cho phép:
-        // ('ChoPhanCong', 'DaXacNhan', 'TuChoi', 'HoanThanh')
-
         DonDatDichVu don = pc.getDonDat();
         don.setTrangThai("DangThucHien");
         donDatDichVuRepository.save(don);
 
-        List<LichLamViec> sches = lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId());
+        List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
+        if (sches.isEmpty()) {
+            sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()));
+        }
+        sches.sort(CHRONO_LLV_COMPARATOR);
+
+        // Chỉ chuyển buổi hiện tại (buổi SapToi đầu tiên theo thời gian) sang DangThucHien, tránh chuyển cả 8 buổi gói tháng
         for (LichLamViec llv : sches) {
             if ("SapToi".equalsIgnoreCase(llv.getTrangThai())) {
                 llv.setTrangThai("DangThucHien");
                 lichLamViecRepository.save(llv);
+                break;
             }
         }
 
@@ -352,36 +512,508 @@ public class CollaboratorApiService {
         return res;
     }
 
+    /**
+     * Xử lý ca làm quá hạn sau khi CTV đã gọi điện và thống nhất với Khách hàng:
+     * - START_TODAY: Làm bù ngay hôm nay (cập nhật ngayThucHien & ngayLam = hôm nay, chuyển sang DangThucHien)
+     * - RESCHEDULE_KEEP: Dời sang ngày mới & CTV này vẫn nhận làm
+     * - RESCHEDULE_RELEASE: Dời sang ngày mới nhưng CTV này bận (cập nhật ngayThucHien = ngày mới, trả đơn về ChoDuyet đang tìm CTV)
+     * - CANCEL_ORDER: Khách hàng không còn nhu cầu, hủy đơn quá hạn (DaHuy)
+     */
+    @Transactional
+    public Map<String, Object> resolveOverdueAssignment(Integer phanCongId, Map<String, Object> req) {
+        PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
+        DonDatDichVu don = donDatDichVuRepository.findByIdForUpdate(pc.getDonDat().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn đặt dịch vụ."));
+
+        String action = req != null && req.get("action") != null ? req.get("action").toString().trim() : "";
+        String ngayMoiStr = req != null && req.get("ngayMoi") != null ? req.get("ngayMoi").toString().trim() : "";
+        String gioBatDauMoiStr = req != null && req.get("gioBatDauMoi") != null ? req.get("gioBatDauMoi").toString().trim() : "";
+        String rawGhiChu = req != null && req.get("ghiChu") != null ? req.get("ghiChu").toString().trim() : "";
+        String cleanGhiChu = rawGhiChu.replaceAll("\\s+", " ");
+
+        Integer reqLlvId = null;
+        if (req != null && req.get("lichLamViecId") != null && !req.get("lichLamViecId").toString().isBlank()) {
+            try {
+                reqLlvId = Integer.valueOf(req.get("lichLamViecId").toString().trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
+        LocalDate today = LocalDate.now();
+        String todayStr = today.format(dateFmt);
+        String tenCtv = pc.getCongTacVien() != null ? pc.getCongTacVien().getHoTen() : "CTV";
+        String nguoiThucHien = "CongTacVien: " + tenCtv;
+        if (nguoiThucHien.length() > 50) nguoiThucHien = nguoiThucHien.substring(0, 50);
+
+        String oldOrderStatus = don.getTrangThai();
+        List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
+        if (sches.isEmpty()) {
+            sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()));
+        }
+        // Sắp xếp theo ngày tăng dần để xử lý đúng trình tự thời gian
+        sches.sort(CHRONO_LLV_COMPARATOR);
+
+        boolean isGoiThang = "GoiThang".equalsIgnoreCase(don.getLoaiHinhDat()) || sches.size() > 1;
+        if (isGoiThang && ("RESCHEDULE_RELEASE".equals(action) || "CANCEL_ORDER".equals(action))) {
+            throw new IllegalArgumentException("Đơn gói dịch vụ phải do cùng 1 CTV phụ trách trọn vẹn toàn bộ các buổi, không được tách lẻ hoặc hủy ngang. Vui lòng chọn làm bù hôm nay hoặc dời ngày làm bù sau buổi cuối cùng của gói.");
+        }
+        LichLamViec targetLlv = null;
+        int targetIdx = -1;
+
+        if (reqLlvId != null) {
+            for (int i = 0; i < sches.size(); i++) {
+                if (reqLlvId.equals(sches.get(i).getId())) {
+                    targetLlv = sches.get(i);
+                    targetIdx = i;
+                    break;
+                }
+            }
+        }
+        if (targetLlv == null) {
+            for (int i = 0; i < sches.size(); i++) {
+                LichLamViec l = sches.get(i);
+                String st = l.getTrangThai() != null ? l.getTrangThai() : "";
+                if (!"HoanThanh".equalsIgnoreCase(st) && !"DaHuy".equalsIgnoreCase(st) && !"Huy".equalsIgnoreCase(st)) {
+                    if (l.getNgayLam() != null && l.getNgayLam().isBefore(today)) {
+                        targetLlv = l;
+                        targetIdx = i;
+                        break;
+                    }
+                    if (targetLlv == null) {
+                        targetLlv = l;
+                        targetIdx = i;
+                    }
+                }
+            }
+        }
+        if (targetLlv == null && !sches.isEmpty()) {
+            targetLlv = sches.get(0);
+            targetIdx = 0;
+        }
+
+        int buoiThu = tinhBuoiThu(targetLlv, targetIdx);
+        LichLamViec nextSession = null;
+        int nextBuoiThu = buoiThu + 1;
+        if (isGoiThang && targetIdx >= 0) {
+            for (int j = targetIdx + 1; j < sches.size(); j++) {
+                LichLamViec cand = sches.get(j);
+                String st = cand.getTrangThai() != null ? cand.getTrangThai() : "";
+                if (!"DaHuy".equalsIgnoreCase(st) && !"Huy".equalsIgnoreCase(st)) {
+                    nextSession = cand;
+                    nextBuoiThu = tinhBuoiThu(cand, j);
+                    break;
+                }
+            }
+        }
+
+        LocalDate oldDate = (targetLlv != null && targetLlv.getNgayLam() != null)
+                ? targetLlv.getNgayLam()
+                : don.getNgayThucHien();
+        String oldDateStr = oldDate != null ? oldDate.format(dateFmt) : "";
+
+        LocalTime origStart = (targetLlv != null && targetLlv.getGioBatDau() != null)
+                ? targetLlv.getGioBatDau()
+                : (don.getGioBatDau() != null ? don.getGioBatDau() : LocalTime.of(8, 0));
+        LocalTime origEnd = (targetLlv != null && targetLlv.getGioKetThuc() != null)
+                ? targetLlv.getGioKetThuc()
+                : (don.getGioKetThuc() != null ? don.getGioKetThuc() : origStart.plusHours(2));
+        long durationMins = java.time.Duration.between(origStart, origEnd).toMinutes();
+        if (durationMins <= 0) durationMins = 120;
+
+        LocalTime batDauMoi = origStart;
+        LocalTime ketThucMoi = origEnd;
+        if (!gioBatDauMoiStr.isEmpty()) {
+            String normalizedTime = gioBatDauMoiStr.length() >= 5 ? gioBatDauMoiStr.substring(0, 5) : gioBatDauMoiStr;
+            batDauMoi = LocalTime.parse(normalizedTime);
+            ketThucMoi = batDauMoi.plusMinutes(durationMins);
+        }
+
+        // Xác định ngày mục tiêu cho các phương án dời lịch / làm bù hôm nay
+        LocalDate targetDate = null;
+        if ("START_TODAY".equals(action)) {
+            targetDate = today;
+        } else if ("RESCHEDULE_KEEP".equals(action) || "RESCHEDULE_RELEASE".equals(action)) {
+            if (ngayMoiStr.isEmpty()) {
+                throw new IllegalArgumentException("Vui lòng chọn ngày hẹn mới mà khách hàng yêu cầu.");
+            }
+            targetDate = LocalDate.parse(ngayMoiStr);
+            if (targetDate.isBefore(today)) {
+                throw new IllegalArgumentException("Ngày hẹn mới không được ở trong quá khứ (phải từ hôm nay " + todayStr + " trở đi).");
+            }
+        }
+
+        // KIỂM TRA 1: Ràng buộc ngày cho Đơn Gói Tháng & không trùng buổi khác trong cùng đơn
+        if (targetDate != null) {
+            String targetDateFmt = targetDate.format(dateFmt);
+            if (isGoiThang) {
+                // Đơn gói tháng: Mỗi ngày chỉ có tối đa 1 buổi, không được chọn ngày đã có buổi khác của gói
+                for (int i = 0; i < sches.size(); i++) {
+                    LichLamViec other = sches.get(i);
+                    if (targetLlv != null && other.getId().equals(targetLlv.getId())) continue;
+                    String st = other.getTrangThai() != null ? other.getTrangThai() : "";
+                    if ("DaHuy".equalsIgnoreCase(st) || "Huy".equalsIgnoreCase(st)) continue;
+                    if (targetDate.equals(other.getNgayLam())) {
+                        LocalTime oStart = other.getGioBatDau() != null ? other.getGioBatDau() : LocalTime.of(8, 0);
+                        LocalTime oEnd = other.getGioKetThuc() != null ? other.getGioKetThuc() : oStart.plusHours(2);
+                        throw new IllegalArgumentException("Đơn gói tháng: Ngày " + targetDateFmt + " đã có lịch của Buổi " + (i + 1)
+                                + " (" + oStart.format(timeFmt) + " - " + oEnd.format(timeFmt)
+                                + ")! Vui lòng chọn ngày khác chưa có ca làm hoặc chọn làm bù sau buổi cuối cùng.");
+                    }
+                }
+            } else {
+                // Đơn đơn lẻ: Kiểm tra không trùng giờ với bất kỳ buổi nào khác của chính đơn này trong cùng ngày targetDate
+                for (int i = 0; i < sches.size(); i++) {
+                    LichLamViec other = sches.get(i);
+                    if (targetLlv != null && other.getId().equals(targetLlv.getId())) continue;
+                    String st = other.getTrangThai() != null ? other.getTrangThai() : "";
+                    if ("DaHuy".equalsIgnoreCase(st) || "Huy".equalsIgnoreCase(st)) continue;
+                    if (targetDate.equals(other.getNgayLam())) {
+                        LocalTime oStart = other.getGioBatDau() != null ? other.getGioBatDau() : LocalTime.of(8, 0);
+                        LocalTime oEnd = other.getGioKetThuc() != null ? other.getGioKetThuc() : oStart.plusHours(2);
+                        if (batDauMoi.isBefore(oEnd) && oStart.isBefore(ketThucMoi)) {
+                            throw new IllegalArgumentException("Ngày " + targetDateFmt + " đơn này đã có ca từ "
+                                    + oStart.format(timeFmt) + " - " + oEnd.format(timeFmt)
+                                    + ". Vui lòng chọn ngày khác hoặc đổi khung giờ làm bù!");
+                        }
+                    }
+                }
+            }
+        }
+
+        // KIỂM TRA 2: Kiểm tra trùng khung giờ (Sáng / Chiều) với tất cả các ca/đơn khác của CTV trong ngày targetDate
+        if (targetDate != null && ("START_TODAY".equals(action) || "RESCHEDULE_KEEP".equals(action)) && pc.getCongTacVien() != null) {
+            String targetDateFmt = targetDate.format(dateFmt);
+            Integer ctvId = pc.getCongTacVien().getId();
+            List<LichLamViec> existingOnDate = lichLamViecRepository
+                    .findByCongTacVien_IdAndNgayLamBetweenOrderByNgayLamAscGioBatDauAsc(
+                            ctvId, targetDate, targetDate);
+
+            for (LichLamViec ex : existingOnDate) {
+                if (targetLlv != null && ex.getId().equals(targetLlv.getId())) continue;
+                String st = ex.getTrangThai() != null ? ex.getTrangThai() : "";
+                // Chỉ bỏ qua ca đã hủy; cả ca SapToi, DangThucHien lẫn HoanThanh trong khung giờ đó đều đã chiếm lịch của CTV
+                if ("DaHuy".equalsIgnoreCase(st) || "Huy".equalsIgnoreCase(st)) continue;
+                if (ex.getPhanCong() != null && "TuChoi".equalsIgnoreCase(ex.getPhanCong().getTrangThai())) continue;
+
+                LocalTime exStart = ex.getGioBatDau() != null ? ex.getGioBatDau() : LocalTime.of(8, 0);
+                LocalTime exEnd = ex.getGioKetThuc() != null ? ex.getGioKetThuc() : exStart.plusHours(2);
+
+                if (batDauMoi.isBefore(exEnd) && exStart.isBefore(ketThucMoi)) {
+                    String exMaDon = (ex.getPhanCong() != null && ex.getPhanCong().getDonDat() != null)
+                            ? ex.getPhanCong().getDonDat().getMaDonDat()
+                            : ex.getMaLichLamViec();
+                    if ("START_TODAY".equals(action)) {
+                        throw new IllegalArgumentException("Không thể xác nhận 'Làm bù ngay hôm nay' (" + targetDateFmt
+                                + ") vì lịch hôm nay của bạn bị trùng với ca " + exStart.format(timeFmt) + " - " + exEnd.format(timeFmt)
+                                + " (Đơn " + exMaDon + "). Dù khách hàng rảnh nhưng lịch của bạn bị trùng, vui lòng chọn Phương án 2 (Dời sang ngày mới), Phương án 3 (Tìm CTV khác) hoặc đổi sang khung giờ Sáng/Chiều còn trống!");
+                    }
+                    String goiY;
+                    if (!exEnd.isAfter(LocalTime.of(13, 0))) {
+                        goiY = "Khung buổi sáng đã bận (" + exStart.format(timeFmt) + " - " + exEnd.format(timeFmt)
+                                + "), bạn có thể đổi Giờ làm bù sang buổi chiều (ví dụ 14:00) hoặc chọn ngày khác!";
+                    } else if (!exStart.isBefore(LocalTime.of(12, 0))) {
+                        goiY = "Khung buổi chiều đã bận (" + exStart.format(timeFmt) + " - " + exEnd.format(timeFmt)
+                                + "), bạn có thể đổi Giờ làm bù sang buổi sáng (ví dụ 08:00) hoặc chọn ngày khác!";
+                    } else {
+                        goiY = "Vui lòng đổi Giờ làm bù sang khung giờ còn trống trong ngày hoặc chọn ngày khác!";
+                    }
+                    throw new IllegalArgumentException("Trùng lịch làm việc! Ngày " + targetDateFmt
+                            + " bạn đã có ca từ " + exStart.format(timeFmt) + " - " + exEnd.format(timeFmt)
+                            + " (Đơn " + exMaDon + "). " + goiY);
+                }
+            }
+
+            // Kiểm tra thêm các đơn phân công khác của CTV có ngày thực hiện trùng targetDate (phòng trường hợp đơn chưa sinh LichLamViec)
+            List<PhanCongCTV> allPcOfCtv = phanCongCTVRepository.findByCongTacVien_IdOrderByThoiGianPhanCongDesc(ctvId);
+            for (PhanCongCTV otherPc : allPcOfCtv) {
+                if (otherPc.getId().equals(pc.getId())) continue;
+                if ("TuChoi".equalsIgnoreCase(otherPc.getTrangThai())) continue;
+                DonDatDichVu otherDon = otherPc.getDonDat();
+                if (otherDon == null) continue;
+                if ("DaHuy".equalsIgnoreCase(otherDon.getTrangThai()) || "Huy".equalsIgnoreCase(otherDon.getTrangThai())) continue;
+                if (targetDate.equals(otherDon.getNgayThucHien())) {
+                    LocalTime exStart = otherDon.getGioBatDau() != null ? otherDon.getGioBatDau() : LocalTime.of(8, 0);
+                    LocalTime exEnd = otherDon.getGioKetThuc() != null ? otherDon.getGioKetThuc() : exStart.plusHours(2);
+                    if (batDauMoi.isBefore(exEnd) && exStart.isBefore(ketThucMoi)) {
+                        if ("START_TODAY".equals(action)) {
+                            throw new IllegalArgumentException("Không thể xác nhận 'Làm bù ngay hôm nay' (" + targetDateFmt
+                                    + ") vì lịch hôm nay của bạn bị trùng với ca " + exStart.format(timeFmt) + " - " + exEnd.format(timeFmt)
+                                    + " (Đơn " + otherDon.getMaDonDat() + "). Dù khách hàng rảnh nhưng lịch của bạn bị trùng, vui lòng chọn Phương án 2 (Dời sang ngày mới) hoặc đổi sang khung giờ Sáng/Chiều còn trống!");
+                        }
+                        throw new IllegalArgumentException("Trùng lịch làm việc! Ngày " + targetDateFmt
+                                + " bạn đã có ca từ " + exStart.format(timeFmt) + " - " + exEnd.format(timeFmt)
+                                + " (Đơn " + otherDon.getMaDonDat() + "). Vui lòng đổi sang khung giờ Sáng/Chiều còn trống hoặc chọn ngày khác!");
+                    }
+                }
+            }
+        }
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("phanCongId", pc.getId());
+        res.put("donDatId", don.getId());
+
+        String buoiLabel = isGoiThang ? " (Buổi " + buoiThu + "/" + sches.size() + ")" : "";
+        String khungGioMoiStr = batDauMoi.format(timeFmt) + " - " + ketThucMoi.format(timeFmt);
+
+        switch (action) {
+            case "START_TODAY": {
+                if (!isGoiThang || buoiThu == 1) {
+                    don.setNgayThucHien(today);
+                }
+                if (!isGoiThang) {
+                    don.setGioBatDau(batDauMoi);
+                    don.setGioKetThuc(ketThucMoi);
+                }
+                don.setTrangThai("DangThucHien");
+                donDatDichVuRepository.save(don);
+
+                if (targetLlv != null) {
+                    targetLlv.setNgayLam(today);
+                    targetLlv.setGioBatDau(batDauMoi);
+                    targetLlv.setGioKetThuc(ketThucMoi);
+                    targetLlv.setTrangThai("DangThucHien");
+                    lichLamViecRepository.save(targetLlv);
+                }
+
+                String note = "Khách hàng đồng ý làm bù ca quá hạn" + buoiLabel + " (Lịch cũ: " + oldDateStr
+                        + " -> Hôm nay: " + todayStr + ", khung giờ: " + khungGioMoiStr + ")"
+                        + (cleanGhiChu.isEmpty() ? "" : ". Ghi chú: " + cleanGhiChu);
+                lichSuTrangThaiDonRepository.save(LichSuTrangThaiDon.builder()
+                        .donDat(don)
+                        .trangThaiCu(oldOrderStatus)
+                        .trangThaiMoi("DangThucHien")
+                        .nguoiThucHien(nguoiThucHien)
+                        .thoiGian(LocalDateTime.now())
+                        .ghiChu(note)
+                        .build());
+
+                res.put("trangThaiDon", "DangThucHien");
+                res.put("trangThaiPhanCong", pc.getTrangThai());
+                res.put("ngayThucHien", today.toString());
+                res.put("gioBatDau", batDauMoi.format(timeFmt));
+                res.put("gioKetThuc", ketThucMoi.format(timeFmt));
+                res.put("message", "Đã cập nhật lịch làm bù" + buoiLabel + " hôm nay (" + todayStr + " lúc " + khungGioMoiStr + ") và bắt đầu thực hiện!");
+                break;
+            }
+            case "RESCHEDULE_KEEP": {
+                LocalDate newDate = targetDate;
+                if (!isGoiThang) {
+                    don.setNgayThucHien(newDate);
+                    don.setGioBatDau(batDauMoi);
+                    don.setGioKetThuc(ketThucMoi);
+                } else {
+                    // Gói tháng: ngày thực hiện trên đơn là ngày của buổi sớm nhất còn phải làm
+                    LocalDate earliestDate = newDate;
+                    for (LichLamViec l : sches) {
+                        if (targetLlv != null && l.getId().equals(targetLlv.getId())) continue;
+                        String st = l.getTrangThai() != null ? l.getTrangThai() : "";
+                        if ("SapToi".equalsIgnoreCase(st) || "DangThucHien".equalsIgnoreCase(st)) {
+                            if (l.getNgayLam() != null && l.getNgayLam().isBefore(earliestDate)) {
+                                earliestDate = l.getNgayLam();
+                            }
+                        }
+                    }
+                    don.setNgayThucHien(earliestDate);
+                }
+                don.setTrangThai("DaXacNhan");
+                donDatDichVuRepository.save(don);
+
+                if (targetLlv != null) {
+                    targetLlv.setNgayLam(newDate);
+                    targetLlv.setGioBatDau(batDauMoi);
+                    targetLlv.setGioKetThuc(ketThucMoi);
+                    targetLlv.setTrangThai("SapToi");
+                    lichLamViecRepository.save(targetLlv);
+                }
+
+                String newDateFmt = newDate.format(dateFmt);
+                String note = "Khách hàng thống nhất dời ca quá hạn" + buoiLabel + " (Lịch cũ: " + oldDateStr
+                        + " -> Ngày mới: " + newDateFmt + ", khung giờ: " + khungGioMoiStr + "), CTV tiếp tục phụ trách"
+                        + (cleanGhiChu.isEmpty() ? "" : ". Ghi chú: " + cleanGhiChu);
+                lichSuTrangThaiDonRepository.save(LichSuTrangThaiDon.builder()
+                        .donDat(don)
+                        .trangThaiCu(oldOrderStatus)
+                        .trangThaiMoi("DaXacNhan")
+                        .nguoiThucHien(nguoiThucHien)
+                        .thoiGian(LocalDateTime.now())
+                        .ghiChu(note)
+                        .build());
+
+                res.put("trangThaiDon", "DaXacNhan");
+                res.put("trangThaiPhanCong", pc.getTrangThai());
+                res.put("ngayThucHien", newDate.toString());
+                res.put("gioBatDau", batDauMoi.format(timeFmt));
+                res.put("gioKetThuc", ketThucMoi.format(timeFmt));
+                res.put("message", "Đã dời lịch làm" + buoiLabel + " sang ngày " + newDateFmt + " (" + khungGioMoiStr + ") thành công!");
+                break;
+            }
+            case "RESCHEDULE_RELEASE": {
+                LocalDate newDate = targetDate;
+                String newDateFmt = newDate.format(dateFmt);
+                String lyDo = !cleanGhiChu.isEmpty()
+                        ? cleanGhiChu
+                        : "Khách dời ca quá hạn" + buoiLabel + " (" + oldDateStr + ") sang " + newDateFmt + " (" + khungGioMoiStr + "), CTV bận lịch ngày mới";
+
+                // Gói tháng: giữ lại các buổi CTV đã HOÀN THÀNH (lịch sử, tính công), chỉ trả các buổi chưa làm về pool
+                List<LichLamViec> buoiDaXong = new ArrayList<>();
+                List<LichLamViec> buoiChuaLam = new ArrayList<>();
+                for (LichLamViec l : sches) {
+                    if ("HoanThanh".equalsIgnoreCase(l.getTrangThai())) buoiDaXong.add(l);
+                    else buoiChuaLam.add(l);
+                }
+                if (!buoiChuaLam.isEmpty()) {
+                    lichLamViecRepository.deleteAll(buoiChuaLam);
+                }
+                if (buoiDaXong.isEmpty()) {
+                    phanCongCTVRepository.delete(pc);
+                } else {
+                    pc.setTrangThai("HoanThanh");
+                    pc.setLyDoTuChoi("Đã làm " + buoiDaXong.size() + " buổi, trả các buổi còn lại về Đang tìm CTV: " + lyDo);
+                    phanCongCTVRepository.save(pc);
+                }
+                phanCongCTVRepository.flush();
+
+                don.setNgayThucHien(newDate);
+                don.setGioBatDau(batDauMoi);
+                don.setGioKetThuc(ketThucMoi);
+                don.setTrangThai("ChoDuyet");
+                donDatDichVuRepository.save(don);
+
+                String note = "Khách dời lịch" + buoiLabel + " từ " + oldDateStr + " sang " + newDateFmt
+                        + " (" + khungGioMoiStr + "). CTV " + tenCtv + " bận nên trả đơn về Đang tìm CTV. Lý do: " + lyDo;
+                lichSuTrangThaiDonRepository.save(LichSuTrangThaiDon.builder()
+                        .donDat(don)
+                        .trangThaiCu(oldOrderStatus)
+                        .trangThaiMoi("ChoDuyet")
+                        .nguoiThucHien(nguoiThucHien)
+                        .thoiGian(LocalDateTime.now())
+                        .ghiChu(note)
+                        .build());
+
+                res.put("trangThaiDon", "ChoDuyet");
+                res.put("trangThaiPhanCong", "TuChoi");
+                res.put("ngayThucHien", newDate.toString());
+                res.put("gioBatDau", batDauMoi.format(timeFmt));
+                res.put("gioKetThuc", ketThucMoi.format(timeFmt));
+                res.put("message", "Đã cập nhật ngày mới (" + newDateFmt + " lúc " + khungGioMoiStr + ") và chuyển đơn về trạng thái Đang tìm CTV!");
+                break;
+            }
+            case "CANCEL_ORDER": {
+                for (LichLamViec l : sches) {
+                    if ("DangThucHien".equalsIgnoreCase(l.getTrangThai())) {
+                        throw new IllegalStateException("Đơn đang có buổi làm ở trạng thái Đang thực hiện (Ngày "
+                                + (l.getNgayLam() != null ? l.getNgayLam().format(dateFmt) : "")
+                                + "), không thể hủy trực tiếp!");
+                    }
+                }
+                String lyDo = !cleanGhiChu.isEmpty()
+                        ? cleanGhiChu
+                        : "Ca làm" + buoiLabel + " ngày " + oldDateStr + " đã quá hạn, khách hàng xác nhận hủy đơn";
+
+                pc.setTrangThai("TuChoi");
+                pc.setLyDoTuChoi(lyDo);
+                phanCongCTVRepository.save(pc);
+                if (!sches.isEmpty()) {
+                    lichLamViecRepository.deleteAll(sches);
+                }
+
+                don.setTrangThai("DaHuy");
+                donDatDichVuRepository.save(don);
+
+                lichSuTrangThaiDonRepository.save(LichSuTrangThaiDon.builder()
+                        .donDat(don)
+                        .trangThaiCu(oldOrderStatus)
+                        .trangThaiMoi("DaHuy")
+                        .nguoiThucHien(nguoiThucHien)
+                        .thoiGian(LocalDateTime.now())
+                        .ghiChu("Hủy đơn quá hạn" + buoiLabel + " theo xác nhận của khách hàng: " + lyDo)
+                        .build());
+
+                res.put("trangThaiDon", "DaHuy");
+                res.put("trangThaiPhanCong", "TuChoi");
+                res.put("message", "Đã hủy đơn quá hạn" + buoiLabel + " theo xác nhận của khách hàng.");
+                break;
+            }
+            default:
+                throw new IllegalArgumentException("Phương án xử lý không hợp lệ: " + action);
+        }
+
+        return res;
+    }
+
     public Map<String, Object> completeAssignment(Integer phanCongId, AssignmentActionRequest req) {
         // Khóa phân công: CTV bấm hai lần hoặc CSKH đổi phân công cùng lúc sẽ được xử lý lần lượt
         PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
-        pc.setTrangThai("HoanThanh");
-        phanCongCTVRepository.save(pc);
-
         DonDatDichVu don = pc.getDonDat();
-        don.setTrangThai("HoanThanh");
-        donDatDichVuRepository.save(don);
+        List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
+        if (sches.isEmpty()) {
+            sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()));
+        }
+        sches.sort(CHRONO_LLV_COMPARATOR);
 
-        // Cập nhật kết quả trên Lịch làm việc
-        List<LichLamViec> sches = lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId());
+        String cleanKetQua = (req != null && req.getKetQuaThucHien() != null && !req.getKetQuaThucHien().trim().isEmpty())
+                ? req.getKetQuaThucHien().trim().replaceAll("\\s+", " ")
+                : "Hoàn thành công việc";
+
+        // Xác định buổi đang thực hiện (hoặc buổi chưa hoàn thành đầu tiên) để hoàn thành đúng 1 buổi
+        LichLamViec activeSession = null;
         for (LichLamViec llv : sches) {
-            llv.setTrangThai("HoanThanh");
-            if (req != null && req.getKetQuaThucHien() != null) {
-                String cleanKetQua = req.getKetQuaThucHien().trim().replaceAll("\\s+", " ");
-                llv.setKetQuaThucHien(cleanKetQua.isEmpty() ? "Hoàn thành công việc" : cleanKetQua);
+            if ("DangThucHien".equalsIgnoreCase(llv.getTrangThai())) {
+                activeSession = llv;
+                break;
             }
-            lichLamViecRepository.save(llv);
+        }
+        if (activeSession == null) {
+            for (LichLamViec llv : sches) {
+                if ("SapToi".equalsIgnoreCase(llv.getTrangThai())) {
+                    activeSession = llv;
+                    break;
+                }
+            }
+        }
+        if (activeSession != null) {
+            activeSession.setTrangThai("HoanThanh");
+            activeSession.setKetQuaThucHien(cleanKetQua);
+            lichLamViecRepository.save(activeSession);
+        }
+
+        // Kiểm tra xem gói tháng còn buổi SapToi nào chưa làm không
+        LichLamViec nextRemaining = null;
+        for (LichLamViec llv : sches) {
+            if ("SapToi".equalsIgnoreCase(llv.getTrangThai())) {
+                nextRemaining = llv;
+                break;
+            }
+        }
+
+        if (nextRemaining != null) {
+            // Còn buổi tiếp theo trong gói tháng -> giữ phân công ở DaXacNhan, cập nhật ngày thực hiện sang buổi kế tiếp
+            pc.setTrangThai("DaXacNhan");
+            phanCongCTVRepository.save(pc);
+            if (nextRemaining.getNgayLam() != null) {
+                don.setNgayThucHien(nextRemaining.getNgayLam());
+            }
+            don.setTrangThai("DaXacNhan");
+            donDatDichVuRepository.save(don);
+        } else {
+            pc.setTrangThai("HoanThanh");
+            phanCongCTVRepository.save(pc);
+            don.setTrangThai("HoanThanh");
+            donDatDichVuRepository.save(don);
         }
 
         LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()
                 .donDat(don)
                 .trangThaiCu("DangThucHien")
-                .trangThaiMoi("HoanThanh")
+                .trangThaiMoi(nextRemaining != null ? "DaXacNhan" : "HoanThanh")
                 .nguoiThucHien("CongTacVien: " + pc.getCongTacVien().getHoTen())
                 .thoiGian(LocalDateTime.now())
-                .ghiChu("CTV hoàn thành ca làm việc. Kết quả: " + (req.getKetQuaThucHien() != null ? req.getKetQuaThucHien() : "Hoàn thành tốt"))
+                .ghiChu("CTV hoàn thành ca làm việc. Kết quả: " + cleanKetQua)
                 .build();
         lichSuTrangThaiDonRepository.save(ls);
 
@@ -668,11 +1300,12 @@ public class CollaboratorApiService {
         }
 
         List<Map<String, Object>> result = new ArrayList<>();
-        Map<Integer, Integer> donBuoiCounter = new HashMap<>();
+        Map<Integer, List<LichLamViec>> donSessionsCache = new HashMap<>();
 
         for (LichLamViec llv : list) {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("id", llv.getId());
+            item.put("lichLamViecId", llv.getId());
             item.put("maLichLamViec", llv.getMaLichLamViec());
             item.put("ngayLam", llv.getNgayLam());
             item.put("gioBatDau", llv.getGioBatDau());
@@ -702,12 +1335,63 @@ public class CollaboratorApiService {
                     item.put("loaiHinhDat", d.getLoaiHinhDat());
                     item.put("loaiHinh", d.getLoaiHinhDat());
 
-                    boolean isGoi = "GoiThang".equalsIgnoreCase(d.getLoaiHinhDat());
-                    int soBuoi = isGoi ? LichGoiThang.soBuoi(null, tenDv) : 1;
-                    int buoiThu = isGoi ? donBuoiCounter.compute(d.getId(), (k, v) -> v == null ? 1 : v + 1) : 1;
+                    List<LichLamViec> allDonSches = donSessionsCache.computeIfAbsent(d.getId(), k -> {
+                        List<LichLamViec> s = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
+                        if (s.isEmpty()) {
+                            s = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(d.getId()));
+                        }
+                        s.sort(CHRONO_LLV_COMPARATOR);
+                        return s;
+                    });
+
+                    boolean isGoi = "GoiThang".equalsIgnoreCase(d.getLoaiHinhDat()) || allDonSches.size() > 1;
+                    int soBuoi = isGoi ? Math.max(allDonSches.size(), LichGoiThang.soBuoi(null, tenDv)) : 1;
+                    int curIdx = -1;
+                    for (int i = 0; i < allDonSches.size(); i++) {
+                        if (allDonSches.get(i).getId().equals(llv.getId())) {
+                            curIdx = i;
+                            break;
+                        }
+                    }
+                    int buoiThu = tinhBuoiThu(llv, curIdx);
+                    LichLamViec nextLlv = null;
+                    if (isGoi && curIdx >= 0) {
+                        for (int j = curIdx + 1; j < allDonSches.size(); j++) {
+                            LichLamViec cand = allDonSches.get(j);
+                            String st = cand.getTrangThai() != null ? cand.getTrangThai() : "";
+                            if (!"DaHuy".equalsIgnoreCase(st) && !"Huy".equalsIgnoreCase(st)) {
+                                nextLlv = cand;
+                                break;
+                            }
+                        }
+                    }
+
+                    long soBuoiConLai = allDonSches.stream()
+                            .filter(s -> !"HoanThanh".equalsIgnoreCase(s.getTrangThai())
+                                    && !"DaHuy".equalsIgnoreCase(s.getTrangThai())
+                                    && !"Huy".equalsIgnoreCase(s.getTrangThai()))
+                            .count();
+
+                    boolean isBuoiLamBu = false;
+                    if (llv.getNgayLam() != null && isGoi) {
+                        for (LichLamViec other : allDonSches) {
+                            if (!other.getId().equals(llv.getId()) && other.getNgayLam() != null) {
+                                int otherB = tinhBuoiThu(other, -1);
+                                if (buoiThu < otherB && llv.getNgayLam().isAfter(other.getNgayLam())) {
+                                    isBuoiLamBu = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     item.put("soBuoi", soBuoi);
                     item.put("buoiThu", buoiThu);
+                    item.put("soBuoiConLai", soBuoiConLai);
+                    item.put("isBuoiLamBu", isBuoiLamBu);
                     item.put("isGoiThang", isGoi);
+                    item.put("ngayBuoiTiepTheo", nextLlv != null ? nextLlv.getNgayLam() : null);
+                    item.put("gioBuoiTiepTheo", nextLlv != null ? nextLlv.getGioBatDau() : null);
                 }
             }
             result.add(item);
@@ -818,12 +1502,43 @@ public class CollaboratorApiService {
 
     /**
      * Lấy danh sách đơn đang tìm CTV (pool chung).
+     * Tự động lọc các đơn việc mới quanh khu vực của CTV:
+     * - Lấy khu vực CTV từ Redis (vị trí GPS mới nhất) hoặc từ bảng KhuVucCTV trong DB.
+     * - Chỉ hiển thị các đơn có địa chỉ thuộc cùng khu vực/quận huyện của CTV.
      */
     public List<Map<String, Object>> getAvailableOrders(Integer congTacVienId) {
+        CongTacVien ctv = congTacVienRepository.findById(congTacVienId).orElse(null);
+        if (ctv == null) {
+            TaiKhoan tk = taiKhoanRepository.findById(congTacVienId).orElse(null);
+            if (tk != null) {
+                ctv = congTacVienRepository.findByTaiKhoan_Id(tk.getId()).orElse(null);
+            }
+        }
+        final Integer ctvId = ctv != null ? ctv.getId() : congTacVienId;
+
+        // 1. Lấy vị trí / khu vực CTV từ Redis
+        Optional<ViTriCtvStore.ViTri> vtOpt = viTriCtvStore.get(ctvId);
+        String quanHuyenCtv = vtOpt.map(ViTriCtvStore.ViTri::quanHuyen).filter(s -> !s.isBlank()).orElse(null);
+
+        // 2. Lấy khu vực CTV từ DB (KhuVucCTV)
+        List<KhuVuc> khuVucDb = (khuVucCtvService != null) ? khuVucCtvService.dangNhan(ctvId) : List.of();
+        Set<Integer> khuVucIds = khuVucDb.stream().map(KhuVuc::getId).collect(Collectors.toSet());
+        if (quanHuyenCtv == null && !khuVucDb.isEmpty()) {
+            quanHuyenCtv = khuVucDb.get(0).getTenKhuVuc();
+        }
+
         List<DonDatDichVu> donList = donDatDichVuRepository.findByTrangThaiOrderByNgayTaoDesc("ChoDuyet");
+        List<KhuVuc> allKhuVuc = (khuVucService != null) ? khuVucService.danhSach() : List.of();
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (DonDatDichVu don : donList) {
+            // Lọc theo khu vực: nếu xác định được khu vực của CTV thì chỉ lấy đơn cùng khu vực
+            if (quanHuyenCtv != null || !khuVucIds.isEmpty()) {
+                if (!isDonInKhuVuc(don, quanHuyenCtv, khuVucIds, allKhuVuc)) {
+                    continue; // Bỏ qua đơn ngoài khu vực
+                }
+            }
+
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("donDatId", don.getId());
             item.put("maDonDat", don.getMaDonDat());
@@ -834,6 +1549,17 @@ public class CollaboratorApiService {
             item.put("gioBatDau", don.getGioBatDau());
             item.put("gioKetThuc", don.getGioKetThuc());
             item.put("diaChi", don.getDiaChi() != null ? don.getDiaChi().getDiaChiChiTiet() : "");
+
+            String tenKhuVucDon = "";
+            if (don.getDiaChi() != null) {
+                if (don.getDiaChi().getKhuVuc() != null) {
+                    tenKhuVucDon = don.getDiaChi().getKhuVuc().getTenKhuVuc();
+                } else if (khuVucService != null && don.getDiaChi().getDiaChiChiTiet() != null) {
+                    tenKhuVucDon = khuVucService.doanQuan(don.getDiaChi().getDiaChiChiTiet(), allKhuVuc)
+                            .map(KhuVuc::getTenKhuVuc).orElse("");
+                }
+            }
+            item.put("khuVuc", tenKhuVucDon);
             item.put("yeuCauDacBiet", don.getYeuCauDacBiet());
             item.put("thanhTien", don.getThanhTien());
             item.put("ngayTao", don.getNgayTao());
@@ -843,6 +1569,44 @@ public class CollaboratorApiService {
             result.add(item);
         }
         return result;
+    }
+
+    private boolean isDonInKhuVuc(DonDatDichVu don, String quanHuyenCtv, Set<Integer> khuVucIds, List<KhuVuc> allKhuVuc) {
+        if (don.getDiaChi() == null) return false;
+        DiaChiKhachHang dc = don.getDiaChi();
+
+        // 1. Khớp qua id của KhuVuc
+        if (dc.getKhuVuc() != null) {
+            KhuVuc kv = dc.getKhuVuc();
+            if (khuVucIds.contains(kv.getId())) return true;
+            if (quanHuyenCtv != null && !quanHuyenCtv.isBlank()) {
+                String q1 = KhuVucService.chuanHoa(kv.getTenKhuVuc());
+                String q2 = KhuVucService.chuanHoa(quanHuyenCtv);
+                if (q1.contains(q2) || q2.contains(q1)) return true;
+            }
+        }
+
+        // 2. Khớp qua DiaChiChiTiet
+        if (dc.getDiaChiChiTiet() != null && !dc.getDiaChiChiTiet().isBlank()) {
+            if (khuVucService != null) {
+                Optional<KhuVuc> guessed = khuVucService.doanQuan(dc.getDiaChiChiTiet(), allKhuVuc);
+                if (guessed.isPresent()) {
+                    KhuVuc kv = guessed.get();
+                    if (khuVucIds.contains(kv.getId())) return true;
+                    if (quanHuyenCtv != null && !quanHuyenCtv.isBlank()) {
+                        String q1 = KhuVucService.chuanHoa(kv.getTenKhuVuc());
+                        String q2 = KhuVucService.chuanHoa(quanHuyenCtv);
+                        if (q1.contains(q2) || q2.contains(q1)) return true;
+                    }
+                }
+            }
+            if (quanHuyenCtv != null && !quanHuyenCtv.isBlank()) {
+                String dcChuan = KhuVucService.chuanHoa(dc.getDiaChiChiTiet());
+                String qCtvChuan = KhuVucService.chuanHoa(quanHuyenCtv);
+                if (dcChuan.contains(qCtvChuan)) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -869,6 +1633,19 @@ public class CollaboratorApiService {
         DonDatDichVu don = donDatDichVuRepository.findById(donDatId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn ID: " + donDatId));
 
+        // Các buổi cần làm: gói tháng tính lại từ ngày thực hiện, trừ số buổi CTV trước đã hoàn thành
+        List<LocalDate> ngayCanLam = new ArrayList<>(PhanCongService.cacBuoi(don));
+        long soBuoiDaXong = lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()).stream()
+                .filter(l -> "HoanThanh".equalsIgnoreCase(l.getTrangThai())).count();
+        if (soBuoiDaXong > 0 && ngayCanLam.size() > soBuoiDaXong) {
+            ngayCanLam = new ArrayList<>(ngayCanLam.subList(0, (int) (ngayCanLam.size() - soBuoiDaXong)));
+        }
+        LocalTime gioKT = PhanCongService.gioKetThuc(don);
+
+        // Kiểm tra trùng lịch của CTV trên mọi buổi (lỗi sẽ rollback cả lệnh nhận đơn ở trên)
+        congTacVienRepository.findByIdForUpdate(ctv.getId());
+        phanCongService.kiemTraDonHoacBaoLoi(ctv.getId(), don, null, false);
+
         // Tạo 1 bản ghi PhanCongCTV duy nhất khi nhận việc
         PhanCongCTV pc = PhanCongCTV.builder()
                 .maPhanCong("PC-" + (System.currentTimeMillis() % 1000000))
@@ -880,17 +1657,8 @@ public class CollaboratorApiService {
                 .build();
         phanCongCTVRepository.save(pc);
 
-        // Tạo Lịch làm việc
-        LichLamViec llv = LichLamViec.builder()
-                .maLichLamViec("LLV-" + (System.currentTimeMillis() % 1000000))
-                .phanCong(pc)
-                .congTacVien(ctv)
-                .ngayLam(don.getNgayThucHien())
-                .gioBatDau(don.getGioBatDau())
-                .gioKetThuc(don.getGioKetThuc())
-                .trangThai("SapToi")
-                .build();
-        lichLamViecRepository.save(llv);
+        // Tạo Lịch làm việc (gói tháng: mỗi buổi còn lại một lịch)
+        phanCongService.taoLichLamViec(pc, ngayCanLam, don.getGioBatDau(), gioKT, null);
 
         // Lưu lịch sử
         LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()

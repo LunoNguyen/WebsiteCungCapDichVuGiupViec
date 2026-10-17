@@ -379,8 +379,11 @@ public String dashboard(
             }
         }
 
+        boolean isPhanTram = "PhanTram".equalsIgnoreCase(loaiGiamGia);
+        String loaiGiamChuan = isPhanTram ? "PhanTram" : "SoTienCoDinh";
+
         // 2. Kiểm tra ràng buộc Mức giảm (Bao quát cả % và tiền mặt)
-        if ("PhanTram".equals(loaiGiamGia)) {
+        if (isPhanTram) {
             if (mucGiam.compareTo(java.math.BigDecimal.ZERO) <= 0 || mucGiam.compareTo(new java.math.BigDecimal("100")) > 0) {
                 redirectAttributes.addFlashAttribute("error", "Lỗi: Mức giảm phần trăm phải từ 1% đến 100%!");
                 return "redirect:/marketing/khuyen-mai";
@@ -423,7 +426,7 @@ public String dashboard(
         com.example.Model.ChuongTrinhKhuyenMai ct = new com.example.Model.ChuongTrinhKhuyenMai();
         ct.setMaChuongTrinh(com.example.Service.MaSinh.tao("CT-"));
         ct.setTenChuongTrinh(tenChuongTrinhClean);
-        ct.setLoaiGiam(loaiGiamGia);
+        ct.setLoaiGiam(loaiGiamChuan);
         ct.setGiaTriGiam(mucGiam);
         ct.setDieuKienToiThieu(dieuKienToiThieu);
         ct.setSoTienGiamToiDa(soTienGiamToiDa);
@@ -615,8 +618,11 @@ public String dashboard(
             return "redirect:/marketing/khuyen-mai";
         }
 
+        boolean isPhanTram = "PhanTram".equalsIgnoreCase(loaiGiamGia);
+        String loaiGiamChuan = isPhanTram ? "PhanTram" : "SoTienCoDinh";
+
         // 4. Kiểm tra ràng buộc Mức giảm (Bao quát cả % và tiền mặt)
-        if ("PhanTram".equals(loaiGiamGia)) {
+        if (isPhanTram) {
             if (mucGiam.compareTo(java.math.BigDecimal.ZERO) <= 0 || mucGiam.compareTo(new java.math.BigDecimal("100")) > 0) {
                 redirectAttributes.addFlashAttribute("error", "Lỗi: Mức giảm phần trăm phải từ 1% đến 100%!");
                 return "redirect:/marketing/khuyen-mai";
@@ -646,7 +652,7 @@ public String dashboard(
                 com.example.Model.ChuongTrinhKhuyenMai ct = mk.getChuongTrinhKhuyenMai();
 
                 ct.setTenChuongTrinh(tenChuongTrinhClean.trim());
-                ct.setLoaiGiam(loaiGiamGia);
+                ct.setLoaiGiam(loaiGiamChuan);
                 ct.setGiaTriGiam(mucGiam);
                 ct.setDieuKienToiThieu(dieuKienToiThieu);
                 ct.setSoTienGiamToiDa(soTienGiamToiDa);
@@ -688,7 +694,24 @@ public String dashboard(
 
                 chuongTrinhKhuyenMaiRepository.save(ct); 
 
-                mk.setCodeKhuyenMai(maKhuyenMaiClean.toUpperCase());
+                String oldCode = (mk.getCodeKhuyenMai() != null) ? mk.getCodeKhuyenMai().trim().toUpperCase() : "";
+                String newCode = maKhuyenMaiClean.toUpperCase();
+
+                // Cập nhật mã trong thông báo ưu đãi đã gửi nếu mã đổi tên
+                if (!oldCode.isEmpty() && !oldCode.equalsIgnoreCase(newCode)) {
+                    List<ThongBao> allTB = thongBaoRepository.findAll();
+                    for (ThongBao tb : allTB) {
+                        if (tb.getTieuDe() != null && tb.getTieuDe().toUpperCase().contains(oldCode)) {
+                            tb.setTieuDe(tb.getTieuDe().replace(oldCode, newCode));
+                            if (tb.getNoiDung() != null && tb.getNoiDung().contains(oldCode)) {
+                                tb.setNoiDung(tb.getNoiDung().replace(oldCode, newCode));
+                            }
+                            thongBaoRepository.save(tb);
+                        }
+                    }
+                }
+
+                mk.setCodeKhuyenMai(newCode);
                 mk.setSoLuotToiDa(gioiHanLuot);
                 maKhuyenMaiRepository.save(mk); 
             });

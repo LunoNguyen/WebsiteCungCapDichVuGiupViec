@@ -19,4 +19,8 @@ public class LocationRequest {
     @DecimalMin(value = "-180", message = "Kinh độ không hợp lệ")
     @DecimalMax(value = "180", message = "Kinh độ không hợp lệ")
     private BigDecimal kinhDo;
+
+    private String quanHuyen;
+    private String tinhThanh;
+    private String diaChi;
 }
