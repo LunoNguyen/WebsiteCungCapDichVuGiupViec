@@ -50,7 +50,7 @@
             <div class="price-box">
               <label for="giaDenInput">Giá tối đa</label>
               <div class="price-input-wrap">
-                <input type="text" id="giaDenInput" inputmode="numeric" placeholder="10.000.000" autocomplete="off">
+                <input type="text" id="giaDenInput" inputmode="numeric" placeholder="5.000.000" autocomplete="off">
                 <span>đ</span>
               </div>
             </div>
@@ -60,15 +60,15 @@
           <div class="range-slider-wrap">
             <div class="range-track-bg"></div>
             <div class="range-track-fill" id="rangeTrackFill"></div>
-            <input type="range" id="minRange" min="0" max="10000000" step="50000"
+            <input type="range" id="minRange" min="0" max="5000000" step="50000"
                    th:value="${giaTu != null ? giaTu : 0}" aria-label="Thanh trượt giá tối thiểu">
-            <input type="range" id="maxRange" min="0" max="10000000" step="50000"
-                   th:value="${giaDen != null ? (giaDen > 10000000 ? 10000000 : giaDen) : 10000000}" aria-label="Thanh trượt giá tối đa">
+            <input type="range" id="maxRange" min="0" max="5000000" step="50000"
+                   th:value="${giaDen != null ? (giaDen > 5000000 ? 5000000 : giaDen) : 5000000}" aria-label="Thanh trượt giá tối đa">
           </div>
           <div class="range-labels">
             <span>0đ</span>
-            <span>5tr</span>
-            <span>10tr+</span>
+            <span>2.5tr</span>
+            <span>5tr+</span>
           </div>
 
           <!-- Mức giá gợi ý chọn nhanh -->
@@ -209,7 +209,7 @@
     var minRange = document.getElementById('minRange');
     var maxRange = document.getElementById('maxRange');
     var trackFill = document.getElementById('rangeTrackFill');
-    var MAX_SLIDER = 10000000;
+    var MAX_SLIDER = 5000000;
     var STEP = 50000;
 
     function formatVN(val) {
