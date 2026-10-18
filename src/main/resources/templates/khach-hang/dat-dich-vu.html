@@ -62,7 +62,7 @@
           </div>
         </div>
 
-        <!-- ===================== BƯỚC 2: HÌNH THỨC ===================== -->
+        <!-- ===================== BƯỚC 2: HÌNH THỨC & THỜI LƯỢNG ===================== -->
         <div data-buoc="2" hidden>
           <section class="panel">
             <h2>Đặt theo lần hay gói tháng?</h2>
@@ -80,14 +80,7 @@
               </label>
             </div>
           </section>
-          <div class="step-nav">
-            <button class="btn btn-outline btn-lg" type="button" data-lui>Quay lại</button>
-            <button class="btn btn-primary btn-lg" type="button" data-tiep>Tiếp tục</button>
-          </div>
-        </div>
 
-        <!-- ===================== BƯỚC 3: THỜI GIAN THỰC HIỆN ===================== -->
-        <div data-buoc="3" hidden>
           <section class="panel">
             <h2 data-tieu-de-bien-the>Thời lượng / quy mô</h2>
             <p class="hint">Chọn gói phù hợp với nhà bạn.</p>
@@ -115,6 +108,14 @@
             </div>
           </section>
 
+          <div class="step-nav">
+            <button class="btn btn-outline btn-lg" type="button" data-lui>Quay lại</button>
+            <button class="btn btn-primary btn-lg" type="button" data-tiep>Tiếp tục</button>
+          </div>
+        </div>
+
+        <!-- ===================== BƯỚC 3: THỜI GIAN THỰC HIỆN ===================== -->
+        <div data-buoc="3" hidden>
           <section class="panel">
             <h2 data-tieu-de-ngay>Ngày và giờ bắt đầu</h2>
             <p class="hint" data-goi-an>Đặt theo lần: chọn ngày trong vòng 1 tháng tới. Giờ bắt đầu cần sau hiện tại ít nhất 1 giờ.</p>
@@ -324,7 +325,7 @@
   function maChon() { var r = form.querySelector('input[name="maNhom"]:checked'); return r ? r.value : null; }
   function nhomChon() { return form.querySelector('input[name="maNhom"]:checked'); }
 
-  // ---- Bước 3: chỉ hiện biến thể của dịch vụ + hình thức đã chọn; biến thể ẩn bị tắt để không gửi lên ----
+  // ---- Bước 2: chỉ hiện biến thể của dịch vụ + hình thức đã chọn; biến thể ẩn bị tắt để không gửi lên ----
   function locBienThe() {
     var ma = maChon(), loai = loaiInput.value;
     all('[data-group]').forEach(function (g) {
@@ -628,7 +629,13 @@
     if (g.getAttribute('data-co-goi') === 'true') ds.push('GoiThang');
     return ds;
   }
-  function boQuaBuoc2() { return loaiCoTheChon().length === 1; }
+  function boQuaBuoc2() {
+    var ma = maChon();
+    if (!ma) return false;
+    return [].filter.call(form.querySelectorAll('[data-group] label.opt'), function (l) {
+      return l.getAttribute('data-ma') === ma;
+    }).length <= 1;
+  }
 
   function capNhatBuoc2() {
     var g = nhomChon();
@@ -647,8 +654,8 @@
   function loiBuoc(n) {
     if (n === 1 && !maChon()) return 'Vui lòng chọn dịch vụ.';
     if (n === 2 && loaiCoTheChon().indexOf(loaiInput.value) === -1) return 'Vui lòng chọn theo lần hoặc gói tháng.';
+    if (n === 2 && !form.querySelector('input[name="dichVuId"]:checked:not(:disabled)')) return 'Vui lòng chọn thời lượng / gói.';
     if (n === 3) {
-      if (!form.querySelector('input[name="dichVuId"]:checked:not(:disabled)')) return 'Vui lòng chọn thời lượng / gói.';
       if (!form.querySelector('input[name="gioBatDau"]:checked')) return 'Vui lòng chọn giờ bắt đầu.';
       if (loaiInput.value === 'GoiThang' && !lichDu) return 'Các thứ đã chọn chưa đủ số buổi của gói.';
       var panelDc = form.querySelector('[data-panel-dia-chi]');
@@ -682,6 +689,7 @@
     daToi = Math.max(daToi, n);
     all('[data-buoc]').forEach(function (s) { s.hidden = Number(s.getAttribute('data-buoc')) !== n; });
     if (n === 2) capNhatBuoc2();
+    if (n === 2) locBienThe();
     if (n === 3) { locBienThe(); tinhLich(); if (fpDat) fpDat.redraw(); }
     capNhatTomTat();
     veThanhBuoc();

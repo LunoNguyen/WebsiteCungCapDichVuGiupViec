@@ -35,7 +35,7 @@
           <dialog class="modal" th:id="'sua' + ${dc.id}">
             <form method="post" th:action="@{/tai-khoan/dia-chi/{id}/sua(id=${dc.id})}" class="form-grid">
               <h2 class="full">Sửa địa chỉ</h2>
-              <th:block th:replace="~{layout/dia-chi-form :: truong(${'sua' + dc.id}, ${dc.maTinh}, ${dc.maPhuong}, ${dc.khuVucId}, ${dc.soNhaTenDuong}, false)}"></th:block>
+              <th:block th:replace="~{layout/dia-chi-form :: truong(${'sua' + dc.id}, ${dc['maTinh']}, ${dc['maPhuong']}, ${dc.khuVucId}, ${dc['soNhaTenDuong']}, false)}"></th:block>
               <div class="field">
                 <label th:for="'sua-dt' + ${dc.id}">Diện tích nhà (m²)</label>
                 <input th:id="'sua-dt' + ${dc.id}" name="dienTichNha" type="number" min="1" step="1" class="input" th:value="${dc.dienTichNha}">
