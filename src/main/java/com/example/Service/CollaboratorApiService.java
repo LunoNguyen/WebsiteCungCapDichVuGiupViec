@@ -498,22 +498,53 @@ public class CollaboratorApiService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
         DonDatDichVu don = pc.getDonDat();
-        don.setTrangThai("DangThucHien");
-        donDatDichVuRepository.save(don);
-
         List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
         if (sches.isEmpty()) {
             sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()));
         }
         sches.sort(CHRONO_LLV_COMPARATOR);
 
-        // Chỉ chuyển buổi hiện tại (buổi SapToi đầu tiên theo thời gian) sang DangThucHien, tránh chuyển cả 8 buổi gói tháng
+        LichLamViec targetLlv = null;
         for (LichLamViec llv : sches) {
             if ("SapToi".equalsIgnoreCase(llv.getTrangThai())) {
-                llv.setTrangThai("DangThucHien");
-                lichLamViecRepository.save(llv);
+                targetLlv = llv;
                 break;
             }
+        }
+
+        // RÀNG BUỘC THỜI GIAN LÀM VIỆC (Ngày & Giờ):
+        LocalDate ngayLam = (targetLlv != null && targetLlv.getNgayLam() != null)
+                ? targetLlv.getNgayLam()
+                : don.getNgayThucHien();
+        LocalTime gioBatDau = (targetLlv != null && targetLlv.getGioBatDau() != null)
+                ? targetLlv.getGioBatDau()
+                : (don.getGioBatDau() != null ? don.getGioBatDau() : LocalTime.of(8, 0));
+        LocalTime gioKetThuc = (targetLlv != null && targetLlv.getGioKetThuc() != null)
+                ? targetLlv.getGioKetThuc()
+                : (don.getGioKetThuc() != null ? don.getGioKetThuc() : gioBatDau.plusHours(2));
+
+        if (ngayLam != null && gioBatDau != null) {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime earliestStart = LocalDateTime.of(ngayLam, gioBatDau).minusMinutes(30);
+            LocalDateTime latestStart = LocalDateTime.of(ngayLam, gioKetThuc != null ? gioKetThuc : gioBatDau.plusHours(2));
+
+            if (now.isBefore(earliestStart)) {
+                String gioStr = gioBatDau.format(DateTimeFormatter.ofPattern("HH:mm"));
+                String ngayStr = ngayLam.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                throw new IllegalArgumentException("Chưa đến giờ bắt đầu ca làm việc! Ca làm bắt đầu lúc "
+                        + gioStr + " ngày " + ngayStr + " (bạn chỉ có thể bắt đầu trước tối đa 30 phút).");
+            }
+            if (now.isAfter(latestStart)) {
+                throw new IllegalArgumentException("Ca làm việc này đã quá hạn! Vui lòng thực hiện xử lý ca quá hạn với Khách hàng.");
+            }
+        }
+
+        don.setTrangThai("DangThucHien");
+        donDatDichVuRepository.save(don);
+
+        if (targetLlv != null) {
+            targetLlv.setTrangThai("DangThucHien");
+            lichLamViecRepository.save(targetLlv);
         }
 
         LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()
@@ -657,6 +688,15 @@ public class CollaboratorApiService {
         LocalDate targetDate = null;
         if ("START_TODAY".equals(action)) {
             targetDate = today;
+            LocalTime nowTime = LocalTime.now();
+            if (nowTime.isAfter(LocalTime.of(21, 0))) {
+                throw new IllegalArgumentException("Đã quá muộn trong ngày (" + nowTime.format(timeFmt)
+                        + "), không còn khung giờ phù hợp để dọn dẹp hôm nay! Vui lòng chọn Phương án 2 (Dời sang ngày mới).");
+            }
+            if (batDauMoi.isBefore(nowTime.minusMinutes(5))) {
+                throw new IllegalArgumentException("Giờ làm bù hôm nay (" + batDauMoi.format(timeFmt)
+                        + ") không được ở trong quá khứ so với thời điểm hiện tại (" + nowTime.format(timeFmt) + ")!");
+            }
         } else if ("RESCHEDULE_KEEP".equals(action) || "RESCHEDULE_RELEASE".equals(action)) {
             if (ngayMoiStr.isEmpty()) {
                 throw new IllegalArgumentException("Vui lòng chọn ngày hẹn mới mà khách hàng yêu cầu.");
@@ -664,6 +704,10 @@ public class CollaboratorApiService {
             targetDate = LocalDate.parse(ngayMoiStr);
             if (targetDate.isBefore(today)) {
                 throw new IllegalArgumentException("Ngày hẹn mới không được ở trong quá khứ (phải từ hôm nay " + todayStr + " trở đi).");
+            }
+            if (targetDate.equals(today) && batDauMoi.isBefore(LocalTime.now().minusMinutes(5))) {
+                throw new IllegalArgumentException("Giờ hẹn mới hôm nay (" + batDauMoi.format(timeFmt)
+                        + ") không được ở trong quá khứ so với thời điểm hiện tại!");
             }
         }
 
