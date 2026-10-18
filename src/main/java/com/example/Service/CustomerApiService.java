@@ -82,6 +82,18 @@ public class CustomerApiService {
     @org.springframework.beans.factory.annotation.Value("${app.esms.otp-template:bTaskee: Ma xac thuc OTP cua ban la %s. Ma co hieu luc trong 5 phut.}")
     private String otpTemplate;
 
+    @org.springframework.beans.factory.annotation.Value("${sepay.bank.code:MB}")
+    private String sepayBankCode;
+
+    @org.springframework.beans.factory.annotation.Value("${sepay.bank.account-no:0336676173}")
+    private String sepayAccountNo;
+
+    @org.springframework.beans.factory.annotation.Value("${sepay.bank.account-name:NGUYEN VUONG LE}")
+    private String sepayAccountName;
+
+    @org.springframework.beans.factory.annotation.Value("${sepay.transfer.prefix:BTK}")
+    private String sepayTransferPrefix;
+
     public CustomerApiService(
             TaiKhoanRepository taiKhoanRepository,
             KhachHangRepository khachHangRepository,
@@ -1727,16 +1739,29 @@ public class CustomerApiService {
         res.put("trangThaiThanhToan", hd.getTrangThaiThanhToan());
         res.put("hinhThucThanhToan", hd.getHinhThucThanhToan());
 
-        // Tạo dữ liệu mã QR VietQR mẫu liên kết tài khoản ngân hàng công ty
-        String bankCode = "MB"; // Ngân hàng MBBank
-        String accountNo = "0988888888"; // STK công ty
-        String accountName = "CONG TY DICH VU GIUP VIEC BTASKEE";
-        String content = "THANHTOAN " + hd.getMaHoaDon();
+        // Tạo dữ liệu mã QR VietQR mẫu liên kết tài khoản ngân hàng SePay
+        String bankCode = (sepayBankCode != null && !sepayBankCode.isBlank()) ? sepayBankCode : "MB";
+        String accountNo = (sepayAccountNo != null && !sepayAccountNo.isBlank()) ? sepayAccountNo : "0336676173";
+        String accountName = (sepayAccountName != null && !sepayAccountName.isBlank()) ? sepayAccountName : "NGUYEN VUONG LE";
+        String prefix = (sepayTransferPrefix != null && !sepayTransferPrefix.isBlank()) ? sepayTransferPrefix : "BTK";
+        String content = prefix + donDat.getId(); // Ví dụ: BTK30
+        
+        String encodedAccountName = "";
+        String encodedContent = "";
+        try {
+            encodedAccountName = java.net.URLEncoder.encode(accountName, java.nio.charset.StandardCharsets.UTF_8.toString());
+            encodedContent = java.net.URLEncoder.encode(content, java.nio.charset.StandardCharsets.UTF_8.toString());
+        } catch (Exception ignored) {
+            encodedAccountName = accountName.replace(" ", "%20");
+            encodedContent = content;
+        }
+
         String qrQuickLink = String.format("https://img.vietqr.io/image/%s-%s-compact2.png?amount=%s&addInfo=%s&accountName=%s",
-                bankCode, accountNo, hd.getTongThanhToan().toPlainString(), content, accountName);
+                bankCode, accountNo, hd.getTongThanhToan().toPlainString(), encodedContent, encodedAccountName);
 
         Map<String, Object> bankInfo = new LinkedHashMap<>();
         bankInfo.put("nganHang", "MBBank (Ngân hàng Quân Đội)");
+        bankInfo.put("maNganHang", bankCode);
         bankInfo.put("soTaiKhoan", accountNo);
         bankInfo.put("chuTaiKhoan", accountName);
         bankInfo.put("noiDungChuyenKhoan", content);

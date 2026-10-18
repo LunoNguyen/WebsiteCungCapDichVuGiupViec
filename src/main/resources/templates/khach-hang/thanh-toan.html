@@ -48,6 +48,9 @@
           <form method="post" th:action="@{/tai-khoan/don-hang/{id}/thanh-toan(id=${donId})}" class="pay-actions">
             <button class="btn btn-primary btn-lg" type="submit" data-nut-da-tra>Tôi đã chuyển khoản</button>
             <button class="btn btn-outline btn-lg" type="button" data-open-dialog="huyDon">Hủy đơn</button>
+            <button class="btn btn-outline btn-sm" type="button" id="btnMockPay" style="grid-column: 1 / -1; margin-top: 8px; border: 1px dashed #16a34a; background: #f0fdf4; color: #15803d; font-weight: 600;" th:attr="data-don-id=${donId}">
+              🧪 Giả lập thanh toán thành công (Test miễn phí)
+            </button>
           </form>
         </section>
       </div>
@@ -67,21 +70,29 @@
     </form>
   </dialog>
 </main>
-<script>
+<script th:inline="javascript">
 (function () {
   'use strict';
+  var donId = /*[[${donId}]]*/ 0;
+
   // Đếm ngược hạn thanh toán; hết giờ thì khoá nút và tải lại (hệ thống quét đơn quá hạn mỗi phút)
   var el = document.querySelector('[data-han-tt]');
   var txt = el.querySelector('[data-han-tt-text]');
   var nut = document.querySelector('[data-nut-da-tra]');
+  var btnMock = document.getElementById('btnMockPay');
   var het = Date.now() + Number(el.getAttribute('data-con-lai')) * 1000;
   var t = null;
+  var pollTimer = null;
+  var daThanhToanXong = false;
+
   function ve() {
     var con = Math.max(0, Math.round((het - Date.now()) / 1000));
     if (con <= 0) {
       txt.textContent = 'Đã hết thời gian thanh toán. Đang cập nhật đơn…';
       nut.disabled = true;
+      if (btnMock) btnMock.disabled = true;
       clearInterval(t);
+      if (pollTimer) clearInterval(pollTimer);
       setTimeout(function () { location.reload(); }, 65000);
       return;
     }
@@ -89,6 +100,52 @@
   }
   ve();
   t = setInterval(ve, 1000);
+
+  // Tự động kiểm tra trạng thái thanh toán (Auto Banking / Webhook)
+  function kiemTraThanhToan() {
+    if (daThanhToanXong || !donId) return;
+    fetch('/api/v1/sepay/status/' + donId, { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.data && res.data.daThanhToan) {
+          daThanhToanXong = true;
+          clearInterval(pollTimer);
+          clearInterval(t);
+          txt.innerHTML = '🎉 <span style="color:#16a34a;font-weight:bold">Đã nhận được tiền thanh toán!</span> Đang chuyển về chi tiết đơn…';
+          if (window.siteToast) window.siteToast('Thanh toán thành công! Hệ thống đang tìm CTV cho bạn.');
+          setTimeout(function () {
+            window.location.href = '/tai-khoan/don-hang/' + donId;
+          }, 1500);
+        }
+      })
+      .catch(function () {});
+  }
+  pollTimer = setInterval(kiemTraThanhToan, 2500);
+
+  // Nút giả lập thanh toán (test miễn phí không tốn SePay quota)
+  if (btnMock) {
+    btnMock.addEventListener('click', function () {
+      if (daThanhToanXong) return;
+      btnMock.disabled = true;
+      btnMock.textContent = '⏳ Đang giả lập thanh toán...';
+      fetch('/api/v1/sepay/mock-pay/' + donId, { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res && res.success) {
+            kiemTraThanhToan();
+          } else {
+            alert((res && res.message) ? res.message : 'Có lỗi khi giả lập thanh toán');
+            btnMock.disabled = false;
+            btnMock.textContent = '🧪 Giả lập thanh toán thành công (Test miễn phí)';
+          }
+        })
+        .catch(function (err) {
+          alert('Không thể kết nối máy chủ');
+          btnMock.disabled = false;
+          btnMock.textContent = '🧪 Giả lập thanh toán thành công (Test miễn phí)';
+        });
+    });
+  }
 
   document.querySelectorAll('[data-sao-chep]').forEach(function (b) {
     b.addEventListener('click', function () {
