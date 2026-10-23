@@ -34,3 +34,6 @@ build/
 
 ### Khoá bí mật (eSMS...) - application.properties vẫn được commit ###
 secrets.properties
+
+storage/
+

@@ -318,19 +318,21 @@
           </div>
         </div>
         <div class="form-label" style="margin-bottom:0.5rem">Địa chỉ nơi ở hiện tại *</div>
-        <div data-dia-chi-form id="addCtvNoiO">
-          <div class="form-row" style="margin-bottom:0.5rem">
-            <div class="form-group">
-              <label class="form-label" for="addCtvTinh">Tỉnh / Thành phố *</label>
-              <select class="form-control" id="addCtvTinh" name="maTinh" required></select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="addCtvPhuong">Phường / Xã *</label>
-              <select class="form-control" id="addCtvPhuong" name="maPhuong" required></select>
-            </div>
+        <div data-dia-chi-form id="addCtvNoiO" class="dia-chi-box">
+          <div class="form-group">
+            <label class="form-label" for="addCtvTinh">Tỉnh / Thành phố *</label>
+            <select class="form-control" id="addCtvTinh" name="maTinh" data-native="true" required></select>
           </div>
-          <div data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem"></div>
-          <div class="form-group" style="margin-bottom:1rem">
+          <div class="form-group" data-quan-wrap>
+            <label class="form-label" for="addCtvQuan">Quận / Huyện *</label>
+            <select class="form-control" id="addCtvQuan" name="maQuan" data-native="true"></select>
+          </div>
+          <div class="form-group col-full" data-phuong-wrap>
+            <label class="form-label" for="addCtvPhuong">Phường / Xã *</label>
+            <select class="form-control" id="addCtvPhuong" name="maPhuong" data-native="true" required></select>
+          </div>
+          <div class="col-full" data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-top:-4px"></div>
+          <div class="form-group col-full">
             <label class="form-label" for="addCtvSoNha">Số nhà, tên đường *</label>
             <input class="form-control" id="addCtvSoNha" name="soNhaTenDuong" maxlength="140" placeholder="VD: 45 Đường số 7" required>
           </div>
@@ -412,19 +414,21 @@
         </div>
         <div class="form-label" style="margin-bottom:0.5rem">Địa chỉ nơi ở hiện tại *</div>
         <div id="editCtvNoiCuCu" style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem"></div>
-        <div data-dia-chi-form id="editCtvNoiO">
-          <div class="form-row" style="margin-bottom:0.5rem">
-            <div class="form-group">
-              <label class="form-label" for="editCtvTinh">Tỉnh / Thành phố *</label>
-              <select class="form-control" id="editCtvTinh" name="maTinh" required></select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="editCtvPhuong">Phường / Xã *</label>
-              <select class="form-control" id="editCtvPhuong" name="maPhuong" required></select>
-            </div>
+        <div data-dia-chi-form id="editCtvNoiO" class="dia-chi-box">
+          <div class="form-group">
+            <label class="form-label" for="editCtvTinh">Tỉnh / Thành phố *</label>
+            <select class="form-control" id="editCtvTinh" name="maTinh" data-native="true" required></select>
           </div>
-          <div data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem"></div>
-          <div class="form-group" style="margin-bottom:1rem">
+          <div class="form-group" data-quan-wrap>
+            <label class="form-label" for="editCtvQuan">Quận / Huyện *</label>
+            <select class="form-control" id="editCtvQuan" name="maQuan" data-native="true"></select>
+          </div>
+          <div class="form-group col-full" data-phuong-wrap>
+            <label class="form-label" for="editCtvPhuong">Phường / Xã *</label>
+            <select class="form-control" id="editCtvPhuong" name="maPhuong" data-native="true" required></select>
+          </div>
+          <div class="col-full" data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-top:-4px"></div>
+          <div class="form-group col-full">
             <label class="form-label" for="editCtvSoNha">Số nhà, tên đường *</label>
             <input class="form-control" id="editCtvSoNha" name="soNhaTenDuong" maxlength="140" placeholder="VD: 45 Đường số 7" required>
           </div>

@@ -238,23 +238,25 @@
         </div>
 
         <!-- Địa chỉ: tỉnh, phường (provinces.open-api.vn v2); khu vực (quận, huyện) tự suy ra từ phường – /js/dia-chi.js -->
-        <div data-dia-chi-form id="modalDiaChi">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="modalTinh">Tỉnh / Thành phố *</label>
-              <select id="modalTinh" name="maTinh" class="form-control" onchange="updateAddressPreview()" required></select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="modalPhuong">Phường / Xã *</label>
-              <select id="modalPhuong" name="maPhuong" class="form-control" onchange="updateAddressPreview()" required></select>
-            </div>
-          </div>
-          <div class="form-group" data-kv-wrap hidden>
-            <label class="form-label" for="modalKhuVuc">Khu vực *</label>
-            <select id="modalKhuVuc" name="khuVucId" class="form-control" onchange="updateAddressPreview()"></select>
-          </div>
-          <div data-kv-note style="font-size:0.8rem;margin:-0.25rem 0 0.75rem;color:var(--text-muted)"></div>
+        <div data-dia-chi-form id="modalDiaChi" class="dia-chi-box">
           <div class="form-group">
+            <label class="form-label" for="modalTinh">Tỉnh / Thành phố *</label>
+            <select id="modalTinh" name="maTinh" class="form-control" data-native="true" onchange="updateAddressPreview()" required></select>
+          </div>
+          <div class="form-group" data-quan-wrap>
+            <label class="form-label" for="modalQuan">Quận / Huyện *</label>
+            <select id="modalQuan" name="maQuan" class="form-control" data-native="true" onchange="updateAddressPreview()"></select>
+          </div>
+          <div class="form-group col-full" data-phuong-wrap>
+            <label class="form-label" for="modalPhuong">Phường / Xã *</label>
+            <select id="modalPhuong" name="maPhuong" class="form-control" data-native="true" onchange="updateAddressPreview()" required></select>
+          </div>
+          <div class="form-group col-full" data-kv-wrap hidden>
+            <label class="form-label" for="modalKhuVuc">Khu vực *</label>
+            <select id="modalKhuVuc" name="khuVucId" class="form-control" data-native="true" onchange="updateAddressPreview()"></select>
+          </div>
+          <div class="col-full" data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-top:-4px"></div>
+          <div class="form-group col-full">
             <label class="form-label" for="modalSoNha">Số nhà, tên đường / Tòa nhà *</label>
             <input type="text" id="modalSoNha" name="soNhaTenDuong" class="form-control" maxlength="200" placeholder="Ví dụ: Số 45 Lê Duẩn" oninput="updateAddressPreview()" required>
           </div>

@@ -1331,6 +1331,7 @@ public class CustomerApiService {
             com.example.DTO.request.AddressRequest dcMoi = new com.example.DTO.request.AddressRequest();
             dcMoi.setSoNhaTenDuong(req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet());
             dcMoi.setMaTinh(req.getMaTinh());
+            dcMoi.setMaQuan(req.getMaQuan());
             dcMoi.setMaPhuong(req.getMaPhuong());
             dcMoi.setKhuVucId(req.getKhuVucId());
             Integer idMoi = (Integer) customerAddressService.them(khachHang.getId(), dcMoi).get("id");

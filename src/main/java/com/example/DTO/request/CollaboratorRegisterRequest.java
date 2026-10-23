@@ -31,6 +31,7 @@ public class CollaboratorRegisterRequest {
     // Hệ thống ghép thành noiCuTru. (App cũ: noiCuTru dạng chữ + tinhThanh/phuongXa = tên quận, huyện.)
     private String soNhaTenDuong;
     private Integer maTinh;
+    private Integer maQuan;
     private Integer maPhuong;
     private String tinhThanh;
     private String phuongXa;

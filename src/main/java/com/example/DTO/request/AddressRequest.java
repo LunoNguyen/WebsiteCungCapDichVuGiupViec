@@ -20,6 +20,7 @@ public class AddressRequest {
     @Size(max = 200, message = "Số nhà, tên đường tối đa 200 ký tự")
     private String soNhaTenDuong;
     private Integer maTinh;
+    private Integer maQuan;
     private Integer maPhuong;
 
     private Integer khuVucId;

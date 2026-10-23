@@ -24,6 +24,7 @@ public class BookingCreateRequest {
     // Địa chỉ theo tỉnh, phường (provinces.open-api.vn v2); khu vực tự suy ra từ phường
     private String soNhaTenDuong;
     private Integer maTinh;
+    private Integer maQuan;
     private Integer maPhuong;
 
     // Danh sách dịch vụ trong đơn (đặt nhiều dịch vụ)

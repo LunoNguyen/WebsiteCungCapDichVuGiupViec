@@ -142,8 +142,14 @@ public class CustomerAddressService {
     }
 
     private void ganGiaTri(DiaChiKhachHang dc, AddressRequest req) {
-        if (req.getMaTinh() != null || req.getMaPhuong() != null) {
-            // Địa chỉ theo tỉnh, phường (API địa giới); khu vực = quận, huyện chứa phường đó
+        if (req.getMaQuan() != null && req.getMaPhuong() != null) {
+            // Địa chỉ theo kiểu truyền thống V1 (3 cấp: Tỉnh -> Quận -> Phường)
+            String soNha = req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet();
+            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinhV1(soNha, req.getMaTinh(), req.getMaQuan(), req.getMaPhuong());
+            dc.setDiaChiChiTiet(x.diaChiDayDu());
+            dc.setKhuVuc(x.khuVuc());
+        } else if (req.getMaTinh() != null || req.getMaPhuong() != null) {
+            // Địa chỉ theo tỉnh, phường (API địa giới V2); khu vực = quận, huyện chứa phường đó
             String soNha = req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet();
             DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinh(soNha, req.getMaTinh(), req.getMaPhuong(), req.getKhuVucId());
             dc.setDiaChiChiTiet(x.diaChiDayDu());

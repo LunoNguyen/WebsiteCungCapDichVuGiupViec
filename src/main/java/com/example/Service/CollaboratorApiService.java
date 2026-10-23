@@ -217,16 +217,18 @@ public class CollaboratorApiService {
         }
         final Integer resolvedCtvId = ctv.getId();
 
-        // 1. Xác định quận: tên quận app gửi lên, không khớp thì theo toạ độ (tâm quận gần nhất),
-        //    cuối cùng mới đoán từ địa chỉ. Geocoder của máy thường không còn trả tên quận.
+        // 1. Xác định quận: Ưu tiên toạ độ GPS chính xác (tamQuanHcm) để tránh lỗi geocoder
+        //    trả về "Thành phố Hồ Chí Minh" hoặc tên phường mới gây lệch quận; sau đó mới tới quanHuyen và diaChi.
         Optional<KhuVuc> kvOpt = Optional.empty();
         if (khuVucService != null) {
-            if (quanHuyen != null && !quanHuyen.isBlank()) {
-                kvOpt = khuVucService.timTheoTen(quanHuyen);
-            }
-            if (kvOpt.isEmpty() && tamQuanHcm != null && viDo != null && kinhDo != null) {
+            if (tamQuanHcm != null && viDo != null && kinhDo != null) {
                 String quanTheoToaDo = tamQuanHcm.quanCua(viDo.doubleValue(), kinhDo.doubleValue());
-                if (quanTheoToaDo != null) kvOpt = khuVucService.timTheoTen(quanTheoToaDo);
+                if (quanTheoToaDo != null) {
+                    kvOpt = khuVucService.timTheoTen(quanTheoToaDo);
+                }
+            }
+            if (kvOpt.isEmpty() && quanHuyen != null && !quanHuyen.isBlank()) {
+                kvOpt = khuVucService.timTheoTen(quanHuyen);
             }
             if (kvOpt.isEmpty() && diaChi != null && !diaChi.isBlank()) {
                 kvOpt = khuVucService.doanQuan(diaChi, khuVucService.danhSach());
@@ -382,8 +384,7 @@ public class CollaboratorApiService {
             String prefixCTV = "CTV " + tenCTV;
             String tenKhach = (don.getKhachHang() != null && don.getKhachHang().getHoTen() != null)
                     ? don.getKhachHang().getHoTen() : "Khách hàng";
-            String diaChiStr = (don.getDiaChi() != null && don.getDiaChi().getDiaChiChiTiet() != null)
-                    ? don.getDiaChi().getDiaChiChiTiet() : "";
+            String diaChiStr = CustomerAddressService.diaChiDayDu(don.getDiaChi());
             String suffixKH = " của KH " + tenKhach + (diaChiStr.isEmpty() ? "" : " (Đ/c: " + diaChiStr + ")");
 
             LocalDate today = LocalDate.now();
@@ -1392,8 +1393,10 @@ public class CollaboratorApiService {
                     String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
                             ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
                     item.put("tenDichVu", tenDv);
-                    item.put("diaChi", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
-                    item.put("diaChiChiTiet", d.getDiaChi() != null ? d.getDiaChi().getDiaChiChiTiet() : "");
+                    String fullDiaChi = CustomerAddressService.diaChiDayDu(d.getDiaChi());
+                    item.put("diaChi", fullDiaChi);
+                    item.put("diaChiChiTiet", fullDiaChi);
+                    item.put("khuVuc", d.getDiaChi() != null && d.getDiaChi().getKhuVuc() != null ? d.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
                     item.put("khachHangTen", d.getKhachHang() != null ? d.getKhachHang().getHoTen() : "Khách hàng");
                     item.put("khachHangPhone", d.getKhachHang() != null ? d.getKhachHang().getSoDienThoai() : "");
                     item.put("yeuCauDacBiet", d.getYeuCauDacBiet());
@@ -1620,7 +1623,7 @@ public class CollaboratorApiService {
             item.put("ngayThucHien", don.getNgayThucHien());
             item.put("gioBatDau", don.getGioBatDau());
             item.put("gioKetThuc", don.getGioKetThuc());
-            item.put("diaChi", don.getDiaChi() != null ? don.getDiaChi().getDiaChiChiTiet() : "");
+            item.put("diaChi", CustomerAddressService.diaChiDayDu(don.getDiaChi()));
 
             String tenKhuVucDon = "";
             if (don.getDiaChi() != null) {
@@ -1760,8 +1763,7 @@ public class CollaboratorApiService {
         String prefixCTV = "CTV " + tenCTV;
         String tenKhach = (don.getKhachHang() != null && don.getKhachHang().getHoTen() != null)
                 ? don.getKhachHang().getHoTen() : "Khách hàng";
-        String diaChiStr = (don.getDiaChi() != null && don.getDiaChi().getDiaChiChiTiet() != null)
-                ? don.getDiaChi().getDiaChiChiTiet() : "";
+        String diaChiStr = CustomerAddressService.diaChiDayDu(don.getDiaChi());
         String suffixKH = " của KH " + tenKhach + (diaChiStr.isEmpty() ? "" : " (Đ/c: " + diaChiStr + ")");
 
         if (ngayThucHien != null && !ngayThucHien.isAfter(today)) {

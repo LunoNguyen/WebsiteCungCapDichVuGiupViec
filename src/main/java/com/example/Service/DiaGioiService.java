@@ -34,6 +34,7 @@ public class DiaGioiService {
 
     private static final Logger log = LoggerFactory.getLogger(DiaGioiService.class);
     private static final String API = "https://provinces.open-api.vn/api/v2";
+    private static final String API_V1 = "https://provinces.open-api.vn/api/v1";
     private static final String FILE_HCM = "data/phuong-xa-hcm.json";
     public static final int MA_HCM = 79;
 
@@ -43,6 +44,9 @@ public class DiaGioiService {
 
     private volatile List<Map<String, Object>> tinhCache;
     private final Map<Integer, List<Map<String, Object>>> phuongCache = new ConcurrentHashMap<>();
+    private volatile List<Map<String, Object>> tinhCacheV1;
+    private final Map<Integer, List<Map<String, Object>>> quanCacheV1 = new ConcurrentHashMap<>();
+    private final Map<Integer, List<Map<String, Object>>> phuongCacheV1 = new ConcurrentHashMap<>();
     /** Mã phường TP.HCM → mã quận cũ (thuộc TP.HCM cũ), theo thứ tự nhiều phường cũ nhất trước. */
     private final Map<Integer, List<Integer>> quanCuTheoPhuong = new HashMap<>();
     private String tenHcm = "Thành phố Hồ Chí Minh";
@@ -223,6 +227,112 @@ public class DiaGioiService {
             }
         }
         return m;
+    }
+
+    // =========================================================================
+    // API v1: ĐỊA CHỈ TRUYỀN THỐNG 3 CẤP (TỈNH -> QUẬN/HUYỆN -> PHƯỜNG/XÃ)
+    // =========================================================================
+
+    public List<Map<String, Object>> tinhThanhV1() {
+        if (tinhCacheV1 != null) return tinhCacheV1;
+        try {
+            List<Map<String, Object>> ds = new ArrayList<>();
+            for (JsonNode p : goi(API_V1 + "/p/")) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("ma", p.path("code").asInt());
+                m.put("ten", p.path("name").asText());
+                ds.add(m);
+            }
+            ds.sort(Comparator.comparing((Map<String, Object> m) -> !Objects.equals(m.get("ma"), MA_HCM)));
+            tinhCacheV1 = List.copyOf(ds);
+            return tinhCacheV1;
+        } catch (Exception e) {
+            log.warn("Không tải được danh sách tỉnh v1: {}", e.getMessage());
+            return tinhThanh();
+        }
+    }
+
+    public List<Map<String, Object>> quanHuyenV1(int maTinh) {
+        List<Map<String, Object>> ds = quanCacheV1.get(maTinh);
+        if (ds == null) {
+            try {
+                List<Map<String, Object>> moi = new ArrayList<>();
+                for (JsonNode d : goi(API_V1 + "/p/" + maTinh + "?depth=2").path("districts")) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("ma", d.path("code").asInt());
+                    m.put("ten", d.path("name").asText());
+                    m.put("maTinh", maTinh);
+                    // Kiểm tra xem quận này có thuộc khu vực bTaskee phục vụ không
+                    if (khuVucService != null) {
+                        Optional<KhuVuc> kv = khuVucService.timTheoTen(d.path("name").asText());
+                        if (kv.isPresent()) {
+                            m.put("khuVucId", kv.get().getId());
+                            m.put("tenKhuVuc", kv.get().getTenKhuVuc());
+                        }
+                    }
+                    moi.add(m);
+                }
+                ds = List.copyOf(moi);
+                quanCacheV1.put(maTinh, ds);
+            } catch (Exception e) {
+                throw new IllegalStateException("Không tải được danh sách quận, huyện. Thử lại sau ít phút.");
+            }
+        }
+        return ds;
+    }
+
+    public List<Map<String, Object>> phuongXaV1(int maQuan) {
+        List<Map<String, Object>> ds = phuongCacheV1.get(maQuan);
+        if (ds == null) {
+            try {
+                List<Map<String, Object>> moi = new ArrayList<>();
+                for (JsonNode w : goi(API_V1 + "/d/" + maQuan + "?depth=2").path("wards")) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("ma", w.path("code").asInt());
+                    m.put("ten", w.path("name").asText());
+                    m.put("maQuan", maQuan);
+                    moi.add(m);
+                }
+                ds = List.copyOf(moi);
+                phuongCacheV1.put(maQuan, ds);
+            } catch (Exception e) {
+                throw new IllegalStateException("Không tải được danh sách phường, xã. Thử lại sau ít phút.");
+            }
+        }
+        return ds;
+    }
+
+    public Optional<String> tenQuanV1(Integer maTinh, Integer maQuan) {
+        if (maTinh == null || maQuan == null) return Optional.empty();
+        return quanHuyenV1(maTinh).stream().filter(q -> Objects.equals(q.get("ma"), maQuan))
+                .map(q -> (String) q.get("ten")).findFirst();
+    }
+
+    public Optional<String> tenPhuongV1(Integer maQuan, Integer maPhuong) {
+        if (maQuan == null || maPhuong == null) return Optional.empty();
+        return phuongXaV1(maQuan).stream().filter(p -> Objects.equals(p.get("ma"), maPhuong))
+                .map(p -> (String) p.get("ten")).findFirst();
+    }
+
+    /** Ghép địa chỉ kiểu cũ 3 cấp: Số nhà, Phường, Quận, Tỉnh và tự động xác định KhuVuc */
+    public DiaChiDaXacDinh xacDinhV1(String soNhaTenDuong, Integer maTinh, Integer maQuan, Integer maPhuong) {
+        if (soNhaTenDuong == null || soNhaTenDuong.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập số nhà, tên đường.");
+        }
+        String tinh = tenTinh(maTinh).orElseGet(() -> tinhThanhV1().stream()
+                .filter(t -> Objects.equals(t.get("ma"), maTinh)).map(t -> (String) t.get("ten")).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn tỉnh, thành phố.")));
+        String quan = tenQuanV1(maTinh, maQuan).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn quận, huyện."));
+        String phuong = tenPhuongV1(maQuan, maPhuong).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn phường, xã."));
+        String soNha = soNhaTenDuong.trim().replaceAll("\\s+", " ");
+
+        KhuVuc kv = null;
+        if (khuVucService != null) {
+            kv = khuVucService.timTheoTen(quan).orElse(null);
+        }
+
+        String diaChiDayDu = soNha + ", " + phuong + ", " + quan + ", " + tinh;
+        return new DiaChiDaXacDinh(diaChiDayDu, kv, phuong, tinh);
     }
 
     private JsonNode goi(String url) throws Exception {

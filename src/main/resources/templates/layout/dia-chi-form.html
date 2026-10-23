@@ -16,6 +16,10 @@
       <label th:for="${tienTo} + '-tinh'">Tỉnh, thành phố <span class="req">*</span></label>
       <select th:id="${tienTo} + '-tinh'" name="maTinh" class="select" required></select>
     </div>
+    <div class="field" data-quan-wrap>
+      <label th:for="${tienTo} + '-quan'">Quận, huyện <span class="req">*</span></label>
+      <select th:id="${tienTo} + '-quan'" name="maQuan" class="select"></select>
+    </div>
     <div class="field">
       <label th:for="${tienTo} + '-phuong'">Phường, xã <span class="req">*</span></label>
       <select th:id="${tienTo} + '-phuong'" name="maPhuong" class="select" required></select>
