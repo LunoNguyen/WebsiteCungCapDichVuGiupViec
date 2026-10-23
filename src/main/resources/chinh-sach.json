@@ -1,0 +1,1068 @@
+{
+  "taiLieu": [
+    {
+      "ma": "dieu-khoan",
+      "ten": "Điều khoản sử dụng",
+      "moTa": "Quan hệ hợp đồng, sử dụng dịch vụ, thanh toán, trách nhiệm và chính sách hoàn tiền.",
+      "noiDung": [
+        {
+          "loai": "tieuDe",
+          "noiDung": "Quan hệ hợp đồng"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Phạm vi áp dụng: Điều khoản Sử dụng điều chỉnh việc bất kỳ cá nhân nào, từ bất kỳ quốc gia nào, truy cập hoặc sử dụng ứng dụng, trang web, nội dung, sản phẩm và dịch vụ của bTaskee Ltd. — công ty TNHH tư nhân thành lập tại Việt Nam, giấy phép đăng ký kinh doanh số 0313723825, trụ sở tại 284/25/20 Lý Thường Kiệt, Phường 14, Quận 10, TP. Hồ Chí Minh."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Hiệu lực ràng buộc: Chỉ cần truy cập hoặc sử dụng dịch vụ là đã coi như chấp nhận chịu ràng buộc bởi các điều khoản này, qua đó thiết lập một quan hệ hợp đồng chính thức giữa người dùng và bTaskee. Nếu không đồng ý, người dùng không có quyền truy cập hoặc sử dụng dịch vụ. Các điều khoản này thay thế toàn bộ thỏa thuận/hợp đồng trước đó giữa hai bên (nếu có)."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Quyền đơn phương chấm dứt của bTaskee: bTaskee có quyền ngay lập tức chấm dứt điều khoản, ngừng cung cấp dịch vụ, hoặc từ chối quyền truy cập của người dùng (toàn bộ hoặc một phần dịch vụ) vào bất kỳ thời điểm nào, vì bất kỳ lý do gì, không cần báo trước."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Điều khoản bổ sung theo từng dịch vụ: Với các dịch vụ đặc thù (sự kiện, hoạt động, chương trình khuyến mãi cụ thể), bTaskee có thể áp dụng thêm điều khoản bổ sung riêng. Các điều khoản bổ sung này sẽ được công bố cho người dùng khi liên quan đến dịch vụ áp dụng, được coi là một phần của Điều khoản chung, và được ưu tiên áp dụng hơn Điều khoản chung nếu có xung đột."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(5) Quyền sửa đổi điều khoản: bTaskee có quyền sửa đổi Điều khoản vào bất kỳ lúc nào. Sửa đổi có hiệu lực ngay khi được đăng tải công khai. Nếu người dùng tiếp tục truy cập/sử dụng dịch vụ sau thời điểm đó, được xem là đã đồng ý với các điều khoản đã sửa đổi."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(6) Liên kết với Chính sách Quyền riêng tư: Việc thu thập và sử dụng thông tin cá nhân liên quan đến các Dịch vụ của chúng tôi được quy định trong Chính sách về Quyền riêng tư của bTaskee tại https://www.btaskee.com/chinh-sach-bao-mat/."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(7) Chia sẻ thông tin phục vụ giải quyết bồi thường/tranh chấp: Trong trường hợp phát sinh yêu cầu bồi thường, tranh chấp, hoặc tai nạn có liên quan giữa người dùng và một Nhà cung cấp Bên Thứ ba, bTaskee có quyền cung cấp toàn bộ thông tin cần thiết (bao gồm cả thông tin liên lạc của người dùng) cho nhân viên xử lý bồi thường hoặc doanh nghiệp bảo hiểm liên quan, nhằm phục vụ việc giải quyết vụ việc."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Các dịch vụ"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Dịch vụ tạo thành nền tảng công nghệ, cho phép người dùng dùng ứng dụng di động/website của bTaskee (\"Ứng dụng\") để sắp xếp, lên lịch trình dịch vụ với các \"Nhà cung cấp Bên Thứ ba\" (đối tác độc lập theo thỏa thuận với bTaskee). Trừ khi có thỏa thuận riêng bằng văn bản, dịch vụ chỉ dành cho mục đích sử dụng cá nhân, phi thương mại. Bạn công nhận rằng bTaskee không cung cấp dịch vụ giúp việc nhà và bảo trì máy lạnh, hoặc có chức năng như nhà cung cấp dịch vụ giúp việc nhà và bảo trì máy lạnh. Các dịch vụ này được cung cấp bởi nhà thầu độc lập bên thứ ba, không làm việc cho bTaskee hoặc bất kỳ chi nhánh nào của bTaskee."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Giấy phép sử dụng: bTaskee cấp cho người dùng giấy phép có giới hạn, không độc quyền, không được cấp lại, có thể bị hủy bỏ, không được chuyển nhượng để:"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) Truy cập/sử dụng Ứng dụng trên thiết bị cá nhân chỉ cho mục đích sử dụng dịch vụ."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) Truy cập/sử dụng nội dung, thông tin liên quan chỉ cho mục đích cá nhân, phi thương mại trong mọi trường hợp. Mọi quyền khác không được nêu rõ đều được bTaskee và tổ chức cấp phép của bTaskee bảo lưu."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Các giới hạn (hành vi bị cấm): Người dùng không được:"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) xóa bản quyền/thương hiệu/thông tin độc quyền khỏi Dịch vụ."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) xuất bản lại, sửa đổi, tạo tác phẩm phái sinh, phân phối, cấp phép, cho thuê, bán, chuyển nhượng, khai thác Dịch vụ khi chưa được phép."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(iii) dịch ngược/đảo ngược Dịch vụ (trừ khi luật cho phép)."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(iv) liên kết/ánh xạ/điều chỉnh bất kỳ phần nào của Dịch vụ."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(v) crawl, lập chỉ mục, khai thác dữ liệu trái phép hoặc gây quá tải hệ thống."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(vi) cố truy cập trái phép hoặc gây tổn hại đến Dịch vụ/hệ thống/mạng lưới liên quan."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Dịch vụ và nội dung bên thứ ba: Dịch vụ có thể liên quan đến nội dung/dịch vụ của bên thứ ba (kể cả quảng cáo) mà bTaskee không kiểm soát và không chịu trách nhiệm. Riêng với Apple/Google (do dùng app trên iOS/Android), các công ty này là \"bên thụ hưởng thứ ba\" của hợp đồng nhưng không phải bên tham gia hợp đồng và không có nghĩa vụ hỗ trợ dịch vụ — việc truy cập qua các nền tảng này còn phải tuân theo điều khoản riêng của Apple/Google."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Quyền sở hữu: Các Dịch vụ và tất cả các quyền trong văn bản này là tài sản của bTaskee hoặc tài sản của tổ chức cấp phép của bTaskee. Các Điều khoản này và việc bạn sử dụng các Dịch vụ này không thể hiện hoặc cấp cho bạn các quyền."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) Về hoặc liên quan đến các Dịch vụ này, ngoại trừ giấy phép hữu hạn đã được cấp ở trên."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) Sử dụng hoặc tham chiếu tên công ty, logo, tên sản phẩm và dịch vụ, thương hiệu hoặc nhãn dịch vụ của bTaskee hoặc của các tổ chức cấp phép của bTaskee dưới bất kỳ hình thức nào."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Sử dụng dịch vụ bTaskee"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Tài khoản người dùng: Để dùng hầu hết các tính năng của Dịch vụ, người dùng phải đăng ký và duy trì một Tài khoản cá nhân. Điều kiện: đủ 18 tuổi (hoặc tuổi trưởng thành hợp pháp theo khu vực tài phán), cung cấp thông tin cá nhân (tên, địa chỉ, SĐT, tuổi) và tối thiểu 1 phương thức thanh toán hợp lệ. Người dùng phải duy trì thông tin chính xác, cập nhật — nếu không (kể cả để phương thức thanh toán hết hạn) có thể bị mất quyền truy cập hoặc bị chấm dứt thỏa thuận. Người dùng chịu trách nhiệm đối với tất cả các hoạt động diễn ra trong Tài khoản của bạn, và bạn đồng ý duy trì tính an ninh và bảo mật của tên người dùng và mật khẩu Tài khoản của bạn tại mọi thời điểm. Chỉ được sở hữu 1 tài khoản, trừ khi có sự cho phép bằng văn bản của bTaskee."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "2. Yêu cầu và ứng xử của người dùng: Dịch vụ không cấp cho người dưới 18 tuổi. Không được ủy quyền cho bên thứ ba dùng tài khoản của mình, không cho người dưới 18 tuổi nhận dịch vụ từ Nhà cung cấp Bên Thứ ba trừ khi có người lớn đi cùng. Không được chuyển nhượng tài khoản. Phải tuân thủ pháp luật, chỉ dùng dịch vụ cho mục đích hợp pháp, không gây phiền toái/thiệt hại cho Nhà cung cấp Bên Thứ ba hoặc bên khác. Có thể bị yêu cầu cung cấp giấy tờ chứng minh quyền sử dụng, từ chối cung cấp có thể bị từ chối truy cập dịch vụ."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Quy định riêng về chống lôi kéo: Nghiêm cấm hành vi thương lượng riêng với Khách hàng/Người giúp việc của bTaskee để cung cấp dịch vụ ngoài hệ thống. bTaskee có quyền từ chối phục vụ hay khóa tài khoản mà không cần báo trước đối với những đối tượng có hành vi trên, Với mỗi Khách Hàng (bao gồm cả Người Giúp Việc), bạn sẽ phải bồi thường cho bTaskee 5.000.000vnđ/01 người."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Tin nhắn văn bản (SMS): Khi tạo tài khoản, người dùng đồng ý nhận SMS thông báo từ bTaskee. Có thể từ chối nhận bất kỳ lúc nào bằng cách gửi email tới support@btaskee.com nêu rõ rằng bạn không còn muốn nhận các tin nhắn như vậy, cùng với số điện thoại của thiết bị di động nhận tin nhắn, nhưng việc từ chối có thể ảnh hưởng đến trải nghiệm sử dụng dịch vụ."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Mã khuyến mãi: bTaskee tùy ý tạo mã khuyến mãi để đổi điểm tín dụng tài khoản hoặc các tính năng hoặc lợi ích khác liên quan đến các Dịch vụ này và/hoặc các dịch vụ của một Nhà cung cấp Bên Thứ ba, tùy thuộc vào bất kỳ điều khoản bổ sung nào mà bTaskee thiết lập trên cơ sở từng mã khuyến mãi (\"Mã khuyến mãi\"). Bạn đồng ý rằng Mã khuyến mãi:"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) Phải được sử dụng cho các đối tượng và mục đích dự định, theo cách phù hợp với pháp luật."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) Không được sao chép, bán hoặc chuyển giao theo bất kỳ cách nào, hoặc cung cấp công khai (cho dù được đăng lên theo hình thức công khai hoặc bất kỳ hình thức nào khác), trừ khi được sự cho phép của bTaskee."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(iii) Có thể bị bTaskee vô hiệu hóa bất kỳ lúc nào vì bất kỳ lý do gì mà bTaskee không phải chịu trách nhiệm."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(iv) Chỉ có thể được sử dụng theo các điều khoản cụ thể mà bTaskee thiết lập cho Mã khuyến mãi đó."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(v) Không có giá trị quy đổi thành tiền mặt."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(vi) Có thể hết hạn trước khi bạn sử dụng. bTaskee có quyền giữ lại hoặc khấu trừ các khoản tín dụng, các tính năng hoặc lợi ích khác thu được thông qua việc sử dụng các Mã khuyến mãi của bạn hoặc bất kỳ người dùng nào khác trong trường hợp bTaskee xác định được hoặc tin rằng việc sử dụng hoặc đổi thưởng Mã khuyến mãi có lỗi, gian lận, bất hợp pháp, hoặc vi phạm các điều khoản về Mã khuyến mãi được áp dụng hoặc các Điều khoản này."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(5) Nội dung người dùng cung cấp: Người dùng có thể gửi/tải lên nội dung (nhận xét, phản hồi, yêu cầu hỗ trợ, bài dự thi khuyến mãi...) — gọi là \"Nội dung Người dùng\". Nội dung vẫn thuộc sở hữu của người dùng, nhưng bằng việc cung cấp, người dùng cấp cho bTaskee giấy phép vĩnh viễn, toàn cầu, miễn phí, không thể thu hồi, để sử dụng/sao chép/sửa đổi/phân phối/khai thác nội dung dưới mọi hình thức, không cần thông báo hay xin phép thêm và không phải trả phí. Bạn tuyên bố và đảm bảo rằng:"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) Là chủ sở hữu duy nhất hoặc có đầy đủ quyền/giấy phép cần thiết đối với Nội dung Người dùng để cấp phép cho bTaskee như trên."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) Nội dung không vi phạm, xâm phạm tài sản trí tuệ hoặc quyền sở hữu/riêng tư của bên thứ ba, và không vi phạm pháp luật. Người dùng đồng ý không đăng nội dung phỉ báng, bôi nhọ, hận thù, bạo lực, khiêu dâm, bất hợp pháp hoặc gây khó chịu (theo đánh giá của bTaskee). bTaskee có quyền (không bắt buộc) rà soát, theo dõi, hoặc xóa Nội dung Người dùng bất kỳ lúc nào, vì bất kỳ lý do gì, không cần báo trước."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(6) Truy cập mạng và thiết bị: Người dùng tự chịu trách nhiệm về kết nối mạng, chi phí dữ liệu/tin nhắn phát sinh, và thiết bị phần cứng tương thích để dùng dịch vụ. bTaskee không đảm bảo dịch vụ hoạt động trên mọi thiết bị. Ngoài ra, các Dịch vụ có thể bị trục trặc và chậm trễ vốn thường gặp trong việc sử dụng Internet và các phương tiện liên lạc điện tử."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Thanh toán"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Cơ chế thu hộ: Việc sử dụng dịch vụ có thể phát sinh chi phí (\"Phí\") cho dịch vụ/hàng hóa nhận từ Nhà cung cấp Bên Thứ ba. bTaskee đóng vai trò đại lý thu hộ thanh toán thay mặt Nhà cung cấp Bên Thứ ba — thanh toán qua bTaskee được coi như thanh toán trực tiếp cho Nhà cung cấp. Phí đã bao gồm thuế (nếu luật yêu cầu). Phí đã trả là cuối cùng, không hoàn lại, trừ khi bTaskee quyết định khác. Người dùng vẫn có quyền yêu cầu Nhà cung cấp giảm phí tại thời điểm nhận dịch vụ."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Quy trình thu phí: Tất cả các khoản Phí phải trả ngay lập tức và việc thanh toán sẽ được tạo điều kiện bởi bTaskee bằng cách sử dụng phương thức thanh toán ưa thích được chỉ định trong Tài khoản của bạn, sau đó bTaskee sẽ gửi cho bạn một biên nhận qua email, với điều kiện email của bạn đã được xác thực trên Ứng dụng. Nếu phương thức thanh toán Tài khoản chính của bạn được xác định là đã hết hạn, không hợp lệ hoặc không thể tính phí, bạn đồng ý rằng bTaskee có thể, trong vai trò là đại lý thu nhận thanh toán của Nhà cung cấp Bên Thứ ba, sử dụng phương thức thanh toán thứ hai trong Tài khoản của bạn, nếu có."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Quyền điều chỉnh giá: bTaskee có toàn quyền thiết lập, xóa, sửa đổi Phí bất kỳ lúc nào. Phí có thể tăng đáng kể theo khu vực/giờ cao điểm (dynamic pricing). bTaskee cố gắng thông báo trước, nhưng người dùng vẫn phải chịu trách nhiệm thanh toán dù có biết trước hay không. Khuyến mãi/giảm giá có thể áp dụng khác nhau cho từng người dùng và không tự động áp dụng cho người khác trừ khi được cung cấp riêng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Hủy dịch vụ: Người dùng có thể hủy yêu cầu bất kỳ lúc nào trước khi Nhà cung cấp thực hiện dịch vụ, nhưng có thể phải trả phí hủy."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(5) Tiền boa/thưởng: Ngoại trừ dịch vụ giúp việc nhà, bTaskee không tự động trích một phần thanh toán làm tiền boa cho Nhà cung cấp. Các tuyên bố về \"tiền boa tự nguyện/không bắt buộc\" không có nghĩa bTaskee sẽ tự thêm khoản tiền nào ngoài Phí đã nêu. Tiền thưởng thêm (nếu có) hoàn toàn tự nguyện, không bắt buộc, và người dùng có thể để lại đánh giá/phản hồi sau khi nhận dịch vụ."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Tuyên bố miễn trách nhiệm"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Dịch vụ cung cấp \"nguyên trạng\", bTaskee không đảm bảo về độ tin cậy, chất lượng, tính liên tục, hay năng lực/an toàn của Nhà cung cấp Bên Thứ ba, người dùng tự chịu mọi rủi ro phát sinh trong phạm vi pháp luật cho phép. Đặc biệt: bTaskee được miễn trừ trách nhiệm hoàn toàn nếu khách hàng/bên khiếu nại tiết lộ thông tin vụ việc hoặc có hành vi bôi nhọ/xúc phạm uy tín bTaskee (kể cả trên mạng xã hội) trong lúc đang xử lý khiếu nại hoặc trước khi có kết luận từ cơ quan nhà nước. Khách hàng/Bên khiếu nại phải chịu trách nhiệm về mọi hành vi tiêu cực đã gây ra cho BTASKEE theo quy định của pháp luật và đồng ý rằng BTASKEE có quyền khởi kiện người sử dụng tùy theo mức độ ảnh hưởng đến uy tín, thương hiệu của BTASKEE."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Giới hạn trách nhiệm"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "bTaskee sẽ không chịu trách nhiệm về các thiệt hại mang tính gián tiếp, ngẫu nhiên, đặc biệt, cảnh cáo, trừng trị hoặc hậu quả, bao gồm tổn thất về lợi nhuận, tổn thất về dữ liệu. bTaskee sẽ không chịu trách nhiệm cho bất kỳ thiệt hại, trách nhiệm hoặc tổn thất nào phát sinh do:"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) Việc bạn sử dụng hoặc dựa trên các dịch vụ hoặc bạn không có quyền truy cập hoặc sử dụng dịch vụ;"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) Mọi giao dịch hoặc quan hệ giữa bạn và Nhà cung cấp Bên Thứ ba, ngay cả nếu bTaskee đã được cảnh báo về nguy cơ của các thiệt hại như vậy. bTaskee sẽ không chịu trách nhiệm về việc trì hoãn hoặc không hoạt động do các nguyên nhân nằm ngoài khả năng kiểm soát của bTaskee. Bạn công nhận rằng Nhà cung cấp dịch vụ bên thứ ba cung cấp các dịch vụ được yêu cầu qua một số thương hiệu có thể cung cấp dịch vụ dùng chung hoặc khách hàng đồng cấp và có thể không được cấp phép hoặc cho phép hoạt động một cách chuyên nghiệp. Trong mọi trường hợp bTaskee không chịu trách nhiệm pháp lý đối với bạn liên quan tới các dịch vụ về mọi thiệt hại, tổn thất và các nguyên nhân tố tụng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Bạn có thể sử dụng dịch vụ của bTaskee để yêu cầu và lên lịch dịch vụ giúp việc nhà và/hoặc bảo trì máy lạnh với Nhà cung cấp Bên Thứ ba, nhưng bạn đồng ý rằng bTaskee không có trách nhiệm hoặc nghĩa vụ với bạn liên quan đến bất kỳ dịch vụ giúp việc nhà và/hoặc bảo trì máy lạnh nào được Nhà cung cấp Bên Thứ ba cung cấp cho bạn, trừ các trách nhiệm được quy định rõ trong các điều khoản này."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Các giới hạn và tuyên bố miễn nhiệm trong phần này không nhằm giới hạn trách nhiệm hoặc thay thế các quyền của người tiêu dùng không thể loại trừ theo pháp luật."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Bồi thường (khách hàng bồi thường cho bTaskee)"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Bạn đồng ý bồi thường và giữ cho bTaskee và các cán bộ, giám đốc, nhân viên và đại lý vô hại khỏi bất kỳ và tất cả các yêu cầu bồi thường, yêu cầu, trách nhiệm pháp lý, và các chi phí (bao gồm chi phí luật sư) phát sinh từ hoặc liên quan đến:"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) Bạn sử dụng các Dịch vụ này, dịch vụ hoặc các sản phẩm nhận được thông qua việc sử dụng các Dịch vụ này."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) Bạn phá vỡ hoặc vi phạm các Điều khoản này."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(iii) bTaskee sử dụng Nội dung Người dùng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(iv) Bạn vi phạm các quyền của bất kỳ bên thứ ba nào, bao gồm Nhà cung cấp Bên Thứ ba."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Các quy định khác"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Yêu cầu bồi thường vi phạm bản quyền: Yêu cầu bồi thường vi phạm bản quyền phải được gửi đến đại lý được chỉ định của bTaskee. Vui lòng truy cập trang web của bTaskee tại https://www.btaskee.com/lien-he/ để biết địa chỉ được chỉ định và thông tin bổ sung."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Thông báo: bTaskee có thể đưa ra thông báo bằng phương thức thông báo chung về các Dịch vụ, gửi thư điện tử đến địa chỉ email trong Tài khoản của bạn, hoặc thông qua văn bản liên lạc được gửi qua đường bưu điện đến địa chỉ được ghi trong Tài khoản của bạn. Bạn có thể thông báo cho bTaskee bằng văn bản liên lạc đến địa chỉ của bTaskee tại 284/25/20 Lý Thường Kiệt, Phường 14, Quận 10, Thành phố Hồ Chí Minh, Việt Nam."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Điều khoản chung: Bạn không thể chuyển nhượng hoặc chuyển giao các Điều khoản này, toàn bộ hoặc một phần, mà không có sự chấp thuận trước bằng văn bản của bTaskee. Bạn chấp thuận cho bTaskee quyền chuyển nhượng hoặc chuyển giao các Điều khoản này, toàn bộ hoặc một phần, cho:"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) Một công ty con hoặc chi nhánh."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) Ngân hàng thanh toán vốn chủ sở hữu, doanh nghiệp hoặc tài sản của bTaskee; hoặc"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(iii) Bên kế thừa do sáp nhập. Không có mối quan hệ liên doanh, hợp tác, làm việc hoặc đại lý tồn tại giữa bạn, bTaskee hoặc bất kỳ Nhà cung cấp Bên Thứ ba nào như là kết quả của hợp đồng giữa bạn và bTaskee hoặc việc sử dụng các Dịch vụ."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Chính sách hoàn tiền"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Tôi sẽ không bị phạt mức phí hủy việc trong những trường hợp nào?"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Trường hợp thanh toán bằng bPay và Tiền mặt"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Hủy trong vòng 10 phút sau khi đăng việc.",
+            "Hủy khi chưa có Tasker nhận việc.",
+            "Hủy trước giờ làm việc ít nhất 06 tiếng."
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Trường hợp thanh toán Ví điện tử, Thẻ thanh toán quốc tế (Visa, Mastercard),…"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Hủy trong vòng 10 phút sau khi đăng việc.",
+            "Hủy việc trong vòng 06 tiếng trước khi bắt đầu công việc nếu chưa có Tasker nhận việc."
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Mức phí hủy việc đang được áp dụng như thế nào?"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Trường hợp thanh toán bằng bPay và Tiền mặt"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "20.000vnd nếu hủy trước khi công việc bắt đầu 1 tiếng.",
+            "30% giá trị công việc nếu hủy trong vòng 1 tiếng trước khi công việc bắt đầu."
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Trường hợp thanh toán Ví điện tử, Thẻ thanh toán quốc tế (Visa, Mastercard),…"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "5% giá trị công việc (tối thiểu 20.000vnd) nếu hủy trước 1 tiếng, tính từ khi công việc bắt đầu.",
+            "30% giá trị công việc (tối đa 100.000vnd) nếu hủy trong vòng 1 tiếng, tính từ khi công việc bắt đầu."
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Điều kiện hoàn Gói:"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Trong trường hợp bạn muốn hủy gói cố định, bTaskee áp dụng điều kiện/điều khoản hủy gói và hoàn lại tiền những công việc chưa sử dụng qua hai hình thức:",
+            "Hoàn tiền qua bPay: bTaskee hoàn lại tổng số tiền của những buổi chưa sử dụng.",
+            "Hoàn tiền qua chuyển khoản ngân hàng: bTaskee hoàn lại tổng số tiền của những buổi chưa sử dụng trừ đi 20% giá trị của gói ban đầu."
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Cách yêu cầu hoàn lại tiền"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Đối với công việc lẻ trên ứng dụng, vui lòng sử dụng tính năng hủy việc trong ứng dụng.",
+            "Đối với các trường hợp khác, vui lòng liên hệ với bộ phận hỗ trợ khách hàng của chúng tôi qua email: support@btaskee.com"
+          ]
+        }
+      ]
+    },
+    {
+      "ma": "khieu-nai",
+      "ten": "Quy trình tiếp nhận và xử lý khiếu nại",
+      "moTa": "Thời hạn, các bước giải quyết khiếu nại và mức bồi thường thiệt hại.",
+      "noiDung": [
+        {
+          "loai": "tieuDe",
+          "noiDung": "I. Mục đích, quy định và phạm vi áp dụng"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "1. Mục đích: Thống nhất và chuẩn hóa việc xử lý khiếu nại của khách hàng liên quan đến sản phẩm, dịch vụ của bTaskee, đảm bảo xử lý nhanh chóng, đúng nghiệp vụ, đúng quy định, kiểm soát và hạn chế rủi ro."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "2. Phạm vi áp dụng: Áp dụng tại bTaskee — bộ phận CSKH và các phòng ban phối hợp giải quyết khiếu nại liên quan sản phẩm/dịch vụ trên nền tảng ứng dụng di động."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "3. Quy định giải quyết khiếu nại"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Thời gian tiếp nhận khiếu nại của khách hàng theo quy định của bộ phận chăm sóc khách hàng bTaskee được quy định tại mục III. MÔ TẢ QUY TRÌNH."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Thời gian xử lý khiếu nại và đưa ra phán quyết: tối đa 60 ngày làm việc kể từ ngày tiếp nhận thông tin khiếu nại lần đầu."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Thời gian và phương thức tiếp nhận khiếu nại được áp dụng cho tất cả các ngày làm việc trong tuần từ Thứ hai đến Thứ sáu, không tính ngày nghỉ, lễ, Tết theo quy định của pháp luật:"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Email: support@btaskee.com: hoạt động từ 08g30 đến 18g00;",
+            "Hotline có ghi âm: 1900 636 736, hoạt động từ 08g30 đến 18g00;",
+            "Các kênh truyền thông xã hội chính thức của bTaskee như trang Facebook bTaskee Vietnam, kênh Zalo OA, hoạt động từ 08g30 đến 18g00;",
+            "Văn bản trực tiếp đến bộ phận chăm sóc khách hàng Công ty TNHH bTaskee."
+          ]
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "II. Định nghĩa và viết vắt"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "CSKH: bộ phận chăm sóc khách hàng"
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "III. Mô tả quy trình"
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "1. Thời hạn chấp nhận khiếu nại theo loại"
+        },
+        {
+          "loai": "bang",
+          "cot": [
+            "Loại khiếu nại",
+            "Thời hạn tính từ"
+          ],
+          "dong": [
+            [
+              "Mất/thất lạc tài sản",
+              "5 ngày kể từ ngày đặt công việc"
+            ],
+            [
+              "Tài sản hư hỏng / vấn đề liên quan CTV",
+              "3 ngày kể từ ngày đặt công việc"
+            ],
+            [
+              "Bảo hành vệ sinh máy lạnh, máy giặt, bình nước nóng",
+              "7 ngày kể từ khi hoàn thành công việc"
+            ],
+            [
+              "Bảo hành dịch vụ giặt ủi",
+              "48 tiếng kể từ khi hoàn thành công việc"
+            ],
+            [
+              "Bảo hành vệ sinh đệm/rèm/sofa/thảm",
+              "24 tiếng kể từ khi hoàn thành công việc"
+            ]
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Đối với các khiếu nại không thỏa một trong các điều kiện nêu trên, bTaskee sẽ xem xét, đáng giá, thương lượng và đề xuất đền bù cho khách hàng theo bảng bồi thường thiệt hại bên dưới."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2)bTaskee không chịu trách nhiệm đối với những thiệt hại phát sinh khác mà không có thỏa thuận trước và/hoặc các khiếu nại phát sinh từ việc Khách Hàng và/hoặc cộng tác viên không thông báo, không báo cáo sự việc đến Bộ Phận CSKH bTaskee, và/hoặc các khiếu nại phát sinh từ việc Khách Hàng và/hoặc cộng tác viên tự thỏa thuận, tự thương lượng hoặc bất kỳ hình thức thống nhất bằng miệng và/hoặc bằng văn bản nào mà không có sự xác nhận từ bTaskee."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "2. Hướng dẫn chi tiết thực hiện giải quyết khiếu nại"
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Bước 1: Khách hàng gửi thắc mắc/khiếu nại"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Khách hàng gửi yêu cầu cần xử lý, thắc mắc cần giải đáp hoặc các khiếu nại liên quan đến sản phẩm dịch vụ của bTaskee qua các kênh hỗ trợ được quy định."
+          ]
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Bước 2: Tiếp nhận thông tin."
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "CSKH sẽ tiếp nhận thông tin và phản hồi qua các kênh đã tiếp nhận.",
+            "Thời gian: 01 ngày làm việc."
+          ]
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Bước 3: Phân loại thông tin"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Đội CSKH phân loại yêu cầu từ khách hàng thành 2 nhóm để có phương án hỗ trợ phù hợp:"
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "A. Nhóm tư vấn, giải đáp thắc mắc"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "CSKH trực tiếp tư vấn các thông tin đã công bố công khai (sản phẩm, dịch vụ, khuyến mãi, sự kiện, hướng dẫn sử dụng...) trên website/app bTaskee, hoặc thông tin được phép cung cấp cho khách.",
+            "Nếu khách hỏi vấn đề chưa công bố/chưa được phép cung cấp: CSKH tiếp nhận, trao đổi với phòng ban nội bộ, phản hồi khách sau khi có kết quả chính thức → chuyển sang xử lý theo nhánh B.",
+            "Sau khi tư vấn xong (không cần xử lý thêm): CSKH thực hiện luôn Bước 7 (đóng yêu cầu)."
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Thời gian: 01 ngày làm việc"
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "B. Nhóm giải quyết khiếu nại"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "CSKH phân loại khiếu nại vào 1 trong 7 nhóm cơ bản để có hướng xử lý tương ứng:"
+        },
+        {
+          "loai": "bang",
+          "cot": [
+            "STT",
+            "Loại khiếu nại"
+          ],
+          "dong": [
+            [
+              "1",
+              "Không thể đăng nhập/đăng xuất"
+            ],
+            [
+              "2",
+              "Liên quan đến cộng tác viên"
+            ],
+            [
+              "3",
+              "Liên quan đến chất lượng dịch vụ"
+            ],
+            [
+              "4",
+              "Mất cắp/hư hại tài sản hoặc bảo hành thiết bị máy móc sau vệ sinh"
+            ],
+            [
+              "5",
+              "Lỗi trên ứng dụng/website bTaskee"
+            ],
+            [
+              "6",
+              "Liên quan đến thanh toán trên ứng dụng"
+            ],
+            [
+              "7",
+              "Liên quan đến quy tắc ứng xử"
+            ],
+            [
+              "8",
+              "Các loại khiếu nại khác"
+            ]
+          ]
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Bước 4: Mở khiếu nại và giải quyết"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "CSKH mở khiếu nại đồng thời phản hồi tiếp nhận qua kênh Khách hàng phản ánh, và thu thập những thông tin cá nhân của Khách hàng như họ tên, số điện thoại, tài khoản đăng nhập, hình ảnh hiển thị câu thông báo lỗi, chứng từ thanh toán… để làm cơ sở kiểm tra xử lý hoặc chuyển tiếp đến những phòng ban liên quan hỗ trợ.",
+            "Khi tiếp nhận thông tin từ CSKH, phòng ban liên quan có nhiệm vụ kiểm tra và xử lý đồng thời đảm bảo phản hồi kết quả theo thời gian quy định.",
+            "Người thực hiện: CSKH – Phòng ban liên quan.",
+            "Thời gian: 01 – 60 ngày làm việc."
+          ]
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Bước 5: Hòa giải và đề xuất hướng hỗ trợ"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Hòa giải, đề xuất phương án; nếu khách chưa đồng ý, tiếp tục trao đổi tìm phương án tối ưu — nếu vẫn không đồng ý, quyết định của bTaskee là quyết định cuối cùng."
+          ]
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Bước 6: Thông báo hướng giải quyết"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Sau khi có kết quả chính thức, CSKH sẽ phản hồi trực tiếp đến Khách hàng thông qua kênh tiếp nhận.",
+            "Người thực hiện: CSKH",
+            "Thời gian: 01 ngày làm việc."
+          ]
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Bước 7: Kết thúc và đóng khiếu nại"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "CSKH đóng khiếu nại.",
+            "Người thực hiện: CSKH.",
+            "Thời gian: 01 ngày làm việc."
+          ]
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "IV. Quy định về mức bồi thường thiệt hại"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Trường hợp tài sản bị mất cắp, thất lạc (có hoá đơn, chứng từ, có bằng chứng xác thực):"
+        },
+        {
+          "loai": "bang",
+          "cot": [
+            "Trường hợp bồi thường",
+            "Mức % bồi thường",
+            "Khoản tiền bồi thường tối đa"
+          ],
+          "dong": [
+            [
+              "Một phần hoặc toàn bộ tài sản bị mất, thất lạc, tài sản bị tráo.\nGiá trị tài sản dưới hoặc bằng 1.000.000 VNĐ.",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 500.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị mất, thất lạc, tài sản bị tráo.\nGiá trị tài sản từ 1.000.001 VNĐ đến dưới 3.000.000Đ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 1.000.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị mất, thất lạc, tài sản bị tráo.\nGiá trị tài sản từ 3.000.001 VNĐ đến dưới 5.000.000Đ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 1.500.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị mất, thất lạc, bị tráo.\nGiá trị tài sản từ 5.000.001 VNĐ đến dưới 7.000.000 VNĐ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 2.000.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị mất, thất lạc, bị tráo.\nGiá trị tài sản từ 7.000.001 VNĐ đến dưới 10.000.000 VNĐ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 3.000.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao"
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị mất, thất lạc, bị tráo.\nGiá trị tài sản từ 10.000.001 VNĐ trở lên hoặc tài sản chưa xác định được giá trị (đồ cổ, đồ gia truyền, kỷ niệm, không có hoá đơn chứng từ xác minh…)",
+              "Khách hàng liên hệ trình báo đến bTaskee và Cơ quan chức năng cung cấp bằng chứng được điều tra làm rõ.",
+              ""
+            ]
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Trường hợp tài sản bị hư hại (có hoá đơn, chứng từ"
+        },
+        {
+          "loai": "bang",
+          "cot": [
+            "Trường hợp bồi thường",
+            "Mức % bồi thường",
+            "Khoản tiền bồi thường tối đa"
+          ],
+          "dong": [
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại, không thể sửa chữa bảo hành hoặc không thể khôi phục hiện trạng ban đầu.\nGiá trị tài sản dưới hoặc bằng 1.000.000 VNĐ.",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 300.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại, có thể sửa chữa bảo hành hoặc có thể khôi phục hiện trạng ban đầu.\nGiá trị tài sản dưới hoặc bằng 1.000.000 VNĐ.",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 200.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại, không thể sửa chữa bảo hành hoặc không thể khôi phục hiện trạng ban đầu.\nGiá trị tài sản từ 1.000.001 VNĐ đến dưới 3.000.000Đ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 500.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại, có thể sửa chữa bảo hành hoặc có thể khôi phục hiện trạng ban đầu.\nGiá trị tài sản từ 1.000.001 VNĐ đến dưới 3.000.000Đ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 300.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại, không thể sửa chữa bảo hành hoặc không thể khôi phục hiện trạng ban đầu.\nGiá trị tài sản từ 3.000.001 VNĐ đến dưới 5.000.000Đ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 1.000.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại, có thể sửa chữa bảo hành hoặc có thể khôi phục hiện trạng ban đầu.\nGiá trị tài sản từ 3.000.001 VNĐ đến dưới 5.000.000Đ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 700.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại, không thể sửa chữa bảo hành hoặc không thể khôi phục hiện trạng ban đầu.\nGiá trị tài sản từ 5.000.001 VNĐ đến dưới 7.000.000 VNĐ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 2.000.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại có thể sửa chữa bảo hành hoặc có thể khôi phục hiện trạng gần giống ban đầu.\nGiá trị tài sản từ 5.000.001 VNĐ đến dưới 7.000.000 VNĐ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 1.500.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại không thể sửa chữa bảo hành hoặc không thể khôi phục hiện trạng ban đầu.\nGiá trị tài sản từ 7.000.001 VNĐ đến dưới 10.000.000 VNĐ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 3.000.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại có thể sửa chữa bảo hành hoặc có thể khôi phục hiện trạng gần giống ban đầu.\nGiá trị tài sản từ 7.000.001 VNĐ đến dưới 10.000.000 VNĐ",
+              "Tùy vào giá trị tài sản đôi bên thương lượng hoặc theo giá trị khấu hao.",
+              "Tối đa không quá 2.500.000VNĐ hoặc không quá 50% giá trị tài sản sau khi khấu hao."
+            ],
+            [
+              "Một phần hoặc toàn bộ tài sản bị hư hại giá trị tài sản từ 10.000.001 VNĐ trở lên.",
+              "Tối đa không quá 3.500.000 VNĐ.",
+              ""
+            ]
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "Đối với các trường hợp tài sản không có hoá đơn chứng từ hoặc tài sản chưa xác định được giá trị (đồ cổ, đồ gia truyền, kỷ niệm, không có hoá đơn chứng từ xác minh…) bTaskee sẽ dựa trên giá trị phần tài sản hư hại để đề xuất và thương lượng mức giá trị đền bù phù hợp."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "V. Quy định khác"
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Người khiếu nại có trách nhiệm cung cấp bằng chứng xác thực; bTaskee kiểm tra và phản hồi qua hệ thống đã nhận khiếu nại.",
+            "Chỉ hỗ trợ giải quyết khi người dùng cung cấp thông tin đầy đủ, trung thực, chính xác.",
+            "Tranh chấp giữa 2 người dùng: bTaskee có thể kết nối để 2 bên tự giải quyết, hoặc căn cứ tình hình thực tế để xử lý; bên có lỗi rõ ràng có thể bị cảnh cáo, khóa tài khoản, hoặc chuyển cơ quan pháp luật tùy mức đ, kèm yêu cầu công khai xin lỗi bên bị xâm phạm.",
+            "Nếu không thể giải quyết qua thương lượng, các bên có quyền nhờ cơ quan pháp luật can thiệp.",
+            "bTaskee chỉ xử lý khiếu nại khi có yêu cầu hợp lý, hợp lệ, liên quan trực tiếp đến hoạt động/dịch vụ của bTaskee.",
+            "Khi tiếp nhận khiếu nại, bTaskee có quyền phong tỏa tài khoản/giao dịch liên quan để tránh thất thoát tiếp diễn.",
+            "Xử lý trên cơ sở công bằng, minh bạch; vi phạm pháp luật/lừa đảo có tổ chức sẽ phối hợp cơ quan chức năng.",
+            "Khiếu nại chỉ được chấp nhận nếu phát sinh trong thời hạn quy định (trừ trường hợp bất khả kháng có chứng minh).",
+            "Thời gian xử lý tối đa 60 ngày (hoặc ngắn hơn theo pháp luật) — bTaskee khuyến khích người dùng hợp tác, phản hồi kịp thời trong quá trình xử lý.",
+            "Công việc không có thông tin trùng khớp trên hệ thống: bTaskee từ chối tiếp nhận.",
+            "Người khiếu nại phải là khách hàng trực tiếp/gián tiếp sử dụng dịch vụ hoặc người thanh toán phí.",
+            "Với tài sản hư hỏng/mất cắp: khách phải cung cấp bằng chứng (ảnh/video) tình trạng tài sản trước khi CTV đến và sau khi CTV bàn giao, bTaskee không có nghĩa vụ cung cấp biên bản bàn giao hiện trạng.",
+            "Tài sản cần có giấy tờ chứng minh giá trị (hóa đơn mua/nhập hàng) khớp với thông tin nhà cung cấp.",
+            "Khách hàng đồng ý bồi thường ngược lại cho bTaskee (và cán bộ, nhân viên, đại lý) nếu:"
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(i) vi phạm Điều khoản Sử dụng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(ii) vi phạm quyền của bên thứ ba (kể cả Nhà cung cấp Bên Thứ ba)."
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "bTaskee khuyến khích thương lượng, hòa giải trước; nếu không thành và yêu cầu bTaskee đứng ra giải quyết, quyết định của bTaskee là quyết định cuối cùng."
+          ]
+        }
+      ]
+    },
+    {
+      "ma": "bao-mat",
+      "ten": "Chính sách bảo mật thông tin cá nhân",
+      "moTa": "Thông tin được thu thập, mục đích sử dụng, ai được tiếp cận và cam kết bảo mật.",
+      "noiDung": [
+        {
+          "loai": "ds",
+          "muc": [
+            "\"Thông tin cá nhân\" là thông tin về bạn mang tính nhận dạng, bao gồm: tên, CMND/CCCD/hộ chiếu, quốc tịch, địa chỉ, SĐT, thông tin ngân hàng/thẻ tín dụng, dân tộc, giới tính, ngày sinh, tình trạng hôn nhân, nơi cư trú, học vấn, tình trạng tài chính, sở thích cá nhân, email, nghề nghiệp và bất kỳ thông tin nào về bạn mà bạn đã cung cấp cho bTaskee trong các đơn đăng ký, đơn xin gia nhập hoặc bất kỳ đơn tương tự nào. Kể cả dữ liệu nhạy cảm như sức khỏe, tôn giáo.",
+            "Ứng dụng có quyền thu thập dữ liệu vị trí (GPS) của thiết bị khi sử dụng ứng dụng.",
+            "Việc cung cấp thông tin là tự nguyện với khách hàng, nhưng bắt buộc với một đại lý, người bán hàng hoặc nhà cung cấp dịch vụ (không cung cấp = vi phạm, có thể không được hợp tác).",
+            "Thu thập thông tin cá nhân của người dùng từ nhiều nguồn khác: form đăng ký, nguồn công khai (danh bạ), mạng xã hội, tổ chức báo cáo tín dụng, sự kiện/hoạt động, cookie trên website."
+          ]
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Chính sách về mục đích và phạm vi sử dụng thông tin"
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Mục đích chung"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Trả lời câu hỏi/phản hồi của người dùngvà liên lạc với người dùng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Phục vụ quản lý nội bộ (kiểm toán, phân tích dữ liệu)."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Tối ưu tuyến đường & thời gian di chuyển, điều phối công việc theo vị trí."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Phục vụ mục đích phát hiện, ngăn chặn và truy tố tội phạm."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(5) Tuân thủ pháp luật giúp bTaskee tuân thủ các nghĩa vụ theo quy định của pháp luật."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Đối với khách hàng"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) BTaskee phải thực hiện bất kỳ hợp đồng nào được ký kết với khách hàng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Xử lý việc đăng ký tài khoản, tải và sử dụng ứng dụng, cấp giấy phép sử dụng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Xác thực đơn hàng và xử lý thanh toán."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Xử lý việc tham gia của khách hàng vào các sự kiện, chương trình khuyến mãi. khảo sát, cuộc thi."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(5) Quản lý các chương trình theo dõi/thành viên và quyền lợi đi."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(6) Phân tích nhu cầu, sở thích khách hàng để phát triển và cải tiến sản phẩm/dịch vụ."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(7) Xử lý các yêu cầu đổi/trả sản phẩm."
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "Đối với khách hàng là đại lý, người bán hàng, đối tác, nhà thầu hoặc nhà cung cấp dịch vụ: bTaskee sử dụng thông tin để:"
+          ]
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Phục vụ hợp tác cung cấp dịch vụ/sản phẩm."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Thực hiện các kiểm tra cần thiết trong quá trình hợp tác."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Xử lý thanh toán cho sản phẩm/dịch vụ mà bên đối tác cung cấp."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Liên hệ với đối tác hoặc đại diện của đối tác."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Mục tiêu tiếp thị và quảng bá"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) bTaskee sử dụng và xử lý thông tin của khách hàng để gửi qua bưu điện, điện thoại, SMS, email."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Gửi cảnh báo, bản tin, quảng cáo, ưu đãi, lời chúc từ bTaskee và các đối tác/nhà tài trợ/nhà quảng cáo."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Thông báo, mời tham gia sự kiện/hoạt động của bTaskee hoặc đối tác."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Xử lý đăng ký và liên hệ về việc tham gia sự kiện."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(5) Chia sẻ thông tin cá nhân giữa các công ty con, công ty liên kết, liên doanh và các đại lý/nhà cung cấp/đối tác để họ tiếp tục tiếp thị sản phẩm, dịch vụ, khuyến mãi."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Thời gian lưu trữ dữ liệu"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Dữ liệu cá nhân được lưu trữ cho đến khi người dùng yêu cầu hủy bỏ hoặc tự đăng nhập thực hiện hủy bỏ"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Ngoài trường hợp đó, thông tin luôn được bảo mật trên máy chủ của bTaskee."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Những người hoặc tổ chức có thể được tiếp cận với thông tin"
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Chuyển giao thông tin cá nhân"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Việc chuyển giao, lưu trữ, sử dụng và xử lý thông tin cá nhân có thể được thực hiện bởi một cơ quan tài phán nằm ngoài quốc gia mà người dùng đang cư trú."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Các hoạt động xử lý dữ liệu này có thể diễn ra tại các \"Quốc gia Thay thế\" (nơi người dùng không trực tiếp hiện diện khi sử dụng dịch vụ) hoặc bởi các công ty thành viên thuộc hệ thống bTaskee tại nước ngoài."
+        },
+        {
+          "loai": "ds",
+          "muc": [
+            "(3) Dữ liệu có thể được luân chuyển cho các công ty thành viên thuộc bTaskee hoạt động ngoài biên giới quốc gia của người dùng.",
+            "(4) Quá trình này bao gồm cả trường hợp hệ thống máy chủ của bTaskee được đặt ở nước ngoài; theo đó, người dùng hiểu và hoàn toàn đồng ý với việc dữ liệu được chuyển đi xuyên biên giới như quy định."
+          ]
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Tiết lộ cho Bên thứ ba"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Thông tin cá nhân có thể được chuyển giao, truy cập hoặc tiết lộ cho các bên thứ ba nhằm phục vụ trực tiếp cho các Mục tiêu và Mục tiêu Bổ sung của doanh nghiệp."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) bTaskee có quyền làm việc với các công ty, nhà cung cấp dịch vụ hoặc cá nhân khác và cung cấp quyền tiếp cận dữ liệu để họ thay mặt bTaskee thực hiện các chức năng cụ thể."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Các bên thứ ba được tiếp cận bao gồm nhưng không giới hạn: Các đối tác cộng tác trong sự kiện, chương trình; các công ty tổ chức và nhà tài trợ sự kiện; các công ty nghiên cứu thị trường."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Các nhà cung cấp dịch vụ (đặc biệt là lĩnh vực công nghệ thông tin liên quan đến cơ sở hạ tầng, phần mềm và phát triển ứng dụng), các chuyên gia tư vấn bên ngoài, chuyên gia kiểm toán (pháp lý, tài chính, chuyên môn) và các tổ chức nội bộ khác của bTaskee."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(5) Dữ liệu có thể được cung cấp cho các cơ quan chính phủ để thực thi các quy định pháp luật."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(6) Thông tin cá nhân cũng có thể được chia sẻ trong quá trình diễn ra các giao dịch doanh nghiệp như: bán chi nhánh hoặc bộ phận, sáp nhập, hợp nhất, bán tài sản, hoặc trong trường hợp giải thể doanh nghiệp."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Địa chỉ của đơn vị thu thập và quản lý thông tin"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "bTaskee Ltd. Nhóm pháp lý và tuân thủ Chính Sách của Doanh Nghiệp 284/25/20 Lý Thường Kiệt, Phường 14, Quận 10, TP Hồ Chí Minh. Việt Nam Email: Privacy@btaskee.com"
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Phương thức và công cụ để người dùng tiếp cận và chỉnh sửa dữ liệu cá nhân của mình"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Tùy thuộc vào các ngoại lệ theo luật hiện hành tại quốc gia của người dùng hoặc Quốc gia Thay thế, người dùng có quyền yêu cầu truy cập, chỉnh sửa, hạn chế xử lý thông tin hoặc đặt câu hỏi liên quan thông qua Nhóm Pháp lý của bTaskee."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) bTaskee bảo lưu quyền áp dụng một khoản phí hợp lý đối với các yêu cầu truy cập thông tin cá nhân, tuân thủ theo phạm vi mà pháp luật cho phép."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Doanh nghiệp có quyền từ chối các yêu cầu truy cập hoặc chỉnh sửa nếu có lý do chính đáng theo luật, ví dụ như khi chi phí thực hiện yêu cầu không tương xứng với rủi ro gây ra đối với quyền riêng tư của người dùng hoặc của bên thứ ba."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Đối với việc thu thập qua Trang web, người dùng có thể chủ động từ chối bằng cách điều chỉnh cài đặt trình duyệt internet để vô hiệu hóa, khóa cookie, hoặc xóa lịch sử truy cập và bộ nhớ đệm."
+        },
+        {
+          "loai": "tieuDe",
+          "noiDung": "Khác"
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Liên kết với Trang Web của Bên thứ ba"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Hệ thống của bTaskee có thể chứa các liên kết dẫn đến trang web của bên thứ ba."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) bTaskee không chịu trách nhiệm đối với các hoạt động thu thập, sử dụng, duy trì, chia sẻ, hoặc tiết lộ dữ liệu trên các nền tảng ngoại vi này."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Khi người dùng trực tiếp cung cấp thông tin cho các bên thứ ba, chính sách bảo mật và điều khoản sử dụng của bên đó sẽ được áp dụng, và bTaskee không chịu trách nhiệm đối với các hoạt động xử lý dữ liệu của họ."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Thông tin Cá nhân của Trẻ chưa thành niên và Cá nhân Khác"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Phụ huynh hoặc người giám hộ không được phép để trẻ vị thành niên (dưới 18 tuổi) gửi Thông tin Cá nhân cho bTaskee."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Nếu dữ liệu của trẻ vị thành niên vẫn được cung cấp, người dùng mặc nhiên chấp thuận việc xử lý thông tin này, đồng thời đồng ý chịu sự ràng buộc của chính sách và hoàn toàn chịu trách nhiệm đối với các hành động của trẻ."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Trong trường hợp cung cấp thông tin của một cá nhân khác (như vợ/chồng, người thân, bạn bè), người dùng phải cam kết rằng mình đã được ủy quyền hợp lệ và cá nhân đó đã đồng ý với các điều khoản xử lý dữ liệu của bTaskee."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Thừa nhận và Chấp thuận"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Thông qua việc tương tác, sử dụng dịch vụ, mua sản phẩm hoặc làm việc với bTaskee, người dùng xác nhận đã đọc, hiểu và chấp thuận việc bTaskee sử dụng, xử lý và chuyển giao thông tin theo quy định."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) bTaskee có quyền chỉnh sửa, cập nhật hoặc sửa đổi chính sách bất kỳ lúc nào bằng cách công bố bản mới trên trang Web."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Việc tiếp tục sử dụng dịch vụ hoặc hợp tác sau khi chính sách được cập nhật đồng nghĩa với việc người dùng hoàn toàn chấp nhận các sửa đổi đó."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Trường hợp có sự mâu thuẫn về ngôn ngữ trong các văn bản chính sách, bản tiếng Anh sẽ được ưu tiên áp dụng."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Cam kết bảo mật thông tin cá nhân khách hàng"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) bTaskee cam kết bảo mật tuyệt đối thông tin cá nhân trên Ứng dụng và Website. Việc thu thập và sử dụng chỉ được thực hiện khi có sự đồng ý của người dùng, trừ những trường hợp pháp luật có quy định khác."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) bTaskee tuyệt đối không sử dụng, chuyển giao, cung cấp hay tiết lộ thông tin cho bất kỳ bên thứ 3 khi chưa có sự cho phép từ người dùng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Nếu máy chủ bị tấn công dẫn đến rủi ro rò rỉ dữ liệu, bTaskee có trách nhiệm báo cáo kịp thời cho cơ quan chức năng điều tra và thông báo ngay cho người dùng."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(4) Thành viên khi đăng ký/mua hàng phải cung cấp đầy đủ, chính xác các thông tin cá nhân (họ tên, địa chỉ, email, CMND/CCCD, số tài khoản...) và chịu hoàn toàn trách nhiệm về tính pháp lý của các thông tin này."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(5) Ban quản lý bTaskee sẽ không chịu trách nhiệm và từ chối giải quyết khiếu nại nếu phát hiện thông tin cá nhân do người dùng cung cấp ban đầu là không chính xác."
+        },
+        {
+          "loai": "tieuDeNho",
+          "noiDung": "Cam kết xóa thông tin cá nhân của khách hàng"
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(1) Khi có yêu cầu và sau khi xác minh thực tế, bTaskee sẽ tiến hành xóa toàn bộ thông tin cá nhân liên quan đến khách hàng trên hệ thống."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(2) Hệ thống sẽ chỉ bảo lưu các thông tin liên quan đến lịch sử giao dịch (nếu có) nhằm phục vụ các yêu cầu đối soát."
+        },
+        {
+          "loai": "doan",
+          "noiDung": "(3) Khách hàng có nhu cầu xóa bỏ hoàn toàn thông tin cá nhân vui lòng gửi yêu cầu trực tiếp qua email: support@btaskee.com."
+        }
+      ]
+    }
+  ]
+}

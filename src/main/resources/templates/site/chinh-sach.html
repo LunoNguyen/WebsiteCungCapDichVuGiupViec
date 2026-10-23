@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Chính sách', 'Điều khoản sử dụng, quy trình tiếp nhận và xử lý khiếu nại, chính sách bảo mật thông tin cá nhân của bTaskee.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('chinh-sach')}"></header>
+
+<!-- Nội dung lấy từ resources/chinh-sach.json qua ChinhSachService (cùng nguồn với API /v1/chinh-sach của ứng dụng) -->
+<main>
+  <section class="page-hero">
+    <div class="wrap">
+      <h1>Chính sách và điều khoản</h1>
+      <p style="margin-top:8px;color:var(--foreground-soft);max-width:44rem">Các quy định áp dụng khi bạn đặt dịch vụ, làm việc cùng bTaskee hoặc gửi khiếu nại.</p>
+    </div>
+  </section>
+
+  <section class="section cs">
+    <div class="wrap cs-layout">
+      <nav class="cs-toc" aria-label="Mục lục chính sách">
+        <a th:each="t : ${taiLieu}" th:href="'#' + ${t.ma}" th:attr="data-toc=${t.ma}">
+          <b th:text="${t.ten}">Điều khoản sử dụng</b>
+          <span th:text="${t.moTa}">Mô tả</span>
+        </a>
+      </nav>
+
+      <div class="cs-docs">
+        <article class="cs-doc" th:each="t : ${taiLieu}" th:id="${t.ma}">
+          <h2 th:text="${t.ten}">Điều khoản sử dụng</h2>
+          <th:block th:each="k : ${t.noiDung}">
+            <h3 th:if="${k.loai == 'tieuDe'}" th:text="${k.noiDung}">Mục</h3>
+            <h4 th:if="${k.loai == 'tieuDeNho'}" th:text="${k.noiDung}">Mục nhỏ</h4>
+            <p th:if="${k.loai == 'doan'}" th:text="${k.noiDung}"
+               th:classappend="${#strings.startsWith(k.noiDung, '(i') or #strings.startsWith(k.noiDung, '(v')} ? 'cs-sub'">Đoạn</p>
+            <ul th:if="${k.loai == 'ds'}"><li th:each="m : ${k.muc}" th:text="${m}">Mục</li></ul>
+            <div class="cs-bang" th:if="${k.loai == 'bang'}" tabindex="0" role="region" aria-label="Bảng">
+              <table>
+                <thead><tr><th th:each="c : ${k.cot}" th:text="${c}">Cột</th></tr></thead>
+                <tbody><tr th:each="d : ${k.dong}"><td th:each="o : ${d}" th:text="${o}">Ô</td></tr></tbody>
+              </table>
+            </div>
+          </th:block>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<style>
+  .cs { padding-top: 32px; }
+  .cs-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 32px; align-items: start; }
+  .cs-toc { position: sticky; top: calc(var(--header-h) + 16px); display: grid; gap: 8px; }
+  .cs-toc a { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--foreground); text-decoration: none; }
+  .cs-toc a span { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .cs-toc a:hover { background: var(--fill-hover); }
+  .cs-toc a.is-active { border-color: var(--primary); background: var(--primary-soft); }
+  .cs-docs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
+  .cs-doc { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 28px; scroll-margin-top: calc(var(--header-h) + 16px); }
+  .cs-doc h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .cs-doc h3 { font-size: 18px; font-weight: 700; margin: 24px 0 8px; }
+  .cs-doc h4 { font-size: 15px; font-weight: 700; margin: 16px 0 6px; }
+  .cs-doc p, .cs-doc li { color: var(--foreground-soft); line-height: 1.65; overflow-wrap: anywhere; }
+  .cs-doc p + p { margin-top: 8px; }
+  .cs-doc p.cs-sub { padding-left: 20px; }
+  .cs-doc ul { margin: 8px 0 8px 20px; display: grid; gap: 6px; list-style: disc; }
+  .cs-bang { overflow-x: auto; margin: 12px 0; border: 1px solid var(--line); border-radius: 12px; }
+  .cs-bang table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 14px; }
+  .cs-bang th, .cs-bang td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); line-height: 1.5; white-space: pre-line; }
+  .cs-bang th { background: var(--background-alt); font-weight: 700; }
+  .cs-bang tr:last-child td { border-bottom: 0; }
+  @media (max-width: 900px) {
+    .cs-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .cs-toc { position: static; }
+    .cs-doc { padding: 20px 16px; }
+  }
+</style>
+<script>
+  // Mục lục: tô mục đang đọc
+  (function () {
+    var links = document.querySelectorAll('[data-toc]');
+    if (!('IntersectionObserver' in window) || !links.length) return;
+    var io = new IntersectionObserver(function (ds) {
+      ds.forEach(function (d) {
+        if (!d.isIntersecting) return;
+        links.forEach(function (a) { a.classList.toggle('is-active', a.getAttribute('data-toc') === d.target.id); });
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    document.querySelectorAll('.cs-doc').forEach(function (el) { io.observe(el); });
+  })();
+</script>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+</body>
+</html>

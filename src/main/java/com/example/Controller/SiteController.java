@@ -266,6 +266,16 @@ public class SiteController {
         return "site/gioi-thieu";
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.ChinhSachService chinhSachService;
+
+    /** Điều khoản sử dụng, Quy trình khiếu nại, Chính sách bảo mật (neo #dieu-khoan, #khieu-nai, #bao-mat). */
+    @GetMapping("/chinh-sach")
+    public String chinhSach(Model model) {
+        model.addAttribute("taiLieu", chinhSachService.danhSach());
+        return "site/chinh-sach";
+    }
+
     @GetMapping("/dich-vu")
     public String dichVu() {
         return "site/dich-vu";
