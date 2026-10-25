@@ -446,6 +446,14 @@ public class CollaboratorApiService {
         pc.setLyDoTuChoi(lyDo);
         phanCongCTVRepository.save(pc);
 
+        // Hủy các ca chưa làm của phân công này, để lịch của CTV không còn bị chiếm (ca đã làm giữ lại để tính công)
+        for (LichLamViec l : lichLamViecRepository.findByPhanCong_Id(pc.getId())) {
+            if ("SapToi".equals(l.getTrangThai())) {
+                l.setTrangThai("Huy");
+                lichLamViecRepository.save(l);
+            }
+        }
+
         DonDatDichVu don = pc.getDonDat();
         don.setTrangThai("ChoDuyet"); // Trả lại về trạng thái chờ để HCNS phân công người khác
         donDatDichVuRepository.save(don);
