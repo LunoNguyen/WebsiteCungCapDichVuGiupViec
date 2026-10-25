@@ -13,6 +13,8 @@ public class PhanCongCTV {
     @Column(name = "MaPhanCong", nullable = false, unique = true, length = 20) private String maPhanCong;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "donDatId", nullable = false) private DonDatDichVu donDat;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "congTacVienId", nullable = false) private CongTacVien congTacVien;
+    /** Dịch vụ (dòng chi tiết) CTV này làm trong đơn nhiều dịch vụ; null = cả đơn (đơn một dịch vụ, dữ liệu cũ). */
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "chiTietDonDatId") private ChiTietDonDat chiTietDonDat;
     @Column(name = "TrangThai", nullable = false, length = 20) private String trangThai;
     @Column(name = "ThoiGianPhanCong", nullable = false, updatable = false) private LocalDateTime thoiGianPhanCong;
     @Column(name = "ThoiGianXacNhan") private LocalDateTime thoiGianXacNhan;
