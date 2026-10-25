@@ -1,0 +1,15 @@
+# Không đưa vào build context
+target/
+storage/
+logout
+.git/
+.vs/
+.vscode/
+.idea/
+.superpowers/
+docs/
+*.iml
+.env
+
+# Khóa bí mật: KHÔNG được đóng gói vào image (truyền qua biến môi trường trong .env)
+src/main/resources/secrets.properties

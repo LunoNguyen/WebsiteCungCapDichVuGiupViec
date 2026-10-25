@@ -29,11 +29,63 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+### VS Code / Visual Studio ###
 .vscode/
+.vs/
 
-### Khoá bí mật (eSMS...) - application.properties vẫn được commit ###
+### Khoá bí mật (eSMS, SePay...) - application.properties vẫn được commit ###
 secrets.properties
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
 
+### Dữ liệu chạy máy (ảnh MinIO, CSDL) ###
 storage/
+database/init/*.sql
+database/backup_*.sql
+*.dump
+*.sql.gz
 
+### Tài liệu văn phòng (báo cáo, luận văn, kế hoạch kiểm định...) ###
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.pdf
+*.odt
+*.ods
+*.odp
+# File tạm của Word/Excel khi đang mở
+~$*
+
+### File nén, bản cài ###
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.apk
+*.aab
+
+### Log, file tạm ###
+*.log
+logs/
+*.tmp
+*.bak
+*.swp
+logout
+
+### Công cụ AI / ghi chú làm việc (không phải mã nguồn) ###
+.superpowers/
+.claude/
+
+### Hệ điều hành ###
+Thumbs.db
+desktop.ini
+.DS_Store

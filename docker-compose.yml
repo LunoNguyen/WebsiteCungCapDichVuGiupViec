@@ -1,15 +1,116 @@
-version: "3"
+# ============================================================
+# Website + MySQL + Redis + MinIO
+#   Chạy toàn bộ:            docker compose up -d --build
+#   Chỉ chạy hạ tầng (dev):  docker compose up -d mysql redis minio
+#   Cấu hình/khóa bí mật:    sao chép .env.example thành .env rồi điền giá trị
+#
+# Cổng trên máy host (đổi trong .env nếu trùng):
+#   web 8080 · MySQL 3307 · Redis 6380 · MinIO API 9010 · MinIO Console 9011
+# ============================================================
+
+name: giupviec
 
 services:
-  minio:
-    image: minio/minio
-    container_name: minio
+  web:
+    build: .
+    image: giupviec-web:latest
+    container_name: giupviec-web
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - ./storage:/data
+      - "${WEB_PORT:-8080}:8083"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      TZ: Asia/Ho_Chi_Minh
+      # MySQL
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-GiupViecDB}?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&useUnicode=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Cần đặt MYSQL_ROOT_PASSWORD trong .env}
+      # Redis (cache)
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      # MinIO (lưu ảnh, tài liệu)
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-giup-viec-storage}
+      # Chế độ chạy thật: bật cache template
+      SPRING_THYMELEAF_CACHE: "true"
+      # SMS & thanh toán (để trống thì SMS chạy mock)
+      APP_SMS_PROVIDER: ${APP_SMS_PROVIDER:-mock}
+      APP_ESMS_API_KEY: ${APP_ESMS_API_KEY:-}
+      APP_ESMS_SECRET_KEY: ${APP_ESMS_SECRET_KEY:-}
+      SEPAY_API_TOKEN: ${SEPAY_API_TOKEN:-}
+      SEPAY_BANK_CODE: ${SEPAY_BANK_CODE:-}
+      SEPAY_BANK_ACCOUNT_NO: ${SEPAY_BANK_ACCOUNT_NO:-}
+      SEPAY_BANK_ACCOUNT_NAME: ${SEPAY_BANK_ACCOUNT_NAME:-}
+      SEPAY_TRANSFER_PREFIX: ${SEPAY_TRANSFER_PREFIX:-BTK}
+
+  mysql:
+    image: mysql:8.4
+    container_name: giupviec-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+07:00
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Cần đặt MYSQL_ROOT_PASSWORD trong .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-GiupViecDB}
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # Các file .sql trong thư mục này chạy MỘT LẦN khi volume còn trống (tạo bảng + dữ liệu)
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: giupviec-redis
+    restart: unless-stopped
+    # Chỉ làm cache: giới hạn bộ nhớ, tự bỏ khóa ít dùng khi đầy
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    # Dùng image minio/minio:latest đã có trên máy (bản RELEASE.2025-09-07);
+    # MinIO đã ngừng phát hành image mới lên Docker Hub nên không ghim tag khác.
+    image: minio/minio:latest
+    container_name: giupviec-minio
+    restart: unless-stopped
     command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${MINIO_API_PORT:-9010}:9000"
+      - "${MINIO_CONSOLE_PORT:-9011}:9001"
+    volumes:
+      # Dữ liệu ảnh/tài liệu nằm trong thư mục ./storage của dự án (đã .gitignore)
+      - ./storage:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql-data:
