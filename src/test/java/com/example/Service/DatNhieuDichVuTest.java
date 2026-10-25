@@ -1,8 +1,10 @@
 package com.example.Service;
 
+import com.example.Model.ChuongTrinhKhuyenMai;
 import com.example.Model.DichVu;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,5 +76,27 @@ class DatNhieuDichVuTest {
     void ketThucSau20GioBaoLoi() {
         assertEquals("Các dịch vụ phải xong trước 20:00 (dự kiến xong lúc 20:30). Vui lòng chọn giờ sớm hơn.",
                 DatNhieuDichVu.loiGioKetThuc(LocalTime.of(17, 0), 210));
+    }
+
+    private static ChuongTrinhKhuyenMai ct(String loai, String giaTri, String toiDa) {
+        return ChuongTrinhKhuyenMai.builder().loaiGiam(loai).giaTriGiam(new BigDecimal(giaTri))
+                .soTienGiamToiDa(toiDa == null ? null : new BigDecimal(toiDa)).build();
+    }
+
+    @Test
+    void congGiaCacDong() {
+        assertEquals(new BigDecimal("411000"), DatNhieuDichVu.tongGoc(List.of(
+                new DatNhieuDichVu.DongGia(1, "A", new BigDecimal("216000")),
+                new DatNhieuDichVu.DongGia(2, "B", new BigDecimal("195000")))));
+    }
+
+    @Test
+    void giamPhanTramCoTran() {
+        assertEquals(new BigDecimal("50000"), DatNhieuDichVu.soTienGiam(ct("PhanTram", "20", "50000"), new BigDecimal("411000")));
+    }
+
+    @Test
+    void giamTienKhongQuaTong() {
+        assertEquals(new BigDecimal("100000"), DatNhieuDichVu.soTienGiam(ct("SoTienCoDinh", "150000", null), new BigDecimal("100000")));
     }
 }

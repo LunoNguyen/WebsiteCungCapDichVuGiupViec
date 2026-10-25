@@ -1095,14 +1095,35 @@ public class CustomerApiService {
     // UC-KH04: TÍNH GIÁ, KHUYẾN MẠI, ĐẶT DỊCH VỤ
     // ==========================================
     public PriceCalculationResult calculatePrice(CalculatePriceRequest req) {
-        DichVu dv = dichVuRepository.findById(req.getDichVuId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dịch vụ ID: " + req.getDichVuId()));
+        // Đơn nhiều dịch vụ (giỏ hàng): mỗi dòng một dịch vụ theo lần, giá gốc = tổng các dòng
+        List<ChiTietDonDatRequest> dongs = req.getChiTiet() != null ? req.getChiTiet() : List.of();
+        boolean nhieu = dongs.size() >= 2;
+        Integer dichVuDau = nhieu ? dongs.get(0).getDichVuId() : req.getDichVuId();
+        DichVu dv = dichVuRepository.findById(dichVuDau)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dịch vụ ID: " + dichVuDau));
 
-        String loaiHinh = (req.getLoaiHinhDat() != null && !req.getLoaiHinhDat().isBlank())
+        String loaiHinh = nhieu ? "TheoLan" : (req.getLoaiHinhDat() != null && !req.getLoaiHinhDat().isBlank())
                 ? req.getLoaiHinhDat() : dv.getLoaiHinhDat();
 
-        // Tính giá gốc: ưu tiên bangGiaId được truyền vào, rồi bảng giá hiệu lực vào ngày làm,
-        // rồi GiaHienTai trên DichVu (giá hôm nay, BangGiaService đồng bộ mỗi ngày)
+        List<DatNhieuDichVu.DongGia> chiTietGia = new ArrayList<>();
+        if (nhieu) {
+            for (ChiTietDonDatRequest dong : dongs) {
+                DichVu d = dichVuRepository.findById(dong.getDichVuId())
+                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dịch vụ ID: " + dong.getDichVuId()));
+                chiTietGia.add(new DatNhieuDichVu.DongGia(d.getId(), d.getTenDichVu(), giaGocMotDichVu(d, req, false)));
+            }
+        } else {
+            chiTietGia.add(new DatNhieuDichVu.DongGia(dv.getId(), dv.getTenDichVu(), giaGocMotDichVu(dv, req, true)));
+        }
+        BigDecimal chiPhiGoc = DatNhieuDichVu.tongGoc(chiTietGia);
+        return apKhuyenMai(req, dv, loaiHinh, chiPhiGoc, chiTietGia);
+    }
+
+    /**
+     * Giá gốc một dịch vụ: bảng giá hiệu lực lúc bắt đầu làm (có ngày giờ), rồi bangGiaId client gửi
+     * (chỉ khi [dungBangGiaId]), rồi GiaHienTai trên DichVu (giá hôm nay, BangGiaService đồng bộ mỗi ngày).
+     */
+    private BigDecimal giaGocMotDichVu(DichVu dv, CalculatePriceRequest req, boolean dungBangGiaId) {
         BigDecimal chiPhiGoc;
         BangGiaDichVu theoNgay = req.getNgayThucHien() != null
                 ? (req.getGioBatDau() != null
@@ -1111,7 +1132,7 @@ public class CustomerApiService {
                 : null;
         if (theoNgay != null && theoNgay.getDonGia() != null) {
             chiPhiGoc = theoNgay.getDonGia();
-        } else if (req.getBangGiaId() != null) {
+        } else if (dungBangGiaId && req.getBangGiaId() != null) {
             BangGiaDichVu bg = bangGiaDichVuRepository.findById(req.getBangGiaId())
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy bảng giá ID: " + req.getBangGiaId()));
             chiPhiGoc = bg.getDonGia();
@@ -1122,7 +1143,12 @@ public class CustomerApiService {
             List<BangGiaDichVu> bangGias = bangGiaDichVuRepository.findByDichVu_IdAndTrangThai(dv.getId(), "DangApDung");
             chiPhiGoc = bangGias.isEmpty() ? BigDecimal.valueOf(250000) : bangGias.get(0).getDonGia();
         }
+        return chiPhiGoc;
+    }
 
+    /** Mã khuyến mãi xét điều kiện tối thiểu và giảm trên tổng [chiPhiGoc] của đơn. */
+    private PriceCalculationResult apKhuyenMai(CalculatePriceRequest req, DichVu dv, String loaiHinh,
+                                               BigDecimal chiPhiGoc, List<DatNhieuDichVu.DongGia> chiTietGia) {
         BigDecimal soTienGiam = BigDecimal.ZERO;
         String thongDiepKM = null;
 
@@ -1136,7 +1162,7 @@ public class CustomerApiService {
             } else {
                 ChuongTrinhKhuyenMai ctkm = mkm.getChuongTrinhKhuyenMai();
                 if (chiPhiGoc.compareTo(ctkm.getDieuKienToiThieu()) >= 0) {
-                    soTienGiam = tinhSoTienGiam(ctkm, chiPhiGoc);
+                    soTienGiam = DatNhieuDichVu.soTienGiam(ctkm, chiPhiGoc);
                     thongDiepKM = "Áp dụng thành công mã " + mkm.getCodeKhuyenMai() + ": " + ctkm.getTenChuongTrinh();
                 } else {
                     thongDiepKM = "Đơn hàng chưa đạt giá trị tối thiểu " + dinhDangTien(ctkm.getDieuKienToiThieu()) + " để dùng mã này.";
@@ -1158,6 +1184,7 @@ public class CustomerApiService {
                 .thanhTien(thanhTien)
                 .maKhuyenMai(req.getCodeKhuyenMai())
                 .thongDiepKMDuocApDung(thongDiepKM)
+                .chiTietGia(chiTietGia)
                 .build();
     }
 
@@ -1173,17 +1200,6 @@ public class CustomerApiService {
         return null;
     }
 
-    private BigDecimal tinhSoTienGiam(ChuongTrinhKhuyenMai ct, BigDecimal chiPhiGoc) {
-        if ("PhanTram".equalsIgnoreCase(ct.getLoaiGiam())) {
-            BigDecimal giam = chiPhiGoc.multiply(ct.getGiaTriGiam()).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
-            if (ct.getSoTienGiamToiDa() != null && giam.compareTo(ct.getSoTienGiamToiDa()) > 0) {
-                giam = ct.getSoTienGiamToiDa();
-            }
-            return giam;
-        }
-        return ct.getGiaTriGiam().setScale(0, RoundingMode.HALF_UP);
-    }
-
     private static String dinhDangTien(BigDecimal so) {
         if (so == null) return "0đ";
         return String.format("%,d", so.setScale(0, RoundingMode.HALF_UP).longValue()).replace(',', '.') + "đ";
@@ -1196,9 +1212,11 @@ public class CustomerApiService {
      */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getUsablePromotions(CalculatePriceRequest req) {
-        if (req.getDichVuId() == null) throw new IllegalArgumentException("Vui lòng chọn dịch vụ trước.");
+        boolean coChiTiet = req.getChiTiet() != null && !req.getChiTiet().isEmpty();
+        if (req.getDichVuId() == null && !coChiTiet) throw new IllegalArgumentException("Vui lòng chọn dịch vụ trước.");
         CalculatePriceRequest khongMa = new CalculatePriceRequest();
         khongMa.setDichVuId(req.getDichVuId());
+        khongMa.setChiTiet(req.getChiTiet());
         khongMa.setLoaiHinhDat(req.getLoaiHinhDat());
         khongMa.setBangGiaId(req.getBangGiaId());
         khongMa.setNgayThucHien(req.getNgayThucHien());
@@ -1212,7 +1230,7 @@ public class CustomerApiService {
             ChuongTrinhKhuyenMai ct = mkm.getChuongTrinhKhuyenMai();
             BigDecimal toiThieu = ct.getDieuKienToiThieu() != null ? ct.getDieuKienToiThieu() : BigDecimal.ZERO;
             boolean duDieuKien = chiPhiGoc.compareTo(toiThieu) >= 0;
-            BigDecimal giam = duDieuKien ? tinhSoTienGiam(ct, chiPhiGoc).min(chiPhiGoc) : BigDecimal.ZERO;
+            BigDecimal giam = duDieuKien ? DatNhieuDichVu.soTienGiam(ct, chiPhiGoc) : BigDecimal.ZERO;
 
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("codeKhuyenMai", mkm.getCodeKhuyenMai());

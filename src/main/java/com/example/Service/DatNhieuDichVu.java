@@ -1,7 +1,10 @@
 package com.example.Service;
 
+import com.example.Model.ChuongTrinhKhuyenMai;
 import com.example.Model.DichVu;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -62,6 +65,28 @@ public final class DatNhieuDichVu {
         if (ketThucPhut <= muonNhat) return null;
         return "Các dịch vụ phải xong trước " + gio(muonNhat) + " (dự kiến xong lúc " + gio(ketThucPhut)
                 + "). Vui lòng chọn giờ sớm hơn.";
+    }
+
+    /** Giá một dịch vụ trong đơn (đã tính theo bảng giá lúc bắt đầu làm). */
+    public record DongGia(Integer dichVuId, String tenDichVu, BigDecimal donGia) {
+    }
+
+    public static BigDecimal tongGoc(List<DongGia> dong) {
+        return dong.stream().map(DongGia::donGia).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /** Số tiền giảm của chương trình trên tổng tiền đơn (phần trăm có trần, hoặc số tiền cố định), không quá tổng. */
+    public static BigDecimal soTienGiam(ChuongTrinhKhuyenMai ct, BigDecimal tong) {
+        BigDecimal giam;
+        if ("PhanTram".equalsIgnoreCase(ct.getLoaiGiam())) {
+            giam = tong.multiply(ct.getGiaTriGiam()).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+            if (ct.getSoTienGiamToiDa() != null && giam.compareTo(ct.getSoTienGiamToiDa()) > 0) {
+                giam = ct.getSoTienGiamToiDa();
+            }
+        } else {
+            giam = ct.getGiaTriGiam().setScale(0, RoundingMode.HALF_UP);
+        }
+        return giam.min(tong);
     }
 
     /** "8 giờ", "8 giờ 30 phút", "45 phút". */

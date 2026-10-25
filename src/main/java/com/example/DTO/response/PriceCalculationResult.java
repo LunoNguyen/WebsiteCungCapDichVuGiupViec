@@ -20,4 +20,6 @@ public class PriceCalculationResult {
     private BigDecimal thanhTien;
     private String maKhuyenMai;
     private String thongDiepKMDuocApDung;
+    /** Giá từng dịch vụ của đơn (đơn một dịch vụ: một dòng). */
+    private java.util.List<com.example.Service.DatNhieuDichVu.DongGia> chiTietGia;
 }
