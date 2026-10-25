@@ -103,10 +103,7 @@ public class KhachHangWebController {
             ra.addFlashAttribute("error", "Hai mật khẩu chưa khớp nhau.");
             return "redirect:/dang-ky";
         }
-        if (matKhau.trim().length() < 6) {
-            ra.addFlashAttribute("error", "Mật khẩu cần ít nhất 6 ký tự.");
-            return "redirect:/dang-ky";
-        }
+        // Quy tắc mật khẩu kiểm tra trong registerCustomer (chỉ áp cho tài khoản mới, không áp khi dùng chung tài khoản CTV)
         try {
             CustomerRegisterRequest req = new CustomerRegisterRequest();
             req.setHoTen(hoTen.trim());

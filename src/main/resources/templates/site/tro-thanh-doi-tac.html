@@ -64,19 +64,22 @@
             <div class="field">
               <label for="matKhau">Mật khẩu đăng nhập *</label>
               <div style="position:relative">
-                <input type="password" id="matKhau" name="matKhau" autocomplete="new-password" required minlength="6" style="padding-right:2.8rem">
+                <input type="password" id="matKhau" name="matKhau" autocomplete="new-password" required style="padding-right:2.8rem"
+                  data-quy-tac-mat-khau data-sdt="#soDienThoai" data-bo-qua="#coTaiKhoanSan">
                 <button type="button" onclick="toggleCtvPass('matKhau','iconMatKhau')" tabindex="-1"
                   style="position:absolute;right:0;top:0;bottom:0;background:none;border:none;cursor:pointer;padding:0 0.75rem;color:var(--color-muted,#888)">
                   <span id="iconMatKhau">👁</span>
                 </button>
               </div>
-              <div class="hint">Ít nhất 6 ký tự. Nếu số điện thoại đã có tài khoản khách hàng bTaskee, hãy nhập đúng mật khẩu đó để dùng chung tài khoản.</div>
-              <div class="error">Mật khẩu cần ít nhất 6 ký tự.</div>
+              <label class="hint" style="display:flex;gap:6px;align-items:center;margin-top:6px;cursor:pointer">
+                <input type="checkbox" id="coTaiKhoanSan"> Số điện thoại này đã có tài khoản khách hàng bTaskee (nhập đúng mật khẩu đó để dùng chung tài khoản)
+              </label>
+              <div class="error">Mật khẩu chưa đạt các yêu cầu bên trên.</div>
             </div>
             <div class="field">
               <label for="xacNhanMatKhau">Xác nhận mật khẩu *</label>
               <div style="position:relative">
-                <input type="password" id="xacNhanMatKhau" name="xacNhanMatKhau" autocomplete="new-password" required minlength="6" style="padding-right:2.8rem">
+                <input type="password" id="xacNhanMatKhau" name="xacNhanMatKhau" autocomplete="new-password" required style="padding-right:2.8rem">
                 <button type="button" onclick="toggleCtvPass('xacNhanMatKhau','iconXacNhan')" tabindex="-1"
                   style="position:absolute;right:0;top:0;bottom:0;background:none;border:none;cursor:pointer;padding:0 0.75rem;color:var(--color-muted,#888)">
                   <span id="iconXacNhan">👁</span>
@@ -213,6 +216,7 @@
 
 <footer th:replace="~{layout/site-layout :: footer}"></footer>
 <div th:replace="~{layout/site-layout :: scripts}"></div>
+<script src="/js/quy-tac-mat-khau.js"></script>
 <script src="/js/dang-ky-ctv.js"></script>
 <script>
   function toggleCtvPass(inputId, iconId) {

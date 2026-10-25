@@ -484,14 +484,15 @@
       <div class="form-group">
         <label class="form-label" for="approveMatKhau">Đặt lại mật khẩu <span id="approveMatKhauTuyChon">(không bắt buộc)</span></label>
         <div style="display:flex;gap:0.5rem">
-          <input class="form-control tabular" id="approveMatKhau" name="matKhau" type="text" minlength="6"
-                 autocomplete="off" spellcheck="false" style="flex:1;min-width:0">
+          <input class="form-control tabular" id="approveMatKhau" name="matKhau" type="text"
+                 autocomplete="off" spellcheck="false" style="flex:1;min-width:0"
+                 data-quy-tac-mat-khau data-tuy-chon data-sdt-value="">
           <button type="button" class="btn btn-outline" onclick="fillRandomPassword()" title="Tạo mật khẩu ngẫu nhiên">
             <i class="ti ti-refresh"></i> Tạo mới
           </button>
         </div>
         <div class="form-hint" id="approveMatKhauHint">Bỏ trống để giữ mật khẩu ứng viên đã tự đặt khi đăng ký.</div>
-        <div class="form-error" id="approveMatKhauError" hidden>Mật khẩu cần ít nhất 6 ký tự.</div>
+        <div class="form-error" id="approveMatKhauError" hidden>Mật khẩu chưa đạt các yêu cầu bên trên.</div>
       </div>
       <div style="margin-top:1rem">
         <div class="form-label">Tin nhắn sẽ gửi tới <span class="tabular" id="approvePhone2"></span></div>
@@ -579,6 +580,7 @@
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
 <script src="/js/dia-chi.js"></script>
+<script src="/js/quy-tac-mat-khau.js"></script>
 
 <script>
   // Duyệt hồ sơ: kích hoạt tài khoản, giữ mật khẩu ứng viên tự đặt (HCNS có thể đặt lại)
@@ -586,10 +588,21 @@
   let approveUsername = '';
   let approveHasAccount = true;
 
+  // Sinh lại tới khi đạt quy tắc mật khẩu (có chữ cái và chữ số), giống CapTaiKhoanCtvService.taoMatKhauNgauNhien
   function randomPassword(length = 8) {
-    const bytes = new Uint32Array(length);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes, b => PASSWORD_CHARS[b % PASSWORD_CHARS.length]).join('');
+    let pw;
+    do {
+      const bytes = new Uint32Array(length);
+      crypto.getRandomValues(bytes);
+      pw = Array.from(bytes, b => PASSWORD_CHARS[b % PASSWORD_CHARS.length]).join('');
+    } while (QuyTacMatKhau.kiemTra(pw, '').length > 0);
+    return pw;
+  }
+
+  function matKhauDuyetChuaDat() {
+    const o = document.getElementById('approveMatKhau');
+    const pw = o.value.trim();
+    return pw.length > 0 && QuyTacMatKhau.kiemTra(pw, o.dataset.sdtValue).length > 0;
   }
 
   function updateSmsPreview() {
@@ -601,11 +614,12 @@
         ', mat khau: ' + (pw || '(tu sinh)') + '. Vui long dang nhap ung dung bTaskee va doi mat khau.'
       : 'bTaskee: Ho so cong tac vien cua ban da duoc duyet va tai khoan da duoc kich hoat. ' +
         'Dang nhap ung dung bTaskee bang tai khoan ' + approveUsername + ' va mat khau ban da dat khi dang ky.';
-    document.getElementById('approveMatKhauError').hidden = pw.length === 0 || pw.length >= 6;
+    document.getElementById('approveMatKhauError').hidden = !matKhauDuyetChuaDat();
   }
 
   function fillRandomPassword() {
     document.getElementById('approveMatKhau').value = randomPassword();
+    QuyTacMatKhau.capNhat(document.getElementById('approveMatKhau'));
     updateSmsPreview();
   }
 
@@ -621,14 +635,15 @@
       ? 'Bỏ trống để giữ mật khẩu ứng viên đã tự đặt khi đăng ký.'
       : 'Hồ sơ chưa có tài khoản. Bỏ trống thì hệ thống tự sinh mật khẩu và gửi qua tin nhắn.';
     document.getElementById('approveMatKhau').value = '';
+    document.getElementById('approveMatKhau').dataset.sdtValue = btn.dataset.phone || '';
+    QuyTacMatKhau.capNhat(document.getElementById('approveMatKhau'));
     updateSmsPreview();
     ModalManager.open('approveCtvModal');
   }
 
   document.getElementById('approveMatKhau').addEventListener('input', updateSmsPreview);
   document.getElementById('approveCtvForm').addEventListener('submit', e => {
-    const len = document.getElementById('approveMatKhau').value.trim().length;
-    if (len > 0 && len < 6) {
+    if (matKhauDuyetChuaDat()) {
       e.preventDefault();
       document.getElementById('approveMatKhauError').hidden = false;
     }

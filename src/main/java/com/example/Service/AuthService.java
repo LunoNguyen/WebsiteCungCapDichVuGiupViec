@@ -126,9 +126,6 @@ public class AuthService {
             throw new IllegalArgumentException("Vui lòng nhập đủ mật khẩu hiện tại và mật khẩu mới.");
         }
         String moi = matKhauMoi.trim();
-        if (moi.length() < CapTaiKhoanCtvService.DO_DAI_TOI_THIEU) {
-            throw new IllegalArgumentException("Mật khẩu mới cần ít nhất " + CapTaiKhoanCtvService.DO_DAI_TOI_THIEU + " ký tự.");
-        }
         TaiKhoan taiKhoan = taiKhoanRepository.findById(taiKhoanId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
         if (!"HoatDong".equalsIgnoreCase(taiKhoan.getTrangThai())) {
@@ -140,6 +137,7 @@ public class AuthService {
         if (passwordMatches(moi, taiKhoan.getMatKhau())) {
             throw new IllegalArgumentException("Mật khẩu mới phải khác mật khẩu hiện tại.");
         }
+        QuyTacMatKhau.batBuoc(moi, taiKhoan.getSoDienThoai());
         taiKhoan.setMatKhau(passwordEncoder.encode(moi));
         taiKhoanRepository.save(taiKhoan);
     }

@@ -656,18 +656,9 @@ public class HCNSController {
                 ctv.setTrangThai(trangThai);
                 TaiKhoan tk = ctv.getTaiKhoan();
                 if (tk == null && "HoatDong".equalsIgnoreCase(trangThai)) {
-                    // Nếu CTV chưa có tài khoản, tự tạo và kích hoạt tài khoản
-                    String suffix = com.example.Service.MaSinh.duoi();
-                    tk = new TaiKhoan();
-                    tk.setMaTaiKhoan("TK-CTV-" + suffix);
-                    tk.setTenDangNhap(ctv.getSoDienThoai());
-                    tk.setEmail(ctv.getSoDienThoai() + "@ctv.local");
-                    tk.setSoDienThoai(ctv.getSoDienThoai());
-                    tk.setLoaiTaiKhoan("CongTacVien");
-                    tk.setMatKhau(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("123456"));
-                    tk.setTrangThai("HoatDong");
-                    tk = taiKhoanRepository.save(tk);
-                    ctv.setTaiKhoan(tk);
+                    // Không cấp mật khẩu mặc định: tài khoản phải được cấp qua nút Duyệt (mật khẩu đạt quy tắc, gửi SMS)
+                    throw new IllegalArgumentException("Cộng tác viên " + ctv.getHoTen()
+                            + " chưa có tài khoản. Vui lòng dùng nút Duyệt để cấp tài khoản và gửi mật khẩu qua SMS.");
                 } else if (tk != null) {
                     // Tài khoản dùng chung với vai trò khách hàng: chỉ đổi hồ sơ CTV, không khóa tài khoản
                     boolean dungChung = khachHangRepository.findByTaiKhoan(tk).isPresent();
@@ -1392,9 +1383,10 @@ public class HCNSController {
                 return "redirect:/hcns/tai-khoan";
             }
 
-            // 3. Kiểm tra độ dài mật khẩu (tối thiểu 6 kí tự)
-            if (matKhau.length() < 6) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Mật khẩu khởi tạo phải có ít nhất 6 ký tự!");
+            // 3. Kiểm tra quy tắc mật khẩu mới
+            var loiMatKhau = com.example.Service.QuyTacMatKhau.kiemTra(matKhau, soDienThoai);
+            if (!loiMatKhau.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", loiMatKhau.get(0));
                 return "redirect:/hcns/tai-khoan";
             }
 
@@ -1551,6 +1543,14 @@ public class HCNSController {
                 return "redirect:/hcns/tai-khoan";
             }
 
+            if (!matKhauMoi.isEmpty()) {
+                var loiMatKhau = com.example.Service.QuyTacMatKhau.kiemTra(matKhauMoi, soDienThoai);
+                if (!loiMatKhau.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", loiMatKhau.get(0));
+                    return "redirect:/hcns/tai-khoan";
+                }
+            }
+
             var opt = taiKhoanRepository.findById(id);
             if (opt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy tài khoản cần cập nhật!");
@@ -1568,14 +1568,6 @@ public class HCNSController {
             tk.setNgayCapNhat(LocalDateTime.now());
 
             if (!matKhauMoi.isEmpty()) {
-                if (hasWhiteSpace(matKhauMoi)) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Mật khẩu mới không được chứa khoảng trắng!");
-                    return "redirect:/hcns/tai-khoan";
-                }
-                if (matKhauMoi.length() < 6) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Mật khẩu mới phải có ít nhất 6 ký tự!");
-                    return "redirect:/hcns/tai-khoan";
-                }
                 BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
                 tk.setMatKhau(passwordEncoder.encode(matKhauMoi));
             }

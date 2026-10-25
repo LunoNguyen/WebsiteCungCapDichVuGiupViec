@@ -29,7 +29,7 @@
 
         <section class="panel">
           <h2>Đổi mật khẩu</h2>
-          <p class="hint">Mật khẩu mới cần ít nhất 6 ký tự.</p>
+          <p class="hint">Mật khẩu mới cần ít nhất 8 ký tự, có chữ cái và chữ số, không chứa số điện thoại.</p>
           <form method="post" action="/tai-khoan/doi-mat-khau" class="form-grid">
             <div class="field full">
               <label for="matKhauHienTai">Mật khẩu hiện tại</label>
@@ -40,11 +40,11 @@
             </div>
             <div class="field">
               <label for="matKhauMoi">Mật khẩu mới</label>
-              <input id="matKhauMoi" name="matKhauMoi" type="password" class="input" autocomplete="new-password" minlength="6" required>
+              <input id="matKhauMoi" name="matKhauMoi" type="password" class="input" autocomplete="new-password" required data-quy-tac-mat-khau th:attr="data-sdt-value=${kh.soDienThoai}">
             </div>
             <div class="field">
               <label for="nhapLaiMatKhau">Nhập lại mật khẩu mới</label>
-              <input id="nhapLaiMatKhau" name="nhapLaiMatKhau" type="password" class="input" autocomplete="new-password" minlength="6" required>
+              <input id="nhapLaiMatKhau" name="nhapLaiMatKhau" type="password" class="input" autocomplete="new-password" required>
             </div>
             <div class="full"><button class="btn btn-primary" type="submit">Đổi mật khẩu</button></div>
           </form>
@@ -56,5 +56,6 @@
 
 <footer th:replace="~{layout/site-layout :: footer}"></footer>
 <div th:replace="~{layout/site-layout :: scripts}"></div>
+<script src="/js/quy-tac-mat-khau.js" defer></script>
 </body>
 </html>

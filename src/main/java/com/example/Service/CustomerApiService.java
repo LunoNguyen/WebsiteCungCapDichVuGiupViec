@@ -304,6 +304,8 @@ public class CustomerApiService {
                 email = taiKhoan.getEmail();
             }
         } else {
+            // Chỉ tài khoản mới phải theo quy tắc; dùng chung thì mật khẩu cũ đã được kiểm tra khớp
+            QuyTacMatKhau.batBuoc(req.getMatKhau().trim(), soDienThoai);
             //    Mật khẩu được mã hoá BCrypt ngay tại đây
             String encodedPassword = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
                     .encode(req.getMatKhau().trim());
@@ -436,10 +438,8 @@ public class CustomerApiService {
 
     /** Quên mật khẩu: xác thực OTP (mục đích DatLaiMatKhau) đã gửi qua SMS rồi đặt mật khẩu mới. */
     public Map<String, Object> resetPassword(ResetPasswordRequest req) {
-        if (req.getMatKhauMoi().trim().length() < CapTaiKhoanCtvService.DO_DAI_TOI_THIEU) {
-            throw new IllegalArgumentException("Mật khẩu mới cần ít nhất " + CapTaiKhoanCtvService.DO_DAI_TOI_THIEU + " ký tự.");
-        }
         TaiKhoan taiKhoan = timTaiKhoan(req.getIdentifier());
+        QuyTacMatKhau.batBuoc(req.getMatKhauMoi().trim(), taiKhoan.getSoDienThoai());
         if ("BiKhoa".equals(taiKhoan.getTrangThai())) {
             throw new IllegalArgumentException("Tài khoản đang bị khoá. Vui lòng liên hệ bộ phận hỗ trợ.");
         }
@@ -668,15 +668,14 @@ public class CustomerApiService {
         // 1. Tạo tài khoản CTV ở trạng thái ChoDuyet với mật khẩu ứng viên tự đặt (web/app).
         //    Khi HCNS duyệt hồ sơ, tài khoản được kích hoạt (CapTaiKhoanCtvService).
         String rawPassword = req.getMatKhau() != null ? req.getMatKhau().trim() : "";
-        if (rawPassword.length() < CapTaiKhoanCtvService.DO_DAI_TOI_THIEU) {
-            throw new IllegalArgumentException("Mật khẩu cần ít nhất " + CapTaiKhoanCtvService.DO_DAI_TOI_THIEU + " ký tự.");
-        }
         //    Tài khoản dùng chung với vai trò khách hàng giữ nguyên trạng thái (khách vẫn đặt dịch vụ được);
         //    quyền làm CTV do trạng thái hồ sơ CongTacVien quyết định.
         TaiKhoan taiKhoan;
         if (taiKhoanCoSan != null) {
             taiKhoan = taiKhoanCoSan;
         } else {
+            // Chỉ tài khoản mới phải theo quy tắc; dùng chung thì mật khẩu cũ đã được kiểm tra khớp
+            QuyTacMatKhau.batBuoc(rawPassword, soDienThoai);
             taiKhoan = TaiKhoan.builder()
                     .maTaiKhoan(maTaiKhoan)
                     .tenDangNhap(tenDangNhap)

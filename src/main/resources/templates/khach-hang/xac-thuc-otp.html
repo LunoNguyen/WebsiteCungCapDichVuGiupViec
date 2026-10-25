@@ -21,7 +21,7 @@
       <div class="field" th:if="${datLai}">
         <label for="matKhauMoi">Mật khẩu mới</label>
         <div class="pass-wrap">
-          <input id="matKhauMoi" name="matKhauMoi" type="password" class="input" placeholder="Ít nhất 6 ký tự" autocomplete="new-password" minlength="6" required>
+          <input id="matKhauMoi" name="matKhauMoi" type="password" class="input" placeholder="Ít nhất 8 ký tự, có chữ và số" autocomplete="new-password" required data-quy-tac-mat-khau th:attr="data-sdt-value=${sdt}">
           <button class="pass-toggle" type="button" aria-label="Hiện mật khẩu" data-pass-toggle><svg class="ic"><use href="#i-eye"/></svg></button>
         </div>
       </div>
@@ -36,5 +36,6 @@
 </main>
 
 <div th:replace="~{layout/site-layout :: scripts}"></div>
+<script src="/js/quy-tac-mat-khau.js" defer></script>
 </body>
 </html>

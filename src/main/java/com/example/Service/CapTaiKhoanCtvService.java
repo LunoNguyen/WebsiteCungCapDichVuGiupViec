@@ -23,7 +23,6 @@ import java.security.SecureRandom;
 @Service
 public class CapTaiKhoanCtvService {
 
-    public static final int DO_DAI_TOI_THIEU = 6;
     // Bỏ các ký tự dễ đọc nhầm (0/O, 1/l/I) vì ứng viên gõ lại từ tin nhắn
     private static final String KY_TU = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -51,23 +50,28 @@ public class CapTaiKhoanCtvService {
     public record KetQua(String hoTen, String soDienThoai, String tenDangNhap, String noiDungTin, String maTin, boolean daGuiTin) {}
 
     /** Mật khẩu ngẫu nhiên 8 ký tự, dùng làm gợi ý cho HCNS và làm mật khẩu tạm lúc ứng viên đăng ký. */
+    /** Mật khẩu ngẫu nhiên đạt QuyTacMatKhau (luôn có chữ cái và chữ số). */
     public static String taoMatKhauNgauNhien() {
-        StringBuilder sb = new StringBuilder(8);
-        for (int i = 0; i < 8; i++) {
-            sb.append(KY_TU.charAt(RANDOM.nextInt(KY_TU.length())));
-        }
-        return sb.toString();
+        String mk;
+        do {
+            StringBuilder sb = new StringBuilder(QuyTacMatKhau.DO_DAI_TOI_THIEU);
+            for (int i = 0; i < QuyTacMatKhau.DO_DAI_TOI_THIEU; i++) {
+                sb.append(KY_TU.charAt(RANDOM.nextInt(KY_TU.length())));
+            }
+            mk = sb.toString();
+        } while (!QuyTacMatKhau.hopLe(mk, null));
+        return mk;
     }
 
     @Transactional
     public KetQua duyetVaCapTaiKhoan(Integer congTacVienId, String matKhau, String diaChiIP, String thietBi) {
         String mk = matKhau != null ? matKhau.trim() : "";
-        if (!mk.isEmpty() && mk.length() < DO_DAI_TOI_THIEU) {
-            throw new IllegalArgumentException("Mật khẩu cần ít nhất " + DO_DAI_TOI_THIEU + " ký tự.");
-        }
 
         CongTacVien ctv = congTacVienRepository.findById(congTacVienId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hồ sơ cộng tác viên."));
+        if (!mk.isEmpty()) {
+            QuyTacMatKhau.batBuoc(mk, ctv.getSoDienThoai());
+        }
         if (!"ChoDuyet".equals(ctv.getTrangThai())) {
             throw new IllegalArgumentException("Hồ sơ này không còn ở trạng thái chờ duyệt.");
         }

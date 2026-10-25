@@ -193,6 +193,21 @@ public class DonDatChiTietController {
 
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Service.QuanLyDonService quanLyDonService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.HanNhanDonService hanNhanDonService;
+
+    /**
+     * Số đơn đang chờ cộng tác viên nhận (Chờ duyệt, đã phát hành: tiền mặt hoặc chuyển khoản đã trả),
+     * cho huy hiệu "Đơn đặt dịch vụ" ở thanh bên CSKH (realtime.js tải lại khi có sự kiện đơn).
+     */
+    @GetMapping("/cskh/don-dat-dich-vu/so-cho-nhan")
+    @Transactional(readOnly = true)
+    public Map<String, Object> soChoNhan() {
+        long so = donDatDichVuRepository.findByTrangThaiOrderByNgayTaoDesc("ChoDuyet").stream()
+                .filter(hanNhanDonService::daPhatHanh)
+                .count();
+        return Map.of("soChoNhan", so);
+    }
 
     /** CSKH đổi trạng thái đơn theo luồng hợp lệ (hủy cần lý do); kèm ghi chú nội bộ nếu có. */
     @org.springframework.web.bind.annotation.PostMapping("/cskh/don-dat-dich-vu/{id}/trang-thai")

@@ -129,7 +129,12 @@
     var xacNhanErr = document.getElementById('xacNhanMatKhauError');
     if (matKhauInput) {
       var mk = matKhauInput.value;
-      if (!mk || mk.length < 6) {
+      // Dùng chung tài khoản đã có: nhập mật khẩu hiện tại, không áp quy tắc mật khẩu mới
+      var dungChung = document.getElementById('coTaiKhoanSan');
+      var chuaDat = window.QuyTacMatKhau && !(dungChung && dungChung.checked)
+        ? QuyTacMatKhau.kiemTra(mk, document.getElementById('soDienThoai').value).length > 0
+        : false;
+      if (!mk || chuaDat) {
         mark(matKhauInput.closest('.field'), true);
         bad = true;
       } else {

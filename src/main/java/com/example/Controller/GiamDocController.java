@@ -445,9 +445,10 @@ public String baoCao(
             return "redirect:/giam-doc/tai-khoan";
         }
 
-        // 3. Kiểm tra độ dài mật khẩu (ví dụ tối thiểu 6 kí tự)
-        if (matKhau.length() < 6) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Mật khẩu phải có ít nhất 6 ký tự!");
+        // 3. Kiểm tra quy tắc mật khẩu mới
+        var loiMatKhau = com.example.Service.QuyTacMatKhau.kiemTra(matKhau, soDienThoai);
+        if (!loiMatKhau.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", loiMatKhau.get(0));
             return "redirect:/giam-doc/tai-khoan";
         }
 
@@ -472,7 +473,7 @@ public String baoCao(
         TaiKhoan tk = new TaiKhoan();
         tk.setMaTaiKhoan(com.example.Service.MaSinh.tao("TK-"));
         tk.setTenDangNhap(tenDangNhap);
-        tk.setMatKhau(matKhau); 
+        tk.setMatKhau(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(matKhau));
         tk.setEmail(email);
         tk.setSoDienThoai(soDienThoai);
         tk.setLoaiTaiKhoan(loaiTaiKhoan);

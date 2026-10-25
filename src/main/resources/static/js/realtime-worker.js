@@ -19,6 +19,10 @@ function moKetNoi() {
   nguon = new EventSource('/realtime/stream');
   nguon.addEventListener('du-lieu-thay-doi', function () { guiTatCa('du-lieu-thay-doi'); });
   nguon.addEventListener('san-sang', function () { guiTatCa('san-sang'); });
+  // Sự kiện có nội dung cho nhân viên (máy chủ chỉ gửi tới đúng vai trò): đơn mới, đơn chuyển khoản vừa trả
+  ['don-moi', 'da-thanh-toan'].forEach(function (ten) {
+    nguon.addEventListener(ten, function (ev) { guiTatCa({ loai: ten, duLieu: ev.data }); });
+  });
   nguon.onerror = function () {
     // Bị từ chối (hết phiên đăng nhập): EventSource tự đóng, bỏ để tab mới có thể mở lại
     if (nguon && nguon.readyState === 2) { nguon = null; }

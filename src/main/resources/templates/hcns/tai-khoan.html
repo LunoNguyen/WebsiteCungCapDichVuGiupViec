@@ -360,7 +360,7 @@
               <label class="form-label">Mật khẩu khởi tạo *</label>
               <div style="position:relative">
                 <i class="ti ti-key" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
-                <input type="password" name="matKhau" id="createPassword" class="form-control" style="padding-left:2.2rem;padding-right:2.5rem" placeholder="Tối thiểu 6 ký tự" required value="bTaskee@2026">
+                <input type="password" name="matKhau" id="createPassword" class="form-control" style="padding-left:2.2rem;padding-right:2.5rem" placeholder="Ít nhất 8 ký tự, có chữ và số" required autocomplete="new-password" data-quy-tac-mat-khau data-sdt="#createPhone">
                 <button type="button" onclick="togglePassVisibility('createPassword', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
                   <i class="ti ti-eye"></i>
                 </button>
@@ -444,7 +444,7 @@
           </label>
           <div style="position:relative">
             <i class="ti ti-key" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
-            <input type="password" name="matKhauMoi" id="editPasswordNew" class="form-control" style="padding-left:2.2rem;padding-right:2.5rem" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)...">
+            <input type="password" name="matKhauMoi" id="editPasswordNew" class="form-control" style="padding-left:2.2rem;padding-right:2.5rem" placeholder="Ít nhất 8 ký tự, có chữ và số..." autocomplete="new-password" data-quy-tac-mat-khau data-tuy-chon data-sdt="#editPhone">
             <button type="button" onclick="togglePassVisibility('editPasswordNew', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
               <i class="ti ti-eye"></i>
             </button>
@@ -464,6 +464,7 @@
 </div>
 
 <div th:replace="~{layout/admin-layout :: adminScripts}"></div>
+<script src="/js/quy-tac-mat-khau.js"></script>
 <script>
   let currentSelectedType = 'NhanVien';
 
@@ -472,7 +473,8 @@
     document.getElementById('createAccountForm').reset();
     document.getElementById('targetPersonId').value = '';
     document.getElementById('selectedPersonName').value = '';
-    document.getElementById('createPassword').value = 'bTaskee@2026';
+    document.getElementById('createPassword').value = '';
+    QuyTacMatKhau.capNhat(document.getElementById('createPassword'));
     document.querySelectorAll('.person-item').forEach(el => {
       el.style.backgroundColor = '';
       const r = el.querySelector('.person-radio-input');
@@ -619,8 +621,9 @@
       alert('Tên đăng nhập, mật khẩu, email và số điện thoại không được chứa khoảng trắng!');
       return false;
     }
-    if (p.length < 6) {
-      alert('Mật khẩu khởi tạo phải có ít nhất 6 ký tự!');
+    const loiMatKhau = QuyTacMatKhau.kiemTra(p, ph);
+    if (loiMatKhau.length) {
+      alert(loiMatKhau[0]);
       return false;
     }
     return true;
@@ -644,6 +647,7 @@
     document.getElementById('editStatus').value = status || 'HoatDong';
     document.getElementById('editOwnerName').value = owner || username;
     document.getElementById('editPasswordNew').value = '';
+    QuyTacMatKhau.capNhat(document.getElementById('editPasswordNew'));
 
     ModalManager.open('editAccountModal');
   }
@@ -663,12 +667,9 @@
       return false;
     }
     if (pNew && pNew.length > 0) {
-      if (pNew.includes(' ')) {
-        alert('Mật khẩu mới không được chứa khoảng trắng!');
-        return false;
-      }
-      if (pNew.length < 6) {
-        alert('Mật khẩu mới phải có tối thiểu 6 ký tự!');
+      const loiMatKhau = QuyTacMatKhau.kiemTra(pNew, ph);
+      if (loiMatKhau.length) {
+        alert(loiMatKhau[0]);
         return false;
       }
     }

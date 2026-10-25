@@ -1042,6 +1042,12 @@
       else CSKH.toast(r.message || 'Không xóa được đơn.', 'error');
     });
   }
+
+  // Mở từ thông báo đơn mới (?moDon=id): bật sẵn khung chi tiết của đơn đó
+  (function () {
+    var id = Number(new URLSearchParams(location.search).get('moDon'));
+    if (id > 0) openDetailPanel(id);
+  })();
 </script>
 </body>
 </html>

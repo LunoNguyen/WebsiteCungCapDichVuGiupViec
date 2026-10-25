@@ -124,7 +124,15 @@
   // Sau khi rớt mạng và nối lại ("san-sang" lần thứ hai trở đi), kiểm tra một lần vì có thể đã lỡ sự kiện
   var daTungMo = false;
   function nhan(loai) {
+    // Sự kiện có nội dung (đơn mới...): phát lại thành sự kiện DOM cho trang xử lý (cskh-thong-bao.js)
+    if (loai && typeof loai === 'object') {
+      var duLieu = {};
+      try { duLieu = JSON.parse(loai.duLieu || '{}'); } catch (e) { /* bỏ qua dữ liệu hỏng */ }
+      document.dispatchEvent(new CustomEvent('realtime:don', { detail: duLieu }));
+      return;
+    }
     if (loai === 'du-lieu-thay-doi') {
+      document.dispatchEvent(new CustomEvent('realtime:thay-doi'));
       lenLich();
     } else if (loai === 'san-sang') {
       if (daTungMo) lenLich();
@@ -147,5 +155,8 @@
   var nguon = new EventSource('/realtime/stream');
   nguon.addEventListener('du-lieu-thay-doi', function () { nhan('du-lieu-thay-doi'); });
   nguon.addEventListener('san-sang', function () { nhan('san-sang'); });
+  ['don-moi', 'da-thanh-toan'].forEach(function (ten) {
+    nguon.addEventListener(ten, function (ev) { nhan({ loai: ten, duLieu: ev.data }); });
+  });
   window.addEventListener('pagehide', function () { nguon.close(); });
 })();

@@ -22,7 +22,14 @@ public class MockSmsSender implements SmsSender {
     @Override
     public String send(String soDienThoai, String noiDung) {
         String maTin = "SMS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        log.info("[SMS mô phỏng {}] Gửi tới {}: {}", maTin, soDienThoai, noiDung);
+        // In khung nổi bật để dễ thấy OTP / mật khẩu trong terminal đang chạy server
+        log.warn("\n"
+                + "==================== SMS MÔ PHỎNG (KHÔNG GỬI THẬT) ====================\n"
+                + "  Mã tin   : {}\n"
+                + "  Tới số   : {}\n"
+                + "  Nội dung : {}\n"
+                + "=======================================================================",
+                maTin, soDienThoai, noiDung);
         return maTin;
     }
 
