@@ -292,9 +292,8 @@ public class ThongBaoSuKienService {
     private static String moTa(DonDatDichVu don) {
         StringBuilder sb = new StringBuilder(don.getMaDonDat() != null ? don.getMaDonDat() : "");
         List<String> phan = new ArrayList<>();
-        if (don.getChiTietList() != null && !don.getChiTietList().isEmpty() && don.getChiTietList().get(0).getDichVu() != null) {
-            phan.add(don.getChiTietList().get(0).getDichVu().getTenDichVu());
-        }
+        String tenDv = DatNhieuDichVu.tenDichVuCuaDon(don, null);
+        if (tenDv != null) phan.add(tenDv);
         if (don.getGioBatDau() != null && don.getNgayThucHien() != null) {
             phan.add(don.getGioBatDau().format(GIO) + " ngày " + don.getNgayThucHien().format(NGAY));
         }

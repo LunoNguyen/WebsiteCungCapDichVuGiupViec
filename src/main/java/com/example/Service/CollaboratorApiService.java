@@ -104,8 +104,7 @@ public class CollaboratorApiService {
             item.put("thoiGianPhanCong", pc.getThoiGianPhanCong());
             item.put("donDatId", don.getId());
             item.put("maDonDat", don.getMaDonDat());
-            String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty())
-                    ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+            String tenDichVu = DatNhieuDichVu.tenDichVuCuaDon(don, "");
             item.put("tenDichVu", tenDichVu);
 
             List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
@@ -301,8 +300,7 @@ public class CollaboratorApiService {
 
         result.put("donDatId", don.getId());
         result.put("maDonDat", don.getMaDonDat());
-        String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty())
-                ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+        String tenDichVu = DatNhieuDichVu.tenDichVuCuaDon(don, "");
         result.put("tenDichVu", tenDichVu);
         result.put("loaiHinhDat", don.getLoaiHinhDat());
         result.put("ngayThucHien", don.getNgayThucHien());
@@ -1084,8 +1082,7 @@ public class CollaboratorApiService {
                 .build();
         lichSuTrangThaiDonRepository.save(ls);
 
-        String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty() && don.getChiTietList().get(0).getDichVu() != null)
-                ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ gia đình";
+        String tenDichVu = DatNhieuDichVu.tenDichVuCuaDon(don, "Dịch vụ gia đình");
         String tenCTV = pc.getCongTacVien() != null ? pc.getCongTacVien().getHoTen() : "Cộng tác viên";
         String gioHoanThanh = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
         String ngayHoanThanh = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -1390,8 +1387,7 @@ public class CollaboratorApiService {
                     item.put("donDatId", d.getId());
                     item.put("maDonDat", d.getMaDonDat());
                     item.put("trangThaiDon", d.getTrangThai());
-                    String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
-                            ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+                    String tenDv = DatNhieuDichVu.tenDichVuCuaDon(d, "");
                     item.put("tenDichVu", tenDv);
                     String fullDiaChi = CustomerAddressService.diaChiDayDu(d.getDiaChi());
                     item.put("diaChi", fullDiaChi);
@@ -1485,8 +1481,7 @@ public class CollaboratorApiService {
             DonDatDichVu d = llv.getPhanCong().getDonDat();
             result.put("donDatId", d.getId());
             result.put("maDonDat", d.getMaDonDat());
-            String tenDv = (d.getChiTietList() != null && !d.getChiTietList().isEmpty())
-                    ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+            String tenDv = DatNhieuDichVu.tenDichVuCuaDon(d, "");
             result.put("tenDichVu", tenDv);
             result.put("diaChi", CustomerAddressService.diaChiDayDu(d.getDiaChi()));
             result.put("khuVuc", d.getDiaChi() != null && d.getDiaChi().getKhuVuc() != null ? d.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
@@ -1617,8 +1612,7 @@ public class CollaboratorApiService {
             item.put("hanNhan", hanNhan);
             item.put("soGiayConLai", hanNhan == null ? null : Math.max(0, java.time.Duration.between(bayGio, hanNhan).getSeconds()));
             item.put("maDonDat", don.getMaDonDat());
-            String tenDichVu = (don.getChiTietList() != null && !don.getChiTietList().isEmpty())
-                    ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ";
+            String tenDichVu = DatNhieuDichVu.tenDichVuCuaDon(don, "Dịch vụ");
             item.put("tenDichVu", tenDichVu);
             item.put("ngayThucHien", don.getNgayThucHien());
             item.put("gioBatDau", don.getGioBatDau());

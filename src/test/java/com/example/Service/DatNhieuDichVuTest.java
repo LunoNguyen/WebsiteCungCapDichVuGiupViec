@@ -1,6 +1,8 @@
 package com.example.Service;
 
+import com.example.Model.ChiTietDonDat;
 import com.example.Model.ChuongTrinhKhuyenMai;
+import com.example.Model.DonDatDichVu;
 import com.example.Model.DichVu;
 import org.junit.jupiter.api.Test;
 
@@ -98,5 +100,34 @@ class DatNhieuDichVuTest {
     @Test
     void giamTienKhongQuaTong() {
         assertEquals(new BigDecimal("100000"), DatNhieuDichVu.soTienGiam(ct("SoTienCoDinh", "150000", null), new BigDecimal("100000")));
+    }
+
+    @Test
+    void tomTatMotDichVu() {
+        assertEquals("Dọn nhà", DatNhieuDichVu.tomTatDichVu(List.of("Dọn nhà")));
+    }
+
+    @Test
+    void tomTatHaiDichVu() {
+        assertEquals("Dọn nhà + Giặt rèm", DatNhieuDichVu.tomTatDichVu(List.of("Dọn nhà", "Giặt rèm")));
+    }
+
+    @Test
+    void tomTatNhieuDichVu() {
+        assertEquals("Dọn nhà + 2 dịch vụ khác", DatNhieuDichVu.tomTatDichVu(List.of("Dọn nhà", "Giặt rèm", "Máy lạnh")));
+    }
+
+    @Test
+    void tenDichVuCuaDonGhepCacDong() {
+        DonDatDichVu don = DonDatDichVu.builder().build();
+        don.setChiTietList(new ArrayList<>(List.of(
+                ChiTietDonDat.builder().dichVu(dv("Dọn nhà", "TheoLan", "HoatDong", 120)).build(),
+                ChiTietDonDat.builder().dichVu(dv("Giặt rèm", "TheoLan", "HoatDong", 60)).build())));
+        assertEquals("Dọn nhà + Giặt rèm", DatNhieuDichVu.tenDichVuCuaDon(don, "Dịch vụ"));
+    }
+
+    @Test
+    void tenDichVuCuaDonKhongChiTietDungMacDinh() {
+        assertEquals("Dịch vụ", DatNhieuDichVu.tenDichVuCuaDon(DonDatDichVu.builder().build(), "Dịch vụ"));
     }
 }

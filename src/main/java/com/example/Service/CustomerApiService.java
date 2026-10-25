@@ -1337,8 +1337,20 @@ public class CustomerApiService {
             throw new IllegalArgumentException("Không xác định được thông tin Khách hàng để tạo đơn đặt.");
         }
 
-        DichVu dichVu = dichVuRepository.findById(req.getDichVuId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dịch vụ ID: " + req.getDichVuId()));
+        // Đơn nhiều dịch vụ (giỏ hàng): một lịch, một địa chỉ, một hóa đơn; mỗi dịch vụ một dòng chi tiết
+        List<ChiTietDonDatRequest> dongs = req.getDanhSachDichVu();
+        boolean nhieu = dongs.size() >= 2;
+        List<DichVu> dsDichVu = new ArrayList<>();
+        for (ChiTietDonDatRequest dong : dongs) {
+            dsDichVu.add(dichVuRepository.findById(dong.getDichVuId())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dịch vụ ID: " + dong.getDichVuId())));
+        }
+        if (dsDichVu.isEmpty()) throw new IllegalArgumentException("Vui lòng chọn dịch vụ.");
+        if (nhieu) {
+            String loiDs = DatNhieuDichVu.loiDanhSach(dsDichVu);
+            if (loiDs != null) throw new IllegalArgumentException(loiDs);
+        }
+        DichVu dichVu = dsDichVu.get(0);
 
         // Địa chỉ thực hiện
         DiaChiKhachHang diaChi = null;
@@ -1391,6 +1403,7 @@ public class CustomerApiService {
         // Tính giá (không còn goiDichVuId)
         CalculatePriceRequest calcReq = new CalculatePriceRequest();
         calcReq.setDichVuId(dichVu.getId());
+        if (nhieu) calcReq.setChiTiet(dongs);
         calcReq.setLoaiHinhDat(req.getLoaiHinhDat());
         calcReq.setBangGiaId(req.getBangGiaId());
         calcReq.setCodeKhuyenMai(req.getCodeKhuyenMai());
@@ -1441,7 +1454,13 @@ public class CustomerApiService {
         if (loiNgay != null) throw new IllegalArgumentException(loiNgay);
 
         LocalTime gioKetThuc = req.getGioKetThuc();
-        if (gioKetThuc == null && dichVu.getThoiGianThucHien() != null) {
+        if (nhieu) {
+            // Các dịch vụ làm nối tiếp nhau: kết thúc = bắt đầu + tổng thời lượng, phải xong trước 20:00
+            int tongPhut = DatNhieuDichVu.tongPhut(dsDichVu);
+            String loiGio = DatNhieuDichVu.loiGioKetThuc(req.getGioBatDau(), tongPhut);
+            if (loiGio != null) throw new IllegalArgumentException(loiGio);
+            gioKetThuc = DatNhieuDichVu.gioKetThuc(req.getGioBatDau(), tongPhut);
+        } else if (gioKetThuc == null && dichVu.getThoiGianThucHien() != null) {
             gioKetThuc = req.getGioBatDau().plusMinutes(dichVu.getThoiGianThucHien());
         } else if (gioKetThuc == null) {
             gioKetThuc = req.getGioBatDau().plusHours(2);
@@ -1469,18 +1488,36 @@ public class CustomerApiService {
                 .build();
         donDat = donDatDichVuRepository.save(donDat);
 
-        // Tạo ChiTietDonDat cho dịch vụ được đặt
-        ChiTietDonDat chiTiet = ChiTietDonDat.builder()
-                .donDat(donDat)
-                .dichVu(dichVu)
-                .bangGia(bg)
-                .soLuong(1)
-                .donGia(priceResult.getChiPhiGoc())
-                .thanhTien(priceResult.getChiPhiGoc())
-                .ngayThucHienTrongTuan(thuTrongTuan)
-                .ghiChu(req.getGhiChu())
-                .build();
-        chiTietDonDatRepository.save(chiTiet);
+        // Tạo ChiTietDonDat: mỗi dịch vụ một dòng, giá và bảng giá của chính dịch vụ đó
+        if (nhieu) {
+            for (int i = 0; i < dsDichVu.size(); i++) {
+                DichVu dvDong = dsDichVu.get(i);
+                BigDecimal giaDong = priceResult.getChiTietGia().get(i).donGia();
+                BangGiaDichVu bgDong = bangGiaService.giaApDung(dvDong.getId(),
+                        LocalDateTime.of(ngayThucHien, req.getGioBatDau())).orElse(null);
+                chiTietDonDatRepository.save(ChiTietDonDat.builder()
+                        .donDat(donDat)
+                        .dichVu(dvDong)
+                        .bangGia(bgDong)
+                        .soLuong(1)
+                        .donGia(giaDong)
+                        .thanhTien(giaDong)
+                        .ghiChu(dongs.get(i).getGhiChu())
+                        .build());
+            }
+        } else {
+            ChiTietDonDat chiTiet = ChiTietDonDat.builder()
+                    .donDat(donDat)
+                    .dichVu(dichVu)
+                    .bangGia(bg)
+                    .soLuong(1)
+                    .donGia(priceResult.getChiPhiGoc())
+                    .thanhTien(priceResult.getChiPhiGoc())
+                    .ngayThucHienTrongTuan(thuTrongTuan)
+                    .ghiChu(req.getGhiChu())
+                    .build();
+            chiTietDonDatRepository.save(chiTiet);
+        }
 
         // Lưu lịch sử trạng thái đơn
         LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()
@@ -1568,9 +1605,8 @@ public class CustomerApiService {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("id", d.getId());
             item.put("maDonDat", d.getMaDonDat());
-            // Lấy tên dịch vụ đầu tiên trong chiTietList
-            String tenDichVu = d.getChiTietList() != null && !d.getChiTietList().isEmpty()
-                    ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+            // Tên dịch vụ của đơn (nhiều dịch vụ: "A + B")
+            String tenDichVu = DatNhieuDichVu.tenDichVuCuaDon(d, "");
             item.put("tenDichVu", tenDichVu);
             item.put("ngayThucHien", d.getNgayThucHien());
             item.put("gioBatDau", d.getGioBatDau());
@@ -1613,8 +1649,7 @@ public class CustomerApiService {
         result.put("id", d.getId());
         result.put("maDonDat", d.getMaDonDat());
         // Lấy danh sách dịch vụ trong đơn
-        String tenDichVu = d.getChiTietList() != null && !d.getChiTietList().isEmpty()
-                ? d.getChiTietList().get(0).getDichVu().getTenDichVu() : "";
+        String tenDichVu = DatNhieuDichVu.tenDichVuCuaDon(d, "");
         result.put("tenDichVu", tenDichVu);
         result.put("danhSachDichVu", d.getChiTietList().stream()
                 .map(ct -> {

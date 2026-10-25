@@ -137,9 +137,7 @@ public class RealtimeService {
     public static String jsonDon(String loai, com.example.Model.DonDatDichVu don, String hinhThuc,
                                  boolean daThanhToan, String ghiChu) {
         try {
-            String tenDichVu = don.getChiTietList() != null && !don.getChiTietList().isEmpty()
-                    && don.getChiTietList().get(0).getDichVu() != null
-                    ? don.getChiTietList().get(0).getDichVu().getTenDichVu() : "Dịch vụ";
+            String tenDichVu = DatNhieuDichVu.tenDichVuCuaDon(don, "Dịch vụ");
             String ngayGio = (don.getNgayThucHien() != null
                     ? don.getNgayThucHien().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "")
                     + (don.getGioBatDau() != null

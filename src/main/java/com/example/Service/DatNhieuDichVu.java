@@ -1,11 +1,14 @@
 package com.example.Service;
 
+import com.example.Model.ChiTietDonDat;
 import com.example.Model.ChuongTrinhKhuyenMai;
 import com.example.Model.DichVu;
+import com.example.Model.DonDatDichVu;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -87,6 +90,23 @@ public final class DatNhieuDichVu {
             giam = ct.getGiaTriGiam().setScale(0, RoundingMode.HALF_UP);
         }
         return giam.min(tong);
+    }
+
+    /** Tên ngắn của một đơn: "A", "A + B", "A + 2 dịch vụ khác" (thẻ đơn, thông báo). */
+    public static String tomTatDichVu(List<String> ten) {
+        if (ten.size() <= 2) return String.join(" + ", ten);
+        return ten.get(0) + " + " + (ten.size() - 1) + " dịch vụ khác";
+    }
+
+    /** [tomTatDichVu] theo các dòng chi tiết của đơn; đơn chưa có chi tiết thì trả [macDinh]. */
+    public static String tenDichVuCuaDon(DonDatDichVu don, String macDinh) {
+        List<String> ten = new ArrayList<>();
+        if (don.getChiTietList() != null) {
+            for (ChiTietDonDat ct : don.getChiTietList()) {
+                if (ct.getDichVu() != null && ct.getDichVu().getTenDichVu() != null) ten.add(ct.getDichVu().getTenDichVu());
+            }
+        }
+        return ten.isEmpty() ? macDinh : tomTatDichVu(ten);
     }
 
     /** "8 giờ", "8 giờ 30 phút", "45 phút". */
