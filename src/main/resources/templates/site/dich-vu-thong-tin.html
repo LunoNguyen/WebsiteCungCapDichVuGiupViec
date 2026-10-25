@@ -80,12 +80,14 @@
           <div class="sum-row"><span>Cộng tác viên làm được</span><b th:text="${dv.congTacViens.size()}">6</b></div>
         </div>
         <a class="btn btn-primary btn-lg btn-block" th:href="@{/dat-dich-vu/{nhom}(nhom=${dv.loaiDichVuId},dv=${dv.id})}">Đặt dịch vụ này</a>
+        <button type="button" class="btn btn-outline btn-lg btn-block nut-them-gio" data-them-gio th:attr="data-id=${dv.id},data-ten=${dv.tenDichVu},data-gia=${gia},data-phut=${phut},data-goi=${goi},data-danh-muc=${dv.loaiDichVuId},data-anh=${anhDichVu}"><svg class="ic"><use href="#i-cart"/></svg>Thêm vào giỏ</button>
         <p class="sum-note" th:if="${session.khachHangId == null}">Bạn sẽ đăng nhập ở bước đặt.</p>
       </aside>
     </div>
 
     <div class="mobile-bar">
       <div class="price"><b th:text="${gia != null} ? ${#numbers.formatDecimal(gia, 0, 'POINT', 0, 'COMMA')} + 'đ' : 'Liên hệ'">270.000đ</b><span th:text="${goi} ? 'Gói ' + ${dv['soBuoiGoi']} + ' buổi' : 'Theo lần'">Theo lần</span></div>
+      <button type="button" class="btn btn-outline btn-lg nut-them-gio" data-them-gio th:attr="data-id=${dv.id},data-ten=${dv.tenDichVu},data-gia=${gia},data-phut=${phut},data-goi=${goi},data-danh-muc=${dv.loaiDichVuId},data-anh=${anhDichVu}" aria-label="Thêm vào giỏ" title="Thêm vào giỏ"><svg class="ic"><use href="#i-cart"/></svg></button>
       <a class="btn btn-primary btn-lg" th:href="@{/dat-dich-vu/{nhom}(nhom=${dv.loaiDichVuId},dv=${dv.id})}">Đặt dịch vụ</a>
     </div>
   </div>

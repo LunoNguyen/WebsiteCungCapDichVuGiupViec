@@ -24,14 +24,6 @@
       </button>
     </div>
 
-    <!-- Amber Cache Banner -->
-    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px;">
-      <svg class="ic" style="width: 20px; height: 20px; color: #d97706; flex-shrink: 0; margin-top: 2px;"><use href="#i-info"/></svg>
-      <div style="font-size: 13.5px; color: #92400e; line-height: 1.5;">
-        <b>Lưu ý:</b> Giỏ hàng được lưu tạm trên bộ nhớ trình duyệt (Cache). Bạn có thể chọn nhiều dịch vụ khác nhau để đặt thuận tiện theo phong cách TikTok/Shopee.
-      </div>
-    </div>
-
     <!-- Empty State -->
     <div id="cartEmptyState" style="display: none; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1px solid #e5e7eb;">
       <div style="width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 50%; background: #ffebd8; display: flex; align-items: center; justify-content: center; color: #e8650c;">
@@ -120,6 +112,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var chkSelectAll = document.getElementById('chkSelectAll');
   var btnXoaTatCa = document.getElementById('btnXoaTatCa');
 
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
   function fmtMoney(num) {
     if (!num || isNaN(num)) return '0đ';
     return Number(num).toLocaleString('vi-VN') + 'đ';
@@ -162,30 +160,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
       row.innerHTML = `
         <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-          <input type="checkbox" class="chk-item" data-id="${item.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #e8650c; cursor: pointer;">
+          <input type="checkbox" class="chk-item" data-id="${Number(item.id)}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #e8650c; cursor: pointer;">
           
-          <div style="width: 48px; height: 48px; border-radius: 10px; background: #ffebd8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #e8650c;">
-            <svg class="ic" style="width: 24px; height: 24px;"><use href="#i-sparkles"/></svg>
+          <div style="width: 48px; height: 48px; border-radius: 10px; background: #ffebd8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #e8650c; overflow: hidden;">
+            ${item.hinhAnh
+              ? `<img src="${esc(item.hinhAnh)}" alt="" style="width: 100%; height: 100%; object-fit: cover;">`
+              : '<svg class="ic" style="width: 24px; height: 24px;"><use href="#i-sparkles"/></svg>'}
           </div>
 
           <div style="flex: 1; min-width: 0;">
-            <a href="/dich-vu/chi-tiet/${item.id}" style="font-size: 14.5px; font-weight: 700; color: #111827; text-decoration: none; display: block; margin-bottom: 2px;">
-              ${item.tenDichVu}
+            <a href="/dich-vu/chi-tiet/${Number(item.id)}" style="font-size: 14.5px; font-weight: 700; color: #111827; text-decoration: none; display: block; margin-bottom: 2px;">
+              ${esc(item.tenDichVu)}
             </a>
             <div style="font-size: 12.5px; color: #6b7280;">
-              ${item.thoiGianText ? item.thoiGianText + ' · ' : ''}${item.donViTinh || 'Buổi'}
+              ${esc(item.donViTinh || 'Theo lần')}${item.thoiGianText ? ' · ' + esc(item.thoiGianText) : ''}
             </div>
           </div>
         </div>
 
-        <!-- Đơn giá & Nút xóa (KHÔNG CÓ nút - 0 + theo yêu cầu của bạn) -->
         <div style="display: flex; align-items: center; gap: 20px;">
           <div style="font-size: 15px; font-weight: 800; color: #e8650c;">
             ${fmtMoney(item.donGia)}
           </div>
 
-          <!-- Nút xóa thùng rác -->
-          <button type="button" class="btn-del-item" data-id="${item.id}" title="Xóa dịch vụ này" style="border: none; background: none; color: #ef4444; cursor: pointer; padding: 6px; display: flex; align-items: center;">
+          <button type="button" class="btn-del-item" data-id="${Number(item.id)}" title="Xóa dịch vụ này" style="border: none; background: none; color: #ef4444; cursor: pointer; padding: 6px; display: flex; align-items: center;">
             <svg class="ic" style="width: 20px; height: 20px;"><use href="#i-trash"/></svg>
           </button>
         </div>
@@ -244,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var allIds = items.map(function (x) { return x.id; });
     var danhMucId = firstItem.danhMucId || 1;
 
-    // Vào thẳng màn đặt 3 bước chuẩn của nhóm trưởng
+    // Vào màn đặt của dịch vụ đầu tiên đã chọn
     var url = '/dat-dich-vu/' + danhMucId + '?dv=' + firstItem.id + '&danhSachDichVu=' + allIds.join(',') + '&fromCart=true';
     window.location.href = url;
   });

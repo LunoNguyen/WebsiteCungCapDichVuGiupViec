@@ -109,7 +109,10 @@
               <b th:text="${#strings.indexOf(dvDaChon.tenDichVu, ' (') > 0} ? ${#strings.substring(dvDaChon.tenDichVu, 0, #strings.indexOf(dvDaChon.tenDichVu, ' ('))} : ${dvDaChon.tenDichVu}">Dọn dẹp nhà theo giờ</b>
               <span th:text="(${dvLaGoi} ? 'Gói tháng' : 'Theo lần') + ' · ' + (${#strings.indexOf(dvDaChon.tenDichVu, ' (') > 0} ? ${#strings.substring(dvDaChon.tenDichVu, #strings.indexOf(dvDaChon.tenDichVu, ' (') + 2, #strings.length(dvDaChon.tenDichVu) - 1)} : ${dvDaChon.tenDichVu}) + ' · ' + ${dvDaChon.giaText}">Theo lần · 2 giờ · 216.000đ</span>
             </div>
-            <a class="btn btn-outline btn-sm" th:href="@{/dich-vu/chi-tiet/{id}(id=${dvDaChon.id})}">Đổi</a>
+            <div class="dv-da-chon-nut">
+              <button type="button" class="btn btn-outline btn-sm nut-them-gio" data-them-gio th:attr="data-id=${dvDaChon.id},data-ten=${dvDaChon.tenDichVu},data-gia=${dvDaChon.gia},data-goi=${dvLaGoi},data-danh-muc=${danhMuc.id},data-anh=${dvDaChon.hinhAnhUrl},data-thoi-gian=${dvDaChon.thoiGianText}"><svg class="ic"><use href="#i-cart"/></svg>Thêm vào giỏ</button>
+              <a class="btn btn-outline btn-sm" th:href="@{/dich-vu/chi-tiet/{id}(id=${dvDaChon.id})}">Đổi</a>
+            </div>
           </section>
           <section class="panel">
             <h2 data-tieu-de-ngay>Ngày và giờ bắt đầu</h2>

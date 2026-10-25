@@ -344,6 +344,9 @@ body.menu-open .drawer { translate: 0 0; transition-duration: .5s; }
 .dv-da-chon > div { display: grid; gap: 2px; min-width: 0; }
 .dv-da-chon b { font-size: 16px; }
 .dv-da-chon > div > span:last-child { color: var(--foreground-soft); font-size: 14px; }
+.dv-da-chon > .dv-da-chon-nut { display: flex; gap: 8px; flex-shrink: 0; }
+/* Nút "Thêm vào giỏ": ở trang chi tiết nằm dưới nút Đặt dịch vụ */
+.summary .nut-them-gio { margin-top: 10px; }
 .variant[hidden] { display: none; }
 /* Trang chi tiết: tên lựa chọn chiếm trọn hàng trên (tên dài như "Gói 8 buổi/tháng, 2 giờ/buổi" xuống dòng thoải mái),
    hàng dưới là loại + giá, giá căn phải và không bị ép */
@@ -879,6 +882,8 @@ li, span { text-wrap: pretty; }
   .mobile-bar .price b { display: block; font-size: 18px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
   .mobile-bar .price span { color: var(--muted); font-size: 13px; }
   .mobile-bar .btn { flex: none; margin-left: auto; }
+  .mobile-bar .nut-them-gio + .btn { margin-left: 0; }
+  .mobile-bar .nut-them-gio { padding: 0 12px; }
   .order { grid-template-columns: 60px minmax(0, 1fr); gap: 12px; }
   .finder { grid-template-columns: minmax(0, 1fr); }
   .result { grid-template-columns: 56px minmax(0, 1fr); gap: 12px; }
@@ -1342,6 +1347,7 @@ li, span { text-wrap: pretty; }
   text-decoration: none;
   transition: transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s;
 }
+.floating-cart-btn[hidden] { display: none; }
 .floating-cart-btn:hover {
   transform: scale(1.08) translateY(-2px);
   box-shadow: 0 12px 28px rgba(232, 101, 12, 0.25);

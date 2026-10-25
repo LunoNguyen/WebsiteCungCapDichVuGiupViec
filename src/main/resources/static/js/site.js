@@ -251,15 +251,8 @@
     getCart: function () {
       try {
         var raw = localStorage.getItem(CART_KEY);
-        if (!raw) {
-          // Khởi tạo 1 dịch vụ mẫu lần đầu để thấy ngay nút giỏ hàng và badge nổi bật
-          var defaultItems = [
-            { id: 2, tenDichVu: 'Dọn dẹp nhà theo diện tích 2 giờ', donGia: 216000, thoiGianText: '120 phút', donViTinh: 'Buổi', checked: true, danhMucId: 1 }
-          ];
-          localStorage.setItem(CART_KEY, JSON.stringify(defaultItems));
-          return defaultItems;
-        }
-        return JSON.parse(raw) || [];
+        var items = raw ? JSON.parse(raw) : [];
+        return Array.isArray(items) ? items : [];
       } catch (e) {
         return [];
       }
@@ -283,7 +276,7 @@
       }
       this.saveCart(items);
       if (typeof window.siteToast === 'function') {
-        window.siteToast('Đã thêm "' + item.tenDichVu + '" vào giỏ hàng');
+        window.siteToast(existing ? 'Dịch vụ này đã có trong giỏ hàng' : 'Đã thêm "' + item.tenDichVu + '" vào giỏ hàng');
       }
     },
 
@@ -307,19 +300,33 @@
       this.saveCart(items);
     },
 
+    // Nút giỏ hàng nổi chỉ hiện khi giỏ có dịch vụ
     updateBadge: function () {
+      var btn = document.getElementById('floatingCartBtn');
       var badge = document.getElementById('floatingCartBadge');
-      if (!badge) return;
-      var items = this.getCart();
-      var count = items.length;
-      if (count > 0) {
-        badge.textContent = count > 99 ? '99+' : count;
-        badge.style.display = 'flex';
-      } else {
-        badge.style.display = 'none';
-      }
+      var count = this.getCart().length;
+      if (btn) btn.hidden = count === 0;
+      if (badge) badge.textContent = count > 99 ? '99+' : count;
     }
   };
+
+  // Nút "Thêm vào giỏ" (trang chi tiết dịch vụ, trang đặt dịch vụ): dữ liệu dịch vụ nằm ở data-*
+  document.addEventListener('click', function (e) {
+    var nut = e.target.closest('[data-them-gio]');
+    if (!nut) return;
+    e.preventDefault();
+    var d = nut.dataset;
+    var phut = Number(d.phut) || 0;
+    window.CartCache.addItem({
+      id: Number(d.id),
+      tenDichVu: d.ten,
+      donGia: Number(d.gia) || 0,
+      thoiGianText: d.thoiGian || (phut ? (phut % 60 === 0 ? (phut / 60) + ' giờ' : phut + ' phút') : ''),
+      donViTinh: d.goi === 'true' ? 'Gói tháng' : 'Theo lần',
+      danhMucId: Number(d.danhMuc) || null,
+      hinhAnh: d.anh || ''
+    });
+  });
 
   // Cập nhật huy hiệu khi load trang
   document.addEventListener('DOMContentLoaded', function () {

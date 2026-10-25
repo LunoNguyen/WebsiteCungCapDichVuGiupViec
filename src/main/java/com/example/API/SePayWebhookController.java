@@ -7,6 +7,7 @@ import com.example.Repository.HoaDonRepository;
 import com.example.Service.SePayPaymentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,8 @@ import java.util.Map;
 
 /**
  * REST API nhận Webhook từ SePay và cung cấp API giả lập test miễn phí.
+ * API giả lập (POST /mock-pay) đánh dấu đơn đã thanh toán mà không cần đăng nhập, nên chỉ chạy khi
+ * app.thanh-toan.cho-phep-gia-lap=true (mặc định tắt: trả về 404).
  */
 @RestController
 @RequestMapping("/api/v1/sepay")
@@ -25,11 +28,14 @@ public class SePayWebhookController {
 
     private final SePayPaymentService sePayPaymentService;
     private final HoaDonRepository hoaDonRepository;
+    private final boolean choPhepGiaLap;
 
     public SePayWebhookController(SePayPaymentService sePayPaymentService,
-                                  HoaDonRepository hoaDonRepository) {
+                                  HoaDonRepository hoaDonRepository,
+                                  @Value("${app.thanh-toan.cho-phep-gia-lap:false}") boolean choPhepGiaLap) {
         this.sePayPaymentService = sePayPaymentService;
         this.hoaDonRepository = hoaDonRepository;
+        this.choPhepGiaLap = choPhepGiaLap;
     }
 
     /**
@@ -67,6 +73,9 @@ public class SePayWebhookController {
      */
     @PostMapping("/mock-pay/{donDatId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> mockPay(@PathVariable Integer donDatId) {
+        if (!choPhepGiaLap) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Không tìm thấy"));
+        }
         try {
             Map<String, Object> data = sePayPaymentService.mockPayment(donDatId);
             return ResponseEntity.ok(ApiResponse.ok("Giả lập thanh toán thành công", data));
