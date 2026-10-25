@@ -31,7 +31,7 @@
           <div class="order-date">
             <span>
               <small th:text="${d['ngayThucHien'] != null} ? ${thu[d['ngayThucHien'].dayOfWeek.value - 1]} : '—'">T5</small><br>
-              <b th:text="${d['ngayThucHien'] != null} ? ${#temporals.format(d['ngayThucHien'], 'dd/MM')} : '—'">09/10</b>
+              <b th:text="${d['ngayThucHien'] != null} ? ${#temporals.format(d['ngayThucHien'], 'dd/MM/yyyy')} : '—'">09/10</b>
             </span>
           </div>
           <div style="min-width:0">

@@ -57,7 +57,7 @@
               <th:block th:if="${don['lichBuoi'] != null}">
                 <dt>Thứ trong tuần</dt><dd th:text="${don['thuTrongTuanText']}">T3, T5, T7, CN</dd>
                 <dt th:text="'Lịch ' + ${don['lichBuoi'].size()} + ' buổi'">Lịch 13 buổi</dt>
-                <dd><span th:each="n, st : ${don['lichBuoi']}" th:text="${thu[n.dayOfWeek.value - 1] + ' ' + #temporals.format(n, 'dd/MM') + (st.last ? '' : ' · ')}">T3 07/10 · </span></dd>
+                <dd><span th:each="n, st : ${don['lichBuoi']}" th:text="${thu[n.dayOfWeek.value - 1] + ' ' + #temporals.format(n, 'dd/MM/yyyy') + (st.last ? '' : ' · ')}">T3 07/10 · </span></dd>
               </th:block>
               <dt th:if="${don['yeuCauDacBiet'] != null and !#strings.isEmpty(don['yeuCauDacBiet'])}">Ghi chú</dt>
               <dd th:if="${don['yeuCauDacBiet'] != null and !#strings.isEmpty(don['yeuCauDacBiet'])}" th:text="${don['yeuCauDacBiet']}">Chìa khóa gửi bảo vệ</dd>

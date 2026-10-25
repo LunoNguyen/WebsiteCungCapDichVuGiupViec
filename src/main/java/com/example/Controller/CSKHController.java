@@ -378,6 +378,23 @@ public class CSKHController {
         var daTraLoi = danhGiaService.daCoNhanVienTraLoi();
         long replied = daTraLoi.size();
 
+        // Dịch vụ của từng đánh giá theo mã dịch vụ (mọi thời lượng / gói cùng mã là một dịch vụ) + danh sách để lọc
+        Map<Integer, Map<String, String>> dichVuDanhGia = new HashMap<>();
+        java.util.TreeMap<String, String> dsDichVu = new java.util.TreeMap<>();
+        for (var dg : danhGiaList) {
+            var ct = dg.getDonDat() != null && dg.getDonDat().getChiTietList() != null
+                    ? dg.getDonDat().getChiTietList().stream().filter(c -> c.getDichVu() != null).findFirst().orElse(null)
+                    : null;
+            if (ct == null) continue;
+            var dv = ct.getDichVu();
+            String ma = dv.getMaDichVu() != null && !dv.getMaDichVu().isBlank() ? dv.getMaDichVu() : "id-" + dv.getId();
+            String ten = dv.getTenDichVu() == null ? ma
+                    : dv.getTenDichVu().contains(" (") ? dv.getTenDichVu().substring(0, dv.getTenDichVu().indexOf(" (")) : dv.getTenDichVu();
+            dichVuDanhGia.put(dg.getId(), Map.of("ma", ma, "ten", ten));
+            dsDichVu.putIfAbsent(ma, ten);
+        }
+        model.addAttribute("dichVuDanhGia",  dichVuDanhGia);
+        model.addAttribute("dsDichVu",       dsDichVu);
         model.addAttribute("danhGias",       danhGiaList);
         model.addAttribute("diemDanhGiaTB",  thongKeService.getDiemDanhGiaTrungBinh());
         model.addAttribute("lowRatingCount", lowRating);

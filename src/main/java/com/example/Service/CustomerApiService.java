@@ -1058,7 +1058,10 @@ public class CustomerApiService {
                 .average().orElse(5.0);
         result.put("diemDanhGiaTrungBinh", BigDecimal.valueOf(avgScore).setScale(1, RoundingMode.HALF_UP));
         result.put("danhGias", danhGias.stream().limit(10).toList());
-        result.put("soLuotDat", chiTietDonDatRepository.countByDichVu_Id(dv.getId()));
+        // Lượt đặt theo mã dịch vụ (cùng cách tính với đánh giá), chưa có mã thì theo id
+        result.put("soLuotDat", dv.getMaDichVu() != null && !dv.getMaDichVu().isBlank()
+                ? chiTietDonDatRepository.countByDichVu_MaDichVu(dv.getMaDichVu())
+                : chiTietDonDatRepository.countByDichVu_Id(dv.getId()));
 
         // Danh sách CTV thực hiện dịch vụ này
         List<DichVuCTV> dvCtvs = dichVuCTVRepository.findByDichVu_Id(dv.getId());

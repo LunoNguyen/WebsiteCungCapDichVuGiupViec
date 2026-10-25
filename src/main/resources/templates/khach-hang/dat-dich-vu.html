@@ -10,12 +10,12 @@
                coGoiThang=${!danhMuc.dichVuGoiThang.isEmpty()}">
   <!-- novalidate: các bước đang ẩn có ô bắt buộc; mỗi bước tự kiểm tra trước khi sang bước sau -->
   <form class="wrap" method="post" th:action="@{/dat-dich-vu/{id}(id=${danhMuc.id})}" id="bookForm" novalidate>
-    <div class="crumb"><a href="/dich-vu">Dịch vụ</a><svg class="ic"><use href="#i-right"/></svg><a th:href="@{/dich-vu/{id}(id=${danhMuc.id})}" th:text="${danhMuc.tenLoaiDichVu}">Dọn dẹp nhà</a></div>
+    <div class="crumb"><a th:href="@{/tim-dich-vu(nhom=${danhMuc.id})}" data-ve-tim-kiem>Dịch vụ</a><svg class="ic"><use href="#i-right"/></svg><a th:href="@{/dich-vu/{id}(id=${danhMuc.id})}" th:text="${danhMuc.tenLoaiDichVu}">Dọn dẹp nhà</a></div>
     <div class="book-head">
       <h1 th:text="'Đặt ' + ${#strings.toLowerCase(danhMuc.tenLoaiDichVu)}">Đặt dọn dẹp nhà theo giờ</h1>
       <div class="book-back">
         <!-- Mặc định về trang dịch vụ của nhóm; JS đổi thành trang vừa xem (xem / tìm dịch vụ) nếu có -->
-        <a class="btn btn-outline" th:href="@{/dich-vu/{id}(id=${danhMuc.id})}" data-quay-lai><svg class="ic"><use href="#i-left"/></svg><span data-quay-lai-text>Quay lại xem dịch vụ</span></a>
+        <a class="btn btn-outline" th:href="@{/dich-vu/chi-tiet/{id}(id=${dvChon})}" data-quay-lai><svg class="ic"><use href="#i-left"/></svg><span data-quay-lai-text>Quay lại xem dịch vụ</span></a>
         <a class="btn btn-ghost" href="/tim-dich-vu"><svg class="ic"><use href="#i-search"/></svg>Tìm dịch vụ khác</a>
       </div>
     </div>
@@ -25,11 +25,9 @@
 
     <!-- Thanh bước: bước đã qua bấm được để quay lại, bước chưa tới bị khoá -->
     <ol class="book-steps" aria-label="Các bước đặt dịch vụ">
-      <li><button type="button" data-toi-buoc="1"><span>1</span>Dịch vụ</button></li>
-      <li><button type="button" data-toi-buoc="2"><span>2</span>Hình thức</button></li>
-      <li><button type="button" data-toi-buoc="3"><span>3</span>Thời gian</button></li>
-      <li><button type="button" data-toi-buoc="4"><span>4</span>Xác nhận</button></li>
-      <li><button type="button" data-toi-buoc="5"><span>5</span>Thanh toán</button></li>
+      <li><button type="button" data-toi-buoc="3"><span>1</span>Thời gian</button></li>
+      <li><button type="button" data-toi-buoc="4"><span>2</span>Xác nhận</button></li>
+      <li><button type="button" data-toi-buoc="5"><span>3</span>Thanh toán</button></li>
     </ol>
 
     <input type="hidden" name="loaiHinhDat" th:value="${coTheoLan} ? 'TheoLan' : 'GoiThang'" data-loai-input>
@@ -37,7 +35,8 @@
     <div class="book-layout">
       <div>
         <!-- ===================== BƯỚC 1: DỊCH VỤ ===================== -->
-        <div data-buoc="1">
+        <!-- Dịch vụ và hình thức đã chọn ở trang chi tiết: hai khối dưới đây luôn ẩn, chỉ giữ giá trị gửi cùng form -->
+        <div data-buoc="1" hidden data-luon-an>
           <section class="panel">
             <h2>Chọn dịch vụ</h2>
             <p class="hint">Giá đã gồm công cộng tác viên.</p>
@@ -45,7 +44,7 @@
               <label class="opt nhom-opt" th:each="g : ${nhomDichVu}">
                 <input type="radio" name="maNhom" th:value="${g.ma}"
                        th:attr="data-ten=${g.ten},data-co-theo-lan=${g.coTheoLan},data-co-goi=${g.coGoiThang}">
-                <img th:src="${g.anh != null ? g.anh : danhMuc.hinhAnhUrl}" alt="" loading="lazy">
+                <span class="khung-anh" th:attr="style='--anh:url(' + ${g.anh != null ? g.anh : danhMuc.hinhAnhUrl} + ')'"><img th:src="${g.anh != null ? g.anh : danhMuc.hinhAnhUrl}" alt="" loading="lazy"></span>
                 <b th:text="${g.ten}">Dọn dẹp nhà theo giờ</b>
                 <span th:text="${g.coTheoLan and g.coGoiThang} ? 'Theo lần hoặc gói tháng' : (${g.coGoiThang} ? 'Gói tháng' : 'Theo lần')">Theo lần hoặc gói tháng</span>
                 <strong th:if="${g.giaTuText != null}" th:text="'Từ ' + ${g.giaTuText}">Từ 216.000đ</strong>
@@ -63,45 +62,33 @@
         </div>
 
         <!-- ===================== BƯỚC 2: HÌNH THỨC & THỜI LƯỢNG ===================== -->
-        <div data-buoc="2" hidden>
+        <div data-buoc="2" hidden data-luon-an>
           <section class="panel">
-            <h2>Đặt theo lần hay gói tháng?</h2>
+            <h2>Hình thức và thời lượng</h2>
             <p class="hint" data-ten-nhom-chon>Dịch vụ đã chọn</p>
-            <div class="opt-grid loai-grid">
-              <label class="opt">
-                <input type="radio" name="_loai" value="TheoLan">
-                <b>Theo lần</b>
-                <span>Một buổi làm, chọn ngày trong vòng 1 tháng tới.</span>
-              </label>
-              <label class="opt">
-                <input type="radio" name="_loai" value="GoiThang">
-                <b>Gói tháng</b>
-                <span>Nhiều buổi trong 1 tháng theo các thứ cố định, rẻ hơn đặt lẻ. Bắt đầu trong vòng 3 tháng tới.</span>
-              </label>
+            <div class="seg" role="radiogroup" aria-label="Hình thức đặt" style="margin-top:12px">
+              <label><input type="radio" name="_loai" value="TheoLan">Theo lần</label>
+              <label><input type="radio" name="_loai" value="GoiThang">Gói tháng</label>
             </div>
-          </section>
-
-          <section class="panel">
-            <h2 data-tieu-de-bien-the>Thời lượng / quy mô</h2>
-            <p class="hint">Chọn gói phù hợp với nhà bạn.</p>
-            <div class="opt-grid" data-group="TheoLan" th:if="${coTheoLan}">
+            <p class="hint seg-hint" data-goi-an>Một buổi làm, chọn ngày trong vòng 1 tháng tới.</p>
+            <p class="hint seg-hint" data-goi-hien hidden>Nhiều buổi trong 1 tháng theo các thứ cố định, rẻ hơn đặt lẻ. Bắt đầu trong vòng 3 tháng tới.</p>
+            <h3 class="tieu-de-nho" data-tieu-de-bien-the>Thời lượng / quy mô</h3>
+            <div class="opt-grid ngan" data-group="TheoLan" th:if="${coTheoLan}">
               <label class="opt" th:each="dv, st : ${danhMuc.dichVuTheoLan}" th:attr="data-ma=${dv.maDichVu}">
                 <input type="radio" name="dichVuId" th:value="${dv.id}"
                        th:checked="${dvChon != null ? dvChon == dv.id : st.first}"
                        th:attr="data-ten=${dv.tenDichVu},data-gia=${dv.gia},data-gia-text=${dv.giaText}">
-                <b th:text="${dv.tenDichVu}">Dọn dẹp nhà 3 giờ</b>
-                <span th:if="${dv.thoiGianText != null and !#strings.contains(dv.tenDichVu, dv.thoiGianText)}" th:text="${dv.thoiGianText}">3 giờ</span>
+                <b th:text="${#strings.indexOf(dv.tenDichVu, ' (') > 0} ? ${#strings.substring(dv.tenDichVu, #strings.indexOf(dv.tenDichVu, ' (') + 2, #strings.length(dv.tenDichVu) - 1)} : ${dv.tenDichVu}">3 giờ</b>
                 <strong th:text="${dv.giaText}">270.000đ</strong>
                 <s class="gia-goc" th:if="${dv.giaGocText != null}" th:text="${dv.giaGocText}">300.000đ</s>
               </label>
             </div>
-            <div class="opt-grid" data-group="GoiThang" th:if="${coGoiThang}">
+            <div class="opt-grid ngan" data-group="GoiThang" th:if="${coGoiThang}">
               <label class="opt" th:each="dv, st : ${danhMuc.dichVuGoiThang}" th:attr="data-ma=${dv.maDichVu}">
                 <input type="radio" name="dichVuId" th:value="${dv.id}"
                        th:checked="${dvChon != null ? dvChon == dv.id : (!coTheoLan and st.first)}"
                        th:attr="data-ten=${dv.tenDichVu},data-gia=${dv.gia},data-gia-text=${dv.giaText},data-so-buoi=${soBuoiGoi[dv.id]}">
-                <b th:text="${dv.tenDichVu}">Gói dọn dẹp 4 buổi</b>
-                <span th:text="${soBuoiGoi[dv.id] + ' buổi trong 1 tháng' + (dv.thoiGianText != null ? ' · ' + dv.thoiGianText + ' mỗi buổi' : '')}">13 buổi trong 1 tháng · 3 giờ mỗi buổi</span>
+                <b th:text="${#strings.indexOf(dv.tenDichVu, ' (') > 0} ? ${#strings.substring(dv.tenDichVu, #strings.indexOf(dv.tenDichVu, ' (') + 2, #strings.length(dv.tenDichVu) - 1)} : ${dv.tenDichVu}">Gói 8 buổi/tháng</b>
                 <strong th:text="${dv.giaText}">1.040.000đ</strong>
                 <s class="gia-goc" th:if="${dv.giaGocText != null}" th:text="${dv.giaGocText}">1.200.000đ</s>
               </label>
@@ -116,6 +103,14 @@
 
         <!-- ===================== BƯỚC 3: THỜI GIAN THỰC HIỆN ===================== -->
         <div data-buoc="3" hidden>
+          <section class="panel dv-da-chon">
+            <div>
+              <span class="hint" style="margin:0">Dịch vụ đã chọn</span>
+              <b th:text="${#strings.indexOf(dvDaChon.tenDichVu, ' (') > 0} ? ${#strings.substring(dvDaChon.tenDichVu, 0, #strings.indexOf(dvDaChon.tenDichVu, ' ('))} : ${dvDaChon.tenDichVu}">Dọn dẹp nhà theo giờ</b>
+              <span th:text="(${dvLaGoi} ? 'Gói tháng' : 'Theo lần') + ' · ' + (${#strings.indexOf(dvDaChon.tenDichVu, ' (') > 0} ? ${#strings.substring(dvDaChon.tenDichVu, #strings.indexOf(dvDaChon.tenDichVu, ' (') + 2, #strings.length(dvDaChon.tenDichVu) - 1)} : ${dvDaChon.tenDichVu}) + ' · ' + ${dvDaChon.giaText}">Theo lần · 2 giờ · 216.000đ</span>
+            </div>
+            <a class="btn btn-outline btn-sm" th:href="@{/dich-vu/chi-tiet/{id}(id=${dvDaChon.id})}">Đổi</a>
+          </section>
           <section class="panel">
             <h2 data-tieu-de-ngay>Ngày và giờ bắt đầu</h2>
             <p class="hint" data-goi-an>Đặt theo lần: chọn ngày trong vòng 1 tháng tới. Giờ bắt đầu cần sau hiện tại ít nhất 1 giờ.</p>
@@ -125,7 +120,7 @@
                  th:attr="data-max-theo-lan=${ngayToiDaTheoLan},data-max-goi=${ngayToiDaGoiThang}">
               <input type="hidden" data-lich-dat>
               <input type="radio" name="ngayThucHien" checked hidden data-ngay-chon
-                     th:value="${ngays[1]}" th:attr="data-nhan=${thu[ngays[1].dayOfWeek.value - 1] + ' ' + #temporals.format(ngays[1], 'dd/MM')}">
+                     th:value="${ngays[1]}" th:attr="data-nhan=${thu[ngays[1].dayOfWeek.value - 1] + ' ' + #temporals.format(ngays[1], 'dd/MM/yyyy')}">
             </div>
             <div class="lich-chu-thich">
               <span><i class="cn"></i>Ngày đang chọn</span>
@@ -158,7 +153,7 @@
                 <span th:text="${t}">T2</span>
               </label>
             </div>
-            <div class="banner banner-ok" style="margin:16px 0 0" data-lich-ok hidden><svg class="ic"><use href="#i-calendar"/></svg><div><b data-lich-tom-tat>13 buổi, từ 09/10 đến 05/11</b><div data-lich-ngay style="margin-top:4px"></div></div></div>
+            <div class="banner banner-ok" style="margin:16px 0 0" data-lich-ok hidden><svg class="ic"><use href="#i-calendar"/></svg><div><b data-lich-tom-tat>13 buổi, từ 09/10/2026 đến 05/11/2026</b><div data-lich-ngay style="margin-top:4px"></div></div></div>
             <div class="banner banner-warn" style="margin:16px 0 0" data-lich-thieu hidden><svg class="ic"><use href="#i-alert"/></svg><span data-lich-loi>Chọn thêm thứ.</span></div>
           </section>
 
@@ -178,7 +173,7 @@
                   <span th:if="${dc.khuVuc == null}" style="display:block;color:var(--danger)">Ngoài khu vực phục vụ</span>
                 </div>
               </label>
-              <a class="link addr-more" th:href="@{/tai-khoan/dia-chi(quay-lai=${'/dat-dich-vu/' + danhMuc.id})}"><svg class="ic"><use href="#i-plus"/></svg>Thêm địa chỉ khác</a>
+              <a class="link addr-more" th:href="@{/tai-khoan/dia-chi(quay-lai=${'/dat-dich-vu/' + danhMuc.id + '?dv=' + dvChon})}"><svg class="ic"><use href="#i-plus"/></svg>Thêm địa chỉ khác</a>
             </div>
             <div th:if="${diaChis.isEmpty()}" class="form-grid">
               <th:block th:replace="~{layout/dia-chi-form :: truong('dat', null, null, null, null, true)}"></th:block>
@@ -360,8 +355,8 @@
       pg.querySelectorAll('input[name="ngayTrongTuan"]').forEach(function (i) { i.checked = ['3', '5', '7', 'CN'].indexOf(i.value) !== -1; });
     }
     form.querySelector('[data-tieu-de-ngay]').textContent = goi ? 'Ngày bắt đầu và giờ làm' : 'Ngày và giờ bắt đầu';
-    form.querySelector('[data-goi-an]').hidden = goi;
-    form.querySelector('[data-goi-hien]').hidden = !goi;
+    all('[data-goi-an]').forEach(function (el) { el.hidden = goi; });
+    all('[data-goi-hien]').forEach(function (el) { el.hidden = !goi; });
     form.querySelector('[data-sum-lich-row]').hidden = !goi;
     locBienThe();
     if (fpDat) {
@@ -397,8 +392,9 @@
   var THU_JS = { '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, 'CN': 0 };
   var TEN_THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
   var lichDu = true;
-  var buoiDau = null; // nhãn buổi đầu tiên của gói, vd "T5 08/10"
-  function dd(d) { return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0'); }
+  var buoiDau = null; // nhãn buổi đầu tiên của gói, vd "T5 08/10/2026"
+  // Ngày hiển thị luôn dd/MM/yyyy (web và app thống nhất)
+  function dd(d) { return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); }
   var radioNgay = form.querySelector('[data-ngay-chon]');
   var lichBuoi = {}; // các ngày có buổi của gói tháng: tô trên lịch
   function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -406,10 +402,11 @@
   function hienNgayChon() {
     var p = radioNgay.value.split('-');
     var d = new Date(+p[0], +p[1] - 1, +p[2]);
-    form.querySelector('[data-ngay-chon-text]').textContent = 'Ngày ' + (loaiInput.value === 'GoiThang' ? 'bắt đầu gói' : 'làm') + ': ' + THU_DAY[d.getDay()] + ', ' + dd(d) + '/' + d.getFullYear();
+    form.querySelector('[data-ngay-chon-text]').textContent = 'Ngày ' + (loaiInput.value === 'GoiThang' ? 'bắt đầu gói' : 'làm') + ': ' + THU_DAY[d.getDay()] + ', ' + dd(d);
   }
   var fpDat = window.flatpickr ? flatpickr(form.querySelector('[data-lich-dat]'), {
     inline: true,
+    onReady: function (a, b, fp) { fp.input.hidden = true; fp.input.style.display = 'none'; },
     dateFormat: 'Y-m-d',
     minDate: 'today',
     maxDate: ngayToiDa(),
@@ -685,6 +682,7 @@
   }
 
   function moBuoc(n, cuon) {
+    if (n < 3) n = 3;
     buoc = n;
     daToi = Math.max(daToi, n);
     all('[data-buoc]').forEach(function (s) { s.hidden = Number(s.getAttribute('data-buoc')) !== n; });
@@ -705,6 +703,8 @@
     moBuoc(sau);
   }
   function lui() {
+    // Bước đầu (Thời gian): quay lại trang chi tiết để đổi dịch vụ / hình thức / thời lượng
+    if (buoc <= 3) { location.href = '/dich-vu/chi-tiet/' + (form.querySelector('input[name="dichVuId"]:checked') || {}).value; return; }
     var truoc = buoc - 1;
     if (truoc === 2 && boQuaBuoc2()) truoc = 1;
     if (truoc >= 1) moBuoc(truoc);
@@ -756,9 +756,8 @@
   apDungLoai(loaiBanDau, true);
   if (dvBanDau && dvBanDau.closest('[data-group]').getAttribute('data-group') === loaiInput.value && !dvBanDau.disabled) dvBanDau.checked = true;
   khoaGio();
-  var coDvChon = /[?&]dv=\d+/.test(location.search);
-  moBuoc(coDvChon ? 3 : 1, false);
-  if (coDvChon) daToi = 3;
+  moBuoc(3, false);
+  daToi = 3;
   veThanhBuoc();
   tinhLich();
   capNhatTomTat();

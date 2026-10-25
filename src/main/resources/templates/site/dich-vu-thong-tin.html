@@ -7,14 +7,17 @@
 <main class="svc-info" th:with="phut=${dv.thoiGianThucHienPhut}, goi=${dv.loaiHinhDat == 'GoiThang'}">
   <div class="wrap">
     <div class="crumb">
-      <a href="/tim-dich-vu">Tìm dịch vụ</a><svg class="ic"><use href="#i-right"/></svg>
+      <a href="/tim-dich-vu" data-ve-tim-kiem>Tìm dịch vụ</a><svg class="ic"><use href="#i-right"/></svg>
       <a th:href="@{/tim-dich-vu(nhom=${dv.loaiDichVuId})}" th:text="${dv.tenLoaiDichVu}">Dọn dẹp nhà cửa</a>
     </div>
 
     <div class="detail-layout">
       <div class="stack">
         <section class="panel">
-          <img class="svc-photo" th:if="${anhDichVu != null}" th:src="${anhDichVu}" th:alt="${dv.tenDichVu}">
+          <!-- Ảnh hiện trọn (không cắt), nền là chính ảnh làm mờ -->
+          <div class="svc-photo khung-anh" th:if="${anhDichVu != null}" th:attr="style='--anh:url(' + ${anhDichVu} + ')'">
+            <img th:src="${anhDichVu}" th:alt="${dv.tenDichVu}">
+          </div>
           <h1 th:text="${dv.tenDichVu}">Dọn dẹp nhà theo diện tích 3 giờ</h1>
           <div class="svc-facts">
             <span class="badge badge-primary" th:text="${goi} ? 'Gói tháng' : 'Theo lần'">Theo lần</span>
@@ -25,12 +28,22 @@
           <p class="svc-desc" th:text="${dv.moTaChiTiet != null and !#strings.isEmpty(dv.moTaChiTiet)} ? ${dv.moTaChiTiet} : 'Chưa có mô tả chi tiết cho dịch vụ này.'">Mô tả dịch vụ</p>
         </section>
 
-        <!-- Các lựa chọn của cùng dịch vụ (cùng mã): thời lượng, kích thước, gói tháng -->
-        <section class="panel" th:if="${bienThe != null}">
-          <h2 style="margin-bottom:12px">Chọn gói phù hợp</h2>
+        <!-- Hình thức và thời lượng của cùng dịch vụ (cùng mã), giống bước 2 của trang đặt:
+             hai nút hình thức trên một hàng, mỗi thời lượng / gói một hàng ngắn -->
+        <section class="panel chon-goi" th:if="${bienThe != null}"
+                 th:with="coTheoLan=${!bienThe.?[loaiHinhDat != 'GoiThang'].isEmpty()}, coGoi=${!bienThe.?[loaiHinhDat == 'GoiThang'].isEmpty()}">
+          <h2 style="margin-bottom:12px">Chọn hình thức và thời lượng</h2>
+          <div class="seg" role="group" aria-label="Hình thức đặt" th:if="${coTheoLan and coGoi}">
+            <button type="button" data-chon-loai="TheoLan" th:attr="aria-pressed=${!goi}">Theo lần</button>
+            <button type="button" data-chon-loai="GoiThang" th:attr="aria-pressed=${goi}">Gói tháng</button>
+          </div>
+          <p class="hint seg-hint" data-hint-loai="TheoLan" th:hidden="${goi}">Một buổi làm, chọn ngày trong vòng 1 tháng tới.</p>
+          <p class="hint seg-hint" data-hint-loai="GoiThang" th:hidden="${!goi}">Nhiều buổi trong 1 tháng theo các thứ cố định, bắt đầu trong vòng 3 tháng tới.</p>
           <div class="variant-list">
             <a class="variant" th:each="b : ${bienThe}" th:href="@{/dich-vu/chi-tiet/{id}(id=${b.id})}"
-               th:classappend="${b.id == dv.id} ? 'is-current'" th:attr="aria-current=${b.id == dv.id ? 'page' : null}">
+               th:attr="aria-current=${b.id == dv.id ? 'page' : null},data-loai=${b.loaiHinhDat == 'GoiThang' ? 'GoiThang' : 'TheoLan'}"
+               th:hidden="${(b.loaiHinhDat == 'GoiThang') != goi}"
+               th:classappend="${b.id == dv.id} ? 'is-current'">
               <span class="variant-name" th:text="${#strings.indexOf(b.tenDichVu, ' (') > 0} ? ${#strings.substring(b.tenDichVu, #strings.indexOf(b.tenDichVu, ' (') + 2, #strings.length(b.tenDichVu) - 1)} : ${b.tenDichVu}">2 giờ</span>
               <span class="variant-type" th:text="${b.loaiHinhDat == 'GoiThang'} ? 'Gói tháng' : ${b.donViTinh}">Buổi</span>
               <b><span th:text="${#numbers.formatDecimal(b.giaHienTai, 0, 'POINT', 0, 'COMMA')} + 'đ'">216.000đ</span><s class="gia-goc" th:if="${giaGocBienThe != null and giaGocBienThe.get(b.id) != null}" th:text="${#numbers.formatDecimal(giaGocBienThe.get(b.id), 0, 'POINT', 0, 'COMMA')} + 'đ'">240.000đ</s></b>
@@ -77,6 +90,21 @@
     </div>
   </div>
 </main>
+
+<script>
+  // Đổi hình thức: lọc danh sách thời lượng / gói tại chỗ; bấm một dòng mở trang của lựa chọn đó
+  (function () {
+    var nut = document.querySelectorAll('[data-chon-loai]');
+    nut.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var loai = b.getAttribute('data-chon-loai');
+        nut.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+        document.querySelectorAll('.chon-goi [data-loai]').forEach(function (v) { v.hidden = v.getAttribute('data-loai') !== loai; });
+        document.querySelectorAll('[data-hint-loai]').forEach(function (h) { h.hidden = h.getAttribute('data-hint-loai') !== loai; });
+      });
+    });
+  })();
+</script>
 
 <footer th:replace="~{layout/site-layout :: footer}"></footer>
 <div th:replace="~{layout/site-layout :: scripts}"></div>

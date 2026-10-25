@@ -260,7 +260,7 @@
             <option value="">-- Chọn đơn chờ duyệt --</option>
             <th:block th:each="order : ${donDatDichVus}">
               <option th:if="${order.trangThai == 'ChoDuyet'}" th:value="${order.id}"
-                th:text="${(order.maDonDat != null ? order.maDonDat : '#DD-'+order.id) + ' · ' + (order.chiTietList != null and !order.chiTietList.isEmpty() ? order.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ') + ' · ' + (order.ngayThucHien != null ? #temporals.format(order.ngayThucHien,'dd/MM') : '')}">
+                th:text="${(order.maDonDat != null ? order.maDonDat : '#DD-'+order.id) + ' · ' + (order.chiTietList != null and !order.chiTietList.isEmpty() ? order.chiTietList[0].dichVu.tenDichVu : 'Dịch vụ') + ' · ' + (order.ngayThucHien != null ? #temporals.format(order.ngayThucHien,'dd/MM/yyyy') : '')}">
                 Đơn</option>
             </th:block>
           </select>

@@ -13,6 +13,9 @@ import java.util.List;
 public interface ChiTietDonDatRepository extends JpaRepository<ChiTietDonDat, Integer> {
     long countByDichVu_Id(Integer dichVuId);
 
+    /** Lượt đặt của cả dịch vụ (mọi thời lượng / gói cùng mã). */
+    long countByDichVu_MaDichVu(String maDichVu);
+
 
     List<ChiTietDonDat> findByDonDat_Id(Integer donDatId);
 

@@ -195,15 +195,30 @@ public class DanhGiaService {
         return m;
     }
 
-    /** Đánh giá công khai (đã duyệt) của một dịch vụ, mới nhất trước, kèm phản hồi mới nhất của bTaskee. */
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Repository.DichVuRepository dichVuRepository;
+
+    /**
+     * Đơn có dùng dịch vụ này không, tính theo mã dịch vụ: mọi thời lượng / gói cùng mã (VD DV101: 2 giờ, 3 giờ,
+     * gói tháng) là một dịch vụ, dùng chung đánh giá, bình luận, phản hồi. Dịch vụ chưa có mã thì so theo id.
+     */
+    static boolean donThuocDichVu(DonDatDichVu don, com.example.Model.DichVu dv) {
+        if (don == null || dv == null || don.getChiTietList() == null) return false;
+        String ma = dv.getMaDichVu();
+        boolean coMa = ma != null && !ma.isBlank();
+        return don.getChiTietList().stream().anyMatch(ct -> ct.getDichVu() != null
+                && (coMa ? ma.equals(ct.getDichVu().getMaDichVu()) : dv.getId().equals(ct.getDichVu().getId())));
+    }
+
+    /** Đánh giá công khai (đã duyệt) của dịch vụ, gom theo mã dịch vụ, mới nhất trước, kèm phản hồi mới nhất của bTaskee. */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> congKhaiTheoDichVu(Integer dichVuId) {
         List<Map<String, Object>> ketQua = new ArrayList<>();
+        com.example.Model.DichVu dv = dichVuRepository.findById(dichVuId).orElse(null);
+        if (dv == null) return ketQua;
         danhGiaRepository.findAll().stream()
                 .filter(DanhGiaService::laCongKhai)
-                .filter(dg -> dg.getDonDat() != null && dg.getDonDat().getChiTietList() != null
-                        && dg.getDonDat().getChiTietList().stream()
-                            .anyMatch(ct -> ct.getDichVu() != null && dichVuId.equals(ct.getDichVu().getId())))
+                .filter(dg -> donThuocDichVu(dg.getDonDat(), dv))
                 .sorted(Comparator.comparing(DanhGia::getNgayDanhGia, Comparator.nullsLast(Comparator.reverseOrder())))
                 .forEach(dg -> {
                     Map<String, Object> m = new LinkedHashMap<>();

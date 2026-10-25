@@ -220,3 +220,21 @@
     capNhatNut();
   });
 })();
+
+/* Quay về trang tìm dịch vụ trước đó (giữ bộ lọc): trang /tim-dich-vu ghi lại địa chỉ của mình,
+   các link [data-ve-tim-kiem] (đường dẫn "Dịch vụ" ở trang đặt, "Tìm dịch vụ" ở trang chi tiết) trỏ về đó. */
+(function () {
+  var KHOA = 'btaskee.timDichVuGanNhat';
+  function ghi() {
+    try { sessionStorage.setItem(KHOA, location.pathname + location.search); } catch (e) { /* bỏ qua */ }
+  }
+  if (location.pathname.indexOf('/tim-dich-vu') === 0) {
+    ghi();
+    window.addEventListener('pagehide', ghi);   // bộ lọc đổi URL bằng history: ghi lại lúc rời trang
+    window.addEventListener('popstate', ghi);
+  }
+  var luu = null;
+  try { luu = sessionStorage.getItem(KHOA); } catch (e) { /* bỏ qua */ }
+  if (!luu || luu.indexOf('/tim-dich-vu') !== 0) return;
+  document.querySelectorAll('[data-ve-tim-kiem]').forEach(function (a) { a.href = luu; });
+})();

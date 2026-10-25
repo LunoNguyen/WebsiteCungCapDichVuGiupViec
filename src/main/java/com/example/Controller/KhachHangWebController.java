@@ -256,8 +256,16 @@ public class KhachHangWebController {
         List<DanhMucView> danhMucs = (List<DanhMucView>) model.getAttribute("danhMucs");
         DanhMucView danhMuc = CatalogService.timDanhMuc(danhMucs, danhMucId);
         if (danhMuc == null) return "redirect:/dich-vu";
+        // Dịch vụ, hình thức và thời lượng chọn ở trang chi tiết; chưa chọn (hoặc không thuộc danh mục) thì về danh sách dịch vụ
+        com.example.DTO.view.DichVuView dvDaChon = null;
+        boolean laGoi = false;
+        for (com.example.DTO.view.DichVuView x : danhMuc.getDichVuTheoLan()) if (x.getId().equals(dv)) dvDaChon = x;
+        for (com.example.DTO.view.DichVuView x : danhMuc.getDichVuGoiThang()) if (x.getId().equals(dv)) { dvDaChon = x; laGoi = true; }
+        if (dvDaChon == null) return "redirect:/tim-dich-vu?nhom=" + danhMucId;
         model.addAttribute("danhMuc", danhMuc);
         model.addAttribute("dvChon", dv);
+        model.addAttribute("dvDaChon", dvDaChon);
+        model.addAttribute("dvLaGoi", laGoi);
         Map<Integer, Integer> soBuoiGoi = new java.util.HashMap<>();
         danhMuc.getDichVuGoiThang().forEach(g -> soBuoiGoi.put(g.getId(), LichGoiThang.soBuoi(g.getSoBuoi(), g.getTenDichVu())));
         model.addAttribute("soBuoiGoi", soBuoiGoi);
