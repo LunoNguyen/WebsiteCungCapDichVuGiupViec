@@ -237,6 +237,26 @@
       <div class="form-section-label">Ghi chú khách hàng</div>
       <div id="pd-ghichu" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;font-size:0.875rem;color:var(--text-secondary);min-height:60px">---</div>
     </div>
+    <!-- Hình ảnh hiện trạng tài sản Trước & Sau khi thực hiện dịch vụ -->
+    <div id="pd-taisan-wrap" style="margin-top:1.25rem;display:none">
+      <div class="form-section-label">Hình ảnh tài sản (Trước &amp; Sau dịch vụ)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.75rem">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-primary);margin-bottom:0.4rem;display:flex;justify-content:space-between;gap:4px;flex-wrap:wrap">
+            <span>📷 Trước khi làm</span>
+            <span id="pd-taisan-truoc-time" style="font-weight:400;color:var(--text-muted)"></span>
+          </div>
+          <div id="pd-taisan-truoc-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px"></div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:0.75rem">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--success,#16a34a);margin-bottom:0.4rem;display:flex;justify-content:space-between;gap:4px;flex-wrap:wrap">
+            <span>✅ Sau khi hoàn thành</span>
+            <span id="pd-taisan-sau-time" style="font-weight:400;color:var(--text-muted)"></span>
+          </div>
+          <div id="pd-taisan-sau-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px"></div>
+        </div>
+      </div>
+    </div>
     <div style="margin-top:1rem">
       <div class="form-section-label">Ghi chú nội bộ CSKH</div>
       <textarea class="form-control" rows="3" placeholder="Thêm ghi chú xử lý nội bộ..."></textarea>
@@ -759,6 +779,48 @@
     document.getElementById(id).textContent = value && String(value).trim() ? value : '---';
   }
 
+  function renderTaiSanPanel(d) {
+    var wrap = document.getElementById('pd-taisan-wrap');
+    if (!wrap) return;
+    var truoc = (d && Array.isArray(d.anhTruocDichVu)) ? d.anhTruocDichVu : [];
+    var sau = (d && Array.isArray(d.anhSauDichVu)) ? d.anhSauDichVu : [];
+    if (!truoc.length && !sau.length) {
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = 'block';
+    document.getElementById('pd-taisan-truoc-time').textContent = (d && d.thoiGianChupTruoc) ? d.thoiGianChupTruoc : '';
+    document.getElementById('pd-taisan-sau-time').textContent = (d && d.thoiGianChupSau) ? d.thoiGianChupSau : '';
+
+    var fillImages = function (elId, list, emptyMsg) {
+      var box = document.getElementById(elId);
+      box.innerHTML = '';
+      if (!list.length) {
+        var span = document.createElement('span');
+        span.style.cssText = 'font-size:0.75rem;color:var(--text-muted);grid-column:1/-1';
+        span.textContent = emptyMsg;
+        box.appendChild(span);
+        return;
+      }
+      list.forEach(function (url) {
+        var a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.style.cssText = 'display:block;border-radius:6px;overflow:hidden;border:1px solid var(--border);aspect-ratio:4/3;background:#fff';
+        var img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Ảnh tài sản';
+        img.loading = 'lazy';
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+        a.appendChild(img);
+        box.appendChild(a);
+      });
+    };
+    fillImages('pd-taisan-truoc-list', truoc, 'Chưa chụp ảnh trước khi làm');
+    fillImages('pd-taisan-sau-list', sau, 'Chưa chụp ảnh sau khi làm');
+  }
+
   // Hiển thị vị trí thực hiện dịch vụ theo địa chỉ của đơn
   function showOrderMap(address) {
     var wrap = document.getElementById('pd-map-wrap');
@@ -921,6 +983,7 @@
         setText('pd-tien', d.thanhTien);
         setText('pd-tt', TRANG_THAI_DON[d.trangThai] || d.trangThai);
         setText('pd-ghichu', [d.yeuCauDacBiet, d.luuYDiaChi, d.ghiChu].filter(Boolean).join(' · '));
+        renderTaiSanPanel(d);
         // Đơn đang thực hiện: bản đồ theo dõi trực tiếp CTV; đơn khác: bản đồ tĩnh theo địa chỉ
         if (d.trangThai === 'DangThucHien') {
           startTracking(id);

@@ -39,6 +39,8 @@ public class DonDatChiTietController {
     private com.example.Service.ViTriCtvStore viTriCtvStore;
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Service.GeocodingService geocodingService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Service.CollaboratorApiService collaboratorApiService;
 
     public DonDatChiTietController(DonDatDichVuRepository donDatDichVuRepository,
                                    PhanCongCTVRepository phanCongCTVRepository) {
@@ -97,6 +99,9 @@ public class DonDatChiTietController {
         body.put("trangThai", don.getTrangThai());
         body.put("yeuCauDacBiet", don.getYeuCauDacBiet() != null ? don.getYeuCauDacBiet() : "");
         body.put("ghiChu", don.getGhiChu() != null ? don.getGhiChu() : "");
+        if (collaboratorApiService != null) {
+            body.putAll(collaboratorApiService.layThongTinTaiSanDon(don.getId()));
+        }
         return ResponseEntity.ok(body);
     }
 

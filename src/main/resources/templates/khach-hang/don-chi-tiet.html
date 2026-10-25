@@ -78,6 +78,53 @@
             <p class="hint" style="margin:0" th:if="${don['congTacVien'] == null}">Chưa có cộng tác viên nhận đơn. bTaskee sẽ báo cho bạn khi có người nhận.</p>
           </section>
 
+          <!-- Hình ảnh hiện trạng tài sản khu vực thực hiện (Trước & Sau khi làm dịch vụ) -->
+          <section class="panel" id="hinh-anh-tai-san" th:if="${don['daChupTruocDichVu'] == true or don['daChupSauDichVu'] == true}">
+            <h2 style="margin-bottom:6px">Hình ảnh tài sản khu vực thực hiện</h2>
+            <p class="hint" style="margin:0 0 16px">Ảnh hiện trạng tài sản do cộng tác viên ghi nhận trực tiếp trước và sau khi thực hiện dịch vụ.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+              <!-- Trước khi thực hiện -->
+              <div style="border:1px solid #e2e8f0;border-radius:12px;padding:14px;background:#f8fafc">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                  <span style="font-weight:700;font-size:14px;color:#0f172a">📷 Trước khi thực hiện</span>
+                  <span th:if="${don['thoiGianChupTruoc'] != null}" style="font-size:12px;color:#64748b" th:text="${don['thoiGianChupTruoc']}">08:00 25/10/2026</span>
+                </div>
+                <div th:if="${don['anhTruocDichVu'] != null and !don['anhTruocDichVu'].isEmpty()}"
+                     style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">
+                  <a th:each="imgUrl : ${don['anhTruocDichVu']}" th:href="${imgUrl}" target="_blank" rel="noopener"
+                     style="display:block;border-radius:8px;overflow:hidden;border:1px solid #cbd5e1;aspect-ratio:4/3;background:#fff">
+                    <img th:src="${imgUrl}" alt="Tài sản trước dịch vụ" loading="lazy"
+                         style="width:100%;height:100%;object-fit:cover;display:block">
+                  </a>
+                </div>
+                <p class="hint" style="margin:8px 0 0;font-size:12px"
+                   th:if="${don['chiTietTruocDichVu'] != null and !don['chiTietTruocDichVu'].isEmpty()}"
+                   th:text="${don['chiTietTruocDichVu'][0]['khuVucVatDung'] + ' · ' + don['chiTietTruocDichVu'][0]['moTaHienTrang']}"></p>
+                <p class="hint" style="margin:0" th:if="${don['anhTruocDichVu'] == null or don['anhTruocDichVu'].isEmpty()}">Chưa có ảnh trước khi thực hiện.</p>
+              </div>
+
+              <!-- Sau khi thực hiện -->
+              <div style="border:1px solid #bbf7d0;border-radius:12px;padding:14px;background:#f0fdf4">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                  <span style="font-weight:700;font-size:14px;color:#166534">✅ Sau khi hoàn thành</span>
+                  <span th:if="${don['thoiGianChupSau'] != null}" style="font-size:12px;color:#15803d" th:text="${don['thoiGianChupSau']}">10:00 25/10/2026</span>
+                </div>
+                <div th:if="${don['anhSauDichVu'] != null and !don['anhSauDichVu'].isEmpty()}"
+                     style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">
+                  <a th:each="imgUrl : ${don['anhSauDichVu']}" th:href="${imgUrl}" target="_blank" rel="noopener"
+                     style="display:block;border-radius:8px;overflow:hidden;border:1px solid #86efac;aspect-ratio:4/3;background:#fff">
+                    <img th:src="${imgUrl}" alt="Tài sản sau dịch vụ" loading="lazy"
+                         style="width:100%;height:100%;object-fit:cover;display:block">
+                  </a>
+                </div>
+                <p class="hint" style="margin:8px 0 0;font-size:12px;color:#166534"
+                   th:if="${don['chiTietSauDichVu'] != null and !don['chiTietSauDichVu'].isEmpty()}"
+                   th:text="${don['chiTietSauDichVu'][0]['khuVucVatDung'] + ' · ' + don['chiTietSauDichVu'][0]['moTaHienTrang']}"></p>
+                <p class="hint" style="margin:0" th:if="${don['anhSauDichVu'] == null or don['anhSauDichVu'].isEmpty()}">Đang chờ cộng tác viên hoàn thành và chụp ảnh nghiệm thu.</p>
+              </div>
+            </div>
+          </section>
+
           <!-- Đánh giá sau khi hoàn thành -->
           <section class="panel" id="danh-gia" th:if="${don.trangThai == 'HoanThanh' and don['danhGia'] == null}">
             <h2>Đánh giá buổi làm</h2>

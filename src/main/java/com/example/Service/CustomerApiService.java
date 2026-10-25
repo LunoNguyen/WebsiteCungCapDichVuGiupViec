@@ -79,6 +79,9 @@ public class CustomerApiService {
     @Autowired
     private ViTriCtvStore viTriCtvStore;
 
+    @Autowired
+    private CollaboratorApiService collaboratorApiService;
+
     @org.springframework.beans.factory.annotation.Value("${app.esms.otp-template:bTaskee: Ma xac thuc OTP cua ban la %s. Ma co hieu luc trong 5 phut.}")
     private String otpTemplate;
 
@@ -1662,6 +1665,11 @@ public class CustomerApiService {
         // Đánh giá nếu có (kèm trạng thái duyệt, hạn sửa và trao đổi với bTaskee)
         Map<String, Object> danhGia = danhGiaService.cuaDon(d.getId());
         if (danhGia != null) result.put("danhGia", danhGia);
+
+        // Hình ảnh tài sản Trước & Sau khi thực hiện dịch vụ
+        if (collaboratorApiService != null) {
+            result.putAll(collaboratorApiService.layThongTinTaiSanDon(d.getId()));
+        }
 
         return result;
     }
