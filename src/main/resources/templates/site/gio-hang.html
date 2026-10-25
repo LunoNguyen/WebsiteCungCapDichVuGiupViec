@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/site-layout :: head('Giỏ hàng dịch vụ', 'Quản lý các dịch vụ đã chọn và đặt nhanh.')}"></head>
+<body>
+<header th:replace="~{layout/site-layout :: header('dich-vu')}"></header>
+
+<main class="cart-page" style="padding: 28px 0 60px; min-height: 70vh; background: #f9fafb;">
+  <div class="wrap" style="max-width: 1040px; margin: 0 auto; padding: 0 16px;">
+    
+    <!-- Breadcrumb -->
+    <div class="crumb" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #6b7280; margin-bottom: 20px;">
+      <a href="/dich-vu" style="color: #4b5563; text-decoration: none;">Dịch vụ</a>
+      <svg class="ic" style="width: 16px; height: 16px;"><use href="#i-right"/></svg>
+      <span style="color: #111827; font-weight: 600;">Giỏ hàng</span>
+    </div>
+
+    <!-- Header Title -->
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px;">
+      <h1 style="font-size: 26px; font-weight: 800; color: #111827; margin: 0;">
+        Giỏ hàng (<span id="cartTotalItemsCount">0</span>)
+      </h1>
+      <button type="button" id="btnXoaTatCa" style="background: none; border: none; color: #ef4444; font-size: 14px; font-weight: 600; cursor: pointer; display: none;">
+        Xóa tất cả
+      </button>
+    </div>
+
+    <!-- Amber Cache Banner -->
+    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px;">
+      <svg class="ic" style="width: 20px; height: 20px; color: #d97706; flex-shrink: 0; margin-top: 2px;"><use href="#i-info"/></svg>
+      <div style="font-size: 13.5px; color: #92400e; line-height: 1.5;">
+        <b>Lưu ý:</b> Giỏ hàng được lưu tạm trên bộ nhớ trình duyệt (Cache). Bạn có thể chọn nhiều dịch vụ khác nhau để đặt thuận tiện theo phong cách TikTok/Shopee.
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="cartEmptyState" style="display: none; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1px solid #e5e7eb;">
+      <div style="width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 50%; background: #ffebd8; display: flex; align-items: center; justify-content: center; color: #e8650c;">
+        <svg class="ic" style="width: 40px; height: 40px;"><use href="#i-grid"/></svg>
+      </div>
+      <h2 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px;">Giỏ hàng của bạn đang trống</h2>
+      <p style="font-size: 14px; color: #6b7280; margin-bottom: 24px;">Hãy chọn các dịch vụ phù hợp để thêm vào giỏ và đặt dịch vụ thuận tiện.</p>
+      <a href="/tim-dich-vu" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">Khám phá dịch vụ</a>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div id="cartContentLayout" style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;">
+      
+      <!-- List Items Card -->
+      <div style="background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden;">
+        <!-- Header Row -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #f3f4f6; background: #fafafa;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #374151;">
+            <input type="checkbox" id="chkSelectAll" style="width: 18px; height: 18px; accent-color: #e8650c; cursor: pointer;">
+            <span>Chọn tất cả (<span id="cartHeaderCount">0</span>)</span>
+          </label>
+          <a href="/tim-dich-vu" style="font-size: 13px; color: #e8650c; text-decoration: none; font-weight: 600;">+ Thêm dịch vụ</a>
+        </div>
+
+        <!-- Items Container -->
+        <div id="cartItemsList" style="padding: 4px 0;">
+          <!-- Rendered dynamically by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Checkout Summary Card -->
+      <aside style="background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; padding: 20px; position: sticky; top: 90px;">
+        <h3 style="font-size: 16px; font-weight: 800; color: #111827; margin-bottom: 16px; border-bottom: 1px solid #f3f4f6; padding-bottom: 12px;">
+          Tóm tắt đặt dịch vụ
+        </h3>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4b5563; margin-bottom: 10px;">
+          <span>Đã chọn:</span>
+          <b id="summarySelectedCount" style="color: #111827;">0 dịch vụ</b>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4b5563; margin-bottom: 16px;">
+          <span>Tạm tính:</span>
+          <b id="summarySubtotal" style="color: #111827;">0đ</b>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">
+
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px;">
+          <span style="font-size: 15px; font-weight: 700; color: #111827;">Tổng thanh toán:</span>
+          <div style="text-align: right;">
+            <div id="summaryTotal" style="font-size: 22px; font-weight: 800; color: #e8650c;">0đ</div>
+            <div style="font-size: 11px; color: #9ca3af;">Đã bao gồm thuế & phí</div>
+          </div>
+        </div>
+
+        <button type="button" id="btnDatDichVu" class="btn btn-primary btn-block btn-lg" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 800; border-radius: 12px; cursor: pointer;">
+          Đặt dịch vụ (<span id="btnDatCount">0</span>)
+        </button>
+
+        <a href="/tim-dich-vu" style="display: block; text-align: center; margin-top: 14px; font-size: 13.5px; color: #6b7280; text-decoration: none;">
+          ← Tiếp tục chọn dịch vụ
+        </a>
+      </aside>
+
+    </div>
+
+  </div>
+</main>
+
+<footer th:replace="~{layout/site-layout :: footer}"></footer>
+<div th:replace="~{layout/site-layout :: scripts}"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var listEl = document.getElementById('cartItemsList');
+  var emptyState = document.getElementById('cartEmptyState');
+  var contentLayout = document.getElementById('cartContentLayout');
+  var cartTotalItemsCount = document.getElementById('cartTotalItemsCount');
+  var cartHeaderCount = document.getElementById('cartHeaderCount');
+  var summarySelectedCount = document.getElementById('summarySelectedCount');
+  var summarySubtotal = document.getElementById('summarySubtotal');
+  var summaryTotal = document.getElementById('summaryTotal');
+  var btnDatDichVu = document.getElementById('btnDatDichVu');
+  var btnDatCount = document.getElementById('btnDatCount');
+  var chkSelectAll = document.getElementById('chkSelectAll');
+  var btnXoaTatCa = document.getElementById('btnXoaTatCa');
+
+  function fmtMoney(num) {
+    if (!num || isNaN(num)) return '0đ';
+    return Number(num).toLocaleString('vi-VN') + 'đ';
+  }
+
+  function renderCart() {
+    var items = window.CartCache ? window.CartCache.getCart() : [];
+    cartTotalItemsCount.textContent = items.length;
+    cartHeaderCount.textContent = items.length;
+
+    if (items.length === 0) {
+      emptyState.style.display = 'block';
+      contentLayout.style.display = 'none';
+      btnXoaTatCa.style.display = 'none';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    contentLayout.style.display = 'grid';
+    btnXoaTatCa.style.display = 'inline-block';
+
+    var allSelected = true;
+    var selectedCount = 0;
+    var totalPrice = 0;
+
+    listEl.innerHTML = '';
+
+    items.forEach(function (item) {
+      var isChecked = item.checked !== false;
+      if (!isChecked) allSelected = false;
+      else {
+        selectedCount++;
+        totalPrice += (Number(item.donGia) || 0);
+      }
+
+      var row = document.createElement('div');
+      row.className = 'cart-item-row';
+      row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #f3f4f6; transition: background .15s;';
+      if (isChecked) row.style.background = '#fffaf5';
+
+      row.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
+          <input type="checkbox" class="chk-item" data-id="${item.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #e8650c; cursor: pointer;">
+          
+          <div style="width: 48px; height: 48px; border-radius: 10px; background: #ffebd8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #e8650c;">
+            <svg class="ic" style="width: 24px; height: 24px;"><use href="#i-sparkles"/></svg>
+          </div>
+
+          <div style="flex: 1; min-width: 0;">
+            <a href="/dich-vu/chi-tiet/${item.id}" style="font-size: 14.5px; font-weight: 700; color: #111827; text-decoration: none; display: block; margin-bottom: 2px;">
+              ${item.tenDichVu}
+            </a>
+            <div style="font-size: 12.5px; color: #6b7280;">
+              ${item.thoiGianText ? item.thoiGianText + ' · ' : ''}${item.donViTinh || 'Buổi'}
+            </div>
+          </div>
+        </div>
+
+        <!-- Đơn giá & Nút xóa (KHÔNG CÓ nút - 0 + theo yêu cầu của bạn) -->
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <div style="font-size: 15px; font-weight: 800; color: #e8650c;">
+            ${fmtMoney(item.donGia)}
+          </div>
+
+          <!-- Nút xóa thùng rác -->
+          <button type="button" class="btn-del-item" data-id="${item.id}" title="Xóa dịch vụ này" style="border: none; background: none; color: #ef4444; cursor: pointer; padding: 6px; display: flex; align-items: center;">
+            <svg class="ic" style="width: 20px; height: 20px;"><use href="#i-trash"/></svg>
+          </button>
+        </div>
+      `;
+
+      listEl.appendChild(row);
+    });
+
+    chkSelectAll.checked = allSelected && items.length > 0;
+    summarySelectedCount.textContent = selectedCount + ' dịch vụ';
+    summarySubtotal.textContent = fmtMoney(totalPrice);
+    summaryTotal.textContent = fmtMoney(totalPrice);
+    btnDatCount.textContent = selectedCount;
+    btnDatDichVu.disabled = selectedCount === 0;
+  }
+
+  // Bắt sự kiện click
+  listEl.addEventListener('click', function (e) {
+    var chk = e.target.closest('.chk-item');
+    if (chk) {
+      var id = Number(chk.getAttribute('data-id'));
+      window.CartCache.toggleSelect(id);
+      renderCart();
+      return;
+    }
+
+    var btnDel = e.target.closest('.btn-del-item');
+    if (btnDel) {
+      var id = Number(btnDel.getAttribute('data-id'));
+      window.CartCache.removeItem(id);
+      renderCart();
+      return;
+    }
+  });
+
+  chkSelectAll.addEventListener('change', function () {
+    window.CartCache.selectAll(chkSelectAll.checked);
+    renderCart();
+  });
+
+  btnXoaTatCa.addEventListener('click', function () {
+    if (confirm('Bạn có chắc muốn xóa tất cả dịch vụ trong giỏ hàng?')) {
+      window.CartCache.saveCart([]);
+      renderCart();
+    }
+  });
+
+  btnDatDichVu.addEventListener('click', function () {
+    var items = window.CartCache.getCart().filter(function (x) { return x.checked !== false; });
+    if (items.length === 0) {
+      alert('Vui lòng chọn ít nhất 1 dịch vụ để đặt lịch.');
+      return;
+    }
+
+    var firstItem = items[0];
+    var allIds = items.map(function (x) { return x.id; });
+    var danhMucId = firstItem.danhMucId || 1;
+
+    // Vào thẳng màn đặt 3 bước chuẩn của nhóm trưởng
+    var url = '/dat-dich-vu/' + danhMucId + '?dv=' + firstItem.id + '&danhSachDichVu=' + allIds.join(',') + '&fromCart=true';
+    window.location.href = url;
+  });
+
+  renderCart();
+});
+</script>
+
+</body>
+</html>

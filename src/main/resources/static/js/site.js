@@ -238,3 +238,91 @@
   if (!luu || luu.indexOf('/tim-dich-vu') !== 0) return;
   document.querySelectorAll('[data-ve-tim-kiem]').forEach(function (a) { a.href = luu; });
 })();
+
+
+/* ============================================================
+   GIỎ HÀNG LƯU TẠM (CLIENT-SIDE CACHE) - PHONG CÁCH TIKTOK/SHOPEE
+   Không lưu CSDL MySQL. Không có nút tăng/giảm số lượng (- 0 +).
+   ============================================================ */
+(function () {
+  var CART_KEY = 'btaskee_cart_items_v2';
+
+  window.CartCache = {
+    getCart: function () {
+      try {
+        var raw = localStorage.getItem(CART_KEY);
+        if (!raw) {
+          // Khởi tạo 1 dịch vụ mẫu lần đầu để thấy ngay nút giỏ hàng và badge nổi bật
+          var defaultItems = [
+            { id: 2, tenDichVu: 'Dọn dẹp nhà theo diện tích 2 giờ', donGia: 216000, thoiGianText: '120 phút', donViTinh: 'Buổi', checked: true, danhMucId: 1 }
+          ];
+          localStorage.setItem(CART_KEY, JSON.stringify(defaultItems));
+          return defaultItems;
+        }
+        return JSON.parse(raw) || [];
+      } catch (e) {
+        return [];
+      }
+    },
+
+    saveCart: function (items) {
+      try {
+        localStorage.setItem(CART_KEY, JSON.stringify(items || []));
+      } catch (e) {}
+      this.updateBadge();
+    },
+
+    addItem: function (item) {
+      var items = this.getCart();
+      var existing = items.find(function (x) { return x.id === item.id; });
+      if (existing) {
+        existing.checked = true;
+      } else {
+        item.checked = true;
+        items.push(item);
+      }
+      this.saveCart(items);
+      if (typeof window.siteToast === 'function') {
+        window.siteToast('Đã thêm "' + item.tenDichVu + '" vào giỏ hàng');
+      }
+    },
+
+    removeItem: function (id) {
+      var items = this.getCart().filter(function (x) { return x.id !== id; });
+      this.saveCart(items);
+    },
+
+    toggleSelect: function (id) {
+      var items = this.getCart();
+      var found = items.find(function (x) { return x.id === id; });
+      if (found) {
+        found.checked = !found.checked;
+        this.saveCart(items);
+      }
+    },
+
+    selectAll: function (checked) {
+      var items = this.getCart();
+      items.forEach(function (x) { x.checked = checked; });
+      this.saveCart(items);
+    },
+
+    updateBadge: function () {
+      var badge = document.getElementById('floatingCartBadge');
+      if (!badge) return;
+      var items = this.getCart();
+      var count = items.length;
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  };
+
+  // Cập nhật huy hiệu khi load trang
+  document.addEventListener('DOMContentLoaded', function () {
+    window.CartCache.updateBadge();
+  });
+})();

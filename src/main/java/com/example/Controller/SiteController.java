@@ -308,6 +308,11 @@ public class SiteController {
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Service.KhuVucService khuVucService;
 
+    @GetMapping("/gio-hang")
+    public String gioHang() {
+        return "site/gio-hang";
+    }
+
     /** Đăng ký làm cộng tác viên (UC: Đăng ký làm cộng tác viên). */
     @GetMapping("/tro-thanh-doi-tac")
     public String troThanhDoiTac(org.springframework.ui.Model model) {
