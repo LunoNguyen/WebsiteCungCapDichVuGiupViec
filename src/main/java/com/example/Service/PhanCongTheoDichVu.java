@@ -1,6 +1,7 @@
 package com.example.Service;
 
 import com.example.Model.ChiTietDonDat;
+import com.example.Model.DonDatDichVu;
 import com.example.Model.PhanCongCTV;
 
 import java.util.ArrayList;
@@ -85,5 +86,18 @@ public final class PhanCongTheoDichVu {
             if (!"HoanThanh".equalsIgnoreCase(pc.getTrangThai())) return false;
         }
         return co;
+    }
+
+    /**
+     * Tên dịch vụ CTV làm trong đơn: có phân công cả đơn thì mọi dịch vụ của đơn; ngược lại chỉ các dòng
+     * CTV đã nhận (đơn nhiều dịch vụ). Dạng "A", "A + B", "A + 2 dịch vụ khác".
+     */
+    public static String tenDichVuCuaCtv(DonDatDichVu don, List<PhanCongCTV> pcsCuaCtv) {
+        List<String> ten = new ArrayList<>();
+        for (PhanCongCTV pc : pcsCuaCtv) {
+            if (pc.getChiTietDonDat() == null) return DatNhieuDichVu.tenDichVuCuaDon(don, "");
+            if (pc.getChiTietDonDat().getDichVu() != null) ten.add(pc.getChiTietDonDat().getDichVu().getTenDichVu());
+        }
+        return ten.isEmpty() ? DatNhieuDichVu.tenDichVuCuaDon(don, "") : DatNhieuDichVu.tomTatDichVu(ten);
     }
 }

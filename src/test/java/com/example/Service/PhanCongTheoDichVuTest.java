@@ -77,4 +77,15 @@ class PhanCongTheoDichVuTest {
         assertFalse(PhanCongTheoDichVu.moiPhanCongXong(List.of(pc(10, "HoanThanh"), pc(11, "DaXacNhan"))));
         assertTrue(PhanCongTheoDichVu.moiPhanCongXong(List.of(pc(10, "HoanThanh"), pc(11, "HoanThanh"), pc(11, "TuChoi"))));
     }
+
+    @Test
+    void tenDichVuCuaCtvChiLayDongCuaHo() {
+        ChiTietDonDat a = ChiTietDonDat.builder().id(10).dichVu(DichVu.builder().id(1).tenDichVu("Dọn nhà").build()).build();
+        ChiTietDonDat b = ChiTietDonDat.builder().id(11).dichVu(DichVu.builder().id(2).tenDichVu("Giặt rèm").build()).build();
+        com.example.Model.DonDatDichVu don = com.example.Model.DonDatDichVu.builder().build();
+        don.setChiTietList(new java.util.ArrayList<>(List.of(a, b)));
+        PhanCongCTV cuaToi = PhanCongCTV.builder().trangThai("DaXacNhan").chiTietDonDat(b).build();
+        assertEquals("Giặt rèm", PhanCongTheoDichVu.tenDichVuCuaCtv(don, List.of(cuaToi)));
+        assertEquals("Dọn nhà + Giặt rèm", PhanCongTheoDichVu.tenDichVuCuaCtv(don, List.of(pc(null, "DaXacNhan"))));
+    }
 }

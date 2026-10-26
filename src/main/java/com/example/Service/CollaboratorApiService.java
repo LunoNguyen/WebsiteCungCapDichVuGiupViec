@@ -289,8 +289,18 @@ public class CollaboratorApiService {
 
         LocalDate today = LocalDate.now();
         List<Map<String, Object>> result = new ArrayList<>();
+        // Đơn nhiều dịch vụ: CTV có thể có nhiều phân công (mỗi dịch vụ một dòng) – gộp thành một dòng mỗi đơn
+        Map<Integer, List<PhanCongCTV>> pcTheoDon = new LinkedHashMap<>();
+        for (PhanCongCTV x : list) pcTheoDon.computeIfAbsent(x.getDonDat().getId(), k -> new ArrayList<>()).add(x);
+        Set<Integer> donDaLay = new HashSet<>();
         for (PhanCongCTV pc : list) {
             DonDatDichVu don = pc.getDonDat();
+            if (!donDaLay.add(don.getId())) continue;
+            List<PhanCongCTV> cungDon = pcTheoDon.get(don.getId());
+            // Ưu tiên phân công còn hiệu lực (phân công đầu tiên giữ lịch làm việc)
+            pc = cungDon.stream().filter(PhanCongTheoDichVu::hieuLuc)
+                    .min(Comparator.comparing(PhanCongCTV::getId)).orElse(pc);
+            List<PhanCongCTV> hieuLucCuaToi = cungDon.stream().filter(PhanCongTheoDichVu::hieuLuc).toList();
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("phanCongId", pc.getId());
             item.put("maPhanCong", pc.getMaPhanCong());
@@ -300,7 +310,7 @@ public class CollaboratorApiService {
             item.put("thoiGianPhanCong", pc.getThoiGianPhanCong());
             item.put("donDatId", don.getId());
             item.put("maDonDat", don.getMaDonDat());
-            String tenDichVu = DatNhieuDichVu.tenDichVuCuaDon(don, "");
+            String tenDichVu = PhanCongTheoDichVu.tenDichVuCuaCtv(don, hieuLucCuaToi.isEmpty() ? cungDon : hieuLucCuaToi);
             item.put("tenDichVu", tenDichVu);
 
             List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
@@ -1685,7 +1695,10 @@ public class CollaboratorApiService {
                     item.put("donDatId", d.getId());
                     item.put("maDonDat", d.getMaDonDat());
                     item.put("trangThaiDon", d.getTrangThai());
-                    String tenDv = DatNhieuDichVu.tenDichVuCuaDon(d, "");
+                    List<PhanCongCTV> pcCuaToi = phanCongCTVRepository.findAllByDonDat_Id(d.getId()).stream()
+                            .filter(x -> PhanCongTheoDichVu.hieuLuc(x) && x.getCongTacVien() != null
+                                    && x.getCongTacVien().getId().equals(congTacVienId)).toList();
+                    String tenDv = PhanCongTheoDichVu.tenDichVuCuaCtv(d, pcCuaToi.isEmpty() ? List.of(pc) : pcCuaToi);
                     item.put("tenDichVu", tenDv);
                     String fullDiaChi = CustomerAddressService.diaChiDayDu(d.getDiaChi());
                     item.put("diaChi", fullDiaChi);
