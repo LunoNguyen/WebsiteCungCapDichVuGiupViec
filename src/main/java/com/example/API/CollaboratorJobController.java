@@ -90,6 +90,24 @@ public class CollaboratorJobController {
     }
 
     /**
+     * Dòng sự kiện 5b (UC-CTV01): CTV chụp ảnh tài sản trước khi làm và bắt đầu thực hiện ca làm việc
+     */
+    @PutMapping("/assignments/{id}/start")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> startAssignment(
+            @PathVariable Integer id,
+            @RequestBody(required = false) AssignmentActionRequest req) {
+        try {
+            AssignmentActionRequest body = req != null ? req : new AssignmentActionRequest();
+            Map<String, Object> res = collaboratorApiService.startAssignment(id, body);
+            return ResponseEntity.ok(ApiResponse.ok("Đã gửi ảnh tài sản trước khi làm và bắt đầu thực hiện.", res));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi bắt đầu thực hiện đơn: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Dòng sự kiện 6-7 (UC-CTV01): CTV cập nhật trạng thái Hoàn thành kèm kết quả thực hiện
      */
     @PutMapping("/assignments/{id}/complete")

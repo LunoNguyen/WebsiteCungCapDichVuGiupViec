@@ -56,11 +56,15 @@ public class CollaboratorProfileController {
         }
     }
 
-    /** Bắt đầu ca làm việc */
+    /** Bắt đầu ca làm việc (yêu cầu kèm ảnh tài sản Trước khi thực hiện dịch vụ) */
     @PutMapping("/assignments/{id}/start")
-    public ResponseEntity<?> startAssignment(@PathVariable Integer id) {
+    public ResponseEntity<?> startAssignment(@PathVariable Integer id,
+                                             @RequestBody(required = false) AssignmentActionRequest req) {
         try {
-            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.startAssignment(id)));
+            AssignmentActionRequest body = req != null ? req : new AssignmentActionRequest();
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.startAssignment(id, body)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
@@ -93,13 +97,15 @@ public class CollaboratorProfileController {
         }
     }
 
-    /** Hoàn thành đơn, body tuỳ chọn: { "ketQuaThucHien": "..." } */
+    /** Hoàn thành đơn, body yêu cầu: danhSachHinhAnh (SauDichVu), ketQuaThucHien */
     @PutMapping("/assignments/{id}/complete")
     public ResponseEntity<?> completeAssignment(@PathVariable Integer id,
                                                 @RequestBody(required = false) AssignmentActionRequest req) {
         try {
             AssignmentActionRequest body = req != null ? req : new AssignmentActionRequest();
             return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.completeAssignment(id, body)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
