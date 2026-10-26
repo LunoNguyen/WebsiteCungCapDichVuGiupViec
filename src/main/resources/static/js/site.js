@@ -362,3 +362,28 @@
     window.CartCache.updateBadge();
   });
 })();
+
+/* Chuông thông báo trên header: hiện số thông báo chưa đọc ở góc phải trên */
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    var bell = document.querySelector('[data-bell]');
+    var badge = document.querySelector('[data-bell-count]');
+    if (!bell || !badge) return;
+    function capNhat() {
+      fetch('/tai-khoan/thong-bao/so-chua-doc', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d) return;
+          var so = Number(d.soChuaDoc) || 0;
+          badge.hidden = so <= 0;
+          badge.textContent = so > 99 ? '99+' : String(so);
+          bell.setAttribute('aria-label', so > 0 ? 'Thông báo (' + so + ' chưa đọc)' : 'Thông báo');
+        })
+        .catch(function () { /* mất mạng: giữ số cũ */ });
+    }
+    capNhat();
+    // Thông báo mới tới khi trang đang mở: hỏi lại mỗi phút, và ngay khi khách quay lại tab
+    setInterval(function () { if (document.visibilityState === 'visible') capNhat(); }, 60000);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') capNhat(); });
+  });
+})();

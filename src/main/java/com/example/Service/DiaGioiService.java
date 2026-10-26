@@ -319,9 +319,11 @@ public class DiaGioiService {
         if (soNhaTenDuong == null || soNhaTenDuong.isBlank()) {
             throw new IllegalArgumentException("Vui lòng nhập số nhà, tên đường.");
         }
-        String tinh = tenTinh(maTinh).orElseGet(() -> tinhThanhV1().stream()
+        // Tên tỉnh theo danh mục cũ (v1): mã tỉnh cũ đã sáp nhập không còn trong danh mục mới
+        String tinh = tinhThanhV1().stream()
                 .filter(t -> Objects.equals(t.get("ma"), maTinh)).map(t -> (String) t.get("ten")).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn tỉnh, thành phố.")));
+                .or(() -> tenTinh(maTinh))
+                .orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn tỉnh, thành phố."));
         String quan = tenQuanV1(maTinh, maQuan).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn quận, huyện."));
         String phuong = tenPhuongV1(maQuan, maPhuong).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn phường, xã."));
         String soNha = soNhaTenDuong.trim().replaceAll("\\s+", " ");
@@ -333,6 +335,97 @@ public class DiaGioiService {
 
         String diaChiDayDu = soNha + ", " + phuong + ", " + quan + ", " + tinh;
         return new DiaChiDaXacDinh(diaChiDayDu, kv, phuong, tinh);
+    }
+
+    // =========================================================================
+    // Ô TÌM ĐỊA CHỈ: gõ tên tỉnh / quận, dò cả sau sáp nhập (v2) lẫn trước sáp nhập (v1)
+    // =========================================================================
+
+    private volatile List<Map<String, Object>> quanTatCaV1;
+
+    /** Mọi quận, huyện cũ (một lần gọi /api/v1/?depth=2), kèm tên tỉnh cũ; mạng lỗi thì rỗng. */
+    private List<Map<String, Object>> quanTatCaV1() {
+        if (quanTatCaV1 != null) return quanTatCaV1;
+        try {
+            List<Map<String, Object>> ds = new ArrayList<>();
+            for (JsonNode p : goi(API_V1 + "/?depth=2")) {
+                for (JsonNode d : p.path("districts")) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("ma", d.path("code").asInt());
+                    m.put("ten", d.path("name").asText());
+                    m.put("maTinh", p.path("code").asInt());
+                    m.put("tenTinh", p.path("name").asText());
+                    ds.add(m);
+                }
+            }
+            quanTatCaV1 = List.copyOf(ds);
+            return quanTatCaV1;
+        } catch (Exception e) {
+            log.warn("Không tải được danh sách quận, huyện v1: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    /** Gợi ý cho ô tìm địa chỉ: [{loai: tinhMoi|tinhCu|quanCu, maTinh, maQuan?, ten, moTa}]. */
+    public List<Map<String, Object>> timTinhQuan(String q) {
+        boolean rong = q == null || q.isBlank();
+        return loc(q, tinhThanh(), rong ? List.of() : tinhThanhV1(), rong ? List.of() : quanTatCaV1(), 20);
+    }
+
+    private static final Set<String> VIET_TAT_HCM = Set.of("hcm", "tphcm", "tp hcm", "tp.hcm", "sai gon", "saigon", "sg");
+
+    /**
+     * Lọc gợi ý (không phân biệt dấu). Xếp: khớp đầu tên (bỏ "Tỉnh", "Quận"…) trước, khớp giữa tên,
+     * rồi quận khớp theo tên tỉnh cũ; cùng mức thì tỉnh mới → tỉnh cũ → quận cũ. Chuỗi rỗng: tỉnh sau sáp nhập.
+     */
+    static List<Map<String, Object>> loc(String q, List<Map<String, Object>> tinhMoi, List<Map<String, Object>> tinhCu,
+                                         List<Map<String, Object>> quanCu, int gioiHan) {
+        String k = boDau(q);
+        if (VIET_TAT_HCM.contains(k)) k = "ho chi minh";
+        record Ung(int diem, int loai, Map<String, Object> m) { }
+        List<Ung> ds = new ArrayList<>();
+        for (Map<String, Object> t : tinhMoi) {
+            int d = diem(k, (String) t.get("ten"), null);
+            if (d >= 0) ds.add(new Ung(d, 0, goiY("tinhMoi", (Integer) t.get("ma"), null, (String) t.get("ten"), "Sau sáp nhập · chọn phường, xã mới")));
+        }
+        if (!k.isEmpty()) {
+            for (Map<String, Object> t : tinhCu) {
+                int d = diem(k, (String) t.get("ten"), null);
+                if (d >= 0) ds.add(new Ung(d, 1, goiY("tinhCu", (Integer) t.get("ma"), null, (String) t.get("ten"), "Trước sáp nhập · chọn quận, huyện")));
+            }
+            for (Map<String, Object> qu : quanCu) {
+                int d = diem(k, (String) qu.get("ten"), (String) qu.get("tenTinh"));
+                if (d >= 0) ds.add(new Ung(d, 2, goiY("quanCu", (Integer) qu.get("maTinh"), (Integer) qu.get("ma"),
+                        (String) qu.get("ten"), qu.get("tenTinh") + " · trước sáp nhập")));
+            }
+        }
+        ds.sort(Comparator.comparingInt(Ung::diem).thenComparingInt(Ung::loai));
+        return ds.stream().limit(gioiHan).map(Ung::m).toList();
+    }
+
+    /** 0 = khớp đầu tên, 1 = khớp giữa tên, 2 = khớp tên tỉnh (của quận), -1 = không khớp. */
+    private static int diem(String k, String ten, String tenTinh) {
+        if (k.isEmpty()) return 0;
+        String t = boDau(ten);
+        if (t.replaceFirst("^(tinh|thanh pho|quan|huyen|thi xa)\\s+", "").startsWith(k)) return 0;
+        if (t.contains(k)) return 1;
+        return tenTinh != null && boDau(tenTinh).contains(k) ? 2 : -1;
+    }
+
+    private static Map<String, Object> goiY(String loai, Integer maTinh, Integer maQuan, String ten, String moTa) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("loai", loai);
+        m.put("maTinh", maTinh);
+        if (maQuan != null) m.put("maQuan", maQuan);
+        m.put("ten", ten);
+        m.put("moTa", moTa);
+        return m;
+    }
+
+    private static String boDau(String s) {
+        if (s == null) return "";
+        return java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "")
+                .replace('đ', 'd').replace('Đ', 'D').toLowerCase(Locale.ROOT).trim().replaceAll("\\s+", " ");
     }
 
     private JsonNode goi(String url) throws Exception {

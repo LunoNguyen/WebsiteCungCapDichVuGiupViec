@@ -38,6 +38,12 @@ public class DiaGioiController {
         return ResponseEntity.ok(ApiResponse.ok(tamQuanHcm.danhSach()));
     }
 
+    /** Ô tìm địa chỉ: gõ tên tỉnh / quận, gợi ý cả địa giới sau sáp nhập và trước sáp nhập. */
+    @GetMapping("/tim")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> tim(@RequestParam(defaultValue = "") String q) {
+        return ResponseEntity.ok(ApiResponse.ok(diaGioiService.timTinhQuan(q)));
+    }
+
     @GetMapping("/tinh")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> tinh() {
         return ResponseEntity.ok(ApiResponse.ok(diaGioiService.tinhThanh()));

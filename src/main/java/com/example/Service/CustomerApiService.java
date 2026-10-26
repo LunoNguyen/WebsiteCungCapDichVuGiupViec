@@ -343,6 +343,7 @@ public class CustomerApiService {
             com.example.DTO.request.AddressRequest dc = new com.example.DTO.request.AddressRequest();
             dc.setSoNhaTenDuong(req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet());
             dc.setMaTinh(req.getMaTinh());
+            dc.setMaQuan(req.getMaQuan());
             dc.setMaPhuong(req.getMaPhuong());
             dc.setKhuVucId(req.getKhuVucId());
             dc.setLaMacDinh(true);

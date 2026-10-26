@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -94,6 +95,7 @@ public class KhachHangWebController {
                              @RequestParam String nhapLaiMatKhau,
                              @RequestParam(required = false) String soNhaTenDuong,
                              @RequestParam(required = false) Integer maTinh,
+                             @RequestParam(required = false) Integer maQuan,
                              @RequestParam(required = false) Integer maPhuong,
                              @RequestParam(required = false) Integer khuVucId,
                              RedirectAttributes ra) {
@@ -119,6 +121,7 @@ public class KhachHangWebController {
             }
             req.setSoNhaTenDuong(soNhaTenDuong);
             req.setMaTinh(maTinh);
+            req.setMaQuan(maQuan);
             req.setMaPhuong(maPhuong);
             req.setKhuVucId(khuVucId);
             Map<String, Object> kq = customerApiService.registerCustomer(req);
@@ -395,6 +398,7 @@ public class KhachHangWebController {
                                 @RequestParam(required = false) Integer diaChiId,
                                 @RequestParam(required = false) String soNhaTenDuong,
                                 @RequestParam(required = false) Integer maTinh,
+                                @RequestParam(required = false) Integer maQuan,
                                 @RequestParam(required = false) Integer maPhuong,
                                 @RequestParam(required = false) Integer khuVucId,
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ngayThucHien,
@@ -445,6 +449,7 @@ public class KhachHangWebController {
                 // Địa chỉ mới nhập lúc đặt: tỉnh, phường + số nhà; khu vực suy ra từ phường
                 req.setSoNhaTenDuong(soNhaTenDuong);
                 req.setMaTinh(maTinh);
+                req.setMaQuan(maQuan);
                 req.setMaPhuong(maPhuong);
                 req.setKhuVucId(khuVucId);
             }
@@ -680,6 +685,23 @@ public class KhachHangWebController {
         return "khach-hang/thong-bao";
     }
 
+    /** Số thông báo chưa đọc cho chuông trên header (site.js gọi khi tải trang). */
+    @GetMapping("/tai-khoan/thong-bao/so-chua-doc")
+    @ResponseBody
+    public Map<String, Object> soThongBaoChuaDoc(HttpSession session) {
+        Integer tkId = khachHangId(session) == null ? null : taiKhoanId(session);
+        long so = 0;
+        if (tkId != null) {
+            try {
+                so = customerApiService.getCustomerNotifications(tkId).stream()
+                        .filter(m -> !Boolean.TRUE.equals(m.get("daDoc"))).count();
+            } catch (Exception e) {
+                log.warn("Không đếm được thông báo chưa đọc: {}", e.getMessage());
+            }
+        }
+        return Map.of("soChuaDoc", so);
+    }
+
     @PostMapping("/tai-khoan/thong-bao/da-doc")
     public String daDocTatCa(HttpSession session, HttpServletRequest request) {
         Integer khId = khachHangId(session);
@@ -718,6 +740,7 @@ public class KhachHangWebController {
     @PostMapping("/tai-khoan/dia-chi")
     public String themDiaChi(@RequestParam(required = false) String soNhaTenDuong,
                              @RequestParam(required = false) Integer maTinh,
+                             @RequestParam(required = false) Integer maQuan,
                              @RequestParam(required = false) Integer maPhuong,
                              @RequestParam(required = false) Integer khuVucId,
                              @RequestParam(required = false) BigDecimal dienTichNha,
@@ -731,6 +754,7 @@ public class KhachHangWebController {
             AddressRequest req = new AddressRequest();
             req.setSoNhaTenDuong(soNhaTenDuong);
             req.setMaTinh(maTinh);
+            req.setMaQuan(maQuan);
             req.setMaPhuong(maPhuong);
             req.setKhuVucId(khuVucId);
             req.setDienTichNha(dienTichNha);
@@ -749,6 +773,7 @@ public class KhachHangWebController {
     public String suaDiaChi(@PathVariable Integer id,
                             @RequestParam(required = false) String soNhaTenDuong,
                             @RequestParam(required = false) Integer maTinh,
+                            @RequestParam(required = false) Integer maQuan,
                             @RequestParam(required = false) Integer maPhuong,
                             @RequestParam(required = false) Integer khuVucId,
                             @RequestParam(required = false) BigDecimal dienTichNha,
@@ -761,6 +786,7 @@ public class KhachHangWebController {
             AddressRequest req = new AddressRequest();
             req.setSoNhaTenDuong(soNhaTenDuong);
             req.setMaTinh(maTinh);
+            req.setMaQuan(maQuan);
             req.setMaPhuong(maPhuong);
             req.setKhuVucId(khuVucId);
             req.setDienTichNha(dienTichNha);

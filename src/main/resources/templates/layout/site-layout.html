@@ -133,6 +133,11 @@
          th:href="${session.userRole == 'ROLE_GIAM_DOC' ? '/giam-doc/dashboard' : (session.userRole == 'ROLE_CSKH' ? '/cskh/dashboard' : (session.userRole == 'ROLE_MARKETING' ? '/marketing/dashboard' : '/hcns/dashboard'))}">Trang quản trị</a>
       <a class="btn btn-outline" href="/login" th:if="${session.khachHangId == null and session.userRole == null}">Đăng nhập</a>
       <a class="btn btn-primary hide-md" href="/tim-dich-vu">Đặt dịch vụ</a>
+      <a class="bell-btn" href="/tai-khoan/thong-bao" th:if="${session.khachHangId != null}"
+         th:classappend="${active == 'thong-bao'} ? 'is-active'" aria-label="Thông báo" title="Thông báo" data-bell>
+        <svg class="ic"><use href="#i-bell"/></svg>
+        <span class="bell-badge" hidden data-bell-count></span>
+      </a>
     </div>
   </div>
 
