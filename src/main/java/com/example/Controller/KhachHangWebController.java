@@ -349,7 +349,12 @@ public class KhachHangWebController {
         List<LocalDate> ngays = new ArrayList<>();
         for (int i = 0; i < 7; i++) ngays.add(LocalDate.now().plusDays(i));
         model.addAttribute("ngays", ngays);
-        model.addAttribute("gios", List.of("07:00", "08:00", "09:00", "10:00", "13:00", "14:00", "15:00", "16:00", "17:00"));
+        // Khung giờ và ngày giờ chọn sẵn giống app: hôm nay nếu còn giờ (sau hiện tại ít nhất 1 giờ), không thì ngày mai
+        model.addAttribute("gios", com.example.Service.RangBuocNgayDat.KHUNG_GIO.stream()
+                .map(g -> g.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))).toList());
+        LocalDateTime macDinh = com.example.Service.RangBuocNgayDat.macDinh(LocalDateTime.now());
+        model.addAttribute("ngayMacDinh", macDinh.toLocalDate());
+        model.addAttribute("gioMacDinh", macDinh.toLocalTime().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
         // Lịch: theo lần trong vòng 1 tháng, gói tháng bắt đầu trong vòng 3 tháng (RangBuocNgayDat)
         model.addAttribute("ngayToiDaTheoLan", com.example.Service.RangBuocNgayDat.ngayToiDa("TheoLan", LocalDate.now()));
         model.addAttribute("ngayToiDaGoiThang", com.example.Service.RangBuocNgayDat.ngayToiDa("GoiThang", LocalDate.now()));

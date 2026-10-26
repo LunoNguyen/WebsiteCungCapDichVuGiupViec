@@ -4,6 +4,8 @@ import com.example.Model.ChiTietDonDat;
 import com.example.Model.DonDatDichVu;
 import com.example.Model.PhanCongCTV;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -99,5 +101,39 @@ public final class PhanCongTheoDichVu {
             if (pc.getChiTietDonDat().getDichVu() != null) ten.add(pc.getChiTietDonDat().getDichVu().getTenDichVu());
         }
         return ten.isEmpty() ? DatNhieuDichVu.tenDichVuCuaDon(don, "") : DatNhieuDichVu.tomTatDichVu(ten);
+    }
+
+    /**
+     * Phần tiền đơn (sau khuyến mãi) ứng với các dịch vụ CTV làm: có phân công cả đơn thì cả đơn; ngược lại
+     * chia thanhTien của đơn theo tỉ lệ giá các dòng CTV nhận (giá các dòng đều 0 thì chia đều theo số dòng).
+     */
+    public static BigDecimal tienCuaCtv(DonDatDichVu don, List<PhanCongCTV> pcsCuaCtv) {
+        BigDecimal tienDon = don == null || don.getThanhTien() == null ? BigDecimal.ZERO : don.getThanhTien();
+        Set<Integer> dong = new LinkedHashSet<>();
+        for (PhanCongCTV pc : pcsCuaCtv) {
+            if (!hieuLuc(pc)) continue;
+            if (pc.getChiTietDonDat() == null) return tienDon;
+            dong.add(pc.getChiTietDonDat().getId());
+        }
+        return tienTheoDong(don, dong);
+    }
+
+    /** Phần tiền đơn (sau khuyến mãi) ứng với các dòng chi tiết [dong], chia theo tỉ lệ giá dòng. */
+    public static BigDecimal tienTheoDong(DonDatDichVu don, Set<Integer> dong) {
+        BigDecimal tienDon = don == null || don.getThanhTien() == null ? BigDecimal.ZERO : don.getThanhTien();
+        List<ChiTietDonDat> cts = don == null || don.getChiTietList() == null ? List.of() : don.getChiTietList();
+        if (dong.isEmpty() || cts.isEmpty()) return BigDecimal.ZERO;
+        BigDecimal tong = BigDecimal.ZERO, cuaCtv = BigDecimal.ZERO;
+        int soDongCuaCtv = 0;
+        for (ChiTietDonDat ct : cts) {
+            BigDecimal gia = ct.getThanhTien() == null ? BigDecimal.ZERO : ct.getThanhTien();
+            tong = tong.add(gia);
+            if (dong.contains(ct.getId())) { cuaCtv = cuaCtv.add(gia); soDongCuaCtv++; }
+        }
+        if (soDongCuaCtv == cts.size()) return tienDon;
+        if (tong.signum() == 0) {
+            return tienDon.multiply(BigDecimal.valueOf(soDongCuaCtv)).divide(BigDecimal.valueOf(cts.size()), 0, RoundingMode.HALF_UP);
+        }
+        return tienDon.multiply(cuaCtv).divide(tong, 0, RoundingMode.HALF_UP);
     }
 }

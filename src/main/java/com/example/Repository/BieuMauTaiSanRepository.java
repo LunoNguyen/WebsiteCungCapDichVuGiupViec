@@ -11,4 +11,7 @@ public interface BieuMauTaiSanRepository extends JpaRepository<BieuMauTaiSan, In
     List<BieuMauTaiSan> findByDonDat_IdOrderByThoiGianGhiNhanAsc(Integer donDatId);
 
     List<BieuMauTaiSan> findByDonDat_IdAndLoaiBieuMauOrderByThoiGianGhiNhanDesc(Integer donDatId, String loaiBieuMau);
+
+    /** CTV này đã tự chụp ảnh tài sản (TruocDichVu / SauDichVu) cho đơn chưa – đơn nhiều dịch vụ mỗi CTV chụp riêng. */
+    boolean existsByDonDat_IdAndCongTacVien_IdAndLoaiBieuMau(Integer donDatId, Integer congTacVienId, String loaiBieuMau);
 }

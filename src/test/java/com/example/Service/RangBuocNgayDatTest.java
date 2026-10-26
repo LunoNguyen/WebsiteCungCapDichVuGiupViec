@@ -49,4 +49,31 @@ class RangBuocNgayDatTest {
         assertTrue(RangBuocNgayDat.loiNgayDat("TheoLan", null, CHIN_GIO, BAY_GIO).contains("chọn ngày và giờ"));
         assertTrue(RangBuocNgayDat.loiNgayDat("TheoLan", LocalDate.of(2026, 2, 1), null, BAY_GIO).contains("chọn ngày và giờ"));
     }
+
+    // ---------- Ngày giờ mặc định khi mở trang đặt (giống app: hôm nay nếu còn khung giờ, không thì ngày mai) ----------
+
+    @Test
+    void khungGioGiongApp7hDen17h() {
+        assertEquals(11, RangBuocNgayDat.KHUNG_GIO.size());
+        assertEquals(LocalTime.of(7, 0), RangBuocNgayDat.KHUNG_GIO.get(0));
+        assertEquals(LocalTime.of(17, 0), RangBuocNgayDat.KHUNG_GIO.get(10));
+    }
+
+    @Test
+    void sangSomThiHomNayGioHopLeDauTien() {
+        assertEquals(LocalDateTime.of(2026, 10, 27, 10, 0),
+                RangBuocNgayDat.macDinh(LocalDateTime.of(2026, 10, 27, 8, 30)));
+    }
+
+    @Test
+    void dungMotTiengThiVanDuoc() {
+        assertEquals(LocalDateTime.of(2026, 10, 27, 9, 0),
+                RangBuocNgayDat.macDinh(LocalDateTime.of(2026, 10, 27, 8, 0)));
+    }
+
+    @Test
+    void hetKhungGioHomNayThiNgayMai7h() {
+        assertEquals(LocalDateTime.of(2026, 10, 28, 7, 0),
+                RangBuocNgayDat.macDinh(LocalDateTime.of(2026, 10, 27, 16, 1)));
+    }
 }

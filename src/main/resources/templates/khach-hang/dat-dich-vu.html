@@ -144,7 +144,7 @@
                  th:attr="data-max-theo-lan=${ngayToiDaTheoLan},data-max-goi=${ngayToiDaGoiThang}">
               <input type="hidden" data-lich-dat>
               <input type="radio" name="ngayThucHien" checked hidden data-ngay-chon
-                     th:value="${ngays[1]}" th:attr="data-nhan=${thu[ngays[1].dayOfWeek.value - 1] + ' ' + #temporals.format(ngays[1], 'dd/MM/yyyy')}">
+                     th:value="${ngayMacDinh}" th:attr="data-nhan=${thu[ngayMacDinh.dayOfWeek.value - 1] + ' ' + #temporals.format(ngayMacDinh, 'dd/MM/yyyy')}">
             </div>
             <div class="lich-chu-thich">
               <span><i class="cn"></i>Ngày đang chọn</span>
@@ -153,7 +153,7 @@
             <p class="lich-chon-hien" data-ngay-chon-text></p>
             <div class="times" role="radiogroup" aria-label="Giờ bắt đầu">
               <label class="time" th:each="gio : ${gios}">
-                <input type="radio" name="gioBatDau" th:value="${gio}" th:checked="${gio == '09:00'}">
+                <input type="radio" name="gioBatDau" th:value="${gio}" th:checked="${gio == gioMacDinh}">
                 <span th:text="${gio}">09:00</span>
               </label>
             </div>
@@ -419,6 +419,10 @@
       i.disabled = quaMuon || (ngay && ngay.value === isoHomNay && t.getTime() < Date.now() + 3600000);
       if (i.disabled && i.checked) i.checked = false;
     });
+    if (!form.querySelector('input[name="gioBatDau"]:checked')) {
+      var dau = form.querySelector('input[name="gioBatDau"]:not(:disabled)');
+      if (dau) dau.checked = true;
+    }
   }
 
   // Lịch gói tháng: cùng thuật toán với máy chủ (LichGoiThang.java): các ngày khớp thứ đã chọn,
@@ -793,6 +797,11 @@
   apDungLoai(loaiBanDau, true);
   if (dvBanDau && dvBanDau.closest('[data-group]').getAttribute('data-group') === loaiInput.value && !dvBanDau.disabled) dvBanDau.checked = true;
   khoaGio();
+  // Hôm nay không còn giờ nào đặt được (VD nhiều dịch vụ phải xong trước 20:00) thì chọn sẵn ngày mai
+  if (!form.querySelector('input[name="gioBatDau"]:checked') && fpDat) {
+    var ngayMai = new Date(); ngayMai.setDate(ngayMai.getDate() + 1);
+    fpDat.setDate(ngayMai, true);
+  }
   moBuoc(3, false);
   daToi = 3;
   veThanhBuoc();

@@ -328,6 +328,20 @@ public class PhanCongService {
      * Kiểm tra toàn bộ buổi của một đơn (gói tháng có nhiều buổi): mỗi buổi phải không trùng giờ,
      * cách việc khác ít nhất {@code khoangCachPhut} phút để nghỉ và di chuyển, không quá tải trong ngày.
      */
+    /**
+     * Lý do CTV trùng lịch với đơn, null nếu không trùng. Không ném lỗi qua proxy giao dịch, nên dùng được
+     * trong giao dịch của người gọi khi chỉ cần lọc danh sách (lỗi ném qua proxy sẽ đánh dấu rollback cả giao dịch).
+     */
+    @Transactional(readOnly = true)
+    public String lyDoTrungLich(Integer ctvId, DonDatDichVu don, Integer boQuaPhanCongId) {
+        try {
+            kiemTraDonHoacBaoLoi(ctvId, don, boQuaPhanCongId, false);
+            return null;
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return e.getMessage();
+        }
+    }
+
     @Transactional(readOnly = true)
     public void kiemTraDonHoacBaoLoi(Integer ctvId, DonDatDichVu don, Integer boQuaPhanCongId, boolean gomDangCho) {
         kiemTraCacBuoiHoacBaoLoi(ctvId, cacBuoi(don), don.getGioBatDau(), ketThucCuaDon(don), khuVucCuaDon(don),

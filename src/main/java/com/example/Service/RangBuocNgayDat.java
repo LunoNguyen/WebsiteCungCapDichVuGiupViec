@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Ràng buộc ngày giờ khi đặt dịch vụ (dùng chung cho website và API ứng dụng):
@@ -15,7 +17,19 @@ public final class RangBuocNgayDat {
 
     private static final DateTimeFormatter NGAY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    /** Khung giờ bắt đầu: 07:00 đến 17:00 mỗi giờ (giống app). */
+    public static final List<LocalTime> KHUNG_GIO = IntStream.rangeClosed(7, 17).mapToObj(h -> LocalTime.of(h, 0)).toList();
+
     private RangBuocNgayDat() {
+    }
+
+    /** Ngày giờ chọn sẵn khi mở trang đặt: hôm nay nếu còn khung giờ sau hiện tại ít nhất 1 giờ, không thì ngày mai. */
+    public static LocalDateTime macDinh(LocalDateTime bayGio) {
+        LocalDate homNay = bayGio.toLocalDate();
+        for (LocalTime g : KHUNG_GIO) {
+            if (!LocalDateTime.of(homNay, g).isBefore(bayGio.plusHours(1))) return LocalDateTime.of(homNay, g);
+        }
+        return LocalDateTime.of(homNay.plusDays(1), KHUNG_GIO.get(0));
     }
 
     /** Ngày muộn nhất được chọn (với gói tháng: ngày bắt đầu gói). */

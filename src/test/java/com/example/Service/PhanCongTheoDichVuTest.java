@@ -2,9 +2,11 @@ package com.example.Service;
 
 import com.example.Model.ChiTietDonDat;
 import com.example.Model.DichVu;
+import com.example.Model.DonDatDichVu;
 import com.example.Model.PhanCongCTV;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -87,5 +89,46 @@ class PhanCongTheoDichVuTest {
         PhanCongCTV cuaToi = PhanCongCTV.builder().trangThai("DaXacNhan").chiTietDonDat(b).build();
         assertEquals("Giặt rèm", PhanCongTheoDichVu.tenDichVuCuaCtv(don, List.of(cuaToi)));
         assertEquals("Dọn nhà + Giặt rèm", PhanCongTheoDichVu.tenDichVuCuaCtv(don, List.of(pc(null, "DaXacNhan"))));
+    }
+
+    // ---------- Tiền công theo dịch vụ CTV nhận ----------
+
+    private static DonDatDichVu don2(long thanhTien, long gia1, long gia2) {
+        DonDatDichVu d = DonDatDichVu.builder().id(1).thanhTien(BigDecimal.valueOf(thanhTien)).build();
+        d.getChiTietList().add(ChiTietDonDat.builder().id(10).thanhTien(BigDecimal.valueOf(gia1)).build());
+        d.getChiTietList().add(ChiTietDonDat.builder().id(11).thanhTien(BigDecimal.valueOf(gia2)).build());
+        return d;
+    }
+
+    @Test
+    void phanCongCaDonDuocCaTienDon() {
+        DonDatDichVu d = don2(837000, 270000, 660000);
+        assertEquals(BigDecimal.valueOf(837000), PhanCongTheoDichVu.tienCuaCtv(d, List.of(pc(null, "HoanThanh"))));
+    }
+
+    @Test
+    void nhanMotDichVuChiDuocPhanCuaDichVuDoSauKhuyenMai() {
+        DonDatDichVu d = don2(837000, 270000, 660000); // giảm 10% trên tổng 930.000đ
+        assertEquals(0, BigDecimal.valueOf(243000).compareTo(PhanCongTheoDichVu.tienCuaCtv(d, List.of(pc(10, "HoanThanh")))));
+        assertEquals(0, BigDecimal.valueOf(594000).compareTo(PhanCongTheoDichVu.tienCuaCtv(d, List.of(pc(11, "HoanThanh")))));
+    }
+
+    @Test
+    void nhanCaHaiDichVuDuocCaDon() {
+        DonDatDichVu d = don2(837000, 270000, 660000);
+        assertEquals(0, BigDecimal.valueOf(837000).compareTo(
+                PhanCongTheoDichVu.tienCuaCtv(d, List.of(pc(10, "HoanThanh"), pc(11, "HoanThanh")))));
+    }
+
+    @Test
+    void phanCongTuChoiKhongDuocTien() {
+        DonDatDichVu d = don2(837000, 270000, 660000);
+        assertEquals(0, BigDecimal.ZERO.compareTo(PhanCongTheoDichVu.tienCuaCtv(d, List.of(pc(10, "TuChoi")))));
+    }
+
+    @Test
+    void giaDongBangKhongThiChiaDeu() {
+        DonDatDichVu d = don2(500000, 0, 0);
+        assertEquals(0, BigDecimal.valueOf(250000).compareTo(PhanCongTheoDichVu.tienCuaCtv(d, List.of(pc(10, "HoanThanh")))));
     }
 }

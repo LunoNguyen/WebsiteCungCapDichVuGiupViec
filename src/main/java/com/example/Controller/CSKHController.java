@@ -180,6 +180,7 @@ public class CSKHController {
             @RequestParam(required = false, defaultValue = "Khac") String gioiTinh,
             @RequestParam(required = false) String ngaySinh,
             @RequestParam(required = false) Integer maTinh,
+            @RequestParam(required = false) Integer maQuan,
             @RequestParam(required = false) Integer maPhuong,
             @RequestParam(required = false) Integer khuVucId,
             @RequestParam(required = false) String soNhaTenDuong,
@@ -207,7 +208,9 @@ public class CSKHController {
 
             // 1. Địa chỉ: tỉnh, phường (provinces.open-api.vn v2) + số nhà; khu vực (quận, huyện) suy ra từ phường
             com.example.Service.DiaGioiService.DiaChiDaXacDinh dcXacDinh =
-                    diaGioiService.xacDinh(soNhaTenDuong, maTinh, maPhuong, khuVucId);
+                    maQuan != null // có quận = địa chỉ cũ 3 cấp (v1)
+                            ? diaGioiService.xacDinhV1(soNhaTenDuong, maTinh, maQuan, maPhuong)
+                            : diaGioiService.xacDinh(soNhaTenDuong, maTinh, maPhuong, khuVucId);
             KhuVuc kv = dcXacDinh.khuVuc(); // null = ngoài khu vực phục vụ: vẫn lưu, chưa đặt dịch vụ được
 
             // 2. Tạo bản ghi KhachHang

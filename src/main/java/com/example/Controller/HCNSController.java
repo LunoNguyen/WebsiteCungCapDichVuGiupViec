@@ -356,9 +356,10 @@ public class HCNSController {
      * Địa chỉ nơi ở hiện tại của CTV: tỉnh, phường (provinces.open-api.vn v2) + số nhà, ghép thành chuỗi đầy đủ.
      * Form cũ chỉ gửi chuỗi noiCuTru thì giữ nguyên chuỗi đó.
      */
-    private String noiOCtv(String noiCuTru, String soNhaTenDuong, Integer maTinh, Integer maPhuong) {
+    private String noiOCtv(String noiCuTru, String soNhaTenDuong, Integer maTinh, Integer maQuan, Integer maPhuong) {
         String kq = maPhuong != null
-                ? diaGioiService.xacDinh(soNhaTenDuong, maTinh, maPhuong, null).diaChiDayDu()
+                ? (maQuan != null ? diaGioiService.xacDinhV1(soNhaTenDuong, maTinh, maQuan, maPhuong)
+                                  : diaGioiService.xacDinh(soNhaTenDuong, maTinh, maPhuong, null)).diaChiDayDu()
                 : (noiCuTru != null ? noiCuTru.trim() : "");
         if (kq.isBlank()) throw new IllegalArgumentException("Vui lòng nhập địa chỉ nơi ở hiện tại của cộng tác viên!");
         if (kq.length() > 200) throw new IllegalArgumentException("Địa chỉ nơi ở quá dài (tối đa 200 ký tự)!");
@@ -444,6 +445,7 @@ public class HCNSController {
             @RequestParam(required = false) String noiCuTru,
             @RequestParam(required = false) String soNhaTenDuong,
             @RequestParam(required = false) Integer maTinh,
+            @RequestParam(required = false) Integer maQuan,
             @RequestParam(required = false) Integer maPhuong,
             @RequestParam(required = false) String ngaySinh,
             @RequestParam(required = false, defaultValue = "Nam") String gioiTinh,
@@ -490,7 +492,7 @@ public class HCNSController {
             ctv.setMaCongTacVien(String.format("CTV-%03d", soThuTu));
             ctv.setHoTen(hoTen.trim());
             ctv.setSoDienThoai(soDienThoai.trim());
-            ctv.setNoiCuTru(noiOCtv(noiCuTru, soNhaTenDuong, maTinh, maPhuong));
+            ctv.setNoiCuTru(noiOCtv(noiCuTru, soNhaTenDuong, maTinh, maQuan, maPhuong));
             ctv.setGioiTinh(gioiTinh);
             ctv.setNgaySinh(dob);
             ctv.setCapDo(capDo);
@@ -501,7 +503,10 @@ public class HCNSController {
             congTacVienRepository.save(ctv);
             // Khu vực nhận việc ban đầu: quận của nơi ở; sau đó tự đổi theo GPS khi CTV dùng app
             if (maPhuong != null) {
-                List<Integer> kvNoiO = diaGioiService.khuVucCuaPhuong(maPhuong).stream()
+                List<com.example.Model.KhuVuc> kvs = maQuan != null
+                        ? java.util.stream.Stream.ofNullable(diaGioiService.xacDinhV1(soNhaTenDuong, maTinh, maQuan, maPhuong).khuVuc()).toList()
+                        : diaGioiService.khuVucCuaPhuong(maPhuong);
+                List<Integer> kvNoiO = kvs.stream()
                         .map(com.example.Model.KhuVuc::getId).limit(1).toList();
                 if (!kvNoiO.isEmpty()) khuVucCtvService.capNhat(ctv.getId(), kvNoiO);
             }
@@ -520,6 +525,7 @@ public class HCNSController {
             @RequestParam(required = false) String noiCuTru,
             @RequestParam(required = false) String soNhaTenDuong,
             @RequestParam(required = false) Integer maTinh,
+            @RequestParam(required = false) Integer maQuan,
             @RequestParam(required = false) Integer maPhuong,
             @RequestParam(required = false) String ngaySinh,
             @RequestParam String capDo,
@@ -555,7 +561,7 @@ public class HCNSController {
 
             ctv.setHoTen(hoTen.trim());
             ctv.setSoDienThoai(soDienThoai.trim());
-            ctv.setNoiCuTru(noiOCtv(noiCuTru, soNhaTenDuong, maTinh, maPhuong));
+            ctv.setNoiCuTru(noiOCtv(noiCuTru, soNhaTenDuong, maTinh, maQuan, maPhuong));
             ctv.setCapDo(capDo);
 
             // Chờ duyệt -> Hoạt động = duyệt hồ sơ: kích hoạt tài khoản và gửi tin nhắn như nút "Duyệt"
