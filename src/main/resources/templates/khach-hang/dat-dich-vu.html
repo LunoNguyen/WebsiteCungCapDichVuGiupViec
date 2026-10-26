@@ -17,7 +17,8 @@
       <h1 th:text="'Đặt ' + ${#strings.toLowerCase(danhMuc.tenLoaiDichVu)}">Đặt dọn dẹp nhà theo giờ</h1>
       <div class="book-back">
         <!-- Mặc định về trang dịch vụ của nhóm; JS đổi thành trang vừa xem (xem / tìm dịch vụ) nếu có -->
-        <a class="btn btn-outline" th:href="@{/dich-vu/chi-tiet/{id}(id=${dvChon})}" data-quay-lai><svg class="ic"><use href="#i-left"/></svg><span data-quay-lai-text>Quay lại xem dịch vụ</span></a>
+        <a class="btn btn-outline" th:if="${dvNhieu == null}" th:href="@{/dich-vu/chi-tiet/{id}(id=${dvChon})}" data-quay-lai><svg class="ic"><use href="#i-left"/></svg><span data-quay-lai-text>Quay lại xem dịch vụ</span></a>
+        <a class="btn btn-outline" th:if="${dvNhieu != null}" th:href="@{/gio-hang}"><svg class="ic"><use href="#i-left"/></svg><span>Quay lại giỏ hàng</span></a>
         <a class="btn btn-ghost" href="/tim-dich-vu"><svg class="ic"><use href="#i-search"/></svg>Tìm dịch vụ khác</a>
       </div>
     </div>
