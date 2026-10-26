@@ -2,6 +2,8 @@ package com.example.API;
 
 import com.example.DTO.response.ApiResponse;
 import com.example.Service.DiaGioiService;
+import com.example.Service.TamQuanHcm;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,9 +20,22 @@ import java.util.Map;
 public class DiaGioiController {
 
     private final DiaGioiService diaGioiService;
+    private final TamQuanHcm tamQuanHcm;
+
+    @Autowired
+    public DiaGioiController(DiaGioiService diaGioiService, TamQuanHcm tamQuanHcm) {
+        this.diaGioiService = diaGioiService;
+        this.tamQuanHcm = tamQuanHcm;
+    }
 
     public DiaGioiController(DiaGioiService diaGioiService) {
-        this.diaGioiService = diaGioiService;
+        this(diaGioiService, new TamQuanHcm());
+    }
+
+    /** Danh sách tâm toạ độ GPS các quận/huyện TP.HCM từ file data/tam-quan-hcm.json. */
+    @GetMapping("/tam-quan")
+    public ResponseEntity<ApiResponse<List<TamQuanHcm.Tam>>> tamQuan() {
+        return ResponseEntity.ok(ApiResponse.ok(tamQuanHcm.danhSach()));
     }
 
     @GetMapping("/tinh")

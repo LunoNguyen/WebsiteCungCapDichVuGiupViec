@@ -41,6 +41,12 @@ public class CollaboratorApiService {
     private ViTriCtvStore viTriCtvStore;
     @org.springframework.beans.factory.annotation.Autowired
     private TamQuanHcm tamQuanHcm;
+    @org.springframework.beans.factory.annotation.Autowired
+    private BieuMauTaiSanRepository bieuMauTaiSanRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private ChiTietTaiSanRepository chiTietTaiSanRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private MinioService minioService;
 
     public CollaboratorApiService(
             PhanCongCTVRepository phanCongCTVRepository,
@@ -67,6 +73,194 @@ public class CollaboratorApiService {
             .comparing((LichLamViec l) -> l.getNgayLam() != null ? l.getNgayLam() : LocalDate.MAX)
             .thenComparing(l -> l.getGioBatDau() != null ? l.getGioBatDau() : LocalTime.MIN)
             .thenComparing(LichLamViec::getId);
+
+    public static final java.math.BigDecimal TY_LE_THU_NHAP_CTV = new java.math.BigDecimal("0.80");
+    public static final java.math.BigDecimal TY_LE_PHI_NEN_TANG = new java.math.BigDecimal("0.20");
+
+    /** Tính tiền công thực nhận của CTV sau khi trừ 20% phí nền tảng (= 80% giá trị đơn) */
+    public static java.math.BigDecimal tinhThuNhapCtv(java.math.BigDecimal thanhTien) {
+        if (thanhTien == null || thanhTien.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return java.math.BigDecimal.ZERO;
+        }
+        return thanhTien.multiply(TY_LE_THU_NHAP_CTV).setScale(0, java.math.RoundingMode.HALF_UP);
+    }
+
+    /** Tính phí chiết khấu nền tảng (20% giá trị đơn) */
+    public static java.math.BigDecimal tinhPhiNenTang(java.math.BigDecimal thanhTien) {
+        if (thanhTien == null || thanhTien.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return java.math.BigDecimal.ZERO;
+        }
+        return thanhTien.subtract(tinhThuNhapCtv(thanhTien));
+    }
+
+    /** Tính tổng số dư ví thu nhập (80%) của CTV từ tất cả các đơn đã hoàn thành */
+    public java.math.BigDecimal tinhSoDuViCtv(Integer congTacVienId) {
+        if (congTacVienId == null) return java.math.BigDecimal.ZERO;
+        List<PhanCongCTV> list = phanCongCTVRepository.findByCongTacVien_IdOrderByThoiGianPhanCongDesc(congTacVienId);
+        java.math.BigDecimal total = java.math.BigDecimal.ZERO;
+        Set<Integer> countedDonIds = new HashSet<>();
+        for (PhanCongCTV pc : list) {
+            if (pc == null || "TuChoi".equalsIgnoreCase(pc.getTrangThai())) continue;
+            DonDatDichVu don = pc.getDonDat();
+            boolean isCompleted = "HoanThanh".equalsIgnoreCase(pc.getTrangThai())
+                    || (don != null && "HoanThanh".equalsIgnoreCase(don.getTrangThai()));
+            if (isCompleted && don != null && don.getThanhTien() != null) {
+                if (don.getId() == null || countedDonIds.add(don.getId())) {
+                    total = total.add(tinhThuNhapCtv(don.getThanhTien()));
+                }
+            }
+        }
+        return total;
+    }
+
+    /** Trích xuất danh sách đường dẫn / objectName hình ảnh tài sản từ request */
+    private List<String> trichXuatDanhSachAnh(AssignmentActionRequest req) {
+        List<String> images = new ArrayList<>();
+        if (req == null) return images;
+        if (req.getDanhSachHinhAnh() != null) {
+            for (String img : req.getDanhSachHinhAnh()) {
+                if (img != null && !img.trim().isEmpty()) {
+                    images.add(img.trim());
+                }
+            }
+        }
+        if (req.getChiTietTaiSanList() != null) {
+            for (Map<String, String> item : req.getChiTietTaiSanList()) {
+                if (item != null) {
+                    String img = item.get("hinhAnh");
+                    if (img != null && !img.trim().isEmpty() && !images.contains(img.trim())) {
+                        images.add(img.trim());
+                    }
+                }
+            }
+        }
+        return images;
+    }
+
+    /**
+     * Lưu Biểu mẫu tài sản (BieuMauTaiSan) và Chi tiết tài sản (ChiTietTaiSan) vào CSDL MySQL,
+     * liên kết với object key của ảnh đã tải lên MinIO (don-dat/tai-san/...).
+     *
+     * @param loaiBieuMau "TruocDichVu" hoặc "SauDichVu"
+     */
+    public BieuMauTaiSan luuBieuMauTaiSan(DonDatDichVu don, CongTacVien ctv, String loaiBieuMau, AssignmentActionRequest req) {
+        if (don == null || ctv == null || bieuMauTaiSanRepository == null || chiTietTaiSanRepository == null) {
+            return null;
+        }
+        String prefix = "TruocDichVu".equalsIgnoreCase(loaiBieuMau) ? "BMT-" : "BMS-";
+        String suffix = String.valueOf(System.currentTimeMillis() % 1_000_000L);
+        String maBieuMau = prefix + don.getId() + "-" + suffix;
+        if (maBieuMau.length() > 20) {
+            maBieuMau = maBieuMau.substring(0, 20);
+        }
+
+        String ghiChuDacBiet = (req != null && req.getGhiChuTaiSan() != null && !req.getGhiChuTaiSan().trim().isEmpty())
+                ? req.getGhiChuTaiSan().trim()
+                : ((req != null && req.getKetQuaThucHien() != null && !req.getKetQuaThucHien().trim().isEmpty())
+                        ? req.getKetQuaThucHien().trim()
+                        : null);
+
+        BieuMauTaiSan bm = BieuMauTaiSan.builder()
+                .maBieuMau(maBieuMau)
+                .donDat(don)
+                .congTacVien(ctv)
+                .loaiBieuMau("TruocDichVu".equalsIgnoreCase(loaiBieuMau) ? "TruocDichVu" : "SauDichVu")
+                .thoiGianGhiNhan(LocalDateTime.now())
+                .xacNhanKhachHang(false)
+                .ghiChuDacBiet(ghiChuDacBiet)
+                .build();
+        bm = bieuMauTaiSanRepository.save(bm);
+
+        String defaultKhuVuc = (req != null && req.getKhuVucVatDung() != null && !req.getKhuVucVatDung().trim().isEmpty())
+                ? req.getKhuVucVatDung().trim()
+                : "Toàn bộ khu vực thực hiện";
+        String defaultMoTa = (req != null && req.getMoTaHienTrang() != null && !req.getMoTaHienTrang().trim().isEmpty())
+                ? req.getMoTaHienTrang().trim()
+                : ("TruocDichVu".equalsIgnoreCase(loaiBieuMau)
+                        ? "Tài sản khu vực thực hiện nguyên vẹn trước khi bắt đầu dịch vụ"
+                        : "Đã hoàn thành dịch vụ, tài sản khu vực thực hiện nguyên vẹn");
+
+        if (req != null && req.getChiTietTaiSanList() != null && !req.getChiTietTaiSanList().isEmpty()) {
+            for (Map<String, String> ctMap : req.getChiTietTaiSanList()) {
+                if (ctMap == null) continue;
+                String rawImg = ctMap.get("hinhAnh");
+                if (rawImg == null || rawImg.trim().isEmpty()) continue;
+                String storedImg = minioService != null ? minioService.toStoredValue(rawImg) : rawImg.trim();
+                String kv = ctMap.get("khuVucVatDung") != null && !ctMap.get("khuVucVatDung").trim().isEmpty()
+                        ? ctMap.get("khuVucVatDung").trim() : defaultKhuVuc;
+                String mt = ctMap.get("moTaHienTrang") != null && !ctMap.get("moTaHienTrang").trim().isEmpty()
+                        ? ctMap.get("moTaHienTrang").trim() : defaultMoTa;
+                chiTietTaiSanRepository.save(ChiTietTaiSan.builder()
+                        .bieuMau(bm)
+                        .khuVucVatDung(kv)
+                        .moTaHienTrang(mt)
+                        .hinhAnh(storedImg)
+                        .build());
+            }
+        } else {
+            List<String> images = trichXuatDanhSachAnh(req);
+            for (String rawImg : images) {
+                String storedImg = minioService != null ? minioService.toStoredValue(rawImg) : rawImg.trim();
+                chiTietTaiSanRepository.save(ChiTietTaiSan.builder()
+                        .bieuMau(bm)
+                        .khuVucVatDung(defaultKhuVuc)
+                        .moTaHienTrang(defaultMoTa)
+                        .hinhAnh(storedImg)
+                        .build());
+            }
+        }
+        return bm;
+    }
+
+    /**
+     * Lấy danh sách hình ảnh & chi tiết tài sản Trước dịch vụ (TruocDichVu) và Sau dịch vụ (SauDichVu)
+     * của một đơn đặt để hiển thị trên App CTV, App Khách hàng, Web Khách hàng và Web CSKH.
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> layThongTinTaiSanDon(Integer donDatId) {
+        Map<String, Object> res = new LinkedHashMap<>();
+        List<String> anhTruoc = new ArrayList<>();
+        List<Map<String, Object>> chiTietTruoc = new ArrayList<>();
+        List<String> anhSau = new ArrayList<>();
+        List<Map<String, Object>> chiTietSau = new ArrayList<>();
+
+        if (donDatId != null && bieuMauTaiSanRepository != null && chiTietTaiSanRepository != null) {
+            List<BieuMauTaiSan> bieuMaus = bieuMauTaiSanRepository.findByDonDat_IdOrderByThoiGianGhiNhanAsc(donDatId);
+            for (BieuMauTaiSan bm : bieuMaus) {
+                boolean isTruoc = "TruocDichVu".equalsIgnoreCase(bm.getLoaiBieuMau());
+                List<ChiTietTaiSan> cts = chiTietTaiSanRepository.findByBieuMau_Id(bm.getId());
+                for (ChiTietTaiSan ct : cts) {
+                    String viewUrl = minioService != null ? minioService.getViewUrl(ct.getHinhAnh()) : ct.getHinhAnh();
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", ct.getId());
+                    item.put("bieuMauId", bm.getId());
+                    item.put("maBieuMau", bm.getMaBieuMau());
+                    item.put("loaiBieuMau", bm.getLoaiBieuMau());
+                    item.put("khuVucVatDung", ct.getKhuVucVatDung());
+                    item.put("moTaHienTrang", ct.getMoTaHienTrang());
+                    item.put("hinhAnh", ct.getHinhAnh());
+                    item.put("hinhAnhUrl", viewUrl);
+                    item.put("thoiGianGhiNhan", bm.getThoiGianGhiNhan());
+                    item.put("ghiChuDacBiet", bm.getGhiChuDacBiet());
+                    if (isTruoc) {
+                        if (viewUrl != null && !viewUrl.isBlank()) anhTruoc.add(viewUrl);
+                        chiTietTruoc.add(item);
+                    } else {
+                        if (viewUrl != null && !viewUrl.isBlank()) anhSau.add(viewUrl);
+                        chiTietSau.add(item);
+                    }
+                }
+            }
+        }
+
+        res.put("anhTruocDichVu", anhTruoc);
+        res.put("chiTietTruocDichVu", chiTietTruoc);
+        res.put("anhSauDichVu", anhSau);
+        res.put("chiTietSauDichVu", chiTietSau);
+        res.put("daChupTruocDichVu", !anhTruoc.isEmpty());
+        res.put("daChupSauDichVu", !anhSau.isEmpty());
+        return res;
+    }
 
     private int tinhBuoiThu(LichLamViec llv, int fallbackIndex) {
         if (llv != null && llv.getMaLichLamViec() != null) {
@@ -190,6 +384,11 @@ public class CollaboratorApiService {
             item.put("khachHangPhone", don.getKhachHang().getSoDienThoai());
             item.put("yeuCauDacBiet", don.getYeuCauDacBiet());
             item.put("thanhTien", don.getThanhTien());
+            item.put("phiNenTang", tinhPhiNenTang(don.getThanhTien()));
+            item.put("tienThucNhan", tinhThuNhapCtv(don.getThanhTien()));
+            item.put("tyLeChietKhau", 20);
+            item.put("tyLeThucNhan", 80);
+            item.putAll(layThongTinTaiSanDon(don.getId()));
             result.add(item);
         }
         return result;
@@ -311,6 +510,10 @@ public class CollaboratorApiService {
         result.put("yeuCauDacBiet", don.getYeuCauDacBiet());
         result.put("ghiChu", don.getGhiChu());
         result.put("thanhTien", don.getThanhTien());
+        result.put("phiNenTang", tinhPhiNenTang(don.getThanhTien()));
+        result.put("tienThucNhan", tinhThuNhapCtv(don.getThanhTien()));
+        result.put("tyLeChietKhau", 20);
+        result.put("tyLeThucNhan", 80);
 
         Map<String, Object> khMap = new LinkedHashMap<>();
         khMap.put("hoTen", don.getKhachHang().getHoTen());
@@ -318,6 +521,7 @@ public class CollaboratorApiService {
         khMap.put("diaChi", CustomerAddressService.diaChiDayDu(don.getDiaChi()));
             khMap.put("khuVuc", don.getDiaChi() != null && don.getDiaChi().getKhuVuc() != null ? don.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
         result.put("khachHang", khMap);
+        result.putAll(layThongTinTaiSanDon(don.getId()));
 
         return result;
     }
@@ -495,6 +699,11 @@ public class CollaboratorApiService {
 
     @Transactional
     public Map<String, Object> startAssignment(Integer phanCongId) {
+        return startAssignment(phanCongId, null);
+    }
+
+    @Transactional
+    public Map<String, Object> startAssignment(Integer phanCongId, AssignmentActionRequest req) {
         PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
@@ -540,6 +749,17 @@ public class CollaboratorApiService {
             }
         }
 
+        // RÀNG BUỘC CHỤP ẢNH TÀI SẢN TRƯỚC KHI THỰC HIỆN DỊCH VỤ:
+        List<String> anhTruocMoi = trichXuatDanhSachAnh(req);
+        boolean daCoAnhTruoc = bieuMauTaiSanRepository != null
+                && !bieuMauTaiSanRepository.findByDonDat_IdAndLoaiBieuMauOrderByThoiGianGhiNhanDesc(don.getId(), "TruocDichVu").isEmpty();
+        if (anhTruocMoi.isEmpty() && !daCoAnhTruoc) {
+            throw new IllegalArgumentException("Vui lòng chụp và gửi ảnh hiện trạng tài sản ở khu vực thực hiện trước khi bắt đầu dịch vụ!");
+        }
+        if (!anhTruocMoi.isEmpty() && pc.getCongTacVien() != null) {
+            luuBieuMauTaiSan(don, pc.getCongTacVien(), "TruocDichVu", req);
+        }
+
         don.setTrangThai("DangThucHien");
         donDatDichVuRepository.save(don);
 
@@ -554,15 +774,17 @@ public class CollaboratorApiService {
                 .trangThaiMoi("DangThucHien")
                 .nguoiThucHien("CongTacVien: " + (pc.getCongTacVien() != null ? pc.getCongTacVien().getHoTen() : "CTV"))
                 .thoiGian(LocalDateTime.now())
-                .ghiChu("CTV bắt đầu thực hiện ca làm việc")
+                .ghiChu("CTV đã chụp ảnh tài sản trước khi làm và bắt đầu thực hiện ca làm việc")
                 .build();
         lichSuTrangThaiDonRepository.save(ls);
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("phanCongId", pc.getId());
+        res.put("donDatId", don.getId());
         res.put("trangThaiDon", "DangThucHien");
         res.put("trangThaiPhanCong", pc.getTrangThai());
-        res.put("message", "Đã bắt đầu thực hiện ca làm việc!");
+        res.putAll(layThongTinTaiSanDon(don.getId()));
+        res.put("message", "Đã gửi ảnh tài sản trước khi làm và bắt đầu thực hiện ca làm việc!");
         return res;
     }
 
@@ -827,6 +1049,18 @@ public class CollaboratorApiService {
 
         switch (action) {
             case "START_TODAY": {
+                if (req != null && req.get("danhSachHinhAnh") instanceof List<?> rawList && !rawList.isEmpty() && pc.getCongTacVien() != null) {
+                    AssignmentActionRequest taiSanReq = new AssignmentActionRequest();
+                    List<String> dsAnh = new ArrayList<>();
+                    for (Object o : rawList) {
+                        if (o != null && !o.toString().isBlank()) dsAnh.add(o.toString().trim());
+                    }
+                    taiSanReq.setDanhSachHinhAnh(dsAnh);
+                    if (req.get("khuVucVatDung") != null) taiSanReq.setKhuVucVatDung(req.get("khuVucVatDung").toString());
+                    if (req.get("moTaHienTrang") != null) taiSanReq.setMoTaHienTrang(req.get("moTaHienTrang").toString());
+                    if (req.get("ghiChuTaiSan") != null) taiSanReq.setGhiChuTaiSan(req.get("ghiChuTaiSan").toString());
+                    luuBieuMauTaiSan(don, pc.getCongTacVien(), "TruocDichVu", taiSanReq);
+                }
                 if (!isGoiThang || buoiThu == 1) {
                     don.setNgayThucHien(today);
                 }
@@ -862,6 +1096,7 @@ public class CollaboratorApiService {
                 res.put("ngayThucHien", today.toString());
                 res.put("gioBatDau", batDauMoi.format(timeFmt));
                 res.put("gioKetThuc", ketThucMoi.format(timeFmt));
+                res.putAll(layThongTinTaiSanDon(don.getId()));
                 res.put("message", "Đã cập nhật lịch làm bù" + buoiLabel + " hôm nay (" + todayStr + " lúc " + khungGioMoiStr + ") và bắt đầu thực hiện!");
                 break;
             }
@@ -1017,6 +1252,18 @@ public class CollaboratorApiService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
         DonDatDichVu don = pc.getDonDat();
+
+        // RÀNG BUỘC CHỤP ẢNH TÀI SẢN SAU KHI THỰC HIỆN DỊCH VỤ (Không chụp lại thì không cho chuyển sang Hoàn thành):
+        List<String> anhSauMoi = trichXuatDanhSachAnh(req);
+        boolean daCoAnhSau = bieuMauTaiSanRepository != null
+                && !bieuMauTaiSanRepository.findByDonDat_IdAndLoaiBieuMauOrderByThoiGianGhiNhanDesc(don.getId(), "SauDichVu").isEmpty();
+        if (anhSauMoi.isEmpty() && !daCoAnhSau) {
+            throw new IllegalArgumentException("Bắt buộc chụp và gửi ảnh tài sản ở khu vực thực hiện sau khi hoàn thành dịch vụ thì đơn mới được chuyển sang trạng thái Hoàn thành!");
+        }
+        if (!anhSauMoi.isEmpty() && pc.getCongTacVien() != null) {
+            luuBieuMauTaiSan(don, pc.getCongTacVien(), "SauDichVu", req);
+        }
+
         List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
         if (sches.isEmpty()) {
             sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()));
@@ -1091,15 +1338,24 @@ public class CollaboratorApiService {
         String ngayHoanThanh = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         String thu = getThuTrongTuan(LocalDate.now());
 
-        // 1. Tạo thông báo hoàn thành đơn cho CTV (ghi rõ nhiệm vụ gì, ngày nào, mấy giờ)
+        java.math.BigDecimal tongTienDon = don.getThanhTien() != null ? don.getThanhTien() : java.math.BigDecimal.ZERO;
+        java.math.BigDecimal phiNenTang = tinhPhiNenTang(tongTienDon);
+        java.math.BigDecimal tienThucNhan = tinhThuNhapCtv(tongTienDon);
+        String tongTienStr = String.format("%,d", tongTienDon.longValue()) + "đ";
+        String phiStr = String.format("%,d", phiNenTang.longValue()) + "đ";
+        String thucNhanStr = String.format("%,d", tienThucNhan.longValue()) + "đ";
+
+        // 1. Tạo thông báo hoàn thành đơn cho CTV (ghi rõ nhiệm vụ gì, ngày nào, mấy giờ, chiết khấu 20% & thực nhận 80%)
         if (pc.getCongTacVien() != null && pc.getCongTacVien().getTaiKhoan() != null) {
             String prefixCTV = "CTV " + tenCTV;
-            String tienStr = don.getThanhTien() != null ? String.format("%,d", don.getThanhTien().longValue()) + "đ" : "";
+            String chiTietTien = tongTienDon.compareTo(java.math.BigDecimal.ZERO) > 0
+                    ? ". Tổng đơn: " + tongTienStr + " | Phí nền tảng (20%): -" + phiStr + " | Tiền công thực nhận (80%): +" + thucNhanStr + " đã được cộng vào Ví thu nhập"
+                    : "";
             ThongBao tbComplete = ThongBao.builder()
                     .maThongBao("TB-CTV-HT-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
                     .tieuDe(prefixCTV + " – Hoàn thành nhiệm vụ: " + don.getMaDonDat())
                     .noiDung(prefixCTV + " đã hoàn thành nhiệm vụ " + tenDichVu + " (Đơn " + don.getMaDonDat() + ") vào lúc " + gioHoanThanh + ", " + thu + " (ngày " + ngayHoanThanh + ")"
-                            + (tienStr.isEmpty() ? "" : ". Tiền công nhận được: " + tienStr)
+                            + chiTietTien
                             + ". Chúc mừng bạn đã hoàn thành xuất sắc ca làm việc!")
                     .nguoiGui("Hệ thống bTaskee")
                     .nhomNhan("CaNhan")
@@ -1118,11 +1374,22 @@ public class CollaboratorApiService {
         }
 
         // Thông báo cho khách hàng: ThongBaoSuKienService gửi theo sự kiện phân công / trạng thái đơn
+        java.math.BigDecimal soDuViMoi = pc.getCongTacVien() != null
+                ? tinhSoDuViCtv(pc.getCongTacVien().getId())
+                : tienThucNhan;
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("phanCongId", pc.getId());
-        res.put("donDatTrangThai", "HoanThanh");
-        res.put("message", "Đã cập nhật trạng thái hoàn thành dịch vụ. Khách hàng có thể tiến hành đánh giá.");
+        res.put("donDatId", don.getId());
+        res.put("donDatTrangThai", don.getTrangThai());
+        res.put("tongTienDon", tongTienDon);
+        res.put("phiNenTang", phiNenTang);
+        res.put("tienThucNhan", tienThucNhan);
+        res.put("tyLeChietKhau", 20);
+        res.put("tyLeThucNhan", 80);
+        res.put("soDuVi", soDuViMoi);
+        res.putAll(layThongTinTaiSanDon(don.getId()));
+        res.put("message", "Đã gửi ảnh tài sản sau dịch vụ & xác nhận hoàn thành! +" + thucNhanStr + " (80% tiền công) đã được cộng vào Ví thu nhập.");
         return res;
     }
 
@@ -1205,15 +1472,17 @@ public class CollaboratorApiService {
                 String maDon = pc.getDonDat().getMaDonDat();
                 if ("HoanThanh".equalsIgnoreCase(pc.getTrangThai())) {
                     if (!notifiedKeys.contains(maDon + "_HOAN_THANH")) {
-                        String tienStr = pc.getDonDat().getThanhTien() != null
-                                ? String.format("%,d", pc.getDonDat().getThanhTien().longValue()) + "đ"
+                        java.math.BigDecimal tong = pc.getDonDat().getThanhTien();
+                        java.math.BigDecimal thucNhan = tinhThuNhapCtv(tong);
+                        String tienStr = thucNhan.compareTo(java.math.BigDecimal.ZERO) > 0
+                                ? String.format("%,d", thucNhan.longValue()) + "đ (80% tiền công)"
                                 : "";
                         LocalDateTime tg = pc.getThoiGianXacNhan() != null ? pc.getThoiGianXacNhan()
                                 : (pc.getThoiGianPhanCong() != null ? pc.getThoiGianPhanCong() : LocalDateTime.now());
                         ThongBao tbComplete = ThongBao.builder()
                                 .maThongBao("TB-HT-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
                                 .tieuDe("Đơn " + maDon + " đã hoàn thành")
-                                .noiDung("Bạn nhận được " + tienStr + " từ đơn " + maDon + ". Chúc mừng bạn đã hoàn thành xuất sắc ca làm việc!")
+                                .noiDung("Bạn thực nhận +" + tienStr + " từ đơn " + maDon + " (đã trừ 20% phí nền tảng). Tiền đã được cộng vào Ví thu nhập!")
                                 .nguoiGui("Hệ thống")
                                 .nhomNhan("CaNhan")
                                 .thoiGianGui(tg)
@@ -1401,6 +1670,10 @@ public class CollaboratorApiService {
                     item.put("khachHangPhone", d.getKhachHang() != null ? d.getKhachHang().getSoDienThoai() : "");
                     item.put("yeuCauDacBiet", d.getYeuCauDacBiet());
                     item.put("thanhTien", d.getThanhTien());
+                    item.put("phiNenTang", tinhPhiNenTang(d.getThanhTien()));
+                    item.put("tienThucNhan", tinhThuNhapCtv(d.getThanhTien()));
+                    item.put("tyLeChietKhau", 20);
+                    item.put("tyLeThucNhan", 80);
                     item.put("loaiHinhDat", d.getLoaiHinhDat());
                     item.put("loaiHinh", d.getLoaiHinhDat());
 
@@ -1461,6 +1734,7 @@ public class CollaboratorApiService {
                     item.put("isGoiThang", isGoi);
                     item.put("ngayBuoiTiepTheo", nextLlv != null ? nextLlv.getNgayLam() : null);
                     item.put("gioBuoiTiepTheo", nextLlv != null ? nextLlv.getGioBatDau() : null);
+                    item.putAll(layThongTinTaiSanDon(d.getId()));
                 }
             }
             result.add(item);
@@ -1491,8 +1765,14 @@ public class CollaboratorApiService {
             result.put("diaChi", CustomerAddressService.diaChiDayDu(d.getDiaChi()));
             result.put("khuVuc", d.getDiaChi() != null && d.getDiaChi().getKhuVuc() != null ? d.getDiaChi().getKhuVuc().getTenKhuVuc() : "");
             result.put("yeuCauDacBiet", d.getYeuCauDacBiet());
+            result.put("thanhTien", d.getThanhTien());
+            result.put("phiNenTang", tinhPhiNenTang(d.getThanhTien()));
+            result.put("tienThucNhan", tinhThuNhapCtv(d.getThanhTien()));
+            result.put("tyLeChietKhau", 20);
+            result.put("tyLeThucNhan", 80);
             result.put("khachHangTen", d.getKhachHang().getHoTen());
             result.put("khachHangPhone", d.getKhachHang().getSoDienThoai());
+            result.putAll(layThongTinTaiSanDon(d.getId()));
         }
         return result;
     }
@@ -1559,6 +1839,9 @@ public class CollaboratorApiService {
         m.put("khuVucNhanViec", khuVucCtvService != null ? khuVucCtvService.tomTat(ctv.getId()) : "");
         m.put("soDienThoai", ctv.getSoDienThoai());
         m.put("diemDanhGia", ctv.getDiemDanhGia());
+        java.math.BigDecimal soDuVi = tinhSoDuViCtv(ctv.getId());
+        m.put("soDuVi", soDuVi);
+        m.put("tongThuNhap", soDuVi);
         m.put("capDo", ctv.getCapDo());
         m.put("trangThai", ctv.getTrangThai());
         m.put("ngayDangKy", ctv.getNgayDangKy() != null ? ctv.getNgayDangKy().toString() : null);
@@ -1637,6 +1920,10 @@ public class CollaboratorApiService {
             item.put("khuVuc", tenKhuVucDon);
             item.put("yeuCauDacBiet", don.getYeuCauDacBiet());
             item.put("thanhTien", don.getThanhTien());
+            item.put("phiNenTang", tinhPhiNenTang(don.getThanhTien()));
+            item.put("tienThucNhan", tinhThuNhapCtv(don.getThanhTien()));
+            item.put("tyLeChietKhau", 20);
+            item.put("tyLeThucNhan", 80);
             item.put("ngayTao", don.getNgayTao());
             // Không expose thông tin khách hàng cho CTV khi đơn chưa được nhận
             item.put("khachHangTen", "Khách hàng");

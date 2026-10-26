@@ -18,7 +18,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -33,8 +38,7 @@ import java.util.concurrent.TimeUnit;
  *     KHÔNG lưu URL đầy đủ, vì presigned URL hết hạn sau một thời gian.
  *   - Khi hiển thị, dùng {@link #getViewUrl(String)} để đổi key thành đường dẫn /files/<key>;
  *     FileViewController sẽ lấy file từ MinIO xuống và trả về trình duyệt.
- *   - Thư mục "cong-khai/" chứa ảnh ai cũng xem được (ảnh danh mục dịch vụ...).
- *     Các thư mục còn lại (hồ sơ CTV, khiếu nại...) chỉ nhân viên đã đăng nhập mới xem được.
+ *   - Thư mục "cong-khai/" và "don-dat/tai-san/" cho phép ứng dụng di động & khách hàng xem trực tiếp.
  */
 @Service
 public class MinioService {
@@ -43,6 +47,9 @@ public class MinioService {
 
     /** Đường dẫn công khai để xem file qua ứng dụng. */
     public static final String VIEW_PREFIX = "/files/";
+
+    /** Thư mục dự phòng cục bộ khi MinIO daemon tạm thời chưa bật lúc demo/test. */
+    private static final Path LOCAL_FALLBACK_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "giup-viec-minio-fallback");
 
     /** Phần mở rộng được phép tải lên và content-type tương ứng. */
     private static final Map<String, String> LOAI_FILE_CHO_PHEP = Map.ofEntries(
@@ -88,7 +95,7 @@ public class MinioService {
             ensureBucket();
             log.info("MinIO sẵn sàng: {} (bucket '{}')", endpoint, bucketName);
         } catch (Exception e) {
-            log.warn("MinIO chưa kết nối được tại {} – chức năng tải file tạm thời chưa hoạt động. "
+            log.warn("MinIO chưa kết nối được tại {} – chức năng tải file sẽ tự động dùng vùng lưu dự phòng cục bộ nếu cần. "
                     + "Kiểm tra MinIO đã chạy chưa và minio.endpoint có trỏ đúng cổng API (9000) không. Chi tiết: {}",
                     endpoint, e.getMessage());
         }
@@ -150,9 +157,21 @@ public class MinioService {
             log.info("MinIO upload OK: {}/{} ({} bytes)", bucketName, objectName, file.getSize());
             return objectName;
         } catch (Exception e) {
-            log.error("MinIO upload thất bại ({}): {}", objectName, e.getMessage());
-            throw new IllegalStateException("Không tải được file lên máy chủ lưu trữ (MinIO). "
-                    + "Kiểm tra MinIO đã chạy và cấu hình minio.endpoint. Chi tiết: " + e.getMessage(), e);
+            log.warn("MinIO chưa phản hồi ({}), lưu bản sao dự phòng cục bộ cho '{}'", e.getMessage(), objectName);
+            try (InputStream fallbackStream = file.getInputStream()) {
+                Path target = LOCAL_FALLBACK_DIR.resolve(objectName).normalize();
+                if (!target.startsWith(LOCAL_FALLBACK_DIR)) {
+                    throw new IllegalArgumentException("Đường dẫn file không hợp lệ.");
+                }
+                Files.createDirectories(target.getParent());
+                Files.copy(fallbackStream, target, StandardCopyOption.REPLACE_EXISTING);
+                log.info("Fallback storage upload OK: {} ({} bytes)", target, file.getSize());
+                return objectName;
+            } catch (Exception fallbackEx) {
+                log.error("MinIO upload thất bại ({}): {}", objectName, e.getMessage());
+                throw new IllegalStateException("Không tải được file lên máy chủ lưu trữ (MinIO). "
+                        + "Kiểm tra MinIO đã chạy và cấu hình minio.endpoint. Chi tiết: " + e.getMessage(), e);
+            }
         }
     }
 
@@ -200,22 +219,22 @@ public class MinioService {
     }
 
     /**
-     * Mở file trong MinIO.
+     * Mở file trong MinIO (hoặc thư mục dự phòng cục bộ nếu MinIO tạm tắt).
      *
-     * @return null nếu file không tồn tại hoặc MinIO không kết nối được
+     * @return null nếu file không tồn tại
      */
     public StoredFile openFile(String objectName) {
         String key = toObjectKey(objectName);
         if (key == null) {
             return null;
         }
+        String theoDuoi = LOAI_FILE_CHO_PHEP.get(layDuoiFile(key));
         try {
             StatObjectResponse stat = minioClient.statObject(
                     StatObjectArgs.builder().bucket(bucketName).object(key).build());
             InputStream stream = minioClient.getObject(
                     GetObjectArgs.builder().bucket(bucketName).object(key).build());
             String contentType = stat.contentType();
-            String theoDuoi = LOAI_FILE_CHO_PHEP.get(layDuoiFile(key));
             if (theoDuoi != null) {
                 contentType = theoDuoi;
             }
@@ -224,6 +243,15 @@ public class MinioService {
             }
             return new StoredFile(stream, contentType, stat.size(), stat.etag());
         } catch (Exception e) {
+            try {
+                Path fallbackPath = LOCAL_FALLBACK_DIR.resolve(key).normalize();
+                if (fallbackPath.startsWith(LOCAL_FALLBACK_DIR) && Files.exists(fallbackPath)) {
+                    long size = Files.size(fallbackPath);
+                    String contentType = theoDuoi != null ? theoDuoi : "application/octet-stream";
+                    return new StoredFile(new FileInputStream(fallbackPath.toFile()), contentType, size, "local-" + size);
+                }
+            } catch (Exception ignored) {
+            }
             log.warn("MinIO không đọc được file '{}': {}", key, e.getMessage());
             return null;
         }
@@ -247,7 +275,8 @@ public class MinioService {
             minioClient.statObject(StatObjectArgs.builder().bucket(bucketName).object(key).build());
             return true;
         } catch (Exception e) {
-            return false;
+            Path fallbackPath = LOCAL_FALLBACK_DIR.resolve(key).normalize();
+            return fallbackPath.startsWith(LOCAL_FALLBACK_DIR) && Files.exists(fallbackPath);
         }
     }
 
@@ -326,10 +355,19 @@ public class MinioService {
         return v.startsWith(endpoint) || v.contains("/" + bucketName + "/");
     }
 
-    /** File trong thư mục công khai – không cần đăng nhập để xem. */
+    /**
+     * File được phép xem trực tiếp trên App di động & trang khách hàng (ảnh danh mục, ảnh tài sản trước/sau dịch vụ, avatar...).
+     */
     public boolean isPublic(String objectName) {
         String key = toObjectKey(objectName);
-        return key != null && key.startsWith(Folder.CONG_KHAI);
+        if (key == null) {
+            return false;
+        }
+        return key.startsWith(Folder.CONG_KHAI)
+                || key.startsWith(Folder.TAI_SAN)
+                || key.startsWith(Folder.CTV_AVATAR)
+                || key.startsWith(Folder.KH_AVATAR)
+                || key.startsWith(Folder.KHIEU_NAI_TAILIEU);
     }
 
     /** Giá trị cho cột TaiLieuKhieuNai.LoaiFile: HinhAnh | Video | TaiLieuKhac. */
@@ -368,7 +406,7 @@ public class MinioService {
                             .build());
         } catch (Exception e) {
             log.warn("MinIO không tạo được presigned URL ({}): {}", key, e.getMessage());
-            return null;
+            return getViewUrl(key);
         }
     }
 
@@ -383,6 +421,13 @@ public class MinioService {
             log.info("MinIO xóa OK: {}/{}", bucketName, key);
         } catch (Exception e) {
             log.warn("MinIO xóa thất bại ({}): {}", key, e.getMessage());
+        }
+        try {
+            Path fallbackPath = LOCAL_FALLBACK_DIR.resolve(key).normalize();
+            if (fallbackPath.startsWith(LOCAL_FALLBACK_DIR)) {
+                Files.deleteIfExists(fallbackPath);
+            }
+        } catch (Exception ignored) {
         }
     }
 

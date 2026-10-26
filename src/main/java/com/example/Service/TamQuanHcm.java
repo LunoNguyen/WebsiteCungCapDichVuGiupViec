@@ -26,6 +26,11 @@ public class TamQuanHcm {
 
     private final List<Tam> ds = docMacDinh();
 
+    /** Danh sách tâm các quận, huyện TP.HCM đọc từ data/tam-quan-hcm.json. */
+    public List<Tam> danhSach() {
+        return ds;
+    }
+
     /** Tên quận (khớp KhuVuc.TenKhuVuc) chứa toạ độ, null nếu ngoài TP.HCM. */
     public String quanCua(double viDo, double kinhDo) {
         return quanGanNhat(ds, viDo, kinhDo);
