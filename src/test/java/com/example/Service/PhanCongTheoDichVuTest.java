@@ -71,4 +71,10 @@ class PhanCongTheoDichVuTest {
     void macDinhNhanMoiDongConTrongCoKyNang() {
         assertEquals(List.of(10), PhanCongTheoDichVu.chonMacDinh(Set.of(10, 11), Set.of(1), Map.of(10, 1, 11, 2)));
     }
+
+    @Test
+    void donXongKhiMoiPhanCongHieuLucXong() {
+        assertFalse(PhanCongTheoDichVu.moiPhanCongXong(List.of(pc(10, "HoanThanh"), pc(11, "DaXacNhan"))));
+        assertTrue(PhanCongTheoDichVu.moiPhanCongXong(List.of(pc(10, "HoanThanh"), pc(11, "HoanThanh"), pc(11, "TuChoi"))));
+    }
 }

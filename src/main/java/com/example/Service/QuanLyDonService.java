@@ -116,6 +116,11 @@ public class QuanLyDonService {
         return luc.isAfter(ketThuc.plusHours(GIO_TU_HOAN_THANH));
     }
 
+    /** Đơn nhiều dịch vụ chỉ sang Đang thực hiện khi mọi dịch vụ đã có cộng tác viên nhận; null nếu được. */
+    static String loiDuNguoi(boolean duNguoi) {
+        return duNguoi ? null : "Còn dịch vụ chưa có cộng tác viên nhận.";
+    }
+
     // ───────────── Thao tác của CSKH ─────────────
 
     @Transactional
@@ -128,6 +133,11 @@ public class QuanLyDonService {
         List<PhanCongCTV> phanCongs = phanCongRepo.findAllByDonDat_Id(donId);
         if ("DangThucHien".equals(moi) && phanCongs.stream().noneMatch(pc -> "DaXacNhan".equals(pc.getTrangThai()))) {
             throw new IllegalArgumentException("Đơn chưa có cộng tác viên nhận, chưa chuyển sang Đang thực hiện được.");
+        }
+        if ("DangThucHien".equals(moi)) {
+            String loiNguoi = loiDuNguoi(PhanCongTheoDichVu.duNguoi(
+                    don.getChiTietList() != null ? don.getChiTietList() : List.of(), phanCongs));
+            if (loiNguoi != null) throw new IllegalArgumentException(loiNguoi);
         }
         String lyDo = ghiChu == null || ghiChu.isBlank() ? null : ghiChu.trim();
         if ("DaHuy".equals(moi) && lyDo == null) {

@@ -1274,7 +1274,11 @@ public class CollaboratorApiService {
 
         List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
         if (sches.isEmpty()) {
-            sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()));
+            // Đơn nhiều dịch vụ: lịch gắn với phân công đầu tiên của CTV trong đơn – chỉ lấy lịch của chính CTV này
+            Integer idCtvLich = pc.getCongTacVien() != null ? pc.getCongTacVien().getId() : null;
+            sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId()).stream()
+                    .filter(l -> idCtvLich == null || (l.getCongTacVien() != null && idCtvLich.equals(l.getCongTacVien().getId())))
+                    .toList());
         }
         sches.sort(CHRONO_LLV_COMPARATOR);
 
@@ -1323,16 +1327,31 @@ public class CollaboratorApiService {
             don.setTrangThai("DaXacNhan");
             donDatDichVuRepository.save(don);
         } else {
+            // CTV xong phần mình: mọi phân công của CTV này trong đơn hoàn thành;
+            // đơn chỉ hoàn thành khi mọi CTV của đơn đã xong (đơn nhiều dịch vụ)
+            Integer idCtvXong = pc.getCongTacVien() != null ? pc.getCongTacVien().getId() : null;
             pc.setTrangThai("HoanThanh");
             phanCongCTVRepository.save(pc);
-            don.setTrangThai("HoanThanh");
-            donDatDichVuRepository.save(don);
+            List<PhanCongCTV> pcsDon = phanCongCTVRepository.findAllByDonDat_Id(don.getId());
+            for (PhanCongCTV x : pcsDon) {
+                if (x.getId().equals(pc.getId())) {
+                    x.setTrangThai("HoanThanh");
+                } else if (idCtvXong != null && x.getCongTacVien() != null && idCtvXong.equals(x.getCongTacVien().getId())
+                        && "DaXacNhan".equals(x.getTrangThai())) {
+                    x.setTrangThai("HoanThanh");
+                    phanCongCTVRepository.save(x);
+                }
+            }
+            if (PhanCongTheoDichVu.moiPhanCongXong(pcsDon)) {
+                don.setTrangThai("HoanThanh");
+                donDatDichVuRepository.save(don);
+            }
         }
 
         LichSuTrangThaiDon ls = LichSuTrangThaiDon.builder()
                 .donDat(don)
                 .trangThaiCu("DangThucHien")
-                .trangThaiMoi(nextRemaining != null ? "DaXacNhan" : "HoanThanh")
+                .trangThaiMoi(nextRemaining != null ? "DaXacNhan" : don.getTrangThai())
                 .nguoiThucHien("CongTacVien: " + pc.getCongTacVien().getHoTen())
                 .thoiGian(LocalDateTime.now())
                 .ghiChu("CTV hoàn thành ca làm việc. Kết quả: " + cleanKetQua)

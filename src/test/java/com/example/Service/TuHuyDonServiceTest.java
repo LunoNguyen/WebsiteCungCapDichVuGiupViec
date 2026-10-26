@@ -45,7 +45,7 @@ class TuHuyDonServiceTest {
     void daNhanNhungChuaLamThiHuyKhiQuaGioKetThuc() {
         DonDatDichVu d = don("TheoLan", null, null);
         assertNull(TuHuyDonService.lyDoQuaHan(d, true, false, NGAY.atTime(10, 59)));         // CTV có thể đang tới muộn
-        assertNotNull(TuHuyDonService.lyDoQuaHan(d, true, false, NGAY.atTime(11, 1)));
+        assertNull(TuHuyDonService.lyDoQuaHan(d, true, false, NGAY.atTime(11, 1)));            // đã có CTV nhận: xử lý qua "Xử lý quá hạn" của CTV, không tự hủy
         assertNull(TuHuyDonService.lyDoQuaHan(d, true, true, NGAY.atTime(23, 0)));           // đã làm: không hủy
     }
 
@@ -53,11 +53,11 @@ class TuHuyDonServiceTest {
     void chuaAiNhanThiHuySau15PhutPhatHanh() {
         LocalDateTime phatHanh = LocalDateTime.of(2026, 10, 10, 9, 0);
         LocalDateTime han = phatHanh.plusMinutes(15);
-        assertNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, phatHanh.plusMinutes(14), 15));   // còn hạn
-        assertNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, han, 15));                         // đúng hạn: chưa hủy
-        assertNotNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, han.plusSeconds(1), 15));       // quá hạn
-        assertNull(TuHuyDonService.lyDoHetHanNhan(han, true, false, han.plusHours(1), 15));             // đã có người nhận
-        assertNull(TuHuyDonService.lyDoHetHanNhan(null, false, false, han.plusHours(1), 15));           // không rõ lúc phát hành
+        assertNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, false, phatHanh.plusMinutes(14), 15));   // còn hạn
+        assertNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, false, han, 15));                         // đúng hạn: chưa hủy
+        assertNotNull(TuHuyDonService.lyDoHetHanNhan(han, false, false, false, han.plusSeconds(1), 15));       // quá hạn
+        assertNull(TuHuyDonService.lyDoHetHanNhan(han, true, false, false, han.plusHours(1), 15));             // đã có người nhận
+        assertNull(TuHuyDonService.lyDoHetHanNhan(null, false, false, false, han.plusHours(1), 15));           // không rõ lúc phát hành
     }
 
     @Test
@@ -75,8 +75,21 @@ class TuHuyDonServiceTest {
     void goiThangTinhTheoBuoiCuoi() {
         DonDatDichVu d = don("GoiThang", "2,4,6", 12);                                         // buổi cuối 06/11
         assertNull(TuHuyDonService.lyDoQuaHan(d, true, false, LocalDateTime.of(2026, 10, 20, 12, 0)));
-        assertNotNull(TuHuyDonService.lyDoQuaHan(d, true, false, LocalDateTime.of(2026, 11, 6, 11, 1)));
+        assertNull(TuHuyDonService.lyDoQuaHan(d, true, false, LocalDateTime.of(2026, 11, 6, 11, 1)));   // đã có CTV nhận: không tự hủy
         // Chưa ai nhận gói: quá giờ buổi đầu là hủy cả gói
         assertNotNull(TuHuyDonService.lyDoQuaHan(d, false, false, NGAY.atTime(8, 30)));
+    }
+
+    @Test
+    void nhanMotPhanHetHanThiHuyVoiLyDoChuaDu() {
+        assertEquals("Hết 15 phút chờ (hạn 10:15 26/10/2026) nhưng chưa đủ cộng tác viên nhận đơn",
+                TuHuyDonService.lyDoHetHanNhan(LocalDateTime.of(2026, 10, 26, 10, 15), false, true, false,
+                        LocalDateTime.of(2026, 10, 26, 10, 16), 15));
+    }
+
+    @Test
+    void duNguoiKhongHuy() {
+        assertNull(TuHuyDonService.lyDoHetHanNhan(LocalDateTime.of(2026, 10, 26, 10, 15), true, true, false,
+                LocalDateTime.of(2026, 10, 26, 10, 16), 15));
     }
 }

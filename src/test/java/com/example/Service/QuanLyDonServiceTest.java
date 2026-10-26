@@ -58,4 +58,10 @@ class QuanLyDonServiceTest {
         assertTrue(QuanLyDonService.quaHanHoanThanh(don, LocalDateTime.of(2026, 9, 29, 17, 31)));
         assertFalse(QuanLyDonService.quaHanHoanThanh(DonDatDichVu.builder().build(), LocalDateTime.now()));
     }
+
+    @Test
+    void dangThucHienCanDuNguoiChoMoiDichVu() {
+        assertEquals("Còn dịch vụ chưa có cộng tác viên nhận.", QuanLyDonService.loiDuNguoi(false));
+        assertNull(QuanLyDonService.loiDuNguoi(true));
+    }
 }

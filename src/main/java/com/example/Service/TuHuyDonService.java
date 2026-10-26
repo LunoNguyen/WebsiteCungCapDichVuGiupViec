@@ -116,13 +116,17 @@ public class TuHuyDonService {
                 .anyMatch(pc -> "DaXacNhan".equals(pc.getTrangThai()) || "HoanThanh".equals(pc.getTrangThai()));
         boolean daLamBuoiNao = lichs.stream()
                 .anyMatch(l -> "DangThucHien".equals(l.getTrangThai()) || "HoanThanh".equals(l.getTrangThai()));
+        // Đơn nhiều dịch vụ: đủ người khi mọi dịch vụ đã có CTV nhận (đơn một dịch vụ: như daCoNguoiNhan)
+        boolean duNguoi = PhanCongTheoDichVu.duNguoi(
+                don.getChiTietList() != null ? don.getChiTietList() : List.of(), phanCongs);
+        boolean nhanMotPhan = daCoNguoiNhan && !duNguoi;
 
         // Chưa có người nhận: quá hạn thanh toán chuyển khoản → hết 15 phút nhận đơn → quá giờ bắt đầu
         HoaDon hd = hoaDonRepo.findByDonDat_Id(id).orElse(null);
         String lyDo = daCoNguoiNhan || daLamBuoiNao || hd == null ? null
                 : lyDoQuaHanThanhToan(hd.getHinhThucThanhToan(), hd.getTrangThaiThanhToan(), don.getNgayTao(), luc,
                         hanThanhToanPhut);
-        if (lyDo == null) lyDo = lyDoHetHanNhan(hanNhanDon.hanNhan(don), daCoNguoiNhan, daLamBuoiNao, luc,
+        if (lyDo == null) lyDo = lyDoHetHanNhan(hanNhanDon.hanNhan(don), duNguoi, nhanMotPhan, daLamBuoiNao, luc,
                 hanNhanDon.soPhut());
         if (lyDo == null) lyDo = lyDoQuaHan(don, daCoNguoiNhan, daLamBuoiNao, luc);
         if (lyDo == null) return false;
@@ -146,9 +150,10 @@ public class TuHuyDonService {
             }
         }
         for (PhanCongCTV pc : phanCongs) {
-            if ("ChoPhanCong".equals(pc.getTrangThai())) {
+            // Chưa đủ người: hủy cả phân công của các CTV đã nhận một phần dịch vụ
+            if ("ChoPhanCong".equals(pc.getTrangThai()) || (nhanMotPhan && "DaXacNhan".equals(pc.getTrangThai()))) {
                 pc.setTrangThai("TuChoi");
-                pc.setLyDoTuChoi("Đơn tự hủy do quá hạn");
+                pc.setLyDoTuChoi(nhanMotPhan ? "Đơn tự hủy: chưa đủ cộng tác viên nhận mọi dịch vụ" : "Đơn tự hủy do quá hạn");
                 phanCongRepo.save(pc);
             }
         }
@@ -173,14 +178,17 @@ public class TuHuyDonService {
     }
 
     /**
-     * Lý do hủy vì hết thời gian nhận đơn; null nếu đã có người nhận, đã làm hoặc còn hạn.
+     * Lý do hủy vì hết thời gian nhận đơn; null nếu đã đủ người nhận, đã làm hoặc còn hạn.
      *
-     * @param han hạn nhận đơn (HanNhanDonService.hanNhan; null = chưa phát hành)
+     * @param han                hạn nhận đơn (HanNhanDonService.hanNhan; null = chưa phát hành)
+     * @param duNguoi            mọi dịch vụ của đơn đã có CTV nhận (đơn một dịch vụ: đã có người nhận)
+     * @param coNguoiNhanMotPhan đơn nhiều dịch vụ mới có CTV nhận một phần
      */
-    public static String lyDoHetHanNhan(LocalDateTime han, boolean daCoNguoiNhan, boolean daLamBuoiNao,
-                                        LocalDateTime luc, long soPhut) {
-        if (han == null || daCoNguoiNhan || daLamBuoiNao || !luc.isAfter(han)) return null;
-        return "Hết " + soPhut + " phút chờ (hạn " + han.format(GIO_NGAY) + ") nhưng chưa có cộng tác viên nhận đơn";
+    public static String lyDoHetHanNhan(LocalDateTime han, boolean duNguoi, boolean coNguoiNhanMotPhan,
+                                        boolean daLamBuoiNao, LocalDateTime luc, long soPhut) {
+        if (han == null || duNguoi || daLamBuoiNao || !luc.isAfter(han)) return null;
+        return "Hết " + soPhut + " phút chờ (hạn " + han.format(GIO_NGAY) + ") nhưng chưa "
+                + (coNguoiNhanMotPhan ? "đủ" : "có") + " cộng tác viên nhận đơn";
     }
 
     /**

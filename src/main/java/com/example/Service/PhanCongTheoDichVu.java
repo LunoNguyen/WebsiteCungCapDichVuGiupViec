@@ -75,4 +75,15 @@ public final class PhanCongTheoDichVu {
         ds.sort(null);
         return ds;
     }
+
+    /** Mọi phân công còn hiệu lực của đơn đã hoàn thành (đơn nhiều dịch vụ: mọi CTV đã làm xong phần mình). */
+    public static boolean moiPhanCongXong(List<PhanCongCTV> pcs) {
+        boolean co = false;
+        for (PhanCongCTV pc : pcs) {
+            if (!hieuLuc(pc)) continue;
+            co = true;
+            if (!"HoanThanh".equalsIgnoreCase(pc.getTrangThai())) return false;
+        }
+        return co;
+    }
 }
