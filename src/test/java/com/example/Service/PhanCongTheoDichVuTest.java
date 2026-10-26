@@ -66,4 +66,9 @@ class PhanCongTheoDichVuTest {
     void nhanHopLe() {
         assertNull(PhanCongTheoDichVu.loiNhan(Set.of(10, 11), Set.of(10, 11), Set.of(1, 2), Map.of(10, 1, 11, 2), List.of(10, 11)));
     }
+
+    @Test
+    void macDinhNhanMoiDongConTrongCoKyNang() {
+        assertEquals(List.of(10), PhanCongTheoDichVu.chonMacDinh(Set.of(10, 11), Set.of(1), Map.of(10, 1, 11, 2)));
+    }
 }

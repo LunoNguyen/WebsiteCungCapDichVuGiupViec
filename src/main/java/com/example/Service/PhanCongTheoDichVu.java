@@ -3,6 +3,7 @@ package com.example.Service;
 import com.example.Model.ChiTietDonDat;
 import com.example.Model.PhanCongCTV;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,5 +64,15 @@ public final class PhanCongTheoDichVu {
             if (!dichVuCtv.contains(dichVuCuaChiTiet.get(id))) return "Bạn chưa đăng ký kỹ năng cho dịch vụ đã chọn.";
         }
         return null;
+    }
+
+    /** Dòng mặc định khi CTV bấm nhận: mọi dòng còn trống mà CTV có kỹ năng, sắp tăng dần. */
+    public static List<Integer> chonMacDinh(Set<Integer> conTrong, Set<Integer> dichVuCtv, Map<Integer, Integer> dichVuCuaChiTiet) {
+        List<Integer> ds = new ArrayList<>();
+        for (Integer id : conTrong) {
+            if (dichVuCtv.contains(dichVuCuaChiTiet.get(id))) ds.add(id);
+        }
+        ds.sort(null);
+        return ds;
     }
 }

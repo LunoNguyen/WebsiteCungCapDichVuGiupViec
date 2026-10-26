@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -170,13 +171,18 @@ public class CollaboratorProfileController {
     @PostMapping("/orders/{donId}/accept")
     public ResponseEntity<?> acceptOrderFromPool(
             @PathVariable Integer donId,
-            @RequestBody Map<String, Integer> req) {
+            @RequestBody Map<String, Object> req) {
         try {
-            Integer congTacVienId = req.get("congTacVienId");
-            if (congTacVienId == null) congTacVienId = req.get("taiKhoanId");
+            Integer congTacVienId = soNguyen(req.get("congTacVienId"));
+            if (congTacVienId == null) congTacVienId = soNguyen(req.get("taiKhoanId"));
             if (congTacVienId == null) return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Thiếu congTacVienId"));
+            // Đơn nhiều dịch vụ: các dòng chi tiết CTV chọn nhận (không gửi = mọi dòng còn trống CTV làm được)
+            List<Integer> chiTietIds = null;
+            if (req.get("chiTietIds") instanceof List<?> ds) {
+                chiTietIds = ds.stream().map(CollaboratorProfileController::soNguyen).filter(java.util.Objects::nonNull).toList();
+            }
             return ResponseEntity.ok(Map.of("success", true, "data",
-                    collaboratorApiService.acceptOrderFromPool(congTacVienId, donId)));
+                    collaboratorApiService.acceptOrderFromPool(congTacVienId, donId, chiTietIds)));
         } catch (IllegalStateException e) {
             // Đơn đã có người nhận → 409 Conflict
             return ResponseEntity.status(409).body(Map.of("success", false, "message", e.getMessage()));
@@ -216,5 +222,13 @@ public class CollaboratorProfileController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
+    }
+
+    private static Integer soNguyen(Object v) {
+        if (v instanceof Number n) return n.intValue();
+        if (v instanceof String t && !t.isBlank()) {
+            try { return Integer.valueOf(t.trim()); } catch (NumberFormatException e) { return null; }
+        }
+        return null;
     }
 }
