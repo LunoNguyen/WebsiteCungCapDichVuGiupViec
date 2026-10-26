@@ -285,6 +285,25 @@
       this.saveCart(items);
     },
 
+    /** Bỏ các dịch vụ vừa đặt xong khỏi giỏ. */
+    removeMany: function (ids) {
+      var bo = ids.map(Number);
+      this.saveCart(this.getCart().filter(function (x) { return bo.indexOf(Number(x.id)) === -1; }));
+    },
+
+    /** Gói tháng không đặt chung được (đặt riêng); item cũ chưa có loaiHinhDat thì suy từ nhãn. */
+    laGoi: function (item) {
+      return item.loaiHinhDat === 'GoiThang' || (!item.loaiHinhDat && item.donViTinh === 'Gói tháng');
+    },
+
+    /** Thời lượng (phút) của một dịch vụ trong giỏ: trường phut, hoặc đọc từ "2 giờ 30 phút"; không rõ thì 120. */
+    phut: function (item) {
+      if (Number(item.phut) > 0) return Number(item.phut);
+      var t = String(item.thoiGianText || ''), g = t.match(/(\d+)\s*giờ/), p = t.match(/(\d+)\s*phút/);
+      var tong = (g ? Number(g[1]) * 60 : 0) + (p ? Number(p[1]) : 0);
+      return tong > 0 ? tong : 120;
+    },
+
     toggleSelect: function (id) {
       var items = this.getCart();
       var found = items.find(function (x) { return x.id === id; });
@@ -295,8 +314,8 @@
     },
 
     selectAll: function (checked) {
-      var items = this.getCart();
-      items.forEach(function (x) { x.checked = checked; });
+      var items = this.getCart(), self = this;
+      items.forEach(function (x) { x.checked = checked && !self.laGoi(x); });
       this.saveCart(items);
     },
 
@@ -323,13 +342,23 @@
       donGia: Number(d.gia) || 0,
       thoiGianText: d.thoiGian || (phut ? (phut % 60 === 0 ? (phut / 60) + ' giờ' : phut + ' phút') : ''),
       donViTinh: d.goi === 'true' ? 'Gói tháng' : 'Theo lần',
+      loaiHinhDat: d.goi === 'true' ? 'GoiThang' : 'TheoLan',
+      phut: phut || null,
       danhMucId: Number(d.danhMuc) || null,
       hinhAnh: d.anh || ''
     });
   });
 
-  // Cập nhật huy hiệu khi load trang
+  // Cập nhật huy hiệu khi load trang; vừa đặt xong từ giỏ (?xoaGio=1,25) thì bỏ các dịch vụ đó khỏi giỏ
   document.addEventListener('DOMContentLoaded', function () {
+    try {
+      var url = new URL(location.href), xoa = url.searchParams.get('xoaGio');
+      if (xoa) {
+        window.CartCache.removeMany(xoa.split(','));
+        url.searchParams.delete('xoaGio');
+        history.replaceState(null, '', url.pathname + url.search + url.hash);
+      }
+    } catch (e) { /* trình duyệt cũ: bỏ qua */ }
     window.CartCache.updateBadge();
   });
 })();

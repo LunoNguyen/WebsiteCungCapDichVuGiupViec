@@ -345,6 +345,19 @@ body.menu-open .drawer { translate: 0 0; transition-duration: .5s; }
 .dv-da-chon b { font-size: 16px; }
 .dv-da-chon > div > span:last-child { color: var(--foreground-soft); font-size: 14px; }
 .dv-da-chon > .dv-da-chon-nut { display: flex; gap: 8px; flex-shrink: 0; }
+/* Đặt nhiều dịch vụ từ giỏ hàng */
+.dv-nhieu { display: grid; gap: 10px; }
+.dv-nhieu-dau { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dv-nhieu-ds { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.dv-nhieu-ds li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: baseline; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.dv-nhieu-ds li b { min-width: 0; overflow-wrap: anywhere; }
+.dv-nhieu-ds li span { color: var(--foreground-soft); font-size: 14px; white-space: nowrap; }
+.dv-nhieu-ds li .gia { color: var(--foreground); font-weight: 700; }
+.dv-nhieu-tong { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; }
+@media (max-width: 560px) {
+  .dv-nhieu-ds li { grid-template-columns: minmax(0, 1fr) auto; }
+  .dv-nhieu-ds li span:not(.gia) { grid-column: 1; }
+}
 /* Nút "Thêm vào giỏ": ở trang chi tiết nằm dưới nút Đặt dịch vụ */
 .summary .nut-them-gio { margin-top: 10px; }
 .variant[hidden] { display: none; }

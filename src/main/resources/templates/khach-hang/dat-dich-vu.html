@@ -9,7 +9,9 @@
                coTheoLan=${!danhMuc.dichVuTheoLan.isEmpty()},
                coGoiThang=${!danhMuc.dichVuGoiThang.isEmpty()}">
   <!-- novalidate: các bước đang ẩn có ô bắt buộc; mỗi bước tự kiểm tra trước khi sang bước sau -->
-  <form class="wrap" method="post" th:action="@{/dat-dich-vu/{id}(id=${danhMuc.id})}" id="bookForm" novalidate>
+  <form class="wrap" method="post" th:action="@{/dat-dich-vu/{id}(id=${danhMuc.id})}" id="bookForm" novalidate
+        th:attr="data-nhieu-ids=${dvNhieuIds},data-tong-phut=${tongPhut},data-tong-gia=${tongGia},data-ten-tom-tat=${tenTomTat}">
+    <input type="hidden" name="dichVuIds" th:each="x : ${dvNhieu}" th:value="${x.id}">
     <div class="crumb"><a th:href="@{/tim-dich-vu(nhom=${danhMuc.id})}" data-ve-tim-kiem>Dịch vụ</a><svg class="ic"><use href="#i-right"/></svg><a th:href="@{/dich-vu/{id}(id=${danhMuc.id})}" th:text="${danhMuc.tenLoaiDichVu}">Dọn dẹp nhà</a></div>
     <div class="book-head">
       <h1 th:text="'Đặt ' + ${#strings.toLowerCase(danhMuc.tenLoaiDichVu)}">Đặt dọn dẹp nhà theo giờ</h1>
@@ -103,7 +105,25 @@
 
         <!-- ===================== BƯỚC 3: THỜI GIAN THỰC HIỆN ===================== -->
         <div data-buoc="3" hidden>
-          <section class="panel dv-da-chon">
+          <section class="panel dv-nhieu" th:if="${dvNhieu != null}">
+            <div class="dv-nhieu-dau">
+              <span class="hint" style="margin:0" th:text="${dvNhieu.size()} + ' dịch vụ đã chọn · làm nối tiếp trong cùng buổi'">2 dịch vụ đã chọn</span>
+              <a class="btn btn-outline btn-sm" th:href="@{/gio-hang}">Sửa</a>
+            </div>
+            <ul class="dv-nhieu-ds">
+              <li th:each="x : ${dvNhieu}">
+                <b th:text="${x.tenDichVu}">Dọn dẹp nhà theo giờ (2 giờ)</b>
+                <span th:text="${x.thoiGianText}">2 giờ</span>
+                <span class="gia" th:text="${x.giaText}">216.000đ</span>
+              </li>
+            </ul>
+            <div class="dv-nhieu-tong">
+              <span th:text="'Tổng thời lượng ' + ${tongThoiLuong}">Tổng thời lượng 2 giờ 45 phút</span>
+              <b th:text="${#numbers.formatDecimal(tongGia, 0, 'POINT', 0, 'COMMA')} + 'đ'">411.000đ</b>
+            </div>
+            <p class="hint" style="margin:0">Các dịch vụ phải xong trước 20:00, khung giờ quá muộn sẽ bị khóa.</p>
+          </section>
+          <section class="panel dv-da-chon" th:if="${dvNhieu == null}">
             <div>
               <span class="hint" style="margin:0">Dịch vụ đã chọn</span>
               <b th:text="${#strings.indexOf(dvDaChon.tenDichVu, ' (') > 0} ? ${#strings.substring(dvDaChon.tenDichVu, 0, #strings.indexOf(dvDaChon.tenDichVu, ' ('))} : ${dvDaChon.tenDichVu}">Dọn dẹp nhà theo giờ</b>
@@ -302,6 +322,15 @@
   var all = function (sel) { return form.querySelectorAll(sel); };
   var toast = function (t) { if (window.siteToast) window.siteToast(t); };
   var giam = 0;
+  // Đặt nhiều dịch vụ từ giỏ hàng: danh sách id, tổng thời lượng (phút), tổng giá, tên tóm tắt do máy chủ gửi
+  var NHIEU = form.getAttribute('data-nhieu-ids') ? {
+    ids: form.getAttribute('data-nhieu-ids').split(',').map(Number),
+    phut: Number(form.getAttribute('data-tong-phut')) || 0,
+    gia: Number(form.getAttribute('data-tong-gia')) || 0,
+    ten: form.getAttribute('data-ten-tom-tat')
+  } : null;
+  var PHUT_KET_THUC_MUON_NHAT = 20 * 60; // các dịch vụ phải xong trước 20:00 (DatNhieuDichVu)
+  function chiTietGui() { return NHIEU ? NHIEU.ids.map(function (id) { return { dichVuId: id }; }) : null; }
 
   // Nút quay lại: về đúng trang xem / tìm dịch vụ khách vừa mở (cùng site), giữ bộ lọc tìm kiếm
   (function () {
@@ -377,7 +406,7 @@
     tinhGia();
   }
 
-  // Giờ đã qua (hôm nay, chưa đủ 1 giờ) thì khóa
+  // Giờ đã qua (hôm nay, chưa đủ 1 giờ) thì khóa; nhiều dịch vụ: khóa giờ làm các dịch vụ xong sau 20:00
   function khoaGio() {
     var ngay = form.querySelector('input[name="ngayThucHien"]:checked');
     var homNay = new Date();
@@ -385,7 +414,8 @@
     all('input[name="gioBatDau"]').forEach(function (i) {
       var p = i.value.split(':');
       var t = new Date(); t.setHours(+p[0], +p[1], 0, 0);
-      i.disabled = ngay && ngay.value === isoHomNay && t.getTime() < Date.now() + 3600000;
+      var quaMuon = NHIEU && (+p[0]) * 60 + (+p[1]) + NHIEU.phut > PHUT_KET_THUC_MUON_NHAT;
+      i.disabled = quaMuon || (ngay && ngay.value === isoHomNay && t.getTime() < Date.now() + 3600000);
       if (i.disabled && i.checked) i.checked = false;
     });
   }
@@ -495,12 +525,12 @@
     var dv = form.querySelector('input[name="dichVuId"]:checked');
     var ngay = form.querySelector('input[name="ngayThucHien"]:checked');
     var gio = form.querySelector('input[name="gioBatDau"]:checked');
-    var ten = dv ? dv.getAttribute('data-ten') : 'Chưa chọn';
+    var ten = NHIEU ? NHIEU.ten : dv ? dv.getAttribute('data-ten') : 'Chưa chọn';
     form.querySelector('[data-sum-ten]').textContent = ten;
     var tg = ngay && gio ? (buoiDau ? 'Từ ' + buoiDau : ngay.getAttribute('data-nhan')) + ' · ' + gio.value : 'Chưa chọn';
     form.querySelector('[data-sum-gio]').textContent = tg;
     form.querySelector('[data-sum-gio-ngan]').textContent = ngay && gio ? tg : 'Chưa chọn giờ';
-    var goc = dv ? Number(dv.getAttribute('data-gia')) : 0;
+    var goc = NHIEU ? NHIEU.gia : dv ? Number(dv.getAttribute('data-gia')) : 0;
     form.querySelector('[data-sum-goc]').textContent = tien(goc);
     form.querySelector('[data-sum-giam-row]').hidden = !giam;
     form.querySelector('[data-sum-giam]').textContent = '−' + tien(giam);
@@ -532,7 +562,7 @@
     if (!dv || !ma) { giam = 0; msg.hidden = true; ganKmMobile('Chưa áp dụng mã ưu đãi.'); capNhatTomTat(); return; }
     fetch('/v1/bookings/calculate-price', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dichVuId: Number(dv.value), loaiHinhDat: loaiInput.value, codeKhuyenMai: ma })
+      body: JSON.stringify({ dichVuId: Number(dv.value), chiTiet: chiTietGui(), loaiHinhDat: loaiInput.value, codeKhuyenMai: ma })
     }).then(function (r) { return r.json(); }).then(function (res) {
       loiGia.hidden = true;
       if (!res.success) throw new Error(res.message);
@@ -588,13 +618,13 @@
     if (!dv) { toast('Vui lòng chọn dịch vụ trước.'); return; }
     var ngay = form.querySelector('input[name="ngayThucHien"]:checked');
     var gio = form.querySelector('input[name="gioBatDau"]:checked');
-    kmDialog.querySelector('[data-km-dich-vu]').textContent = 'Cho: ' + dv.getAttribute('data-ten');
+    kmDialog.querySelector('[data-km-dich-vu]').textContent = 'Cho: ' + (NHIEU ? NHIEU.ten : dv.getAttribute('data-ten'));
     kmBo.hidden = !oMa.value.trim();
     kmList.innerHTML = '<p class="hint">Đang tải khuyến mãi…</p>';
     if (typeof kmDialog.showModal === 'function') kmDialog.showModal(); else kmDialog.setAttribute('open', '');
     fetch('/v1/bookings/available-promotions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dichVuId: Number(dv.value), loaiHinhDat: loaiInput.value,
+      body: JSON.stringify({ dichVuId: Number(dv.value), chiTiet: chiTietGui(), loaiHinhDat: loaiInput.value,
         ngayThucHien: ngay ? ngay.value : null, gioBatDau: gio ? gio.value : null })
     }).then(function (r) { return r.json(); }).then(function (res) {
       if (!res.success) throw new Error(res.message);
@@ -707,7 +737,10 @@
   }
   function lui() {
     // Bước đầu (Thời gian): quay lại trang chi tiết để đổi dịch vụ / hình thức / thời lượng
-    if (buoc <= 3) { location.href = '/dich-vu/chi-tiet/' + (form.querySelector('input[name="dichVuId"]:checked') || {}).value; return; }
+    if (buoc <= 3) {
+      location.href = NHIEU ? '/gio-hang' : '/dich-vu/chi-tiet/' + (form.querySelector('input[name="dichVuId"]:checked') || {}).value;
+      return;
+    }
     var truoc = buoc - 1;
     if (truoc === 2 && boQuaBuoc2()) truoc = 1;
     if (truoc >= 1) moBuoc(truoc);

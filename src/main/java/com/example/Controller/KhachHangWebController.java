@@ -54,6 +54,8 @@ public class KhachHangWebController {
     private final CustomerApiService customerApiService;
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Service.HanNhanDonService hanNhanDonService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Repository.DichVuRepository dichVuRepository;
     private final CustomerAddressService addressService;
     private final AuthService authService;
     private final KhachHangRepository khachHangRepository;
@@ -263,6 +265,70 @@ public class KhachHangWebController {
         model.addAttribute("dvChon", dv);
         model.addAttribute("dvDaChon", dvDaChon);
         model.addAttribute("dvLaGoi", laGoi);
+        napTrangDat(khId, danhMuc, model);
+        return "khach-hang/dat-dich-vu";
+    }
+
+    /**
+     * Đặt nhiều dịch vụ từ giỏ hàng (?dv=1,25): một lịch, một địa chỉ, một hóa đơn; chỉ dịch vụ theo lần,
+     * tối đa 5 dịch vụ, tổng tối đa 8 giờ (DatNhieuDichVu). Không hợp lệ thì về giỏ hàng kèm lý do.
+     */
+    @GetMapping("/dat-dich-vu/nhieu")
+    @SuppressWarnings("unchecked")
+    public String datNhieuDichVu(@RequestParam List<Integer> dv, HttpSession session, HttpServletRequest request,
+                                 Model model, RedirectAttributes ra) {
+        Integer khId = khachHangId(session);
+        if (khId == null) return chuyenDangNhap(request);
+        List<Integer> ids = dv.stream().filter(java.util.Objects::nonNull).distinct().toList();
+        if (ids.size() == 1) return "redirect:/dich-vu/chi-tiet/" + ids.get(0);
+
+        List<com.example.Model.DichVu> dichVus = new ArrayList<>();
+        for (Integer id : ids) dichVuRepository.findById(id).ifPresent(dichVus::add);
+        String loi = dichVus.size() < ids.size() ? "Có dịch vụ trong giỏ không còn tồn tại, vui lòng xóa khỏi giỏ hàng."
+                : com.example.Service.DatNhieuDichVu.loiDanhSach(dichVus);
+        // Dịch vụ phải đang hiển thị trong danh mục (giá, ảnh lấy từ cùng bản xem với trang chi tiết)
+        List<DanhMucView> danhMucs = (List<DanhMucView>) model.getAttribute("danhMucs");
+        List<com.example.DTO.view.DichVuView> views = new ArrayList<>();
+        DanhMucView danhMucDau = null;
+        for (Integer id : ids) {
+            com.example.DTO.view.DichVuView thay = null;
+            if (danhMucs != null) {
+                for (DanhMucView dm : danhMucs) {
+                    for (com.example.DTO.view.DichVuView x : dm.getDichVuTheoLan()) {
+                        if (x.getId().equals(id)) {
+                            thay = x;
+                            if (danhMucDau == null) danhMucDau = dm;
+                        }
+                    }
+                }
+            }
+            if (thay != null) views.add(thay);
+        }
+        if (loi == null && views.size() < ids.size()) loi = "Có dịch vụ trong giỏ hiện không còn nhận đặt.";
+        if (loi != null) {
+            ra.addFlashAttribute("error", loi);
+            return "redirect:/gio-hang";
+        }
+        int tongPhut = com.example.Service.DatNhieuDichVu.tongPhut(dichVus);
+        java.math.BigDecimal tongGia = views.stream().map(x -> x.getGia() != null ? x.getGia() : java.math.BigDecimal.ZERO)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        model.addAttribute("danhMuc", danhMucDau);
+        model.addAttribute("dvChon", ids.get(0));
+        model.addAttribute("dvDaChon", views.get(0));
+        model.addAttribute("dvLaGoi", false);
+        model.addAttribute("dvNhieu", views);
+        model.addAttribute("dvNhieuIds", ids.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")));
+        model.addAttribute("tongPhut", tongPhut);
+        model.addAttribute("tongThoiLuong", com.example.Service.DatNhieuDichVu.thoiLuong(tongPhut));
+        model.addAttribute("tongGia", tongGia);
+        model.addAttribute("tenTomTat", com.example.Service.DatNhieuDichVu.tomTatDichVu(
+                views.stream().map(com.example.DTO.view.DichVuView::getTenDichVu).toList()));
+        napTrangDat(khId, danhMucDau, model);
+        return "khach-hang/dat-dich-vu";
+    }
+
+    /** Phần chung của trang đặt (một hoặc nhiều dịch vụ): gói tháng, địa chỉ, khu vực, ngày giờ, hạn. */
+    private void napTrangDat(Integer khId, DanhMucView danhMuc, Model model) {
         Map<Integer, Integer> soBuoiGoi = new java.util.HashMap<>();
         danhMuc.getDichVuGoiThang().forEach(g -> soBuoiGoi.put(g.getId(), LichGoiThang.soBuoi(g.getSoBuoi(), g.getTenDichVu())));
         model.addAttribute("soBuoiGoi", soBuoiGoi);
@@ -287,7 +353,6 @@ public class KhachHangWebController {
         model.addAttribute("nhomDichVu", nhomDichVu(danhMuc));
         model.addAttribute("phutThanhToan", hanNhanDonService.soPhutThanhToan());
         model.addAttribute("phutNhanDon", hanNhanDonService.soPhut());
-        return "khach-hang/dat-dich-vu";
     }
 
     /**
@@ -338,10 +403,15 @@ public class KhachHangWebController {
                                 @RequestParam(required = false) String codeKhuyenMai,
                                 @RequestParam(required = false) String yeuCauDacBiet,
                                 @RequestParam(defaultValue = "TienMat") String hinhThucThanhToan,
+                                @RequestParam(required = false) List<Integer> dichVuIds,
                                 HttpSession session, HttpServletRequest request, RedirectAttributes ra) {
         Integer khId = khachHangId(session);
         if (khId == null) return chuyenDangNhap(request);
-        String quayLai = "redirect:/dat-dich-vu/" + danhMucId + "?dv=" + dichVuId;
+        // Đặt nhiều dịch vụ từ giỏ hàng: mỗi dịch vụ một dòng chi tiết, cùng lịch và địa chỉ, luôn theo lần
+        boolean nhieu = dichVuIds != null && dichVuIds.size() >= 2;
+        String dsIds = nhieu ? dichVuIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")) : null;
+        String quayLai = nhieu ? "redirect:/dat-dich-vu/nhieu?dv=" + dsIds : "redirect:/dat-dich-vu/" + danhMucId + "?dv=" + dichVuId;
+        if (nhieu) loaiHinhDat = "TheoLan";
 
         boolean goiThang = "GoiThang".equals(loaiHinhDat);
         // Theo lần: trong vòng 1 tháng; gói tháng: bắt đầu trong vòng 3 tháng; sau hiện tại ít nhất 1 giờ
@@ -358,7 +428,17 @@ public class KhachHangWebController {
         try {
             BookingCreateRequest req = new BookingCreateRequest();
             req.setKhachHangId(khId);
-            req.setDichVuId(dichVuId);
+            req.setDichVuId(nhieu ? dichVuIds.get(0) : dichVuId);
+            if (nhieu) {
+                List<com.example.DTO.request.ChiTietDonDatRequest> chiTiet = new ArrayList<>();
+                for (Integer id : dichVuIds) {
+                    com.example.DTO.request.ChiTietDonDatRequest ct = new com.example.DTO.request.ChiTietDonDatRequest();
+                    ct.setDichVuId(id);
+                    ct.setSoLuong(1);
+                    chiTiet.add(ct);
+                }
+                req.setChiTiet(chiTiet);
+            }
             req.setLoaiHinhDat(goiThang ? "GoiThang" : "TheoLan");
             req.setDiaChiId(diaChiId);
             if (diaChiId == null && maPhuong != null) {
@@ -377,10 +457,12 @@ public class KhachHangWebController {
             Map<String, Object> kq = customerApiService.createBooking(req);
             Object id = kq.get("donDatId") != null ? kq.get("donDatId") : kq.get("id");
             if (id == null) return "redirect:/tai-khoan/don-hang";
+            // Đặt từ giỏ hàng: trang đích xóa các dịch vụ vừa đặt khỏi giỏ (site.js, tham số xoaGio)
+            String xoaGio = nhieu ? "?xoaGio=" + dsIds : "";
             // Chuyển khoản: sang trang mã VietQR; tiền mặt: đơn đã phát hành, về trang theo dõi đơn
-            if ("ChuyenKhoan".equals(kq.get("hinhThucThanhToan"))) return "redirect:/tai-khoan/don-hang/" + id + "/thanh-toan";
+            if ("ChuyenKhoan".equals(kq.get("hinhThucThanhToan"))) return "redirect:/tai-khoan/don-hang/" + id + "/thanh-toan" + xoaGio;
             ra.addFlashAttribute("success", "Đã đặt dịch vụ. bTaskee đang tìm cộng tác viên cho bạn.");
-            return "redirect:/tai-khoan/don-hang/" + id;
+            return "redirect:/tai-khoan/don-hang/" + id + xoaGio;
         } catch (IllegalArgumentException e) {
             ra.addFlashAttribute("error", e.getMessage());
         } catch (Exception e) {

@@ -110,7 +110,7 @@ public final class DatNhieuDichVu {
     }
 
     /** "8 giờ", "8 giờ 30 phút", "45 phút". */
-    static String thoiLuong(int phut) {
+    public static String thoiLuong(int phut) {
         int g = phut / 60, p = phut % 60;
         if (g == 0) return p + " phút";
         return p == 0 ? g + " giờ" : g + " giờ " + p + " phút";

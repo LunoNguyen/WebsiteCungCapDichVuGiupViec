@@ -24,6 +24,8 @@
       </button>
     </div>
 
+    <div th:replace="~{layout/account-layout :: flash}"></div>
+
     <!-- Empty State -->
     <div id="cartEmptyState" style="display: none; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1px solid #e5e7eb;">
       <div style="width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 50%; background: #ffebd8; display: flex; align-items: center; justify-content: center; color: #e8650c;">
@@ -70,6 +72,11 @@
           <b id="summarySubtotal" style="color: #111827;">0đ</b>
         </div>
 
+        <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4b5563; margin-bottom: 16px;">
+          <span>Tổng thời lượng:</span>
+          <b id="summaryThoiLuong" style="color: #111827;">0 phút</b>
+        </div>
+
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">
 
         <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px;">
@@ -80,6 +87,7 @@
           </div>
         </div>
 
+        <p id="cartLyDo" hidden style="font-size: 13px; color: #b91c1c; margin: 0 0 10px;"></p>
         <button type="button" id="btnDatDichVu" class="btn btn-primary btn-block btn-lg" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 800; border-radius: 12px; cursor: pointer;">
           Đặt dịch vụ (<span id="btnDatCount">0</span>)
         </button>
@@ -118,6 +126,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  var SO_DICH_VU_TOI_DA = 5, TONG_PHUT_TOI_DA = 480; // cùng giới hạn với máy chủ (DatNhieuDichVu)
+  var cartLyDo = document.getElementById('cartLyDo');
+  var summaryThoiLuong = document.getElementById('summaryThoiLuong');
+  function thoiLuong(phut) {
+    var g = Math.floor(phut / 60), p = phut % 60;
+    return g === 0 ? p + ' phút' : (p === 0 ? g + ' giờ' : g + ' giờ ' + p + ' phút');
+  }
+
   function fmtMoney(num) {
     if (!num || isNaN(num)) return '0đ';
     return Number(num).toLocaleString('vi-VN') + 'đ';
@@ -142,15 +158,18 @@ document.addEventListener('DOMContentLoaded', function () {
     var allSelected = true;
     var selectedCount = 0;
     var totalPrice = 0;
+    var totalPhut = 0;
 
     listEl.innerHTML = '';
 
     items.forEach(function (item) {
-      var isChecked = item.checked !== false;
-      if (!isChecked) allSelected = false;
-      else {
+      var laGoi = window.CartCache.laGoi(item);
+      var isChecked = !laGoi && item.checked !== false;
+      if (!laGoi && !isChecked) allSelected = false;
+      if (isChecked) {
         selectedCount++;
         totalPrice += (Number(item.donGia) || 0);
+        totalPhut += window.CartCache.phut(item);
       }
 
       var row = document.createElement('div');
@@ -160,7 +179,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       row.innerHTML = `
         <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-          <input type="checkbox" class="chk-item" data-id="${Number(item.id)}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #e8650c; cursor: pointer;">
+          ${laGoi
+            ? '<span style="width: 18px; flex-shrink: 0;" title="Gói tháng đặt riêng"></span>'
+            : `<input type="checkbox" class="chk-item" data-id="${Number(item.id)}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #e8650c; cursor: pointer;">`}
           
           <div style="width: 48px; height: 48px; border-radius: 10px; background: #ffebd8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #e8650c; overflow: hidden;">
             ${item.hinhAnh
@@ -182,6 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <div style="font-size: 15px; font-weight: 800; color: #e8650c;">
             ${fmtMoney(item.donGia)}
           </div>
+          ${laGoi ? `<a class="btn btn-outline btn-sm" href="/dat-dich-vu/${Number(item.danhMucId) || 1}?dv=${Number(item.id)}" title="Gói tháng đặt riêng, không đặt chung với dịch vụ khác">Đặt riêng</a>` : ''}
 
           <button type="button" class="btn-del-item" data-id="${Number(item.id)}" title="Xóa dịch vụ này" style="border: none; background: none; color: #ef4444; cursor: pointer; padding: 6px; display: flex; align-items: center;">
             <svg class="ic" style="width: 20px; height: 20px;"><use href="#i-trash"/></svg>
@@ -192,12 +214,17 @@ document.addEventListener('DOMContentLoaded', function () {
       listEl.appendChild(row);
     });
 
-    chkSelectAll.checked = allSelected && items.length > 0;
+    chkSelectAll.checked = allSelected && selectedCount > 0;
     summarySelectedCount.textContent = selectedCount + ' dịch vụ';
     summarySubtotal.textContent = fmtMoney(totalPrice);
     summaryTotal.textContent = fmtMoney(totalPrice);
+    summaryThoiLuong.textContent = thoiLuong(totalPhut);
     btnDatCount.textContent = selectedCount;
-    btnDatDichVu.disabled = selectedCount === 0;
+    var lyDo = selectedCount > SO_DICH_VU_TOI_DA ? 'Mỗi lần đặt tối đa ' + SO_DICH_VU_TOI_DA + ' dịch vụ.'
+      : totalPhut > TONG_PHUT_TOI_DA ? 'Tổng thời lượng tối đa 8 giờ (đang chọn ' + thoiLuong(totalPhut) + ').' : '';
+    cartLyDo.textContent = lyDo;
+    cartLyDo.hidden = !lyDo;
+    btnDatDichVu.disabled = selectedCount === 0 || !!lyDo;
   }
 
   // Bắt sự kiện click
@@ -232,19 +259,17 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   btnDatDichVu.addEventListener('click', function () {
-    var items = window.CartCache.getCart().filter(function (x) { return x.checked !== false; });
+    var items = window.CartCache.getCart().filter(function (x) { return x.checked !== false && !window.CartCache.laGoi(x); });
     if (items.length === 0) {
       alert('Vui lòng chọn ít nhất 1 dịch vụ để đặt lịch.');
       return;
     }
 
-    var firstItem = items[0];
-    var allIds = items.map(function (x) { return x.id; });
-    var danhMucId = firstItem.danhMucId || 1;
-
-    // Vào màn đặt của dịch vụ đầu tiên đã chọn
-    var url = '/dat-dich-vu/' + danhMucId + '?dv=' + firstItem.id + '&danhSachDichVu=' + allIds.join(',') + '&fromCart=true';
-    window.location.href = url;
+    // Một dịch vụ: trang đặt thường; nhiều dịch vụ: một đơn chung lịch, chung hóa đơn
+    var ids = items.map(function (x) { return Number(x.id); });
+    window.location.href = ids.length === 1
+      ? '/dat-dich-vu/' + (Number(items[0].danhMucId) || 1) + '?dv=' + ids[0]
+      : '/dat-dich-vu/nhieu?dv=' + ids.join(',');
   });
 
   renderCart();
