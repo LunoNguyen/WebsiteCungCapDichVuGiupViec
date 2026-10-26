@@ -411,8 +411,11 @@ public class PhanCongService {
         // Phân công hiện có của đơn này
         Map<Integer, PhanCongCTV> phanCongCuaDon = new HashMap<>();
         List<Map<String, Object>> daPhanCong = new ArrayList<>();
-        for (PhanCongCTV pc : phanCongCTVRepository.findAllByDonDat_Id(donDatId)) {
-            phanCongCuaDon.put(pc.getCongTacVien().getId(), pc);
+        List<PhanCongCTV> pcsDon = phanCongCTVRepository.findAllByDonDat_Id(donDatId);
+        for (PhanCongCTV pc : pcsDon) {
+            // CTV có nhiều dòng (đơn nhiều dịch vụ): giữ phân công còn hiệu lực
+            PhanCongCTV truoc = phanCongCuaDon.get(pc.getCongTacVien().getId());
+            if (truoc == null || !PhanCongTheoDichVu.hieuLuc(truoc)) phanCongCuaDon.put(pc.getCongTacVien().getId(), pc);
             if (!"TuChoi".equalsIgnoreCase(pc.getTrangThai())) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("phanCongId", pc.getId());
@@ -420,8 +423,31 @@ public class PhanCongService {
                 m.put("hoTen", pc.getCongTacVien().getHoTen());
                 m.put("soDienThoai", pc.getCongTacVien().getSoDienThoai());
                 m.put("trangThai", pc.getTrangThai());
+                m.put("chiTietId", pc.getChiTietDonDat() != null ? pc.getChiTietDonDat().getId() : null);
+                m.put("tenDichVu", pc.getChiTietDonDat() != null && pc.getChiTietDonDat().getDichVu() != null
+                        ? pc.getChiTietDonDat().getDichVu().getTenDichVu() : null);
                 daPhanCong.add(m);
             }
+        }
+        // Đơn nhiều dịch vụ (giỏ hàng): mỗi dòng chi tiết một CTV
+        List<ChiTietDonDat> ctsDon = don.getChiTietList() != null ? don.getChiTietList() : List.of();
+        boolean nhieuDv = ctsDon.size() >= 2;
+        Set<Integer> conTrong = nhieuDv ? PhanCongTheoDichVu.chiTietConTrong(ctsDon, pcsDon) : Set.of();
+        Map<Integer, Integer> dichVuCuaChiTiet = new HashMap<>();
+        List<Map<String, Object>> dichVusDon = new ArrayList<>();
+        for (ChiTietDonDat ct : ctsDon) {
+            dichVuCuaChiTiet.put(ct.getId(), ct.getDichVu() != null ? ct.getDichVu().getId() : null);
+            if (!nhieuDv) continue;
+            Map<String, Object> d = new LinkedHashMap<>();
+            d.put("chiTietId", ct.getId());
+            d.put("tenDichVu", ct.getDichVu() != null ? ct.getDichVu().getTenDichVu() : "Dịch vụ");
+            PhanCongCTV pcDong = pcsDon.stream().filter(x -> PhanCongTheoDichVu.hieuLuc(x) && x.getChiTietDonDat() != null
+                    && ct.getId().equals(x.getChiTietDonDat().getId())).findFirst().orElse(null);
+            if (pcDong != null) {
+                d.put("phanCong", Map.of("phanCongId", pcDong.getId(), "hoTen", pcDong.getCongTacVien().getHoTen(),
+                        "trangThai", pcDong.getTrangThai()));
+            }
+            dichVusDon.add(d);
         }
 
         // Dịch vụ và khu vực mỗi CTV đăng ký
@@ -469,17 +495,24 @@ public class PhanCongService {
             PhanCongCTV daCo = phanCongCuaDon.get(ctv.getId());
             String lyDoLoai = null;
             KiemTra kq = null;
+            // Đơn nhiều dịch vụ: các dòng còn trống CTV này làm được (CTV đã nhận một dòng vẫn nhận thêm được)
+            List<Integer> coTheNhan = nhieuDv ? PhanCongTheoDichVu.chonMacDinh(conTrong,
+                    dichVuTheoCtv.getOrDefault(ctv.getId(), Set.of()), dichVuCuaChiTiet) : List.of();
+            boolean nhanThem = nhieuDv && daCo != null && PhanCongTheoDichVu.hieuLuc(daCo);
             if (laChinhKhachDatDon(ctv, don)) {
                 lyDoLoai = "Là chính khách hàng đặt đơn này";
-            } else if (daCo != null) {
+            } else if (nhieuDv && coTheNhan.isEmpty()) {
+                lyDoLoai = nhanThem ? "Đã nhận các dịch vụ làm được của đơn này" : "Chưa đăng ký kỹ năng cho dịch vụ còn trống của đơn";
+            } else if (daCo != null && !nhanThem) {
                 lyDoLoai = "TuChoi".equalsIgnoreCase(daCo.getTrangThai())
                         ? "Đã từ chối đơn này" : "Đã được phân công cho đơn này";
             } else {
-                kq = kiemTra(viec, ngay, batDau, ketThuc, khuVucDon, null);
+                Integer boQua = nhanThem ? daCo.getId() : null; // lịch của chính CTV trong đơn này không tính là trùng
+                kq = kiemTra(viec, ngay, batDau, ketThuc, khuVucDon, boQua);
                 lyDoLoai = kq.lyDoLoai;
                 // Các buổi sau của gói tháng cũng phải trống và đủ khoảng nghỉ
                 for (int i = 1; lyDoLoai == null && i < cacBuoi.size(); i++) {
-                    String lyDo = kiemTra(viec, cacBuoi.get(i), batDau, ketThuc, khuVucDon, null).lyDoLoai;
+                    String lyDo = kiemTra(viec, cacBuoi.get(i), batDau, ketThuc, khuVucDon, boQua).lyDoLoai;
                     if (lyDo != null) {
                         lyDoLoai = "Buổi " + cacBuoi.get(i).format(DateTimeFormatter.ofPattern("dd/MM")) + ": " + lyDo;
                     }
@@ -541,6 +574,7 @@ public class PhanCongService {
             }
             diem -= kq.diemTru;
 
+            dong.put("chiTietCoTheNhan", coTheNhan);
             dong.put("diem", (int) Math.round(Math.max(0, Math.min(100, diem))));
             dong.put("lyDo", lyDo);
             dong.put("canhBao", canhBao);
@@ -564,6 +598,7 @@ public class PhanCongService {
         ketQua.put("toiDaDonMoiNgay", toiDaDonMoiNgay);
         ketQua.put("toiDaGioMoiNgay", toiDaGioMoiNgay);
         ketQua.put("daPhanCong", daPhanCong);
+        ketQua.put("dichVus", dichVusDon);
         ketQua.put("phuHop", phuHop);
         ketQua.put("khongPhuHop", khongPhuHop);
         // Đơn đang chờ nhận: số giây còn lại của thời gian nhận đơn (hết thì hệ thống tự hủy)
@@ -616,6 +651,15 @@ public class PhanCongService {
     /** CSKH phân công một CTV cho đơn (giờ làm lấy theo đơn). Kiểm tra lại mọi ràng buộc cứng trước khi lưu. */
     @Transactional
     public PhanCongCTV phanCong(Integer donDatId, Integer ctvId, String nguoiThucHien) {
+        return phanCong(donDatId, ctvId, null, nguoiThucHien);
+    }
+
+    /**
+     * Phân công CTV; đơn nhiều dịch vụ bắt buộc chọn [chiTietDonDatId] (dịch vụ CTV sẽ làm). Đơn chỉ sang
+     * "Đã xác nhận" khi mọi dịch vụ đã có người; CTV đã có một dịch vụ trong đơn thì không tạo lịch lần hai.
+     */
+    @Transactional
+    public PhanCongCTV phanCong(Integer donDatId, Integer ctvId, Integer chiTietDonDatId, String nguoiThucHien) {
         // Khóa CTV rồi tới đơn: hai nhân viên phân công cùng lúc được xử lý lần lượt
         CongTacVien ctv = congTacVienRepository.findByIdForUpdate(ctvId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên."));
@@ -633,36 +677,59 @@ public class PhanCongService {
         boolean daCoNguoiNhan = phanCongCTVRepository.findAllByDonDat_Id(donDatId).stream()
                 .anyMatch(x -> "DaXacNhan".equalsIgnoreCase(x.getTrangThai()) || "HoanThanh".equalsIgnoreCase(x.getTrangThai()));
         if (!daCoNguoiNhan) hanNhanDonService.kiemTraConHan(don);
-        PhanCongCTV daCo = phanCongCTVRepository.findByDonDat_IdAndCongTacVien_Id(donDatId, ctvId).orElse(null);
-        if (daCo != null) {
+        List<PhanCongCTV> pcsDon = phanCongCTVRepository.findAllByDonDat_Id(donDatId);
+        List<ChiTietDonDat> cts = don.getChiTietList() != null ? don.getChiTietList() : List.of();
+        boolean nhieuDv = cts.size() >= 2;
+        PhanCongCTV daCo = pcsDon.stream().filter(x -> x.getCongTacVien() != null && ctvId.equals(x.getCongTacVien().getId()))
+                .sorted(Comparator.comparing((PhanCongCTV x) -> !PhanCongTheoDichVu.hieuLuc(x))).findFirst().orElse(null);
+        ChiTietDonDat dong = null;
+        if (nhieuDv) {
+            if (chiTietDonDatId == null) throw new IllegalArgumentException("Vui lòng chọn dịch vụ để phân công.");
+            dong = cts.stream().filter(ct -> ct.getId().equals(chiTietDonDatId)).findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không thuộc đơn này."));
+            if (!PhanCongTheoDichVu.chiTietConTrong(cts, pcsDon).contains(chiTietDonDatId)) {
+                throw new IllegalArgumentException("Dịch vụ này đã có cộng tác viên.");
+            }
+            Integer dvDong = dong.getDichVu() != null ? dong.getDichVu().getId() : null;
+            boolean coKyNang = dichVuCTVRepository.findAll().stream().anyMatch(d -> "HoatDong".equalsIgnoreCase(d.getTrangThai())
+                    && d.getCongTacVien() != null && ctvId.equals(d.getCongTacVien().getId())
+                    && d.getDichVu() != null && d.getDichVu().getId().equals(dvDong));
+            if (!coKyNang) throw new IllegalArgumentException("Cộng tác viên chưa đăng ký kỹ năng cho dịch vụ này.");
+        } else if (daCo != null) {
             throw new IllegalArgumentException("TuChoi".equalsIgnoreCase(daCo.getTrangThai())
                     ? "Cộng tác viên này đã từ chối đơn này." : "Cộng tác viên này đã được phân công cho đơn này.");
         }
+        boolean daCoLich = nhieuDv && daCo != null && PhanCongTheoDichVu.hieuLuc(daCo);
 
         if (don.getNgayThucHien() != null && don.getGioBatDau() != null
                 && LocalDateTime.of(don.getNgayThucHien(), don.getGioBatDau()).isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Đơn đã quá giờ bắt đầu, không phân công được nữa (đơn sẽ được tự hủy).");
         }
         LocalTime ketThuc = ketThucCuaDon(don);
-        kiemTraDonHoacBaoLoi(ctvId, don, null, true);
+        kiemTraDonHoacBaoLoi(ctvId, don, daCoLich ? daCo.getId() : null, true);
 
         PhanCongCTV pc = phanCongCTVRepository.save(PhanCongCTV.builder()
                 .maPhanCong(MaSinh.tao("PC-"))
                 .donDat(don)
                 .congTacVien(ctv)
+                .chiTietDonDat(dong)
                 .trangThai("DaXacNhan")
                 .thoiGianPhanCong(LocalDateTime.now())
                 .thoiGianXacNhan(LocalDateTime.now())
                 .build());
 
-        taoLichLamViec(pc, cacBuoi(don), don.getGioBatDau(), ketThuc, null);
+        if (!daCoLich) taoLichLamViec(pc, cacBuoi(don), don.getGioBatDau(), ketThuc, null);
 
         String trangThaiCu = don.getTrangThai();
-        if (!"DaXacNhan".equalsIgnoreCase(trangThaiCu)) {
+        List<PhanCongCTV> sau = new ArrayList<>(pcsDon);
+        sau.add(pc);
+        boolean duNguoi = !nhieuDv || PhanCongTheoDichVu.duNguoi(cts, sau);
+        if (duNguoi && !"DaXacNhan".equalsIgnoreCase(trangThaiCu)) {
             don.setTrangThai("DaXacNhan");
             donDatDichVuRepository.save(don);
         }
-        ghiLichSu(don, trangThaiCu, don.getTrangThai(), nguoiThucHien, "Phân công cộng tác viên " + ctv.getHoTen());
+        ghiLichSu(don, trangThaiCu, don.getTrangThai(), nguoiThucHien, "Phân công cộng tác viên " + ctv.getHoTen()
+                + (dong != null && dong.getDichVu() != null ? " cho " + dong.getDichVu().getTenDichVu() : ""));
         return pc;
     }
 
@@ -687,8 +754,11 @@ public class PhanCongService {
         phanCongCTVRepository.delete(pc);
         phanCongCTVRepository.flush();
 
-        boolean conNguoi = phanCongCTVRepository.findAllByDonDat_Id(donDatId).stream()
-                .anyMatch(p -> !"TuChoi".equalsIgnoreCase(p.getTrangThai()));
+        List<PhanCongCTV> conLai = phanCongCTVRepository.findAllByDonDat_Id(donDatId);
+        boolean conNguoi = conLai.stream().anyMatch(p -> !"TuChoi".equalsIgnoreCase(p.getTrangThai()));
+        // Đơn nhiều dịch vụ: bỏ một dịch vụ thì đơn chưa đủ người, quay về Chờ duyệt để tìm người cho dịch vụ đó
+        List<ChiTietDonDat> cts = don.getChiTietList() != null ? don.getChiTietList() : List.of();
+        if (cts.size() >= 2 && !PhanCongTheoDichVu.duNguoi(cts, conLai)) conNguoi = false;
         String trangThaiCu = don.getTrangThai();
         if (!conNguoi && "DaXacNhan".equalsIgnoreCase(trangThaiCu)) {
             don.setTrangThai("ChoDuyet");

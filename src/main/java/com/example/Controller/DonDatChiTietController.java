@@ -168,9 +168,11 @@ public class DonDatChiTietController {
     @org.springframework.web.bind.annotation.PostMapping("/cskh/don-dat-dich-vu/{id}/phan-cong")
     public ResponseEntity<Map<String, Object>> phanCong(@PathVariable Integer id,
                                                         @org.springframework.web.bind.annotation.RequestParam Integer ctvId,
+                                                        @org.springframework.web.bind.annotation.RequestParam(required = false) Integer chiTietDonDatId,
                                                         jakarta.servlet.http.HttpSession session) {
         try {
-            phanCongService.phanCong(id, ctvId, nguoiDangNhap(session));
+            // Đơn nhiều dịch vụ: chiTietDonDatId là dịch vụ CTV sẽ làm
+            phanCongService.phanCong(id, ctvId, chiTietDonDatId, nguoiDangNhap(session));
             return ResponseEntity.ok(Map.of("success", true, "message", "Đã phân công cộng tác viên."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));

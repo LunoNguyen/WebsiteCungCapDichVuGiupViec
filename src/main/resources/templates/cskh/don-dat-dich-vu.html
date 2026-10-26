@@ -685,7 +685,34 @@
         var da = document.getElementById('pcDaPhanCong');
         da.innerHTML = '';
         var coTheDoi = d.trangThai === 'ChoDuyet' || d.trangThai === 'DaXacNhan';
-        if (!d.daPhanCong.length) {
+        var nhieuDv = d.dichVus && d.dichVus.length > 0;
+        var tenDv = {};
+        if (nhieuDv) d.dichVus.forEach(function (x) { tenDv[x.chiTietId] = x.tenDichVu; });
+        if (nhieuDv) {
+          // Đơn nhiều dịch vụ: mỗi dịch vụ một cộng tác viên
+          var soCo = d.dichVus.filter(function (x) { return x.phanCong; }).length;
+          da.appendChild(pcEl('div', 'font-size:0.8rem;color:var(--text-muted)', 'Đơn có ' + d.dichVus.length + ' dịch vụ · đã có người cho ' + soCo + ' / ' + d.dichVus.length + ' dịch vụ.'));
+          d.dichVus.forEach(function (x) {
+            var dong = pcEl('div', 'display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.6rem 0.8rem;border:1px solid var(--border);border-radius:var(--radius-md)');
+            var trai = pcEl('div');
+            trai.appendChild(pcEl('div', 'font-weight:600', x.tenDichVu));
+            trai.appendChild(pcEl('div', 'font-size:0.8rem;color:' + (x.phanCong ? 'var(--text-muted)' : 'var(--warning)'),
+              x.phanCong ? x.phanCong.hoTen + (x.phanCong.trangThai === 'ChoPhanCong' ? ' (chờ xác nhận)' : '') : 'Chưa có cộng tác viên'));
+            dong.appendChild(trai);
+            if (x.phanCong && coTheDoi && x.phanCong.trangThai !== 'HoanThanh') {
+              var boDv = pcEl('button', '', 'Bỏ phân công');
+              boDv.type = 'button';
+              boDv.className = 'btn btn-outline btn-sm';
+              boDv.addEventListener('click', function () {
+                if (confirm('Bỏ ' + x.phanCong.hoTen + ' khỏi dịch vụ "' + x.tenDichVu + '"?')) {
+                  pcGui('/cskh/don-dat-dich-vu/' + assignOrderId + '/bo-phan-cong', 'phanCongId=' + x.phanCong.phanCongId, boDv);
+                }
+              });
+              dong.appendChild(boDv);
+            }
+            da.appendChild(dong);
+          });
+        } else if (!d.daPhanCong.length) {
           da.appendChild(pcEl('div', 'font-size:0.875rem;color:var(--text-muted)',
             'Chưa có ai.' + (d.soNguoiCan > 1 ? ' Đơn này cần ' + d.soNguoiCan + ' người.' : '')));
         } else {
@@ -734,13 +761,29 @@
           if (c.canhBao.length) trai.appendChild(pcEl('div', 'font-size:0.8rem;margin-top:4px;color:var(--warning)', 'Lưu ý: ' + c.canhBao.join(' · ')));
           if (c.lichTrongNgay.length) trai.appendChild(pcEl('div', 'font-size:0.78rem;color:var(--text-muted);margin-top:4px', 'Lịch trong ngày: ' + c.lichTrongNgay.join(', ')));
           the.appendChild(trai);
-          var nut = pcEl('button', '', i === 0 ? 'Phân công' : 'Chọn');
-          nut.type = 'button';
-          nut.className = i === 0 ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
-          nut.addEventListener('click', function () {
-            pcGui('/cskh/don-dat-dich-vu/' + assignOrderId + '/phan-cong', 'ctvId=' + c.ctvId, nut);
-          });
-          the.appendChild(nut);
+          if (nhieuDv) {
+            // Một nút cho mỗi dịch vụ còn trống mà CTV này làm được
+            var nhom = pcEl('div', 'display:grid;gap:6px;justify-items:end');
+            (c.chiTietCoTheNhan || []).forEach(function (ctId, j) {
+              var nutDv = pcEl('button', '', 'Gán: ' + (tenDv[ctId] || 'Dịch vụ'));
+              nutDv.type = 'button';
+              nutDv.className = i === 0 && j === 0 ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+              nutDv.style.whiteSpace = 'normal';
+              nutDv.addEventListener('click', function () {
+                pcGui('/cskh/don-dat-dich-vu/' + assignOrderId + '/phan-cong', 'ctvId=' + c.ctvId + '&chiTietDonDatId=' + ctId, nutDv);
+              });
+              nhom.appendChild(nutDv);
+            });
+            the.appendChild(nhom);
+          } else {
+            var nut = pcEl('button', '', i === 0 ? 'Phân công' : 'Chọn');
+            nut.type = 'button';
+            nut.className = i === 0 ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+            nut.addEventListener('click', function () {
+              pcGui('/cskh/don-dat-dich-vu/' + assignOrderId + '/phan-cong', 'ctvId=' + c.ctvId, nut);
+            });
+            the.appendChild(nut);
+          }
           goiY.appendChild(the);
         });
 
