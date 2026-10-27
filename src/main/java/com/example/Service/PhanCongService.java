@@ -732,7 +732,9 @@ public class PhanCongService {
                 .thoiGianXacNhan(LocalDateTime.now())
                 .build());
 
-        if (!daCoLich) taoLichLamViec(pc, cacBuoi(don), don.getGioBatDau(), ketThuc, null);
+        // Đơn nhiều dịch vụ: lịch của CTV theo thời lượng dịch vụ được giao (các dịch vụ làm song song)
+        if (!daCoLich) taoLichLamViec(pc, cacBuoi(don), don.getGioBatDau(), nhieuDv && dong.getDichVu() != null
+                ? DatNhieuDichVu.ketThucCuaCtv(don.getGioBatDau(), List.of(dong.getDichVu())) : ketThuc, null);
 
         String trangThaiCu = don.getTrangThai();
         List<PhanCongCTV> sau = new ArrayList<>(pcsDon);

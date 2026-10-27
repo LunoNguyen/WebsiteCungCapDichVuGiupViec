@@ -2171,7 +2171,10 @@ public class CollaboratorApiService {
         }
         PhanCongCTV pc = pcMoi.get(0);
 
-        // Tạo Lịch làm việc (gói tháng: mỗi buổi còn lại một lịch) – mỗi CTV một lịch cho cả đơn
+        // Tạo Lịch làm việc (gói tháng: mỗi buổi còn lại một lịch) – mỗi CTV một lịch cho cả đơn.
+        // Đơn nhiều dịch vụ: CTV bận từ giờ bắt đầu tới khi xong (nối tiếp) các dịch vụ mình nhận
+        if (nhieu) gioKT = DatNhieuDichVu.ketThucCuaCtv(don.getGioBatDau(),
+                dongNhan.stream().map(ChiTietDonDat::getDichVu).filter(java.util.Objects::nonNull).toList());
         if (pcCuaToi == null) phanCongService.taoLichLamViec(pc, ngayCanLam, don.getGioBatDau(), gioKT, null);
 
         List<PhanCongCTV> tatCaPc = new ArrayList<>(pcsCu);

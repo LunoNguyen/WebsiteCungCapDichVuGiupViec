@@ -312,7 +312,8 @@ public class KhachHangWebController {
             ra.addFlashAttribute("error", loi);
             return "redirect:/gio-hang";
         }
-        int tongPhut = com.example.Service.DatNhieuDichVu.tongPhut(dichVus);
+        // Các dịch vụ làm song song từ giờ bắt đầu: đơn xong theo dịch vụ lâu nhất
+        int tongPhut = com.example.Service.DatNhieuDichVu.phutDaiNhat(dichVus);
         java.math.BigDecimal tongGia = views.stream().map(x -> x.getGia() != null ? x.getGia() : java.math.BigDecimal.ZERO)
                 .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
         model.addAttribute("danhMuc", danhMucDau);
@@ -577,21 +578,6 @@ public class KhachHangWebController {
         model.addAttribute("soPhutThanhToan", hanNhanDonService.soPhutThanhToan());
         model.addAttribute("active", "don-hang");
         return "khach-hang/thanh-toan";
-    }
-
-    @PostMapping("/tai-khoan/don-hang/{id}/thanh-toan")
-    public String xacNhanThanhToan(@PathVariable Integer id, HttpSession session, HttpServletRequest request,
-                                   RedirectAttributes ra) {
-        Integer khId = khachHangId(session);
-        if (khId == null) return chuyenDangNhap(request);
-        if (!laDonCuaKhach(id, khId)) return "redirect:/tai-khoan/don-hang";
-        try {
-            customerApiService.xacNhanThanhToanChuyenKhoan(id, "Khách xác nhận trên website");
-            ra.addFlashAttribute("success", "Đã ghi nhận thanh toán. bTaskee đang tìm cộng tác viên cho bạn.");
-        } catch (IllegalArgumentException e) {
-            ra.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/tai-khoan/don-hang/" + id;
     }
 
     @PostMapping("/tai-khoan/don-hang/{id}/huy")

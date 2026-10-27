@@ -221,6 +221,8 @@
           soNhaTenDuong: document.getElementById('diaChiChiTiet').value.trim(),
           maTinh: parseInt(tinhSelect.value, 10),
           maPhuong: parseInt(phuongSelect.value, 10),
+          // Phường cũ (trước sáp nhập) kèm quận cũ; phường mới thì ô quận bị tắt
+          maQuan: (function (q) { return q && !q.disabled && q.value ? parseInt(q.value, 10) : null; })(document.getElementById('quanHuyen')),
           danhSachDichVuId: dichVuIds,
           danhSachHoSo: hoSo,
           danhSachChungChi: chungChi

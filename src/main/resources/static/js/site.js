@@ -291,7 +291,7 @@
       this.saveCart(this.getCart().filter(function (x) { return bo.indexOf(Number(x.id)) === -1; }));
     },
 
-    /** Gói tháng không đặt chung được (đặt riêng); item cũ chưa có loaiHinhDat thì suy từ nhãn. */
+    /** Gói tháng không đặt chung với dịch vụ khác; item cũ chưa có loaiHinhDat thì suy từ nhãn. */
     laGoi: function (item) {
       return item.loaiHinhDat === 'GoiThang' || (!item.loaiHinhDat && item.donViTinh === 'Gói tháng');
     },
@@ -308,14 +308,14 @@
       var items = this.getCart();
       var found = items.find(function (x) { return x.id === id; });
       if (found) {
-        found.checked = !found.checked;
+        found.checked = found.checked === false; // chưa có cờ = đang chọn
         this.saveCart(items);
       }
     },
 
     selectAll: function (checked) {
-      var items = this.getCart(), self = this;
-      items.forEach(function (x) { x.checked = checked && !self.laGoi(x); });
+      var items = this.getCart();
+      items.forEach(function (x) { x.checked = checked; });
       this.saveCart(items);
     },
 

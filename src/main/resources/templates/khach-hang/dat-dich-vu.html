@@ -108,7 +108,7 @@
         <div data-buoc="3" hidden>
           <section class="panel dv-nhieu" th:if="${dvNhieu != null}">
             <div class="dv-nhieu-dau">
-              <span class="hint" style="margin:0" th:text="${dvNhieu.size()} + ' dịch vụ đã chọn · làm nối tiếp trong cùng buổi'">2 dịch vụ đã chọn</span>
+              <span class="hint" style="margin:0" th:text="${dvNhieu.size()} + ' dịch vụ đã chọn · bắt đầu cùng lúc, làm song song'">2 dịch vụ đã chọn</span>
               <a class="btn btn-outline btn-sm" th:href="@{/gio-hang}">Sửa</a>
             </div>
             <ul class="dv-nhieu-ds">
@@ -119,7 +119,7 @@
               </li>
             </ul>
             <div class="dv-nhieu-tong">
-              <span th:text="'Tổng thời lượng ' + ${tongThoiLuong}">Tổng thời lượng 2 giờ 45 phút</span>
+              <span th:text="'Xong sau ' + ${tongThoiLuong}">Xong sau 2 giờ 45 phút</span>
               <b th:text="${#numbers.formatDecimal(tongGia, 0, 'POINT', 0, 'COMMA')} + 'đ'">411.000đ</b>
             </div>
             <p class="hint" style="margin:0">Các dịch vụ phải xong trước 20:00, khung giờ quá muộn sẽ bị khóa.</p>

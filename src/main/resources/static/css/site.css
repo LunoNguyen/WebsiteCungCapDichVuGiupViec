@@ -718,7 +718,8 @@ a.chip:hover { background: var(--primary-soft); color: var(--primary-ink); }
 .order:hover { background: var(--surface-hover, #FCFCFC); border-color: var(--line-strong); }
 .order-date { display: grid; place-items: center; height: 76px; border-radius: 12px; background: var(--background-alt); line-height: 1.2; text-align: center; }
 .order-date small { color: var(--muted); font-size: 12px; }
-.order-date b { font-size: 22px; font-weight: 700; }
+.order-date b { font-size: 20px; font-weight: 700; white-space: nowrap; }
+.order-date { min-width: 0; overflow: hidden; }
 .order h3 { font-size: 16px; font-weight: 600; }
 .order .meta { margin-top: 2px; color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .order-side { display: grid; justify-items: end; gap: 6px; }

@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Đặt nhiều dịch vụ trong một đơn: chỉ theo lần, tối đa 5 dịch vụ, tổng ≤ 8 giờ, xong trước 20:00. */
+/** Đặt nhiều dịch vụ trong một đơn: chỉ theo lần, tối đa 5 dịch vụ, làm song song cùng giờ bắt đầu, xong trước 20:00. */
 class DatNhieuDichVuTest {
 
     private static DichVu dv(String ten, String loai, String trangThai, Integer phut) {
@@ -49,9 +49,22 @@ class DatNhieuDichVuTest {
     }
 
     @Test
-    void tongQuaTamGioBaoLoi() {
-        assertEquals("Tổng thời lượng tối đa 8 giờ (đang chọn 8 giờ 30 phút).",
-                DatNhieuDichVu.loiDanhSach(List.of(dv("A", "TheoLan", "HoatDong", 240), dv("B", "TheoLan", "HoatDong", 270))));
+    void khongGioiHanTongThoiLuong() {
+        // Các dịch vụ làm song song từ cùng giờ bắt đầu: tổng 8 giờ 30 phút vẫn đặt được
+        assertNull(DatNhieuDichVu.loiDanhSach(List.of(dv("A", "TheoLan", "HoatDong", 240), dv("B", "TheoLan", "HoatDong", 270))));
+    }
+
+    @Test
+    void donXongTheoDichVuLauNhat() {
+        assertEquals(240, DatNhieuDichVu.phutDaiNhat(List.of(dv("A", "TheoLan", "HoatDong", 180), dv("B", "TheoLan", "HoatDong", 240))));
+    }
+
+    @Test
+    void ctvNhanNhieuDichVuLamNoiTiep() {
+        assertEquals(LocalTime.of(14, 0), DatNhieuDichVu.ketThucCuaCtv(LocalTime.of(9, 0),
+                List.of(dv("A", "TheoLan", "HoatDong", 180), dv("B", "TheoLan", "HoatDong", 120))));
+        assertEquals(LocalTime.of(12, 0), DatNhieuDichVu.ketThucCuaCtv(LocalTime.of(9, 0),
+                List.of(dv("A", "TheoLan", "HoatDong", 180))));
     }
 
     @Test

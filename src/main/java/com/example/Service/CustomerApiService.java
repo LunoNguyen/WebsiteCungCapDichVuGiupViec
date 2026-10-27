@@ -648,7 +648,12 @@ public class CustomerApiService {
         // Địa chỉ nơi ở hiện tại (tỉnh, phường từ API địa giới) – khác với khu vực nhận việc
         String noiCuTru;
         List<KhuVuc> khuVucNoiO = List.of();
-        if (req.getMaPhuong() != null) {
+        if (req.getMaQuan() != null && req.getMaPhuong() != null) {
+            // Phường cũ (trước sáp nhập): khu vực là quận cũ đã chọn
+            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinhV1(req.getSoNhaTenDuong(), req.getMaTinh(), req.getMaQuan(), req.getMaPhuong());
+            noiCuTru = x.diaChiDayDu();
+            khuVucNoiO = java.util.stream.Stream.ofNullable(x.khuVuc()).toList();
+        } else if (req.getMaPhuong() != null) {
             DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinh(req.getSoNhaTenDuong(), req.getMaTinh(), req.getMaPhuong(), null);
             noiCuTru = x.diaChiDayDu();
             khuVucNoiO = diaGioiService.khuVucCuaPhuong(req.getMaPhuong());
@@ -1459,11 +1464,11 @@ public class CustomerApiService {
 
         LocalTime gioKetThuc = req.getGioKetThuc();
         if (nhieu) {
-            // Các dịch vụ làm nối tiếp nhau: kết thúc = bắt đầu + tổng thời lượng, phải xong trước 20:00
-            int tongPhut = DatNhieuDichVu.tongPhut(dsDichVu);
-            String loiGio = DatNhieuDichVu.loiGioKetThuc(req.getGioBatDau(), tongPhut);
+            // Các dịch vụ làm song song từ giờ bắt đầu: đơn xong khi dịch vụ lâu nhất xong, phải trước 20:00
+            int phutDon = DatNhieuDichVu.phutDaiNhat(dsDichVu);
+            String loiGio = DatNhieuDichVu.loiGioKetThuc(req.getGioBatDau(), phutDon);
             if (loiGio != null) throw new IllegalArgumentException(loiGio);
-            gioKetThuc = DatNhieuDichVu.gioKetThuc(req.getGioBatDau(), tongPhut);
+            gioKetThuc = DatNhieuDichVu.gioKetThuc(req.getGioBatDau(), phutDon);
         } else if (gioKetThuc == null && dichVu.getThoiGianThucHien() != null) {
             gioKetThuc = req.getGioBatDau().plusMinutes(dichVu.getThoiGianThucHien());
         } else if (gioKetThuc == null) {
@@ -1838,10 +1843,10 @@ public class CustomerApiService {
     }
 
     /**
-     * Điểm vào duy nhất để ghi nhận một khoản chuyển khoản của khách: nút "Tôi đã chuyển khoản" trên website
-     * hôm nay, webhook VietQR sau này. Khoá đơn để không đụng độ với tác vụ tự hủy đơn quá hạn thanh toán.
+     * Điểm vào duy nhất để ghi nhận một khoản chuyển khoản của khách (webhook SePay khi nhận được tiền).
+     * Khoá đơn để không đụng độ với tác vụ tự hủy đơn quá hạn thanh toán.
      *
-     * @param nguon ghi vào biên lai (người thu tiền), VD "Khách xác nhận trên website", "VietQR"
+     * @param nguon ghi vào biên lai (người thu tiền), VD "SePay"
      */
     public Map<String, Object> xacNhanThanhToanChuyenKhoan(Integer donDatId, String nguon) {
         donDatDichVuRepository.findByIdForUpdate(donDatId)

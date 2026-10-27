@@ -73,7 +73,7 @@
         </div>
 
         <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4b5563; margin-bottom: 16px;">
-          <span>Tổng thời lượng:</span>
+          <span>Xong sau:</span>
           <b id="summaryThoiLuong" style="color: #111827;">0 phút</b>
         </div>
 
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  var SO_DICH_VU_TOI_DA = 5, TONG_PHUT_TOI_DA = 480; // cùng giới hạn với máy chủ (DatNhieuDichVu)
+  var SO_DICH_VU_TOI_DA = 5; // cùng giới hạn với máy chủ (DatNhieuDichVu)
   var cartLyDo = document.getElementById('cartLyDo');
   var summaryThoiLuong = document.getElementById('summaryThoiLuong');
   function thoiLuong(phut) {
@@ -158,18 +158,19 @@ document.addEventListener('DOMContentLoaded', function () {
     var allSelected = true;
     var selectedCount = 0;
     var totalPrice = 0;
-    var totalPhut = 0;
+    var totalPhut = 0; // các dịch vụ làm song song từ cùng giờ bắt đầu: đơn xong theo dịch vụ lâu nhất
+    var coGoi = false;
 
     listEl.innerHTML = '';
 
     items.forEach(function (item) {
-      var laGoi = window.CartCache.laGoi(item);
-      var isChecked = !laGoi && item.checked !== false;
-      if (!laGoi && !isChecked) allSelected = false;
+      var isChecked = item.checked !== false;
+      if (!isChecked) allSelected = false;
       if (isChecked) {
         selectedCount++;
         totalPrice += (Number(item.donGia) || 0);
-        totalPhut += window.CartCache.phut(item);
+        totalPhut = Math.max(totalPhut, window.CartCache.phut(item));
+        if (window.CartCache.laGoi(item)) coGoi = true;
       }
 
       var row = document.createElement('div');
@@ -179,9 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       row.innerHTML = `
         <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-          ${laGoi
-            ? '<span style="width: 18px; flex-shrink: 0;" title="Gói tháng đặt riêng"></span>'
-            : `<input type="checkbox" class="chk-item" data-id="${Number(item.id)}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #e8650c; cursor: pointer;">`}
+          <input type="checkbox" class="chk-item" data-id="${Number(item.id)}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #e8650c; cursor: pointer;">
           
           <div style="width: 48px; height: 48px; border-radius: 10px; background: #ffebd8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #e8650c; overflow: hidden;">
             ${item.hinhAnh
@@ -203,7 +202,6 @@ document.addEventListener('DOMContentLoaded', function () {
           <div style="font-size: 15px; font-weight: 800; color: #e8650c;">
             ${fmtMoney(item.donGia)}
           </div>
-          ${laGoi ? `<a class="btn btn-outline btn-sm" href="/dat-dich-vu/${Number(item.danhMucId) || 1}?dv=${Number(item.id)}" title="Gói tháng đặt riêng, không đặt chung với dịch vụ khác">Đặt riêng</a>` : ''}
 
           <button type="button" class="btn-del-item" data-id="${Number(item.id)}" title="Xóa dịch vụ này" style="border: none; background: none; color: #ef4444; cursor: pointer; padding: 6px; display: flex; align-items: center;">
             <svg class="ic" style="width: 20px; height: 20px;"><use href="#i-trash"/></svg>
@@ -221,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
     summaryThoiLuong.textContent = thoiLuong(totalPhut);
     btnDatCount.textContent = selectedCount;
     var lyDo = selectedCount > SO_DICH_VU_TOI_DA ? 'Mỗi lần đặt tối đa ' + SO_DICH_VU_TOI_DA + ' dịch vụ.'
-      : totalPhut > TONG_PHUT_TOI_DA ? 'Tổng thời lượng tối đa 8 giờ (đang chọn ' + thoiLuong(totalPhut) + ').' : '';
+      : coGoi && selectedCount > 1 ? 'Gói tháng không đặt chung với dịch vụ khác, hãy chọn riêng gói tháng.' : '';
     cartLyDo.textContent = lyDo;
     cartLyDo.hidden = !lyDo;
     btnDatDichVu.disabled = selectedCount === 0 || !!lyDo;
@@ -259,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   btnDatDichVu.addEventListener('click', function () {
-    var items = window.CartCache.getCart().filter(function (x) { return x.checked !== false && !window.CartCache.laGoi(x); });
+    var items = window.CartCache.getCart().filter(function (x) { return x.checked !== false; });
     if (items.length === 0) {
       alert('Vui lòng chọn ít nhất 1 dịch vụ để đặt lịch.');
       return;

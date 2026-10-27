@@ -338,6 +338,114 @@ public class DiaGioiService {
     }
 
     // =========================================================================
+    // FORM 2 Ô: TỈNH (GỘP v1 + v2 THEO MÃ) → PHƯỜNG, XÃ (MỚI + CŨ)
+    // =========================================================================
+
+    /** Tỉnh gộp: [{ma, ten, coMoi, coCu}], tỉnh sau sáp nhập trước (giữ thứ tự v2), rồi tỉnh chỉ còn ở v1. */
+    public List<Map<String, Object>> tinhGop() {
+        return gopTinh(tinhThanh(), tinhThanhV1());
+    }
+
+    static List<Map<String, Object>> gopTinh(List<Map<String, Object>> tinhMoi, List<Map<String, Object>> tinhCu) {
+        Set<Object> maCu = new HashSet<>();
+        tinhCu.forEach(t -> maCu.add(t.get("ma")));
+        Set<Object> maMoi = new HashSet<>();
+        List<Map<String, Object>> ds = new ArrayList<>();
+        for (Map<String, Object> t : tinhMoi) {
+            maMoi.add(t.get("ma"));
+            ds.add(tinhGop(t, true, maCu.contains(t.get("ma"))));
+        }
+        for (Map<String, Object> t : tinhCu) {
+            if (!maMoi.contains(t.get("ma"))) ds.add(tinhGop(t, false, true));
+        }
+        return ds;
+    }
+
+    private static Map<String, Object> tinhGop(Map<String, Object> t, boolean coMoi, boolean coCu) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("ma", t.get("ma"));
+        m.put("ten", t.get("ten"));
+        m.put("coMoi", coMoi);
+        m.put("coCu", coCu);
+        return m;
+    }
+
+    /**
+     * Phường, xã của tỉnh lấy từ cả hai nguồn: phường mới (v2, loai "moi", kèm khuVuc) và phường cũ của
+     * mọi quận, huyện cũ cùng mã tỉnh (v1, loai "cu", kèm maQuan, tenQuan, khuVucId của quận).
+     */
+    public List<Map<String, Object>> phuongXaGop(int maTinh) {
+        boolean coMoi = tinhThanh().stream().anyMatch(t -> Objects.equals(t.get("ma"), maTinh));
+        boolean coCu = tinhThanhV1().stream().anyMatch(t -> Objects.equals(t.get("ma"), maTinh));
+        List<Map<String, Object>> moi = coMoi ? phuongXa(maTinh) : List.of();
+        List<Map<String, Object>> quanCu = new ArrayList<>();
+        if (coCu) {
+            try {
+                napPhuongCaTinhV1(maTinh);
+                for (Map<String, Object> q : quanHuyenV1(maTinh)) {
+                    Map<String, Object> m = new LinkedHashMap<>(q);
+                    m.put("wards", phuongXaV1((Integer) q.get("ma")));
+                    quanCu.add(m);
+                }
+            } catch (IllegalStateException e) {
+                if (moi.isEmpty()) throw e;
+                log.warn("Không tải được phường, xã cũ của tỉnh {}: {}", maTinh, e.getMessage());
+            }
+        }
+        return gopPhuong(moi, quanCu);
+    }
+
+    /** Một lần gọi depth=3 nạp sẵn phường cũ của mọi quận trong tỉnh (thay vì gọi từng quận). */
+    private void napPhuongCaTinhV1(int maTinh) {
+        try {
+            for (JsonNode d : goi(API_V1 + "/p/" + maTinh + "?depth=3").path("districts")) {
+                int maQuan = d.path("code").asInt();
+                if (phuongCacheV1.containsKey(maQuan)) continue;
+                List<Map<String, Object>> moi = new ArrayList<>();
+                for (JsonNode w : d.path("wards")) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("ma", w.path("code").asInt());
+                    m.put("ten", w.path("name").asText());
+                    m.put("maQuan", maQuan);
+                    moi.add(m);
+                }
+                phuongCacheV1.put(maQuan, List.copyOf(moi));
+            }
+        } catch (Exception e) {
+            log.warn("Không nạp được phường, xã cũ của tỉnh {} trong một lần: {}", maTinh, e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    static List<Map<String, Object>> gopPhuong(List<Map<String, Object>> moi, List<Map<String, Object>> quanCu) {
+        List<Map<String, Object>> ds = new ArrayList<>();
+        for (Map<String, Object> p : moi) {
+            Map<String, Object> m = new LinkedHashMap<>(p);
+            m.put("loai", "moi");
+            ds.add(m);
+        }
+        for (Map<String, Object> q : quanCu) {
+            for (Map<String, Object> w : (List<Map<String, Object>>) q.getOrDefault("wards", List.of())) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("ma", w.get("ma"));
+                m.put("ten", w.get("ten"));
+                m.put("loai", "cu");
+                m.put("maQuan", q.get("ma"));
+                m.put("tenQuan", q.get("ten"));
+                if (q.get("khuVucId") != null) {
+                    m.put("khuVucId", q.get("khuVucId"));
+                    m.put("tenKhuVuc", q.get("tenKhuVuc"));
+                }
+                ds.add(m);
+            }
+        }
+        java.text.Collator vn = java.text.Collator.getInstance(new Locale("vi", "VN"));
+        ds.sort(Comparator.comparing((Map<String, Object> m) -> boTienTo((String) m.get("ten")), vn)
+                .thenComparing(m -> "cu".equals(m.get("loai"))));
+        return ds;
+    }
+
+    // =========================================================================
     // Ô TÌM ĐỊA CHỈ: gõ tên tỉnh / quận, dò cả sau sáp nhập (v2) lẫn trước sáp nhập (v1)
     // =========================================================================
 

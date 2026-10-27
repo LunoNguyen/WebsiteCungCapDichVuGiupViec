@@ -13,13 +13,13 @@ import java.util.List;
 
 /**
  * Quy tắc đặt nhiều dịch vụ trong một đơn (giỏ hàng): một ngày, một giờ bắt đầu, một địa chỉ,
- * các dịch vụ làm nối tiếp nhau. Chỉ dịch vụ theo lần, tối đa 5 dịch vụ, tổng tối đa 8 giờ, xong trước 20:00.
+ * các dịch vụ làm song song từ cùng giờ bắt đầu (mỗi dịch vụ xong theo thời lượng của nó; đơn xong khi dịch vụ lâu nhất xong).
+ * Một CTV nhận nhiều dịch vụ thì làm nối tiếp các dịch vụ của mình. Chỉ dịch vụ theo lần, tối đa 5 dịch vụ, xong trước 20:00.
  * Lớp thuần (không chạm CSDL): web, API và test dùng chung câu báo lỗi.
  */
 public final class DatNhieuDichVu {
 
     public static final int SO_DICH_VU_TOI_DA = 5;
-    public static final int TONG_PHUT_TOI_DA = 480;
     /** Dịch vụ chưa khai báo thời lượng: tính 2 giờ như khi tạo đơn một dịch vụ. */
     public static final int PHUT_MAC_DINH = 120;
     public static final LocalTime GIO_KET_THUC_MUON_NHAT = LocalTime.of(20, 0);
@@ -50,11 +50,17 @@ public final class DatNhieuDichVu {
                 return "Dịch vụ \"" + dv.getTenDichVu() + "\" hiện không còn nhận đặt.";
             }
         }
-        int tong = tongPhut(ds);
-        if (tong > TONG_PHUT_TOI_DA) {
-            return "Tổng thời lượng tối đa " + thoiLuong(TONG_PHUT_TOI_DA) + " (đang chọn " + thoiLuong(tong) + ").";
-        }
         return null;
+    }
+
+    /** Thời lượng dịch vụ lâu nhất: các dịch vụ cùng bắt đầu nên đơn xong theo dịch vụ này. */
+    public static int phutDaiNhat(List<DichVu> ds) {
+        return ds.stream().mapToInt(DatNhieuDichVu::phut).max().orElse(PHUT_MAC_DINH);
+    }
+
+    /** Giờ xong của một CTV: làm nối tiếp các dịch vụ mình nhận trong đơn. */
+    public static LocalTime ketThucCuaCtv(LocalTime batDau, List<DichVu> dichVuCuaCtv) {
+        return batDau.plusMinutes(tongPhut(dichVuCuaCtv));
     }
 
     public static LocalTime gioKetThuc(LocalTime batDau, int tongPhut) {

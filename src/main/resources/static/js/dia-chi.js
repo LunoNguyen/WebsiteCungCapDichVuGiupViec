@@ -1,17 +1,13 @@
 /*
- * Form địa chỉ dùng chung (sổ địa chỉ, đặt dịch vụ, đăng ký CTV, CSKH thêm khách):
- * Hỗ trợ song song cả 2 hệ thống địa chỉ:
- *   - Địa chỉ cũ (v1): 3 cấp (Tỉnh/TP → Quận/Huyện → Phường/Xã) từ https://provinces.open-api.vn/api/v1/
- *   - Địa chỉ mới (v2): 2 cấp (Tỉnh/TP → Phường/Xã sau sáp nhập) từ https://provinces.open-api.vn/api/v2/
- * Khu vực (quận, huyện nhận việc/phục vụ) tự động suy ra và đồng bộ chính xác.
+ * Form địa chỉ dùng chung (sổ địa chỉ, đặt dịch vụ, đăng ký CTV, CSKH thêm khách): chỉ 2 ô
+ * Tỉnh, thành phố → Phường, xã. Tỉnh gộp trước (v1) và sau (v2) sáp nhập theo mã; tỉnh có ở cả hai
+ * thì ô phường tìm được cả phường mới lẫn phường cũ (kèm quận cũ). Chọn phường cũ thì gửi thêm maQuan.
+ * Khu vực (quận, huyện nhận việc/phục vụ) tự động suy ra.
  */
 (function () {
   var MA_HCM = 79;
-  var tinhPromiseV1 = null;
-  var tinhPromiseV2 = null;
-  var quanPromiseV1 = {};
-  var phuongPromiseV1 = {};
-  var phuongPromiseV2 = {};
+  var tinhPromise = null;
+  var phuongPromise = {};
 
   function layJson(url) {
     return fetch(url, { headers: { Accept: 'application/json' } })
@@ -23,36 +19,16 @@
       });
   }
 
-  // API V1
-  function dsTinhV1() {
-    return tinhPromiseV1 || (tinhPromiseV1 = layJson('/v1/dia-gioi/v1/tinh').catch(function (e) {
-      tinhPromiseV1 = null;
+  // Tỉnh gộp trước + sau sáp nhập theo mã; phường của tỉnh lấy từ cả hai nguồn
+  function dsTinhGop() {
+    return tinhPromise || (tinhPromise = layJson('/v1/dia-gioi/tinh-gop').catch(function (e) {
+      tinhPromise = null;
       throw e;
     }));
   }
-  function dsQuanV1(maTinh) {
-    return quanPromiseV1[maTinh] || (quanPromiseV1[maTinh] = layJson('/v1/dia-gioi/v1/tinh/' + maTinh + '/quan-huyen').catch(function (e) {
-      delete quanPromiseV1[maTinh];
-      throw e;
-    }));
-  }
-  function dsPhuongV1(maQuan) {
-    return phuongPromiseV1[maQuan] || (phuongPromiseV1[maQuan] = layJson('/v1/dia-gioi/v1/quan-huyen/' + maQuan + '/phuong-xa').catch(function (e) {
-      delete phuongPromiseV1[maQuan];
-      throw e;
-    }));
-  }
-
-  // API V2
-  function dsTinhV2() {
-    return tinhPromiseV2 || (tinhPromiseV2 = layJson('/v1/dia-gioi/tinh').catch(function (e) {
-      tinhPromiseV2 = null;
-      throw e;
-    }));
-  }
-  function dsPhuongV2(maTinh) {
-    return phuongPromiseV2[maTinh] || (phuongPromiseV2[maTinh] = layJson('/v1/dia-gioi/tinh/' + maTinh + '/phuong-xa').catch(function (e) {
-      delete phuongPromiseV2[maTinh];
+  function dsPhuongGop(maTinh) {
+    return phuongPromise[maTinh] || (phuongPromise[maTinh] = layJson('/v1/dia-gioi/tinh/' + maTinh + '/phuong-xa-gop').catch(function (e) {
+      delete phuongPromise[maTinh];
       throw e;
     }));
   }
@@ -159,7 +135,7 @@
         li.id = id + '-' + i;
         li.setAttribute('role', 'option');
         li.textContent = op.textContent;
-        if (op.value === sel.value) li.classList.add('dang-chon');
+        if (op.index === sel.selectedIndex) li.classList.add('dang-chon');
         li.addEventListener('mousedown', function (e) {
           e.preventDefault();
           chon(op);
@@ -167,7 +143,7 @@
         ds.appendChild(li);
       });
       danhDau(hien.findIndex(function (op) {
-        return op.value === sel.value;
+        return op.index === sel.selectedIndex;
       }));
     }
     function danhDau(i) {
@@ -193,8 +169,8 @@
       o.value = nhanChon();
     }
     function chon(op) {
-      var doi = sel.value !== op.value;
-      sel.value = op.value;
+      var doi = sel.selectedIndex !== op.index;
+      sel.selectedIndex = op.index;
       dong();
       if (doi) sel.dispatchEvent(new Event('change', { bubbles: true }));
     }
@@ -204,7 +180,8 @@
       mo();
     });
     o.addEventListener('click', function () {
-      if (ds.hidden) mo();
+      // Bấm lại ô đã chọn (vẫn đang focus): chọn hết chữ để gõ tìm lại từ đầu
+      if (ds.hidden) { o.select(); mo(); }
     });
     o.addEventListener('input', function () {
       ds.hidden = false;
@@ -263,7 +240,6 @@
     if (khoi.__diaChi) return;
     khoi.__diaChi = true;
 
-    var cheDo = 'v1'; // Mặc định v1: Địa chỉ cũ có quận huyện cho dễ nhận diện
     var selTinh = khoi.querySelector('select[name="maTinh"]');
     var selPhuong = khoi.querySelector('select[name="maPhuong"]');
     var selKv = khoi.querySelector('select[name="khuVucId"]');
@@ -271,56 +247,31 @@
     var note = khoi.querySelector('[data-kv-note]');
     var batBuoc = khoi.hasAttribute('data-bat-buoc-khu-vuc');
 
-    // Tạo ô Quận/Huyện nếu chưa có
-    var quanWrap = khoi.querySelector('[data-quan-wrap]');
+    // Ô quận ẩn: chỉ mang maQuan khi khách chọn phường cũ (trước sáp nhập); phường mới thì tắt để không gửi.
     var selQuan = khoi.querySelector('select[name="maQuan"]');
     if (!selQuan) {
-      quanWrap = document.createElement('div');
-      quanWrap.className = 'field';
-      quanWrap.setAttribute('data-quan-wrap', '');
-      var lbQuan = document.createElement('label');
-      lbQuan.innerHTML = 'Quận, huyện <span class="req">*</span>';
       selQuan = document.createElement('select');
       selQuan.name = 'maQuan';
-      selQuan.className = selTinh ? selTinh.className : 'select';
-      selQuan.required = true;
-      quanWrap.appendChild(lbQuan);
-      quanWrap.appendChild(selQuan);
-
-      var phuongWrap = selPhuong ? (selPhuong.closest('.field') || selPhuong.parentNode) : null;
-      if (phuongWrap && phuongWrap.parentNode) {
-        phuongWrap.parentNode.insertBefore(quanWrap, phuongWrap);
-      } else {
-        khoi.appendChild(quanWrap);
-      }
+      selQuan.hidden = true;
+      khoi.appendChild(selQuan);
+    } else {
+      var quanWrap = selQuan.closest('[data-quan-wrap]') || selQuan.closest('.form-group') || selQuan.closest('.field');
+      if (quanWrap && quanWrap !== khoi && !quanWrap.contains(selPhuong)) quanWrap.style.display = 'none';
+      else selQuan.hidden = true;
     }
-
-    // Một ô tìm duy nhất: gõ tên tỉnh / quận, gợi ý cả trước lẫn sau sáp nhập; chọn xong tự chuyển chế độ.
-    // Ô tỉnh (và ô quận khi đã chọn quận từ ô tìm) ẩn đi nhưng vẫn gửi giá trị lên server.
-    var tinhWrap = selTinh.closest('[data-tinh-wrap]') || selTinh.closest('.form-group') || selTinh.closest('.field') || selTinh.parentNode;
-    var hienQuan = true;
-    var timWrap = document.createElement('div');
-    timWrap.className = (tinhWrap && tinhWrap.className) || 'field';
-    timWrap.classList.add('full', 'col-full', 'diachi-tim');
-    var timId = (selTinh.id || 'dia-chi') + '-tim-kv';
-    timWrap.innerHTML =
-      '<label for="' + timId + '">Tỉnh, thành phố / quận, huyện <span class="req">*</span></label>' +
-      '<div class="tim-chon"><input type="text" id="' + timId + '" class="input" autocomplete="off" role="combobox"' +
-      ' aria-autocomplete="list" aria-expanded="false" placeholder="Gõ tên tỉnh hoặc quận, VD: Bình Thạnh, Lâm Đồng">' +
-      '<span class="tim-chon-mui" aria-hidden="true">▾</span><ul class="tim-chon-ds" role="listbox" hidden></ul></div>' +
-      '<p class="hint" style="margin:4px 0 0">Tìm được cả tên cũ (trước sáp nhập) và tên mới (sau sáp nhập).</p>';
-    khoi.insertBefore(timWrap, tinhWrap && tinhWrap.parentNode === khoi ? tinhWrap : khoi.firstChild);
-    if (tinhWrap && tinhWrap !== khoi) tinhWrap.style.display = 'none';
-    var timO = timWrap.querySelector('input');
-    var timDs = timWrap.querySelector('ul');
-
-    var phuongTheoMa = {};
-    var quanTheoMa = {};
-    var ngoaiKhuVuc = false;
+    selQuan.required = false;
+    function datQuan(p) {
+      selQuan.innerHTML = '';
+      if (p && p.loai === 'cu') {
+        selQuan.appendChild(option(p.maQuan, p.tenQuan || ''));
+        selQuan.disabled = false;
+      } else selQuan.disabled = true;
+    }
+    datQuan(null);
 
     var dongBoTinh = timChon(selTinh);
-    var dongBoQuan = timChon(selQuan);
     var dongBoPhuong = timChon(selPhuong);
+    var phuongTheoViTri = [];
 
     function baoKv(text, loi) {
       if (!note) return;
@@ -328,241 +279,63 @@
       note.style.color = loi ? 'var(--danger, #C70036)' : '#6b7280';
     }
 
-    var phuongWrap = selPhuong ? (selPhuong.closest('[data-phuong-wrap]') || selPhuong.closest('.form-group') || selPhuong.closest('.field') || selPhuong.parentNode) : null;
-
-    function capNhatCheDo(moi) {
-      cheDo = moi;
-      if (cheDo === 'v1') {
-        quanWrap.style.display = hienQuan ? '' : 'none';
-        selQuan.required = true;
-        selQuan.disabled = false;
-        if (phuongWrap) phuongWrap.classList.toggle('col-full', !hienQuan);
-        if (kvWrap) kvWrap.hidden = true;
-        baoKv('');
-        napTinhV1();
-      } else {
-        quanWrap.style.display = 'none';
-        selQuan.required = false;
-        selQuan.innerHTML = '';
-        selQuan.disabled = true; // không gửi maQuan: server hiểu là địa chỉ mới
-        if (phuongWrap) phuongWrap.classList.add('col-full');
-        baoKv('');
-        napTinhV2();
-      }
-    }
-
-    // Chữ hiển thị trong ô tìm theo lựa chọn hiện tại
-    function tenChon(sel) {
-      var op = sel.options[sel.selectedIndex];
-      return op && op.value ? op.textContent : '';
-    }
-    function capNhatNhanTim() {
-      var tinh = tenChon(selTinh);
-      if (!tinh) { timO.value = ''; return; }
-      if (cheDo === 'v2') timO.value = tinh + ' (sau sáp nhập)';
-      else {
-        var quan = tenChon(selQuan);
-        timO.value = quan ? quan + ', ' + tinh : tinh + ' (trước sáp nhập)';
-      }
-    }
-
-    var goiYHien = [], viTriGoiY = -1, henGio = null, lanTim = 0;
-    function veGoiY(ds, q) {
-      goiYHien = ds;
-      timDs.innerHTML = '';
-      if (!ds.length) {
-        var li0 = document.createElement('li');
-        li0.className = 'rong';
-        li0.textContent = 'Không tìm thấy “' + q + '”';
-        timDs.appendChild(li0);
-      }
-      ds.forEach(function (g, i) {
-        var li = document.createElement('li');
-        li.setAttribute('role', 'option');
-        var ten = document.createElement('div');
-        ten.textContent = g.ten;
-        var mo = document.createElement('div');
-        mo.textContent = g.moTa || '';
-        mo.style.cssText = 'font-size:12px;color:#64748b';
-        li.appendChild(ten);
-        li.appendChild(mo);
-        li.addEventListener('mousedown', function (e) { e.preventDefault(); chonGoiY(g); });
-        timDs.appendChild(li);
-      });
-      danhDauGoiY(ds.length ? 0 : -1);
-      timDs.hidden = false;
-      timO.setAttribute('aria-expanded', 'true');
-    }
-    function danhDauGoiY(i) {
-      viTriGoiY = i;
-      [].forEach.call(timDs.children, function (li, j) { li.setAttribute('aria-selected', j === i ? 'true' : 'false'); });
-      var li = timDs.children[i];
-      if (li) li.scrollIntoView({ block: 'nearest' });
-    }
-    function timGoiY() {
-      var q = timO.value.trim(), lan = ++lanTim;
-      clearTimeout(henGio);
-      henGio = setTimeout(function () {
-        layJson('/v1/dia-gioi/tim?q=' + encodeURIComponent(q)).then(function (ds) {
-          if (lan === lanTim && document.activeElement === timO) veGoiY(ds || [], q);
-        }).catch(function () {
-          if (lan === lanTim) veGoiY([], q);
-        });
-      }, 180);
-    }
-    function dongGoiY() {
-      timDs.hidden = true;
-      timO.setAttribute('aria-expanded', 'false');
-      capNhatNhanTim();
-    }
-    function chonGoiY(g) {
-      timDs.hidden = true;
-      timO.setAttribute('aria-expanded', 'false');
-      khoi.dataset.maTinh = g.maTinh;
-      khoi.dataset.maPhuong = '';
-      khoi.dataset.khuVucId = '';
-      khoi.dataset.maQuan = g.maQuan || '';
-      hienQuan = g.loai === 'tinhCu';
-      // Hiện ngay tên vừa chọn (cùng dạng với capNhatNhanTim), không giữ chữ khách đang gõ
-      timO.value = g.loai === 'quanCu' ? g.ten + ', ' + String(g.moTa || '').split(' · ')[0]
-        : g.ten + (g.loai === 'tinhMoi' ? ' (sau sáp nhập)' : ' (trước sáp nhập)');
-      capNhatCheDo(g.loai === 'tinhMoi' ? 'v2' : 'v1');
-      // chọn xong: đưa con trỏ sang ô kế tiếp cần chọn
-      setTimeout(function () {
-        var tiep = hienQuan ? document.getElementById((selQuan.id || '') + '-tim') : document.getElementById((selPhuong.id || '') + '-tim');
-        if (tiep) tiep.focus();
-      }, 0);
-    }
-    timO.addEventListener('focus', function () { timO.select(); timGoiY(); });
-    timO.addEventListener('input', timGoiY);
-    timO.addEventListener('blur', function () { clearTimeout(henGio); lanTim++; dongGoiY(); });
-    timO.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (timDs.hidden) { timGoiY(); return; }
-        if (!goiYHien.length) return;
-        danhDauGoiY(Math.max(0, Math.min(goiYHien.length - 1, viTriGoiY + (e.key === 'ArrowDown' ? 1 : -1))));
-      } else if (e.key === 'Enter') {
-        if (!timDs.hidden) { e.preventDefault(); if (goiYHien[viTriGoiY]) chonGoiY(goiYHien[viTriGoiY]); }
-      } else if (e.key === 'Escape') {
-        if (!timDs.hidden) { e.preventDefault(); dongGoiY(); }
-      }
-    });
-    selTinh.addEventListener('invalid', function () { timO.focus(); });
-
-    // ================= XỬ LÝ CHẾ ĐỘ V1 =================
-    function napTinhV1() {
+    function napTinh() {
       selTinh.innerHTML = '';
       selTinh.appendChild(option('', 'Đang tải…'));
       dongBoTinh();
-      dsTinhV1().then(function (ds) {
+      dsTinhGop().then(function (ds) {
         selTinh.innerHTML = '';
         selTinh.appendChild(option('', 'Chọn tỉnh, thành phố'));
-        ds.forEach(function (t) { selTinh.appendChild(option(t.ma, t.ten)); });
+        ds.forEach(function (t) { selTinh.appendChild(option(t.ma, t.ten + (t.coMoi ? '' : ' (trước sáp nhập)'))); });
         selTinh.value = String(khoi.dataset.maTinh || MA_HCM);
         dongBoTinh();
-        capNhatNhanTim();
-        napQuanV1(selTinh.value, khoi.dataset.maQuan, khoi.dataset.maPhuong);
-      }).catch(function (e) {
+        napPhuong(selTinh.value, khoi.dataset.maPhuong, khoi.dataset.maQuan, khoi.dataset.khuVucId);
+      }).catch(function () {
         selTinh.innerHTML = '';
         selTinh.appendChild(option('', 'Không tải được tỉnh'));
         dongBoTinh();
       });
     }
 
-    function napQuanV1(maTinh, maQuanChon, maPhuongChon) {
-      selQuan.innerHTML = '';
-      selQuan.appendChild(option('', maTinh ? 'Đang tải quận, huyện…' : 'Chọn tỉnh trước'));
-      selQuan.disabled = true;
-      quanTheoMa = {};
-      dongBoQuan();
-
+    // Phường mới và phường cũ có thể trùng mã: nhận diện bằng vị trí option, không bằng value.
+    function napPhuong(maTinh, maPhuongChon, maQuanChon, kvChon) {
       selPhuong.innerHTML = '';
-      selPhuong.appendChild(option('', 'Chọn quận, huyện trước'));
+      selPhuong.appendChild(option('', maTinh ? 'Đang tải phường, xã…' : 'Chọn tỉnh trước'));
       selPhuong.disabled = true;
+      phuongTheoViTri = [null];
+      datQuan(null);
       dongBoPhuong();
-
+      capNhatKhuVuc();
       if (!maTinh) return Promise.resolve();
-      return dsQuanV1(maTinh).then(function (ds) {
-        if (cheDo !== 'v1') return; // đã chuyển sang địa chỉ mới trong lúc tải
-        selQuan.innerHTML = '';
-        selQuan.appendChild(option('', 'Chọn quận, huyện'));
-        ds.forEach(function (q) {
-          quanTheoMa[q.ma] = q;
-          selQuan.appendChild(option(q.ma, q.ten));
-        });
-        selQuan.disabled = false;
-        if (maQuanChon && quanTheoMa[maQuanChon]) {
-          selQuan.value = String(maQuanChon);
-        }
-        dongBoQuan();
-        capNhatNhanTim();
-        if (!selQuan.value && !hienQuan) { hienQuan = true; quanWrap.style.display = ''; if (phuongWrap) phuongWrap.classList.remove('col-full'); }
-        if (selQuan.value) {
-          napPhuongV1(selQuan.value, maPhuongChon);
-        }
-      }).catch(function (e) {
-        selQuan.innerHTML = '';
-        selQuan.appendChild(option('', 'Lỗi tải quận huyện'));
-        dongBoQuan();
-      });
-    }
-
-    function napPhuongV1(maQuan, maPhuongChon) {
-      selPhuong.innerHTML = '';
-      selPhuong.appendChild(option('', maQuan ? 'Đang tải phường, xã…' : 'Chọn quận trước'));
-      selPhuong.disabled = true;
-      dongBoPhuong();
-
-      if (!maQuan) return Promise.resolve();
-      var q = quanTheoMa[maQuan];
-      if (q && q.khuVucId && selKv) {
-        selKv.value = q.khuVucId;
-      }
-
-      return dsPhuongV1(maQuan).then(function (ds) {
+      return dsPhuongGop(maTinh).then(function (ds) {
+        if (selTinh.value !== String(maTinh)) return; // khách đã đổi tỉnh trong lúc tải
         selPhuong.innerHTML = '';
-        selPhuong.appendChild(option('', 'Chọn phường, xã'));
+        selPhuong.appendChild(option('', 'Gõ tên phường, xã (mới hoặc cũ)'));
+        phuongTheoViTri = [null];
+        var chon = 0;
         ds.forEach(function (p) {
-          selPhuong.appendChild(option(p.ma, nhanPhuong(p.ten)));
+          var nhan = nhanPhuong(p.ten) + (p.loai === 'cu' ? ' — ' + p.tenQuan + ' (cũ)' : ' — mới');
+          selPhuong.appendChild(option(p.ma, nhan));
+          phuongTheoViTri.push(p);
+          var dung = String(p.ma) === String(maPhuongChon || '') &&
+            (maQuanChon ? p.loai === 'cu' && String(p.maQuan) === String(maQuanChon) : p.loai === 'moi');
+          if (dung && !chon) chon = phuongTheoViTri.length - 1;
         });
         selPhuong.disabled = false;
-        if (maPhuongChon) selPhuong.value = String(maPhuongChon);
+        selPhuong.selectedIndex = chon;
+        datQuan(phuongTheoViTri[chon]);
         dongBoPhuong();
-        if (q && q.tenKhuVuc) {
-          baoKv('Khu vực phục vụ: ' + q.tenKhuVuc);
-        }
-      }).catch(function (e) {
+        capNhatKhuVuc(kvChon);
+      }).catch(function () {
         selPhuong.innerHTML = '';
-        selPhuong.appendChild(option('', 'Lỗi tải phường xã'));
+        selPhuong.appendChild(option('', 'Lỗi tải phường, xã'));
         dongBoPhuong();
       });
     }
 
-    // ================= XỬ LÝ CHẾ ĐỘ V2 =================
-    function napTinhV2() {
-      selTinh.innerHTML = '';
-      selTinh.appendChild(option('', 'Đang tải…'));
-      dongBoTinh();
-      dsTinhV2().then(function (ds) {
-        selTinh.innerHTML = '';
-        selTinh.appendChild(option('', 'Chọn tỉnh, thành phố'));
-        ds.forEach(function (t) { selTinh.appendChild(option(t.ma, t.ten)); });
-        selTinh.value = String(khoi.dataset.maTinh || MA_HCM);
-        dongBoTinh();
-        capNhatNhanTim();
-        napPhuongV2(selTinh.value, khoi.dataset.maPhuong, khoi.dataset.khuVucId);
-      }).catch(function (e) {
-        selTinh.innerHTML = '';
-        selTinh.appendChild(option('', 'Không tải được tỉnh'));
-        dongBoTinh();
-      });
-    }
-
-    function capNhatKhuVucV2(giuKv) {
-      var p = phuongTheoMa[selPhuong.value];
-      var kvs = p ? (p.khuVuc || []) : [];
-      ngoaiKhuVuc = !!p && kvs.length === 0;
+    function capNhatKhuVuc(giuKv) {
+      var p = phuongTheoViTri[selPhuong.selectedIndex] || null;
+      var kvs = !p ? [] : p.loai === 'cu' ? (p.khuVucId ? [{ id: p.khuVucId, tenKhuVuc: p.tenKhuVuc }] : []) : (p.khuVuc || []);
       khoi.dispatchEvent(new CustomEvent('diachi:khuvuc', { detail: kvs, bubbles: true }));
 
       if (!selKv) {
@@ -590,43 +363,10 @@
       }
     }
 
-    function napPhuongV2(maTinh, maPhuongChon, kvChon) {
-      selPhuong.innerHTML = '';
-      selPhuong.appendChild(option('', maTinh ? 'Đang tải…' : 'Chọn tỉnh trước'));
-      selPhuong.disabled = true;
-      phuongTheoMa = {};
-      dongBoPhuong();
-      capNhatKhuVucV2();
-      if (!maTinh) return Promise.resolve();
-      return dsPhuongV2(maTinh).then(function (ds) {
-        selPhuong.innerHTML = '';
-        selPhuong.appendChild(option('', 'Chọn phường, xã'));
-        ds.forEach(function (p) {
-          phuongTheoMa[p.ma] = p;
-          selPhuong.appendChild(option(p.ma, nhanPhuong(p.ten)));
-        });
-        selPhuong.disabled = false;
-        if (maPhuongChon && phuongTheoMa[maPhuongChon]) selPhuong.value = String(maPhuongChon);
-        dongBoPhuong();
-        capNhatKhuVucV2(kvChon);
-      }).catch(function (e) {
-        selPhuong.innerHTML = '';
-        selPhuong.appendChild(option('', 'Lỗi tải phường xã'));
-        dongBoPhuong();
-      });
-    }
-
-    selTinh.addEventListener('change', function () {
-      if (cheDo === 'v1') napQuanV1(selTinh.value);
-      else napPhuongV2(selTinh.value);
-    });
-
-    selQuan.addEventListener('change', function () {
-      if (cheDo === 'v1') { capNhatNhanTim(); napPhuongV1(selQuan.value); }
-    });
-
+    selTinh.addEventListener('change', function () { napPhuong(selTinh.value); });
     selPhuong.addEventListener('change', function () {
-      if (cheDo === 'v2') capNhatKhuVucV2();
+      datQuan(phuongTheoViTri[selPhuong.selectedIndex]);
+      capNhatKhuVuc();
     });
 
     khoi.__datGiaTri = function (maTinh, maPhuong, khuVucId, maQuan) {
@@ -634,13 +374,10 @@
       khoi.dataset.maPhuong = maPhuong || '';
       khoi.dataset.khuVucId = khuVucId || '';
       khoi.dataset.maQuan = maQuan || '';
-      hienQuan = false;
-      capNhatCheDo(khoi.dataset.maQuan ? 'v1' : 'v2');
+      napTinh();
     };
 
-    // Có quận (địa chỉ cũ đã lưu) → chế độ cũ; còn lại mặc định địa chỉ mới, TP.HCM
-    hienQuan = false;
-    capNhatCheDo(khoi.dataset.maQuan ? 'v1' : 'v2');
+    napTinh();
   }
 
   function ganTatCa(goc) {
