@@ -793,7 +793,7 @@ public class CollaboratorApiService {
         if (ngayLam != null && gioBatDau != null) {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime earliestStart = LocalDateTime.of(ngayLam, gioBatDau).minusMinutes(30);
-            LocalDateTime latestStart = LocalDateTime.of(ngayLam, gioKetThuc != null ? gioKetThuc : gioBatDau.plusHours(2));
+            LocalDateTime latestStart = (gioKetThuc != null && gioKetThuc.isBefore(gioBatDau)) ? LocalDateTime.of(ngayLam.plusDays(1), gioKetThuc) : LocalDateTime.of(ngayLam, gioKetThuc != null ? gioKetThuc : gioBatDau.plusHours(2));
 
             if (now.isBefore(earliestStart)) {
                 String gioStr = gioBatDau.format(DateTimeFormatter.ofPattern("HH:mm"));

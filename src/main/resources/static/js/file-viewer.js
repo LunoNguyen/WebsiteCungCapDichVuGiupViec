@@ -83,7 +83,7 @@
           img.alt = f.ten || '';
           img.loading = 'lazy';
           img.addEventListener('error', function () {
-            preview.textContent = 'Không tải được ảnh từ MinIO';
+            preview.textContent = 'Không thể tải hình ảnh đính kèm';
           });
           preview.appendChild(img);
         } else {

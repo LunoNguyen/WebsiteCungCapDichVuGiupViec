@@ -1098,11 +1098,34 @@ public class HCNSController {
         }
     }
 
+    private String sinhMaDichVu(Integer loaiDichVuId) {
+        int prefix = (loaiDichVuId != null ? loaiDichVuId : 1) * 100;
+        List<DichVu> all = dichVuRepository.findAll();
+        int maxSeq = prefix;
+        for (DichVu d : all) {
+            if (d.getMaDichVu() != null && d.getMaDichVu().startsWith("DV")) {
+                try {
+                    int num = Integer.parseInt(d.getMaDichVu().substring(2));
+                    if (num >= prefix && num < prefix + 100) {
+                        if (num > maxSeq) maxSeq = num;
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        return "DV" + (maxSeq + 1);
+    }
+
     @PostMapping("/dich-vu-bang-gia/them")
     public String themBangGia(
-            @RequestParam Integer dichVuId,
+            @RequestParam(required = false) Integer loaiDichVuId,
+            @RequestParam(required = false) String tenDichVu,
+            @RequestParam(required = false) Integer dichVuId,
             @RequestParam(defaultValue = "TheoLan") String loaiHinhDat,
             @RequestParam String donViTinh,
+            @RequestParam(required = false, defaultValue = "1") Double thoiGianGio,
+            @RequestParam(required = false, defaultValue = "1") Integer soNguoiThucHien,
+            @RequestParam(required = false) Integer soBuoi,
+            @RequestParam(required = false) String moTaChiTiet,
             @RequestParam BigDecimal donGia,
             @RequestParam(required = false) String ngayApDung,
             @RequestParam(required = false) String gioApDung,
@@ -1110,30 +1133,88 @@ public class HCNSController {
             @RequestParam(required = false) String gioKetThuc,
             RedirectAttributes redirectAttributes) {
         try {
-            var dvOpt = dichVuRepository.findById(dichVuId);
-            if (dvOpt.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Dịch vụ không tồn tại!");
+            if (donGia == null || donGia.compareTo(BigDecimal.ZERO) <= 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Đơn giá phải lớn hơn 0!");
+                return "redirect:/hcns/dich-vu-bang-gia";
+            }
+
+            LocalDateTime tu = com.example.Service.BangGiaService.ghepNgayGio(ngayApDung, gioApDung, false);
+            LocalDateTime tuApDung = tu != null ? tu : LocalDateTime.now();
+            LocalDateTime denApDung = com.example.Service.BangGiaService.ghepNgayGio(ngayKetThuc, gioKetThuc, true);
+            com.example.Service.BangGiaService.kiemTraKhoang(tuApDung, denApDung, null);
+
+            DichVu dv;
+            if (tenDichVu != null && !tenDichVu.isBlank()) {
+                if (loaiDichVuId == null) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn danh mục cho dịch vụ mới!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                var ldvOpt = loaiDichVuRepository.findById(loaiDichVuId);
+                if (ldvOpt.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Danh mục dịch vụ không tồn tại!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                if (thoiGianGio == null || thoiGianGio <= 0 || thoiGianGio > 12) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Thời lượng làm việc phải từ 0.5 đến 12 giờ!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                if (soNguoiThucHien == null || soNguoiThucHien < 1 || soNguoiThucHien > 20) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Số người làm phải từ 1 đến 20 người!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                Integer buoiThang = null;
+                if ("GoiThang".equalsIgnoreCase(loaiHinhDat)) {
+                    if (soBuoi == null || soBuoi < 1) {
+                        redirectAttributes.addFlashAttribute("errorMessage", "Gói định kỳ (Tháng) yêu cầu nhập số buổi trong tháng!");
+                        return "redirect:/hcns/dich-vu-bang-gia";
+                    }
+                    buoiThang = soBuoi;
+                }
+
+                String maDvMoi = sinhMaDichVu(loaiDichVuId);
+                int phut = (int) Math.round(thoiGianGio * 60);
+
+                dv = DichVu.builder()
+                        .maDichVu(maDvMoi)
+                        .loaiDichVu(ldvOpt.get())
+                        .tenDichVu(tenDichVu.trim())
+                        .moTaChiTiet(moTaChiTiet != null && !moTaChiTiet.isBlank() ? moTaChiTiet.trim() : null)
+                        .thoiGianThucHien(phut)
+                        .loaiHinhDat(loaiHinhDat)
+                        .donViTinh(donViTinh != null ? donViTinh.trim() : "Lần")
+                        .soNguoiThucHien(soNguoiThucHien)
+                        .soBuoi(buoiThang)
+                        .giaHienTai(donGia)
+                        .trangThai("HoatDong")
+                        .build();
+                dv = dichVuRepository.save(dv);
+            } else if (dichVuId != null) {
+                var dvOpt = dichVuRepository.findById(dichVuId);
+                if (dvOpt.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Dịch vụ không tồn tại!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                dv = dvOpt.get();
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng nhập tên dịch vụ mới hoặc chọn dịch vụ!");
                 return "redirect:/hcns/dich-vu-bang-gia";
             }
 
             BangGiaDichVu bg = new BangGiaDichVu();
             bg.setMaBangGia(com.example.Service.MaSinh.tao("BG-"));
-            bg.setDichVu(dvOpt.get());
+            bg.setDichVu(dv);
             bg.setLoaiHinhDat(loaiHinhDat);
             bg.setDonViTinh(donViTinh != null ? donViTinh.trim() : "Lần");
             bg.setDonGia(donGia);
-
-            // Thời điểm áp dụng (ngày + giờ); trống = ngay bây giờ. Kết thúc trống = không thời hạn
-            LocalDateTime tu = com.example.Service.BangGiaService.ghepNgayGio(ngayApDung, gioApDung, false);
-            bg.setNgayApDung(tu != null ? tu : LocalDateTime.now());
-            bg.setNgayKetThuc(com.example.Service.BangGiaService.ghepNgayGio(ngayKetThuc, gioKetThuc, true));
-            com.example.Service.BangGiaService.kiemTraKhoang(bg.getNgayApDung(), bg.getNgayKetThuc(), null);
-            bg.setTrangThai("DangApDung"); // chưa tới giờ áp dụng vẫn lưu DangApDung (CHECK chk_BG_trangThai)
+            bg.setNgayApDung(tuApDung);
+            bg.setNgayKetThuc(denApDung);
+            bg.setTrangThai("DangApDung");
             bangGiaDichVuRepository.save(bg);
             bangGiaService.lamMoi();
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm gói bảng giá thành công (Mã: " + bg.getMaBangGia() + ")!");
+
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ mới \"" + dv.getTenDichVu() + "\" (" + dv.getMaDichVu() + ") thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thêm bảng giá: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thêm dịch vụ: " + e.getMessage());
         }
         return "redirect:/hcns/dich-vu-bang-gia";
     }
@@ -1144,6 +1225,9 @@ public class HCNSController {
             @RequestParam Integer dichVuId,
             @RequestParam(defaultValue = "TheoLan") String loaiHinhDat,
             @RequestParam String donViTinh,
+            @RequestParam(required = false) Double thoiGianGio,
+            @RequestParam(required = false) Integer soNguoiThucHien,
+            @RequestParam(required = false) Integer soBuoi,
             @RequestParam BigDecimal donGia,
             @RequestParam(required = false) String ngayApDung,
             @RequestParam(required = false) String gioApDung,
@@ -1164,9 +1248,23 @@ public class HCNSController {
                 return "redirect:/hcns/dich-vu-bang-gia";
             }
 
+            DichVu dv = dvOpt.get();
+            if (thoiGianGio != null && thoiGianGio > 0 && thoiGianGio <= 12) {
+                dv.setThoiGianThucHien((int) Math.round(thoiGianGio * 60));
+            }
+            if (soNguoiThucHien != null && soNguoiThucHien >= 1 && soNguoiThucHien <= 20) {
+                dv.setSoNguoiThucHien(soNguoiThucHien);
+            }
+            if ("GoiThang".equalsIgnoreCase(loaiHinhDat) && soBuoi != null && soBuoi >= 1) {
+                dv.setSoBuoi(soBuoi);
+            }
+            dv.setDonViTinh(donViTinh.trim());
+            dv.setLoaiHinhDat(loaiHinhDat);
+            dichVuRepository.save(dv);
+
             BangGiaDichVu bg = bgOpt.get();
             LocalDateTime apDungCu = bg.getNgayApDung();
-            bg.setDichVu(dvOpt.get());
+            bg.setDichVu(dv);
             bg.setLoaiHinhDat(loaiHinhDat);
             bg.setDonViTinh(donViTinh.trim());
             // Đơn giá không sửa trực tiếp: dùng "Cập nhật giá" để tạo bảng giá mới, giữ lịch sử giá

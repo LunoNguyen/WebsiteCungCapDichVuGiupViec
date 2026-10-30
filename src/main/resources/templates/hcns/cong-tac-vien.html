@@ -633,7 +633,7 @@
     document.getElementById('approveUsername').textContent = approveUsername || '—';
     document.getElementById('approveMatKhauHint').textContent = approveHasAccount
       ? 'Bỏ trống để giữ mật khẩu ứng viên đã tự đặt khi đăng ký.'
-      : 'Hồ sơ chưa có tài khoản. Bỏ trống thì hệ thống tự sinh mật khẩu và gửi qua tin nhắn.';
+      : 'Hồ sơ chưa có tài khoản. Bỏ trống để cấp mật khẩu ngẫu nhiên qua tin nhắn.';
     document.getElementById('approveMatKhau').value = '';
     document.getElementById('approveMatKhau').dataset.sdtValue = btn.dataset.phone || '';
     QuyTacMatKhau.capNhat(document.getElementById('approveMatKhau'));
