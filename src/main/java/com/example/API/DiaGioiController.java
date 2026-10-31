@@ -76,12 +76,6 @@ public class DiaGioiController {
         }
     }
 
-    /** Tỉnh gộp trước + sau sáp nhập theo mã: [{ma, ten, coMoi, coCu}]. */
-    @GetMapping("/tinh-gop")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> tinhGop() {
-        return ResponseEntity.ok(ApiResponse.ok(diaGioiService.tinhGop()));
-    }
-
     /** Phường, xã mới (loai "moi") và cũ (loai "cu", kèm maQuan, tenQuan) của cùng một mã tỉnh. */
     @GetMapping("/tinh/{maTinh}/phuong-xa-gop")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> phuongXaGop(@PathVariable int maTinh) {

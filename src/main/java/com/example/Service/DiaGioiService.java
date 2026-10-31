@@ -465,11 +465,7 @@ public class DiaGioiService {
     // FORM 2 Ô: TỈNH (GỘP v1 + v2 THEO MÃ) → PHƯỜNG, XÃ (MỚI + CŨ)
     // =========================================================================
 
-    /** Tỉnh gộp: [{ma, ten, coMoi, coCu}], tỉnh sau sáp nhập trước (giữ thứ tự v2), rồi tỉnh chỉ còn ở v1. */
-    public List<Map<String, Object>> tinhGop() {
-        return gopTinh(tinhThanh(), tinhThanhV1());
-    }
-
+    /** Tỉnh gộp theo mã: [{ma, ten, coMoi, coCu}], tỉnh sau sáp nhập trước (giữ thứ tự v2), rồi tỉnh chỉ còn ở v1. */
     static List<Map<String, Object>> gopTinh(List<Map<String, Object>> tinhMoi, List<Map<String, Object>> tinhCu) {
         Set<Object> maCu = new HashSet<>();
         tinhCu.forEach(t -> maCu.add(t.get("ma")));
