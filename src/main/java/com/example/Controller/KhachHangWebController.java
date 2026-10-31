@@ -115,7 +115,7 @@ public class KhachHangWebController {
             req.setEmail(email != null && !email.isBlank() ? email.trim() : null);
             req.setMatKhau(matKhau);
             // Địa chỉ nơi ở hiện tại → địa chỉ mặc định (khu vực suy ra từ phường)
-            if (maPhuong == null || soNhaTenDuong == null || soNhaTenDuong.isBlank()) {
+            if ((maPhuong == null && maQuan == null) || soNhaTenDuong == null || soNhaTenDuong.isBlank()) {
                 ra.addFlashAttribute("error", "Vui lòng nhập địa chỉ nơi ở: tỉnh, thành, phường, xã và số nhà, tên đường.");
                 return "redirect:/dang-ky";
             }
@@ -450,7 +450,7 @@ public class KhachHangWebController {
             }
             req.setLoaiHinhDat(goiThang ? "GoiThang" : "TheoLan");
             req.setDiaChiId(diaChiId);
-            if (diaChiId == null && maPhuong != null) {
+            if (diaChiId == null && (maPhuong != null || maQuan != null)) {
                 // Địa chỉ mới nhập lúc đặt: tỉnh, phường + số nhà; khu vực suy ra từ phường
                 req.setSoNhaTenDuong(soNhaTenDuong);
                 req.setMaTinh(maTinh);

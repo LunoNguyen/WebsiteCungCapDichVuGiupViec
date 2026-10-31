@@ -357,9 +357,8 @@ public class HCNSController {
      * Form cũ chỉ gửi chuỗi noiCuTru thì giữ nguyên chuỗi đó.
      */
     private String noiOCtv(String noiCuTru, String soNhaTenDuong, Integer maTinh, Integer maQuan, Integer maPhuong) {
-        String kq = maPhuong != null
-                ? (maQuan != null ? diaGioiService.xacDinhV1(soNhaTenDuong, maTinh, maQuan, maPhuong)
-                                  : diaGioiService.xacDinh(soNhaTenDuong, maTinh, maPhuong, null)).diaChiDayDu()
+        String kq = maPhuong != null || maQuan != null
+                ? diaGioiService.xacDinhChung(soNhaTenDuong, maTinh, maQuan, maPhuong, null).diaChiDayDu()
                 : (noiCuTru != null ? noiCuTru.trim() : "");
         if (kq.isBlank()) throw new IllegalArgumentException("Vui lòng nhập địa chỉ nơi ở hiện tại của cộng tác viên!");
         if (kq.length() > 200) throw new IllegalArgumentException("Địa chỉ nơi ở quá dài (tối đa 200 ký tự)!");
@@ -502,10 +501,8 @@ public class HCNSController {
 
             congTacVienRepository.save(ctv);
             // Khu vực nhận việc ban đầu: quận của nơi ở; sau đó tự đổi theo GPS khi CTV dùng app
-            if (maPhuong != null) {
-                List<com.example.Model.KhuVuc> kvs = maQuan != null
-                        ? java.util.stream.Stream.ofNullable(diaGioiService.xacDinhV1(soNhaTenDuong, maTinh, maQuan, maPhuong).khuVuc()).toList()
-                        : diaGioiService.khuVucCuaPhuong(maPhuong);
+            if (maPhuong != null || maQuan != null) {
+                List<com.example.Model.KhuVuc> kvs = diaGioiService.khuVucCuaDiaChi(maTinh, maQuan, maPhuong);
                 List<Integer> kvNoiO = kvs.stream()
                         .map(com.example.Model.KhuVuc::getId).limit(1).toList();
                 if (!kvNoiO.isEmpty()) khuVucCtvService.capNhat(ctv.getId(), kvNoiO);

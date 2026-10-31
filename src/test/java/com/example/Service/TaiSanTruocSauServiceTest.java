@@ -147,35 +147,25 @@ class TaiSanTruocSauServiceTest {
     }
 
     @Test
-    void batDauLam_KhongChupAnhTruoc_BiChanVaKhongDoiTrangThai() {
+    void batDauLam_KhongChupAnhTruoc_VanBatDauVaKhongLuuBieuMau() {
         PhanCongCTV pc = taoPhanCongMau("DaXacNhan", "DaXacNhan");
 
-        AssignmentActionRequest emptyReq = new AssignmentActionRequest();
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> service.startAssignment(55, emptyReq)
-        );
+        // Ảnh tài sản không bắt buộc
+        service.startAssignment(55, new AssignmentActionRequest());
 
-        assertTrue(ex.getMessage().contains("trước khi bắt đầu dịch vụ"));
-        assertEquals("DaXacNhan", pc.getDonDat().getTrangThai());
+        assertEquals("DangThucHien", pc.getDonDat().getTrangThai());
         assertTrue(savedForms.isEmpty());
     }
 
     @Test
-    void hoanThanhDon_KhongChupAnhSau_BiChanKhongDuocSangHoanThanh() {
+    void hoanThanhDon_KhongChupAnhSau_VanHoanThanhVaKhongLuuBieuMau() {
         PhanCongCTV pc = taoPhanCongMau("DangThucHien", "DaXacNhan");
 
         AssignmentActionRequest emptyReq = new AssignmentActionRequest();
         emptyReq.setKetQuaThucHien("Đã dọn xong");
+        service.completeAssignment(55, emptyReq);
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> service.completeAssignment(55, emptyReq)
-        );
-
-        assertTrue(ex.getMessage().contains("sau khi hoàn thành dịch vụ thì đơn mới được chuyển sang trạng thái Hoàn thành"));
-        // Đơn vẫn giữ nguyên trạng thái DangThucHien
-        assertEquals("DangThucHien", pc.getDonDat().getTrangThai());
+        assertEquals("HoanThanh", pc.getTrangThai());
         assertTrue(savedForms.isEmpty());
     }
 

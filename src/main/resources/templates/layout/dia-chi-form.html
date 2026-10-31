@@ -2,8 +2,9 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
 <!--
-  Các ô địa chỉ dùng chung (trang khách hàng, giao diện site): Tỉnh, thành → Phường, xã (provinces.open-api.vn v2)
-  + số nhà, tên đường. Khu vực (quận, huyện) tự suy ra từ phường; chỉ hiện ô chọn khi phường thuộc nhiều khu vực.
+  Các ô địa chỉ dùng chung (trang khách hàng, giao diện site): Tỉnh, thành (mới + cũ) → Phường, xã / quận, huyện
+  + số nhà, tên đường. Khu vực (quận, huyện) tự suy ra từ ô thứ hai; chỉ hiện ô chọn khi phường thuộc nhiều khu vực.
+    maTinh dạng "c79" = tỉnh trước sáp nhập, khi đó maPhuong là mã quận, huyện cũ.
   Hoạt động nhờ /js/dia-chi.js (đã nạp trong layout/site-layout :: scripts).
     tienTo   : tiền tố id cho các ô (nhiều form trên cùng trang)
     maTinh, maPhuong, khuVucId, soNha : giá trị sẵn có khi sửa (null khi thêm mới)
@@ -16,12 +17,8 @@
       <label th:for="${tienTo} + '-tinh'">Tỉnh, thành phố <span class="req">*</span></label>
       <select th:id="${tienTo} + '-tinh'" name="maTinh" class="select" required></select>
     </div>
-    <div class="field" data-quan-wrap>
-      <label th:for="${tienTo} + '-quan'">Quận, huyện <span class="req">*</span></label>
-      <select th:id="${tienTo} + '-quan'" name="maQuan" class="select"></select>
-    </div>
     <div class="field">
-      <label th:for="${tienTo} + '-phuong'">Phường, xã <span class="req">*</span></label>
+      <label th:for="${tienTo} + '-phuong'">Phường, xã / quận, huyện <span class="req">*</span></label>
       <select th:id="${tienTo} + '-phuong'" name="maPhuong" class="select" required></select>
     </div>
     <div class="field" data-kv-wrap hidden>

@@ -1,6 +1,7 @@
 package com.example.API;
 
 import com.example.DTO.request.CollaboratorRegisterRequest;
+import com.example.DTO.request.GuiGiayToCtvRequest;
 import com.example.DTO.response.ApiResponse;
 import com.example.Service.CustomerApiService;
 import jakarta.validation.Valid;
@@ -35,6 +36,23 @@ public class CollaboratorRegistrationController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi gửi hồ sơ CTV: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Sau khi gửi hồ sơ thành công: trình duyệt / app mới tải giấy tờ lên MinIO rồi gắn object key
+     * vào hồ sơ bằng maGuiGiayTo nhận được từ /register.
+     */
+    @PostMapping("/register/giay-to")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> guiGiayTo(@Valid @RequestBody GuiGiayToCtvRequest request) {
+        try {
+            Map<String, Object> data = customerApiService.guiGiayToDangKy(
+                    request.getMaGuiGiayTo(), request.getDanhSachHoSo(), request.getDanhSachChungChi());
+            return ResponseEntity.ok(ApiResponse.ok("Đã lưu giấy tờ vào hồ sơ.", data));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Lỗi lưu giấy tờ: " + e.getMessage()));
         }
     }
 

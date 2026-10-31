@@ -201,6 +201,7 @@
                             th:data-noicutru="${ctv.noiCuTru}"
                             th:data-matinh="${noiOTach.get(ctv.id).get('maTinh')}"
                             th:data-maphuong="${noiOTach.get(ctv.id).get('maPhuong')}"
+                            th:data-maquan="${noiOTach.get(ctv.id).get('maQuan')}"
                             th:data-sonha="${noiOTach.get(ctv.id).get('soNhaTenDuong')}"
                             th:data-khuvuc="${khuVucCtv.get(ctv.id) != null ? #strings.listJoin(khuVucCtv.get(ctv.id).![id], ',') : ''}"
                             th:data-capdo="${ctv.capDo}"
@@ -320,15 +321,11 @@
         <div class="form-label" style="margin-bottom:0.5rem">Địa chỉ nơi ở hiện tại *</div>
         <div data-dia-chi-form id="addCtvNoiO" class="dia-chi-box">
           <div class="form-group">
-            <label class="form-label" for="addCtvTinh">Tỉnh / Thành phố *</label>
+            <label class="form-label" for="addCtvTinh">Tỉnh, thành phố *</label>
             <select class="form-control" id="addCtvTinh" name="maTinh" data-native="true" required></select>
           </div>
-          <div class="form-group" data-quan-wrap>
-            <label class="form-label" for="addCtvQuan">Quận / Huyện *</label>
-            <select class="form-control" id="addCtvQuan" name="maQuan" data-native="true"></select>
-          </div>
           <div class="form-group col-full" data-phuong-wrap>
-            <label class="form-label" for="addCtvPhuong">Phường / Xã *</label>
+            <label class="form-label" for="addCtvPhuong">Phường, xã / quận, huyện *</label>
             <select class="form-control" id="addCtvPhuong" name="maPhuong" data-native="true" required></select>
           </div>
           <div class="col-full" data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-top:-4px"></div>
@@ -416,15 +413,11 @@
         <div id="editCtvNoiCuCu" style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem"></div>
         <div data-dia-chi-form id="editCtvNoiO" class="dia-chi-box">
           <div class="form-group">
-            <label class="form-label" for="editCtvTinh">Tỉnh / Thành phố *</label>
+            <label class="form-label" for="editCtvTinh">Tỉnh, thành phố *</label>
             <select class="form-control" id="editCtvTinh" name="maTinh" data-native="true" required></select>
           </div>
-          <div class="form-group" data-quan-wrap>
-            <label class="form-label" for="editCtvQuan">Quận / Huyện *</label>
-            <select class="form-control" id="editCtvQuan" name="maQuan" data-native="true"></select>
-          </div>
           <div class="form-group col-full" data-phuong-wrap>
-            <label class="form-label" for="editCtvPhuong">Phường / Xã *</label>
+            <label class="form-label" for="editCtvPhuong">Phường, xã / quận, huyện *</label>
             <select class="form-control" id="editCtvPhuong" name="maPhuong" data-native="true" required></select>
           </div>
           <div class="col-full" data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-top:-4px"></div>
@@ -1012,8 +1005,8 @@
     document.getElementById('editCtvSdt').value = btn.dataset.sdt || '';
     // Nơi ở: điền lại tỉnh, phường, số nhà (địa chỉ cũ không tách được thì hiện để HCNS chọn lại)
     document.getElementById('editCtvSoNha').value = btn.dataset.sonha || '';
-    document.getElementById('editCtvNoiCuCu').textContent = btn.dataset.maphuong ? '' : 'Địa chỉ đang lưu: ' + (btn.dataset.noicutru || '—') + '. Hãy chọn lại tỉnh, phường.';
-    DiaChi.datGiaTri(document.getElementById('editCtvNoiO'), btn.dataset.matinh, btn.dataset.maphuong);
+    document.getElementById('editCtvNoiCuCu').textContent = btn.dataset.maphuong || btn.dataset.maquan ? '' : 'Địa chỉ đang lưu: ' + (btn.dataset.noicutru || '—') + '. Hãy chọn lại tỉnh, phường xã / quận huyện.';
+    DiaChi.datGiaTri(document.getElementById('editCtvNoiO'), btn.dataset.matinh, btn.dataset.maphuong, null, btn.dataset.maquan);
     if (btn.dataset.capdo) {
       document.getElementById('editCtvCapDo').value = btn.dataset.capdo;
     }

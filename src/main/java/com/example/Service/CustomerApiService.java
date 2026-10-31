@@ -79,6 +79,10 @@ public class CustomerApiService {
     @Autowired
     private ViTriCtvStore viTriCtvStore;
 
+    /** Mã một lần để gắn giấy tờ (tải lên MinIO sau khi gửi hồ sơ thành công) vào hồ sơ CTV vừa tạo. */
+    @Autowired
+    private MaGuiGiayToStore maGuiGiayToStore;
+
     @Autowired
     private CollaboratorApiService collaboratorApiService;
 
@@ -339,7 +343,7 @@ public class CustomerApiService {
         khachHang = khachHangRepository.save(khachHang);
 
         // 3. Địa chỉ nơi ở (nếu có) thành địa chỉ mặc định trong sổ địa chỉ
-        if (req.getMaPhuong() != null) {
+        if (req.getMaPhuong() != null || req.getMaQuan() != null) {
             com.example.DTO.request.AddressRequest dc = new com.example.DTO.request.AddressRequest();
             dc.setSoNhaTenDuong(req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet());
             dc.setMaTinh(req.getMaTinh());
@@ -648,10 +652,11 @@ public class CustomerApiService {
         // Địa chỉ nơi ở hiện tại (tỉnh, phường từ API địa giới) – khác với khu vực nhận việc
         String noiCuTru;
         List<KhuVuc> khuVucNoiO = List.of();
-        if (req.getMaPhuong() != null) {
-            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinh(req.getSoNhaTenDuong(), req.getMaTinh(), req.getMaPhuong(), null);
+        if (req.getMaPhuong() != null || req.getMaQuan() != null) {
+            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinhChung(req.getSoNhaTenDuong(), req.getMaTinh(),
+                    req.getMaQuan(), req.getMaPhuong(), null);
             noiCuTru = x.diaChiDayDu();
-            khuVucNoiO = diaGioiService.khuVucCuaPhuong(req.getMaPhuong());
+            khuVucNoiO = diaGioiService.khuVucCuaDiaChi(req.getMaTinh(), req.getMaQuan(), req.getMaPhuong());
         } else if (req.getNoiCuTru() != null && !req.getNoiCuTru().isBlank()) {
             noiCuTru = req.getNoiCuTru().trim();
         } else {
@@ -734,9 +739,53 @@ public class CustomerApiService {
             ganKhuVucChoCtv(savedCtv, khuVucTheoDiaChi, khuVucDaGan);
         }
 
+        // 5-6. Giấy tờ gửi kèm (app cũ). Web/app mới: chỉ tải file lên MinIO sau khi hồ sơ lưu thành công,
+        //      rồi gửi object key qua guiGiayToDangKy() bằng maGuiGiayTo trả về bên dưới.
+        luuGiayToCtv(savedCtv, req.getDanhSachHoSo(), req.getDanhSachChungChi());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("congTacVienId", savedCtv.getId());
+        result.put("maCongTacVien", savedCtv.getMaCongTacVien());
+        result.put("hoTen", savedCtv.getHoTen());
+        result.put("trangThai", savedCtv.getTrangThai());
+        result.put("khuVuc", String.join(", ", khuVucRepository.findAllById(khuVucDaGan).stream()
+                .map(KhuVuc::getTenKhuVuc).toList()));
+        result.put("thoiGianXetDuyetDuKien", "1-3 ngày làm việc");
+        result.put("maGuiGiayTo", maGuiGiayToStore != null ? maGuiGiayToStore.taoMa(savedCtv.getId()) : null);
+        result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt, "
+                + "kết quả sẽ được gửi qua tin nhắn tới số " + soDienThoai + ".");
+        return result;
+    }
+
+    /**
+     * Gắn giấy tờ (đã tải lên MinIO sau khi gửi hồ sơ thành công) vào hồ sơ CTV vừa đăng ký.
+     * Mã gửi giấy tờ chỉ dùng được một lần và tự hết hạn.
+     */
+    public Map<String, Object> guiGiayToDangKy(String maGuiGiayTo,
+                                                List<CollaboratorRegisterRequest.HoSoItem> hoSo,
+                                                List<CollaboratorRegisterRequest.ChungChiItem> chungChi) {
+        Integer ctvId = maGuiGiayToStore == null ? null : maGuiGiayToStore.layCtvId(maGuiGiayTo).orElse(null);
+        if (ctvId == null) {
+            throw new IllegalArgumentException("Mã gửi giấy tờ không hợp lệ hoặc đã hết hạn. Liên hệ bộ phận nhân sự để bổ sung giấy tờ.");
+        }
+        CongTacVien ctv = congTacVienRepository.findById(ctvId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hồ sơ cộng tác viên."));
+        int soFile = luuGiayToCtv(ctv, hoSo, chungChi);
+        maGuiGiayToStore.xoa(maGuiGiayTo);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("congTacVienId", ctv.getId());
+        result.put("soFile", soFile);
+        return result;
+    }
+
+    /** Lưu hồ sơ tài liệu (CCCD, ảnh chân dung) và chứng chỉ của CTV – object key MinIO. @return số file đã lưu */
+    private int luuGiayToCtv(CongTacVien savedCtv,
+                             List<CollaboratorRegisterRequest.HoSoItem> hoSo,
+                             List<CollaboratorRegisterRequest.ChungChiItem> chungChi) {
+        int soFile = 0;
         // 5. Lưu bằng cấp / chứng chỉ (URL MinIO)
-        if (req.getDanhSachChungChi() != null) {
-            for (CollaboratorRegisterRequest.ChungChiItem item : req.getDanhSachChungChi()) {
+        if (chungChi != null) {
+            for (CollaboratorRegisterRequest.ChungChiItem item : chungChi) {
                 ChungChiCTV cc = ChungChiCTV.builder()
                         .maChungChi(maNgauNhien("CC-"))
                         .congTacVien(savedCtv)
@@ -747,12 +796,13 @@ public class CustomerApiService {
                         .duongDanFile(minioService.toStoredValue(item.getDuongDanFile())) // Lưu object key MinIO
                         .build();
                 chungChiCTVRepository.save(cc);
+                soFile++;
             }
         }
 
         // 6. Lưu hồ sơ tài liệu (CCCD trước/sau, ảnh chân dung - URL MinIO)
-        if (req.getDanhSachHoSo() != null) {
-            for (CollaboratorRegisterRequest.HoSoItem item : req.getDanhSachHoSo()) {
+        if (hoSo != null) {
+            for (CollaboratorRegisterRequest.HoSoItem item : hoSo) {
                 if (item.getDuongDanFile() == null || item.getDuongDanFile().isBlank()) {
                     continue; // cột DuongDanFile bắt buộc có giá trị
                 }
@@ -764,20 +814,11 @@ public class CustomerApiService {
                         .ngayTai(LocalDateTime.now())
                         .build();
                 hoSoCTVRepository.save(hs);
+                soFile++;
             }
         }
 
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("congTacVienId", savedCtv.getId());
-        result.put("maCongTacVien", savedCtv.getMaCongTacVien());
-        result.put("hoTen", savedCtv.getHoTen());
-        result.put("trangThai", savedCtv.getTrangThai());
-        result.put("khuVuc", String.join(", ", khuVucRepository.findAllById(khuVucDaGan).stream()
-                .map(KhuVuc::getTenKhuVuc).toList()));
-        result.put("thoiGianXetDuyetDuKien", "1-3 ngày làm việc");
-        result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt, "
-                + "kết quả sẽ được gửi qua tin nhắn tới số " + soDienThoai + ".");
-        return result;
+        return soFile;
     }
 
     /** Gán một khu vực cho CTV, bỏ qua nếu đã gán (cặp congTacVienId - khuVucId là duy nhất). */
@@ -1362,7 +1403,7 @@ public class CustomerApiService {
             // Chỉ nhận địa chỉ còn dùng của chính khách hàng đặt đơn
             diaChi = customerAddressService.timDiaChi(khachHang.getId(), req.getDiaChiId());
         }
-        if (diaChi == null && req.getMaPhuong() != null) {
+        if (diaChi == null && (req.getMaPhuong() != null || req.getMaQuan() != null)) {
             // Địa chỉ mới nhập lúc đặt: lưu vào sổ địa chỉ (tỉnh, phường → khu vực)
             com.example.DTO.request.AddressRequest dcMoi = new com.example.DTO.request.AddressRequest();
             dcMoi.setSoNhaTenDuong(req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet());

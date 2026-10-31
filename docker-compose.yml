@@ -5,7 +5,7 @@
 #   Cấu hình/khóa bí mật:    sao chép .env.example thành .env rồi điền giá trị
 #
 # Cổng trên máy host (đổi trong .env nếu trùng):
-#   web 8080 · MySQL 3307 · Redis 6380 · MinIO API 9010 · MinIO Console 9011
+#   web 8083 · MySQL 3307 · Redis 6380 · MinIO API 9010 · MinIO Console 9011
 # ============================================================
 
 name: giupviec
@@ -24,7 +24,7 @@ services:
       minio:
         condition: service_healthy
     ports:
-      - "${WEB_PORT:-8080}:8083"
+      - "${WEB_PORT:-8083}:8083"
     environment:
       TZ: Asia/Ho_Chi_Minh
       # MySQL

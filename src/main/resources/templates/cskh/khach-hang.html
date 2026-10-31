@@ -236,18 +236,14 @@
           <i class="ti ti-map-pin"></i> Địa chỉ &amp; Khu vực
         </div>
 
-        <!-- Địa chỉ: tỉnh, phường (provinces.open-api.vn v2); khu vực (quận, huyện) tự suy ra từ phường – /js/dia-chi.js -->
+        <!-- Địa chỉ: tỉnh (mới + cũ), phường xã / quận huyện; khu vực tự suy ra từ ô thứ hai – /js/dia-chi.js -->
         <div data-dia-chi-form id="modalDiaChi" class="dia-chi-box">
           <div class="form-group">
-            <label class="form-label" for="modalTinh">Tỉnh / Thành phố *</label>
+            <label class="form-label" for="modalTinh">Tỉnh, thành phố *</label>
             <select id="modalTinh" name="maTinh" class="form-control" data-native="true" onchange="updateAddressPreview()" required></select>
           </div>
-          <div class="form-group" data-quan-wrap>
-            <label class="form-label" for="modalQuan">Quận / Huyện *</label>
-            <select id="modalQuan" name="maQuan" class="form-control" data-native="true" onchange="updateAddressPreview()"></select>
-          </div>
           <div class="form-group col-full" data-phuong-wrap>
-            <label class="form-label" for="modalPhuong">Phường / Xã *</label>
+            <label class="form-label" for="modalPhuong">Phường, xã / quận, huyện *</label>
             <select id="modalPhuong" name="maPhuong" class="form-control" data-native="true" onchange="updateAddressPreview()" required></select>
           </div>
           <div class="form-group col-full" data-kv-wrap hidden>
@@ -309,8 +305,8 @@
   function updateAddressPreview() {
     const soNha = document.getElementById('modalSoNha').value.trim();
     const tinhName = chuDaChon('modalTinh');
-    const phuongName = chuDaChon('modalPhuong').replace(/^(.*) \((Phường|Xã|Đặc khu|Thị trấn)\)$/, '$2 $1');
-    const parts = [soNha, phuongName, tinhName].filter(Boolean);
+    const phuongName = chuDaChon('modalPhuong').replace(/^(.*) \((Phường|Xã|Đặc khu|Thị trấn)\)$/, '$2 $1').replace(/ \(cũ\)$/, '');
+    const parts = [soNha, phuongName, tinhName].map(s => s.replace(/ \(cũ\)$/, '')).filter(Boolean);
     const box = document.getElementById('addressPreviewBox');
     const text = document.getElementById('addressPreviewText');
     const area = document.getElementById('areaPreviewText');
@@ -354,7 +350,7 @@
     }
 
     if (!tinhThanh || !phuongXa) {
-      Toast.show('Vui lòng chọn Tỉnh/Thành phố và Phường/Xã!', 'error');
+      Toast.show('Vui lòng chọn tỉnh, thành phố và phường, xã / quận, huyện!', 'error');
       return;
     }
 

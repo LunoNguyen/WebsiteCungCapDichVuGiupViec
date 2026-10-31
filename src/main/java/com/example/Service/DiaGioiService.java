@@ -195,8 +195,10 @@ public class DiaGioiService {
     }
 
     /**
-     * Tách địa chỉ đã lưu "số nhà, đường, phường, tỉnh" để điền lại form sửa (so tên với danh sách API).
-     * Không khớp thì trả về soNhaTenDuong = cả chuỗi để người dùng chọn lại phường, tỉnh.
+     * Tách địa chỉ đã lưu để điền lại form sửa (so tên với danh sách API):
+     *   "số nhà, [phường,] quận/huyện, tỉnh" (địa giới cũ) → maTinh, maQuan (phường cũ giữ trong số nhà);
+     *   "số nhà, phường/xã, tỉnh" (địa giới mới) → maTinh, maPhuong.
+     * Không khớp thì trả về soNhaTenDuong = cả chuỗi để người dùng chọn lại.
      */
     public Map<String, Object> tach(String diaChi) {
         Map<String, Object> m = new LinkedHashMap<>();
@@ -204,29 +206,44 @@ public class DiaGioiService {
         if (diaChi == null) return m;
         List<String> phan = new ArrayList<>(Arrays.stream(diaChi.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
         if (phan.size() < 3) return m;
-        String tenTinhCuoi = phan.get(phan.size() - 1);
-        Integer maTinh = null;
-        for (Map<String, Object> t : tinhThanh()) {
-            if (KhuVucService.chuanHoa((String) t.get("ten")).equals(KhuVucService.chuanHoa(tenTinhCuoi))) {
-                maTinh = (Integer) t.get("ma");
-                break;
-            }
+        String tinhCuoi = KhuVucService.chuanHoa(phan.get(phan.size() - 1));
+        String keTinh = KhuVucService.chuanHoa(phan.get(phan.size() - 2));
+        String soNha = String.join(", ", phan.subList(0, phan.size() - 2));
+
+        // Địa giới cũ: tên kề tỉnh là một quận, huyện của tỉnh cũ
+        Integer maTinhCu = timMa(tinhThanhV1(), tinhCuoi);
+        if (maTinhCu != null) {
+            try {
+                Integer maQuan = timMa(quanHuyenV1(maTinhCu), keTinh);
+                if (maQuan != null) {
+                    m.put("maTinh", maTinhCu);
+                    m.put("maQuan", maQuan);
+                    m.put("soNhaTenDuong", soNha);
+                    return m;
+                }
+            } catch (Exception ignored) { }
         }
+        // Địa giới mới: tên kề tỉnh là một phường, xã
+        Integer maTinh = timMa(tinhThanh(), tinhCuoi);
         if (maTinh == null) return m;
-        String tenPhuongKe = KhuVucService.chuanHoa(phan.get(phan.size() - 2));
         List<Map<String, Object>> ds = phuongCache.containsKey(maTinh) ? phuongCache.get(maTinh) : List.of();
         if (ds.isEmpty()) {
             try { phuongXa(maTinh); ds = phuongCache.getOrDefault(maTinh, List.of()); } catch (Exception ignored) { }
         }
-        for (Map<String, Object> p : ds) {
-            if (KhuVucService.chuanHoa((String) p.get("ten")).equals(tenPhuongKe)) {
-                m.put("maTinh", maTinh);
-                m.put("maPhuong", p.get("ma"));
-                m.put("soNhaTenDuong", String.join(", ", phan.subList(0, phan.size() - 2)));
-                break;
-            }
+        Integer maPhuong = timMa(ds, keTinh);
+        if (maPhuong != null) {
+            m.put("maTinh", maTinh);
+            m.put("maPhuong", maPhuong);
+            m.put("soNhaTenDuong", soNha);
         }
         return m;
+    }
+
+    private static Integer timMa(List<Map<String, Object>> ds, String tenChuanHoa) {
+        for (Map<String, Object> x : ds) {
+            if (KhuVucService.chuanHoa((String) x.get("ten")).equals(tenChuanHoa)) return (Integer) x.get("ma");
+        }
+        return null;
     }
 
     // =========================================================================
@@ -314,7 +331,10 @@ public class DiaGioiService {
                 .map(p -> (String) p.get("ten")).findFirst();
     }
 
-    /** Ghép địa chỉ kiểu cũ 3 cấp: Số nhà, Phường, Quận, Tỉnh và tự động xác định KhuVuc */
+    /**
+     * Địa chỉ theo địa giới cũ (v1): "số nhà, quận/huyện, tỉnh" và khu vực theo quận đó.
+     * maPhuong là tuỳ chọn (form cũ 3 cấp còn gửi): có thì ghép thêm tên phường trước quận.
+     */
     public DiaChiDaXacDinh xacDinhV1(String soNhaTenDuong, Integer maTinh, Integer maQuan, Integer maPhuong) {
         if (soNhaTenDuong == null || soNhaTenDuong.isBlank()) {
             throw new IllegalArgumentException("Vui lòng nhập số nhà, tên đường.");
@@ -325,16 +345,115 @@ public class DiaGioiService {
                 .or(() -> tenTinh(maTinh))
                 .orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn tỉnh, thành phố."));
         String quan = tenQuanV1(maTinh, maQuan).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn quận, huyện."));
-        String phuong = tenPhuongV1(maQuan, maPhuong).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn phường, xã."));
+        String phuong = maPhuong == null ? null
+                : tenPhuongV1(maQuan, maPhuong).orElseThrow(() -> new IllegalArgumentException("Vui lòng chọn phường, xã."));
         String soNha = soNhaTenDuong.trim().replaceAll("\\s+", " ");
+        if (soNha.length() > 200) throw new IllegalArgumentException("Số nhà, tên đường tối đa 200 ký tự.");
 
         KhuVuc kv = null;
         if (khuVucService != null) {
             kv = khuVucService.timTheoTen(quan).orElse(null);
         }
 
-        String diaChiDayDu = soNha + ", " + phuong + ", " + quan + ", " + tinh;
-        return new DiaChiDaXacDinh(diaChiDayDu, kv, phuong, tinh);
+        String diaChiDayDu = soNha + (phuong != null ? ", " + phuong : "") + ", " + quan + ", " + tinh;
+        return new DiaChiDaXacDinh(diaChiDayDu, kv, phuong != null ? phuong : quan, tinh);
+    }
+
+    /** Có quận (địa giới cũ) thì theo v1, còn lại theo tỉnh + phường (v2). */
+    public DiaChiDaXacDinh xacDinhChung(String soNhaTenDuong, Integer maTinh, Integer maQuan, Integer maPhuong, Integer khuVucId) {
+        return maQuan != null ? xacDinhV1(soNhaTenDuong, maTinh, maQuan, maPhuong)
+                : xacDinh(soNhaTenDuong, maTinh, maPhuong, khuVucId);
+    }
+
+    /** Khu vực ứng với địa chỉ: quận cũ (v1) hoặc các quận cũ chứa phường mới (v2). */
+    public List<KhuVuc> khuVucCuaDiaChi(Integer maTinh, Integer maQuan, Integer maPhuong) {
+        if (maQuan == null) return khuVucCuaPhuong(maPhuong);
+        String quan = tenQuanV1(maTinh, maQuan).orElse(null);
+        return quan == null ? List.of() : khuVucService.timTheoTen(quan).map(List::of).orElse(List.of());
+    }
+
+    // =========================================================================
+    // FORM ĐỊA CHỈ GỘP (khớp bảng DiaChiKhachHang: chuỗi địa chỉ + khu vực)
+    //   Ô tỉnh: tỉnh sau sáp nhập (v2) và tỉnh trước sáp nhập (v1) gộp theo tên – tỉnh cùng tên chỉ có một dòng,
+    //           tỉnh chỉ còn ở danh mục cũ có cu = true.
+    //   Ô thứ hai: cấp ngay dưới tỉnh – phường, xã (v2) và quận, huyện cũ (v1, cu = true) của tỉnh cùng tên.
+    // =========================================================================
+
+    /** [{ma, ten, cu, maCu?}]: tỉnh v2 (TP.HCM đầu; maCu = mã tỉnh v1 cùng tên), rồi tỉnh chỉ có ở v1 (cu = true). */
+    public List<Map<String, Object>> tinhGop() {
+        tinhThanhV1();
+        List<Map<String, Object>> cuList = tinhCacheV1 != null ? tinhCacheV1 : List.of();
+        Map<String, Integer> maCuTheoTen = new HashMap<>();
+        for (Map<String, Object> t : cuList) maCuTheoTen.put(KhuVucService.chuanHoa((String) t.get("ten")), (Integer) t.get("ma"));
+
+        List<Map<String, Object>> kq = new ArrayList<>();
+        Set<String> daCo = new HashSet<>();
+        for (Map<String, Object> t : tinhThanh()) {
+            String khoa = KhuVucService.chuanHoa((String) t.get("ten"));
+            Map<String, Object> m = gop(t, false);
+            if (maCuTheoTen.containsKey(khoa)) m.put("maCu", maCuTheoTen.get(khoa));
+            kq.add(m);
+            daCo.add(khoa);
+        }
+        for (Map<String, Object> t : cuList) {
+            if (!daCo.contains(KhuVucService.chuanHoa((String) t.get("ten")))) kq.add(gop(t, true));
+        }
+        return kq;
+    }
+
+    /**
+     * Ô thứ hai: [{ma, ten, cu, maTinh, khuVuc: [{id, tenKhuVuc}]}]; khuVuc rỗng = ngoài khu vực phục vụ.
+     * maTinh là mã tỉnh gửi kèm khi chọn dòng đó (v2 cho phường mới, v1 cho quận cũ).
+     *   cu = false: phường, xã của tỉnh mới + quận, huyện của tỉnh cũ cùng tên (nếu có);
+     *   cu = true : tỉnh chỉ còn ở danh mục cũ – quận, huyện của tỉnh đó.
+     */
+    public List<Map<String, Object>> duoiTinh(int maTinh, boolean cu) {
+        List<Map<String, Object>> kq = new ArrayList<>();
+        if (cu) {
+            themQuanCu(kq, maTinh);
+            return kq;
+        }
+        for (Map<String, Object> p : phuongXa(maTinh)) {
+            Map<String, Object> m = gop(p, false);
+            m.put("maTinh", maTinh);
+            kq.add(m);
+        }
+        Integer maCu = tinhGop().stream()
+                .filter(t -> Boolean.FALSE.equals(t.get("cu")) && Objects.equals(t.get("ma"), maTinh))
+                .map(t -> (Integer) t.get("maCu")).filter(Objects::nonNull).findFirst().orElse(null);
+        if (maCu != null) {
+            try {
+                themQuanCu(kq, maCu);
+            } catch (IllegalStateException e) {
+                log.warn("Không tải được quận, huyện cũ của tỉnh {}: {}", maCu, e.getMessage());
+            }
+        }
+        return kq;
+    }
+
+    private void themQuanCu(List<Map<String, Object>> kq, int maTinhCu) {
+        for (Map<String, Object> q : quanHuyenV1(maTinhCu)) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ma", q.get("ma"));
+            m.put("ten", q.get("ten"));
+            m.put("cu", true);
+            m.put("maTinh", maTinhCu);
+            List<Map<String, Object>> kv = new ArrayList<>();
+            if (q.get("khuVucId") != null) {
+                Map<String, Object> k = new LinkedHashMap<>();
+                k.put("id", q.get("khuVucId"));
+                k.put("tenKhuVuc", q.get("tenKhuVuc"));
+                kv.add(k);
+            }
+            m.put("khuVuc", kv);
+            kq.add(m);
+        }
+    }
+
+    private static Map<String, Object> gop(Map<String, Object> goc, boolean cu) {
+        Map<String, Object> m = new LinkedHashMap<>(goc);
+        m.put("cu", cu);
+        return m;
     }
 
     // =========================================================================

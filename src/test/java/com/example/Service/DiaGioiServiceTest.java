@@ -71,4 +71,69 @@ class DiaGioiServiceTest {
         assertTrue(res.diaChiDayDu().contains("123 Lũy Bán Bích"));
         assertTrue(res.diaChiDayDu().contains("Quận Tân Phú"));
     }
+
+    @Test
+    void xacDinhV1_khongPhuong_dungOQuan() {
+        DiaGioiService.DiaChiDaXacDinh res = diaGioiService.xacDinhV1("123 Lũy Bán Bích", 79, 767, null);
+        assertEquals("123 Lũy Bán Bích, Quận Tân Phú, Thành phố Hồ Chí Minh", res.diaChiDayDu());
+        assertEquals(7, res.khuVuc().getId());
+    }
+
+    @Test
+    void xacDinhChung_coQuanThiTheoV1() {
+        DiaGioiService.DiaChiDaXacDinh res = diaGioiService.xacDinhChung("5 Tân Kỳ Tân Quý", 79, 767, null, null);
+        assertTrue(res.diaChiDayDu().endsWith("Quận Tân Phú, Thành phố Hồ Chí Minh"));
+        assertEquals(List.of(7), diaGioiService.khuVucCuaDiaChi(79, 767, null).stream().map(KhuVuc::getId).toList());
+    }
+
+    @Test
+    void tinhGop_tinhCungTenChiMotDong_tinhChiConODanhMucCuGhiCu() {
+        List<Map<String, Object>> ds = diaGioiService.tinhGop();
+        List<Map<String, Object>> hcm = ds.stream().filter(t -> "Thành phố Hồ Chí Minh".equals(t.get("ten"))).toList();
+        assertEquals(1, hcm.size(), "TP.HCM có ở cả hai danh mục: chỉ một dòng");
+        assertEquals(Boolean.FALSE, hcm.get(0).get("cu"));
+        assertEquals(79, hcm.get(0).get("maCu"));
+        // Bình Dương đã sáp nhập: chỉ còn ở danh mục cũ
+        Map<String, Object> binhDuong = ds.stream().filter(t -> "Tỉnh Bình Dương".equals(t.get("ten"))).findFirst().orElseThrow();
+        assertEquals(Boolean.TRUE, binhDuong.get("cu"));
+        assertEquals(Boolean.FALSE, ds.get(0).get("cu"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void duoiTinh_tinhCungTen_gopPhuongMoiVaQuanCu() {
+        List<Map<String, Object>> ds = diaGioiService.duoiTinh(79, false);
+        assertTrue(ds.stream().anyMatch(x -> Boolean.FALSE.equals(x.get("cu")) && ((String) x.get("ten")).startsWith("Phường")));
+        Map<String, Object> tanPhu = ds.stream().filter(q -> "Quận Tân Phú".equals(q.get("ten"))).findFirst().orElseThrow();
+        assertEquals(767, tanPhu.get("ma"));
+        assertEquals(Boolean.TRUE, tanPhu.get("cu"));
+        assertEquals(79, tanPhu.get("maTinh"));
+        List<Map<String, Object>> kv = (List<Map<String, Object>>) tanPhu.get("khuVuc");
+        assertEquals(7, kv.get(0).get("id"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void duoiTinh_tinhCu_laQuanHuyenKemKhuVuc() {
+        List<Map<String, Object>> ds = diaGioiService.duoiTinh(79, true);
+        Map<String, Object> tanPhu = ds.stream().filter(q -> "Quận Tân Phú".equals(q.get("ten"))).findFirst().orElseThrow();
+        assertEquals(767, tanPhu.get("ma"));
+        assertEquals(Boolean.TRUE, tanPhu.get("cu"));
+        List<Map<String, Object>> kv = (List<Map<String, Object>>) tanPhu.get("khuVuc");
+        assertEquals(7, kv.get(0).get("id"));
+    }
+
+    @Test
+    void tach_diaChiCu_traVeMaQuan() {
+        Map<String, Object> m = diaGioiService.tach("12 Lũy Bán Bích, Quận Tân Phú, Thành phố Hồ Chí Minh");
+        assertEquals(79, m.get("maTinh"));
+        assertEquals(767, m.get("maQuan"));
+        assertNull(m.get("maPhuong"));
+        assertEquals("12 Lũy Bán Bích", m.get("soNhaTenDuong"));
+
+        // Địa chỉ 3 cấp cũ: phường cũ giữ trong phần số nhà
+        Map<String, Object> m3 = diaGioiService.tach("12 Lũy Bán Bích, Phường Tây Thạnh, Quận Tân Phú, Thành phố Hồ Chí Minh");
+        assertEquals(767, m3.get("maQuan"));
+        assertEquals("12 Lũy Bán Bích, Phường Tây Thạnh", m3.get("soNhaTenDuong"));
+    }
 }
