@@ -132,6 +132,9 @@
           </a>
           <a href="/hcns/cong-tac-vien" class="sidebar-item" th:classappend="${activeMenu == 'cong-tac-vien' ? 'active' : ''}" th:attr="aria-current=${activeMenu == 'cong-tac-vien' ? 'page' : null}">
             <i class="ti ti-user-star item-icon"></i><span class="item-label">Cộng tác viên</span>
+            <span class="item-badge badge-alert" th:if="${soDonCtvChuaDoc != null and soDonCtvChuaDoc > 0}"
+                  th:text="${soDonCtvChuaDoc > 99 ? '99+' : soDonCtvChuaDoc}"
+                  th:title="${soDonCtvChuaDoc + ' đơn đăng ký cộng tác viên mới chưa đọc'}">1</span>
           </a>
         </div>
       </div>

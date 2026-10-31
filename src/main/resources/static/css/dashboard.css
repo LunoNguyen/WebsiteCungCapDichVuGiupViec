@@ -70,6 +70,13 @@
 .sidebar-item:hover { background: var(--fill-hover); color: var(--foreground); }
 .sidebar-item.active { background: var(--fill-selected); color: var(--foreground); font-weight: 500; border: 0; }
 .sidebar-item.active .item-icon, .sidebar-item.active .item-badge { color: var(--foreground); }
+/* Badge đỏ báo mục mới chưa đọc (VD đơn đăng ký CTV) */
+.sidebar-item .item-badge.badge-alert,
+.sidebar-item.active .item-badge.badge-alert {
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #ef4444; color: #fff; font-weight: 600; line-height: 1;
+}
 
 /* Thu gọn: chỉ còn icon */
 .sidebar.collapsed .sidebar-header { padding: 0; justify-content: center; }

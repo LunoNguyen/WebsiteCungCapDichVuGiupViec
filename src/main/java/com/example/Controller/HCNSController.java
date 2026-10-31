@@ -76,6 +76,18 @@ public class HCNSController {
         this.capTaiKhoanCtvService = capTaiKhoanCtvService;
     }
 
+    /** Số đơn đăng ký CTV mới (chờ duyệt, HCNS chưa mở xem): badge đỏ ở mục "Cộng tác viên" trên sidebar. */
+    @org.springframework.web.bind.annotation.ModelAttribute("soDonCtvChuaDoc")
+    public Long soDonCtvChuaDoc(HttpServletRequest request) {
+        if (!"GET".equals(request.getMethod())) return 0L;
+        List<CongTacVien> choDuyet = congTacVienRepository.findAll().stream()
+                .filter(c -> "ChoDuyet".equals(c.getTrangThai()))
+                .toList();
+        if (choDuyet.isEmpty()) return 0L;
+        var daXem = ungVienCtvService.hoSoDaXem(choDuyet);
+        return choDuyet.stream().filter(c -> !daXem.contains(c.getId())).count();
+    }
+
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         var ctvStats = thongKeService.getCongTacVienStats();
