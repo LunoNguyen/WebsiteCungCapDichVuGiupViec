@@ -4,27 +4,35 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
-/** Bang 1: TaiKhoan */
-@Entity @Table(name = "TaiKhoan")
+/**
+ * Bang 1: TaiKhoan. Khớp ràng buộc UNIQUE trong DB: một số điện thoại / tên đăng nhập có thể có
+ * một tài khoản cho mỗi loại (khách hàng và cộng tác viên là hai tài khoản riêng, mật khẩu riêng).
+ */
+@Entity @Table(name = "TaiKhoan", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_TK_ma", columnNames = "MaTaiKhoan"),
+        @UniqueConstraint(name = "uq_TK_email", columnNames = "Email"),
+        @UniqueConstraint(name = "uq_TK_sdt_loai", columnNames = {"SoDienThoai", "LoaiTaiKhoan"}),
+        @UniqueConstraint(name = "uq_TK_tenDN_loai", columnNames = {"TenDangNhap", "LoaiTaiKhoan"})
+})
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class TaiKhoan {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "MaTaiKhoan", nullable = false, unique = true, length = 20)
+    @Column(name = "MaTaiKhoan", nullable = false, length = 20)
     private String maTaiKhoan;
 
-    @Column(name = "TenDangNhap", nullable = false, unique = true, length = 100)
+    @Column(name = "TenDangNhap", nullable = false, length = 100)
     private String tenDangNhap;
 
     @Column(name = "MatKhau", nullable = false, length = 255)
     private String matKhau;
 
-    @Column(name = "Email", nullable = false, unique = true, length = 150)
+    @Column(name = "Email", nullable = false, length = 150)
     private String email;
 
-    @Column(name = "SoDienThoai", nullable = false, unique = true, length = 15)
+    @Column(name = "SoDienThoai", nullable = false, length = 15)
     private String soDienThoai;
 
     @Column(name = "LoaiTaiKhoan", nullable = false, length = 20)

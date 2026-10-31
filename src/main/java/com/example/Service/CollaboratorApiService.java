@@ -42,6 +42,8 @@ public class CollaboratorApiService {
     @org.springframework.beans.factory.annotation.Autowired
     private ViTriCtvStore viTriCtvStore;
     @org.springframework.beans.factory.annotation.Autowired
+    private BoQuaDonStore boQuaDonStore;
+    @org.springframework.beans.factory.annotation.Autowired
     private TamQuanHcm tamQuanHcm;
     @org.springframework.beans.factory.annotation.Autowired
     private BieuMauTaiSanRepository bieuMauTaiSanRepository;
@@ -136,18 +138,6 @@ public class CollaboratorApiService {
             dong.add(x.getChiTietDonDat().getId());
         }
         return PhanCongTheoDichVu.tienTheoDong(don, dong);
-    }
-
-    /**
-     * CTV của phân công đã tự gửi ảnh tài sản loại [loai] cho đơn chưa. Đơn nhiều dịch vụ có nhiều CTV:
-     * ảnh của đồng nghiệp không thay được ảnh của mình.
-     */
-    private boolean daTuChupAnh(DonDatDichVu don, PhanCongCTV pc, String loai) {
-        if (bieuMauTaiSanRepository == null || don == null) return false;
-        if (pc.getCongTacVien() == null) {
-            return !bieuMauTaiSanRepository.findByDonDat_IdAndLoaiBieuMauOrderByThoiGianGhiNhanDesc(don.getId(), loai).isEmpty();
-        }
-        return bieuMauTaiSanRepository.existsByDonDat_IdAndCongTacVien_IdAndLoaiBieuMau(don.getId(), pc.getCongTacVien().getId(), loai);
     }
 
     /** Trích xuất danh sách đường dẫn / objectName hình ảnh tài sản từ request */
@@ -759,6 +749,53 @@ public class CollaboratorApiService {
         return startAssignment(phanCongId, null);
     }
 
+    /**
+     * Gắn ảnh tài sản (không bắt buộc) vào phân công SAU KHI bắt đầu / hoàn thành thành công:
+     * app chỉ tải ảnh lên MinIO khi máy chủ đã nhận thao tác, rồi gửi object key qua đây.
+     *
+     * @param loaiBieuMau "TruocDichVu" hoặc "SauDichVu"
+     */
+    @Transactional
+    public Map<String, Object> guiAnhTaiSan(Integer phanCongId, String loaiBieuMau, AssignmentActionRequest req) {
+        if (!"TruocDichVu".equals(loaiBieuMau) && !"SauDichVu".equals(loaiBieuMau)) {
+            throw new IllegalArgumentException("Loại ảnh tài sản phải là TruocDichVu hoặc SauDichVu.");
+        }
+        PhanCongCTV pc = phanCongCTVRepository.findById(phanCongId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
+        if (!daBatDauLam(pc)) {
+            throw new IllegalArgumentException("Chỉ gửi ảnh tài sản khi công việc đã bắt đầu.");
+        }
+        if (trichXuatDanhSachAnh(req).isEmpty()) {
+            throw new IllegalArgumentException("Chưa có ảnh tài sản để lưu.");
+        }
+        BieuMauTaiSan bm = luuBieuMauTaiSan(pc.getDonDat(), pc.getCongTacVien(), loaiBieuMau, req);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("phanCongId", pc.getId());
+        res.put("loaiBieuMau", loaiBieuMau);
+        res.put("bieuMauId", bm != null ? bm.getId() : null);
+        res.put("danhSachHinhAnh", trichXuatDanhSachAnh(req));
+        return res;
+    }
+
+    /**
+     * Bắt đầu ca chỉ đổi trạng thái đơn và buổi làm (phân công vẫn DaXacNhan), nên xét cả buổi làm của CTV:
+     * phân công đang làm / đã xong, hoặc có buổi DangThucHien / HoanThanh.
+     */
+    private boolean daBatDauLam(PhanCongCTV pc) {
+        String tt = pc.getTrangThai();
+        if ("DangThucHien".equalsIgnoreCase(tt) || "HoanThanh".equalsIgnoreCase(tt)) return true;
+        List<LichLamViec> sches = lichLamViecRepository.findByPhanCong_Id(pc.getId());
+        if (sches.isEmpty() && pc.getDonDat() != null) {
+            // Đơn nhiều dịch vụ: lịch gắn với phân công đầu tiên của CTV trong đơn – chỉ lấy lịch của chính CTV này
+            Integer idCtv = pc.getCongTacVien() != null ? pc.getCongTacVien().getId() : null;
+            sches = lichLamViecRepository.findByPhanCong_DonDat_Id(pc.getDonDat().getId()).stream()
+                    .filter(l -> idCtv == null || (l.getCongTacVien() != null && idCtv.equals(l.getCongTacVien().getId())))
+                    .toList();
+        }
+        return sches.stream().anyMatch(l -> "DangThucHien".equalsIgnoreCase(l.getTrangThai())
+                || "HoanThanh".equalsIgnoreCase(l.getTrangThai()));
+    }
+
     @Transactional
     public Map<String, Object> startAssignment(Integer phanCongId, AssignmentActionRequest req) {
         PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
@@ -793,7 +830,7 @@ public class CollaboratorApiService {
         if (ngayLam != null && gioBatDau != null) {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime earliestStart = LocalDateTime.of(ngayLam, gioBatDau).minusMinutes(30);
-            LocalDateTime latestStart = LocalDateTime.of(ngayLam, gioKetThuc != null ? gioKetThuc : gioBatDau.plusHours(2));
+            LocalDateTime latestStart = (gioKetThuc != null && gioKetThuc.isBefore(gioBatDau)) ? LocalDateTime.of(ngayLam.plusDays(1), gioKetThuc) : LocalDateTime.of(ngayLam, gioKetThuc != null ? gioKetThuc : gioBatDau.plusHours(2));
 
             if (now.isBefore(earliestStart)) {
                 String gioStr = gioBatDau.format(DateTimeFormatter.ofPattern("HH:mm"));
@@ -806,12 +843,8 @@ public class CollaboratorApiService {
             }
         }
 
-        // RÀNG BUỘC CHỤP ẢNH TÀI SẢN TRƯỚC KHI THỰC HIỆN DỊCH VỤ:
+        // Ảnh tài sản trước khi làm không bắt buộc: có ảnh thì lưu biểu mẫu
         List<String> anhTruocMoi = trichXuatDanhSachAnh(req);
-        boolean daCoAnhTruoc = daTuChupAnh(don, pc, "TruocDichVu");
-        if (anhTruocMoi.isEmpty() && !daCoAnhTruoc) {
-            throw new IllegalArgumentException("Vui lòng chụp và gửi ảnh hiện trạng tài sản ở khu vực thực hiện trước khi bắt đầu dịch vụ!");
-        }
         if (!anhTruocMoi.isEmpty() && pc.getCongTacVien() != null) {
             luuBieuMauTaiSan(don, pc.getCongTacVien(), "TruocDichVu", req);
         }
@@ -1309,16 +1342,6 @@ public class CollaboratorApiService {
 
         DonDatDichVu don = pc.getDonDat();
 
-        // RÀNG BUỘC CHỤP ẢNH TÀI SẢN SAU KHI THỰC HIỆN DỊCH VỤ (Không chụp lại thì không cho chuyển sang Hoàn thành):
-        List<String> anhSauMoi = trichXuatDanhSachAnh(req);
-        boolean daCoAnhSau = daTuChupAnh(don, pc, "SauDichVu");
-        if (anhSauMoi.isEmpty() && !daCoAnhSau) {
-            throw new IllegalArgumentException("Bắt buộc chụp và gửi ảnh tài sản ở khu vực thực hiện sau khi hoàn thành dịch vụ thì đơn mới được chuyển sang trạng thái Hoàn thành!");
-        }
-        if (!anhSauMoi.isEmpty() && pc.getCongTacVien() != null) {
-            luuBieuMauTaiSan(don, pc.getCongTacVien(), "SauDichVu", req);
-        }
-
         List<LichLamViec> sches = new ArrayList<>(lichLamViecRepository.findByPhanCong_Id(pc.getId()));
         if (sches.isEmpty()) {
             // Đơn nhiều dịch vụ: lịch gắn với phân công đầu tiên của CTV trong đơn – chỉ lấy lịch của chính CTV này
@@ -1349,6 +1372,17 @@ public class CollaboratorApiService {
                 }
             }
         }
+        // Bấm hoàn thành lần nữa (mạng chập chờn, gọi lại API) khi không còn buổi nào để làm thì không ghi thêm gì
+        if (activeSession == null && "HoanThanh".equalsIgnoreCase(pc.getTrangThai())) {
+            throw new IllegalArgumentException("Công việc này đã hoàn thành trước đó.");
+        }
+
+        // Ảnh tài sản sau khi làm không bắt buộc: có ảnh thì lưu biểu mẫu
+        List<String> anhSauMoi = trichXuatDanhSachAnh(req);
+        if (!anhSauMoi.isEmpty() && pc.getCongTacVien() != null) {
+            luuBieuMauTaiSan(don, pc.getCongTacVien(), "SauDichVu", req);
+        }
+
         if (activeSession != null) {
             activeSession.setTrangThai("HoanThanh");
             activeSession.setKetQuaThucHien(cleanKetQua);
@@ -1970,6 +2004,8 @@ public class CollaboratorApiService {
             LocalDateTime hanNhan = hanNhanDonService.hanNhan(don);
             // Chưa phát hành (chờ khách chuyển khoản) hoặc đã hết thời gian nhận thì không hiện cho CTV
             if (hanNhan == null || bayGio.isAfter(hanNhan)) continue;
+            // CTV đã bấm bỏ qua đơn này thì không hiện lại
+            if (boQuaDonStore != null && boQuaDonStore.daBoQua(ctvId, don.getId())) continue;
             // Lọc theo khu vực: nếu xác định được khu vực của CTV thì chỉ lấy đơn cùng khu vực
             if (quanHuyenCtv != null || !khuVucIds.isEmpty()) {
                 if (!isDonInKhuVuc(don, quanHuyenCtv, khuVucIds, allKhuVuc)) {
@@ -2262,9 +2298,17 @@ public class CollaboratorApiService {
 
     /**
      * CTV bỏ qua / từ chối đơn từ pool trên ứng dụng.
-     * Không chèn bản ghi vào DB. Mobile app tự ẩn đơn trên giao diện local.
+     * Không chèn bản ghi vào DB: lưu trên Redis để đơn không hiện lại với CTV này (kể cả khi mở lại app).
      */
     public Map<String, Object> rejectOrderFromPool(Integer congTacVienId, Integer donDatId, String lyDo) {
+        // App có thể gửi id tài khoản thay cho id CTV – quy về id CTV như danh sách việc mới
+        Integer ctvId = congTacVienRepository.findById(congTacVienId).map(CongTacVien::getId)
+                .or(() -> congTacVienRepository.findByTaiKhoan_Id(congTacVienId).map(CongTacVien::getId))
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cộng tác viên ID: " + congTacVienId));
+        if (!donDatDichVuRepository.existsById(donDatId)) {
+            throw new IllegalArgumentException("Không tìm thấy đơn ID: " + donDatId);
+        }
+        if (boQuaDonStore != null) boQuaDonStore.boQua(ctvId, donDatId, lyDo);
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("donDatId", donDatId);
         res.put("message", "Đã bỏ qua đơn hàng");

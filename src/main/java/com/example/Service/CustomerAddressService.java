@@ -142,8 +142,8 @@ public class CustomerAddressService {
     }
 
     private void ganGiaTri(DiaChiKhachHang dc, AddressRequest req) {
-        if (req.getMaQuan() != null && req.getMaPhuong() != null) {
-            // Địa chỉ theo kiểu truyền thống V1 (3 cấp: Tỉnh -> Quận -> Phường)
+        if (req.getMaQuan() != null) {
+            // Địa giới cũ (v1): tỉnh + quận, huyện (phường cũ tuỳ chọn); khu vực = quận đó
             String soNha = req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet();
             DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinhV1(soNha, req.getMaTinh(), req.getMaQuan(), req.getMaPhuong());
             dc.setDiaChiChiTiet(x.diaChiDayDu());

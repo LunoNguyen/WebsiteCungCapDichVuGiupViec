@@ -71,6 +71,23 @@ public class CollaboratorProfileController {
         }
     }
 
+    /**
+     * Gắn ảnh tài sản vào phân công sau khi bắt đầu / hoàn thành thành công (ảnh vừa tải lên MinIO).
+     * Body: danhSachHinhAnh (object key), khuVucVatDung, moTaHienTrang, ghiChuTaiSan
+     */
+    @PostMapping("/assignments/{id}/tai-san")
+    public ResponseEntity<?> guiAnhTaiSan(@PathVariable Integer id,
+                                          @RequestParam String loaiBieuMau,
+                                          @RequestBody AssignmentActionRequest req) {
+        try {
+            return ResponseEntity.ok(Map.of("success", true, "data", collaboratorApiService.guiAnhTaiSan(id, loaiBieuMau, req)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     /** Xử lý ca làm quá hạn sau khi CTV thống nhất với Khách hàng */
     @PutMapping("/assignments/{id}/resolve-overdue")
     public ResponseEntity<?> resolveOverdueAssignment(@PathVariable Integer id,
@@ -203,6 +220,8 @@ public class CollaboratorProfileController {
             String lyDo = req.getOrDefault("lyDo", "").toString();
             return ResponseEntity.ok(Map.of("success", true, "data",
                     collaboratorApiService.rejectOrderFromPool(congTacVienId, donId, lyDo)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {

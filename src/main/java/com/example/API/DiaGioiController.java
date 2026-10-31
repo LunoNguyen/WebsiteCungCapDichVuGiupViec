@@ -44,6 +44,23 @@ public class DiaGioiController {
         return ResponseEntity.ok(ApiResponse.ok(diaGioiService.timTinhQuan(q)));
     }
 
+    /** Ô tỉnh của form địa chỉ: tỉnh sau sáp nhập + tỉnh trước sáp nhập (cu = true). */
+    @GetMapping("/tinh-gop")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> tinhGop() {
+        return ResponseEntity.ok(ApiResponse.ok(diaGioiService.tinhGop()));
+    }
+
+    /** Ô thứ hai: phường, xã của tỉnh mới, hoặc quận, huyện của tỉnh cũ (cu=true); kèm khu vực. */
+    @GetMapping("/tinh-gop/{maTinh}/duoi")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> duoiTinh(@PathVariable int maTinh,
+                                                                          @RequestParam(defaultValue = "false") boolean cu) {
+        try {
+            return ResponseEntity.ok(ApiResponse.ok(diaGioiService.duoiTinh(maTinh, cu)));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(503).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     @GetMapping("/tinh")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> tinh() {
         return ResponseEntity.ok(ApiResponse.ok(diaGioiService.tinhThanh()));

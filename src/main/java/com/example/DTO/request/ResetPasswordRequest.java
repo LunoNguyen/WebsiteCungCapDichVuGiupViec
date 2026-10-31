@@ -14,4 +14,7 @@ public class ResetPasswordRequest {
 
     @NotBlank(message = "Vui lòng nhập mật khẩu mới")
     private String matKhauMoi;
+
+    /** KhachHang | CongTacVien: số điện thoại có cả hai tài khoản thì chọn tài khoản nào (mặc định khách hàng). */
+    private String loaiTaiKhoan;
 }

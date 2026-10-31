@@ -87,7 +87,8 @@
                   <div style="display:flex;gap:0.375rem;flex-wrap:wrap;margin-top:0.25rem">
                     <span class="badge badge-danger ung-vien-moi" th:if="${moi}"><span class="dot" style="width:6px;height:6px;background:currentColor"></span>Mới</span>
                     <span class="badge badge-warning" th:if="${lich == null}">Chờ mời phỏng vấn</span>
-                    <span class="badge badge-info" th:if="${lich != null}" th:text="'Phỏng vấn ' + ${lich.thoiGian}">Phỏng vấn 09:00 15/10/2026</span>
+                    <span class="badge badge-info" th:if="${lich != null and lich.coTheDoiLich()}" th:text="'Phỏng vấn ' + ${lich.thoiGian}">Phỏng vấn 09:00 15/10/2026</span>
+                    <span class="badge badge-secondary" th:if="${lich != null and !lich.coTheDoiLich()}" th:text="'Phỏng vấn ' + ${lich.thoiGian} + ' (Quá hạn đổi)'" title="Đã quá hạn đổi lịch (yêu cầu trước giờ hẹn ít nhất 6 tiếng)">Phỏng vấn 09:00 15/10/2026</span>
                   </div>
                 </div>
               </div>
@@ -98,8 +99,10 @@
             <div style="padding:0.875rem 1.25rem;background:var(--primary-soft);border-top:1px solid var(--border-light);display:flex;gap:0.5rem;flex-wrap:wrap">
               <button type="button" class="btn btn-outline btn-sm" style="flex:1" th:attr="data-chi-tiet=${ctv.id}"><i class="ti ti-file-description"></i> Chi tiết</button>
               <button type="button" class="btn btn-sm" style="flex:1" th:classappend="${lich == null} ? 'btn-primary' : 'btn-outline'"
+                      th:disabled="${lich != null and !lich.coTheDoiLich()}"
+                      th:title="${lich != null and !lich.coTheDoiLich()} ? 'Không thể đổi lịch khi còn dưới 6 tiếng trước giờ hẹn cũ' : (${lich == null} ? 'Gửi lịch phỏng vấn' : 'Đổi lịch phỏng vấn')"
                       th:attr="data-phong-van=${ctv.id}, data-name=${ctv.hoTen}, data-phone=${ctv.soDienThoai}, data-lich=${lich != null ? lich.thoiGian : ''}">
-                <i class="ti ti-calendar-event"></i> <span th:text="${lich == null} ? 'Mời phỏng vấn' : 'Đổi lịch'">Mời phỏng vấn</span>
+                <i class="ti ti-calendar-event"></i> <span th:text="${lich == null} ? 'Mời phỏng vấn' : (${lich.coTheDoiLich()} ? 'Đổi lịch' : 'Khóa đổi lịch')">Mời phỏng vấn</span>
               </button>
               <button type="button" class="btn btn-success btn-sm" style="flex:1" onclick="openApproveModal(this)"
                       th:disabled="${lich == null and ctv.taiKhoan != null}"
@@ -201,6 +204,7 @@
                             th:data-noicutru="${ctv.noiCuTru}"
                             th:data-matinh="${noiOTach.get(ctv.id).get('maTinh')}"
                             th:data-maphuong="${noiOTach.get(ctv.id).get('maPhuong')}"
+                            th:data-maquan="${noiOTach.get(ctv.id).get('maQuan')}"
                             th:data-sonha="${noiOTach.get(ctv.id).get('soNhaTenDuong')}"
                             th:data-khuvuc="${khuVucCtv.get(ctv.id) != null ? #strings.listJoin(khuVucCtv.get(ctv.id).![id], ',') : ''}"
                             th:data-capdo="${ctv.capDo}"
@@ -320,15 +324,11 @@
         <div class="form-label" style="margin-bottom:0.5rem">Địa chỉ nơi ở hiện tại *</div>
         <div data-dia-chi-form id="addCtvNoiO" class="dia-chi-box">
           <div class="form-group">
-            <label class="form-label" for="addCtvTinh">Tỉnh / Thành phố *</label>
+            <label class="form-label" for="addCtvTinh">Tỉnh, thành phố *</label>
             <select class="form-control" id="addCtvTinh" name="maTinh" data-native="true" required></select>
           </div>
-          <div class="form-group" data-quan-wrap>
-            <label class="form-label" for="addCtvQuan">Quận / Huyện *</label>
-            <select class="form-control" id="addCtvQuan" name="maQuan" data-native="true"></select>
-          </div>
           <div class="form-group col-full" data-phuong-wrap>
-            <label class="form-label" for="addCtvPhuong">Phường / Xã *</label>
+            <label class="form-label" for="addCtvPhuong">Phường, xã / quận, huyện *</label>
             <select class="form-control" id="addCtvPhuong" name="maPhuong" data-native="true" required></select>
           </div>
           <div class="col-full" data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-top:-4px"></div>
@@ -416,15 +416,11 @@
         <div id="editCtvNoiCuCu" style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem"></div>
         <div data-dia-chi-form id="editCtvNoiO" class="dia-chi-box">
           <div class="form-group">
-            <label class="form-label" for="editCtvTinh">Tỉnh / Thành phố *</label>
+            <label class="form-label" for="editCtvTinh">Tỉnh, thành phố *</label>
             <select class="form-control" id="editCtvTinh" name="maTinh" data-native="true" required></select>
           </div>
-          <div class="form-group" data-quan-wrap>
-            <label class="form-label" for="editCtvQuan">Quận / Huyện *</label>
-            <select class="form-control" id="editCtvQuan" name="maQuan" data-native="true"></select>
-          </div>
           <div class="form-group col-full" data-phuong-wrap>
-            <label class="form-label" for="editCtvPhuong">Phường / Xã *</label>
+            <label class="form-label" for="editCtvPhuong">Phường, xã / quận, huyện *</label>
             <select class="form-control" id="editCtvPhuong" name="maPhuong" data-native="true" required></select>
           </div>
           <div class="col-full" data-kv-note style="font-size:0.8rem;color:var(--text-muted);margin-top:-4px"></div>
@@ -539,15 +535,28 @@
         <dt>Số điện thoại</dt><dd class="tabular" id="pvPhone">—</dd>
         <dt id="pvLichCuLabel" hidden>Lịch hiện tại</dt><dd class="tabular" id="pvLichCu" hidden>—</dd>
       </dl>
+      <div id="pvLockWarning" style="display:none;padding:0.75rem 1rem;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-md);color:#b91c1c;font-size:var(--text-sm);margin-bottom:1rem">
+        <i class="ti ti-alert-triangle" style="margin-right:4px"></i>
+        <strong>Không thể đổi lịch:</strong> Đã quá thời hạn đổi lịch phỏng vấn (bắt buộc phải hẹn lại trước giờ hẹn cũ ít nhất 6 tiếng).
+      </div>
       <div class="form-group">
         <label class="form-label" for="pvThoiGian">Thời gian phỏng vấn *</label>
         <input class="form-control" type="datetime-local" id="pvThoiGian" name="thoiGian" required>
       </div>
       <div class="form-group">
-        <label class="form-label" for="pvDiaDiem">Địa chỉ phỏng vấn *</label>
-        <input class="form-control" type="text" id="pvDiaDiem" name="diaDiem" required minlength="10" maxlength="250"
-               th:value="${diaChiPhongVanMacDinh}" placeholder="VD: Văn phòng bTaskee, 12 Nguyễn Huệ, Phường Sài Gòn, TP.HCM">
-        <div class="form-hint">Địa chỉ dùng lần trước được điền sẵn cho lần sau.</div>
+        <label class="form-label" for="pvDiaDiemSelect">Địa chỉ phỏng vấn *</label>
+        <div>
+          <select id="pvDiaDiemSelect" class="form-control" style="background:var(--background);cursor:pointer" required>
+            <option value="" disabled selected style="color:#94a3b8">-- Chọn trụ sở / văn phòng mặc định --</option>
+            <option th:each="dc : ${danhSachDiaChiPhongVan}" th:value="${dc}" th:text="${dc}">284/25/20 Lý Thường Kiệt, P.14, Q.10, TP.HCM</option>
+            <option value="__custom__" style="font-weight:600;color:var(--primary)">Địa chỉ khác (tự nhập)...</option>
+          </select>
+        </div>
+        <div id="pvDiaDiemCustomWrap" style="display:none;margin-top:8px">
+          <input class="form-control" type="text" id="pvDiaDiem" name="diaDiem" minlength="10" maxlength="250"
+                 placeholder="Nhập địa chỉ phỏng vấn chi tiết (số nhà, đường, phường, quận...)">
+          <div class="form-hint">Nhập đầy đủ số nhà, tên đường, phường/xã, quận/huyện để gửi cho ứng viên.</div>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label" for="pvGhiChu">Ghi chú cho ứng viên</label>
@@ -633,7 +642,7 @@
     document.getElementById('approveUsername').textContent = approveUsername || '—';
     document.getElementById('approveMatKhauHint').textContent = approveHasAccount
       ? 'Bỏ trống để giữ mật khẩu ứng viên đã tự đặt khi đăng ký.'
-      : 'Hồ sơ chưa có tài khoản. Bỏ trống thì hệ thống tự sinh mật khẩu và gửi qua tin nhắn.';
+      : 'Hồ sơ chưa có tài khoản. Bỏ trống để cấp mật khẩu ngẫu nhiên qua tin nhắn.';
     document.getElementById('approveMatKhau').value = '';
     document.getElementById('approveMatKhau').dataset.sdtValue = btn.dataset.phone || '';
     QuyTacMatKhau.capNhat(document.getElementById('approveMatKhau'));
@@ -747,12 +756,18 @@
       footer.appendChild(close);
       if (d.trangThai === 'ChoDuyet') {
         if (d.tenDangNhap) {
-          const moi = el('button', d.phongVan ? 'btn btn-outline' : 'btn btn-primary', d.phongVan ? 'Đổi lịch phỏng vấn' : 'Mời phỏng vấn');
+          const coTheDoi = !d.phongVan || d.phongVan.coTheDoiLich !== false;
+          const moi = el('button', d.phongVan ? 'btn btn-outline' : 'btn btn-primary', d.phongVan ? (coTheDoi ? 'Đổi lịch phỏng vấn' : 'Khóa đổi lịch') : 'Mời phỏng vấn');
           moi.type = 'button';
-          moi.addEventListener('click', () => {
-            ModalManager.close('ungVienModal');
-            openInterview({ id: d.id, name: d.hoTen, phone: d.soDienThoai, lich: d.phongVan ? d.phongVan.thoiGian : '' });
-          });
+          if (d.phongVan && !coTheDoi) {
+            moi.disabled = true;
+            moi.title = 'Đã quá thời hạn đổi lịch phỏng vấn (yêu cầu trước giờ hẹn cũ ít nhất 6 tiếng)';
+          } else {
+            moi.addEventListener('click', () => {
+              ModalManager.close('ungVienModal');
+              openInterview({ id: d.id, name: d.hoTen, phone: d.soDienThoai, lich: d.phongVan ? d.phongVan.thoiGian : '' });
+            });
+          }
           footer.appendChild(moi);
         }
         const approve = el('button', 'btn btn-success', 'Phê duyệt');
@@ -819,25 +834,138 @@
       document.getElementById('pvLichCu').hidden = !pvDoiLich;
       document.getElementById('pvLichCuLabel').hidden = !pvDoiLich;
 
+      // Kiểm tra quy định đổi lịch trước ít nhất 6 tiếng so với giờ hẹn cũ
+      let quaHanDoi = false;
+      if (pvDoiLich && o.lich) {
+        try {
+          const parts = o.lich.trim().split(' ');
+          if (parts.length === 2) {
+            const [hh, mm] = parts[0].split(':');
+            const [day, mon, yr] = parts[1].split('/');
+            const henDate = new Date(parseInt(yr, 10), parseInt(mon, 10) - 1, parseInt(day, 10), parseInt(hh, 10), parseInt(mm, 10));
+            const diffHours = (henDate.getTime() - Date.now()) / (3600 * 1000);
+            if (diffHours < 6) {
+              quaHanDoi = true;
+            }
+          }
+        } catch (err) {}
+      }
+
+      const warningEl = document.getElementById('pvLockWarning');
+      const submitBtn = document.getElementById('pvSubmit');
+      const tgInput = document.getElementById('pvThoiGian');
+      const ddInput = document.getElementById('pvDiaDiem');
+      const ddSelect = document.getElementById('pvDiaDiemSelect');
+      const gcInput = document.getElementById('pvGhiChu');
+
+      if (quaHanDoi) {
+        if (warningEl) warningEl.style.display = 'block';
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '0.5'; submitBtn.style.cursor = 'not-allowed'; }
+        if (tgInput) tgInput.disabled = true;
+        if (ddInput) ddInput.disabled = true;
+        if (ddSelect) ddSelect.disabled = true;
+        if (gcInput) gcInput.disabled = true;
+      } else {
+        if (warningEl) warningEl.style.display = 'none';
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; submitBtn.style.cursor = 'pointer'; }
+        if (tgInput) tgInput.disabled = false;
+        if (ddInput) ddInput.disabled = false;
+        if (ddSelect) ddSelect.disabled = false;
+        if (gcInput) gcInput.disabled = false;
+      }
+
       // Không chọn thời điểm đã qua; gợi ý 9:00 sáng ngày làm việc kế tiếp (bỏ Chủ nhật)
       const now = new Date();
-      const tg = document.getElementById('pvThoiGian');
-      tg.min = isoLocal(now);
+      tgInput.min = isoLocal(now);
       const goiY = new Date(now);
       goiY.setDate(goiY.getDate() + 1);
       while (goiY.getDay() === 0) goiY.setDate(goiY.getDate() + 1);
       goiY.setHours(9, 0, 0, 0);
-      tg.value = isoLocal(goiY);
+      tgInput.value = isoLocal(goiY);
 
-      const dd = document.getElementById('pvDiaDiem');
-      if (!dd.value) { try { dd.value = localStorage.getItem(PV_KEY) || ''; } catch (e) {} }
-      document.getElementById('pvGhiChu').value = '';
+      if (!ddInput.value) { try { ddInput.value = localStorage.getItem(PV_KEY) || ''; } catch (e) {} }
+
+      // Đồng bộ giá trị với dropdown nếu khớp
+      const ddWrap = document.getElementById('pvDiaDiemCustomWrap');
+      if (ddSelect) {
+        let matched = false;
+        for (let i = 0; i < ddSelect.options.length; i++) {
+          if (ddSelect.options[i].value && ddSelect.options[i].value === ddInput.value.trim()) {
+            ddSelect.selectedIndex = i;
+            matched = true;
+            break;
+          }
+        }
+        if (matched) {
+          if (ddWrap) ddWrap.style.display = 'none';
+          ddInput.required = false;
+        } else if (ddInput.value.trim()) {
+          ddSelect.value = '__custom__';
+          if (ddWrap) ddWrap.style.display = 'block';
+          ddInput.required = true;
+        } else {
+          // Mặc định chọn cơ sở đầu tiên nếu chưa chọn gì
+          if (ddSelect.options.length > 1) {
+            ddSelect.selectedIndex = 1;
+            ddInput.value = ddSelect.options[1].value;
+            if (ddWrap) ddWrap.style.display = 'none';
+            ddInput.required = false;
+          } else {
+            ddSelect.selectedIndex = 0;
+            if (ddWrap) ddWrap.style.display = 'none';
+            ddInput.required = false;
+          }
+        }
+      }
+
+      gcInput.value = '';
       pvPreview();
       ModalManager.open('phongVanModal');
     }
 
+    const ddSelect = document.getElementById('pvDiaDiemSelect');
+    const ddWrap = document.getElementById('pvDiaDiemCustomWrap');
+    if (ddSelect) {
+      ddSelect.addEventListener('change', () => {
+        const val = ddSelect.value;
+        const input = document.getElementById('pvDiaDiem');
+        if (val && val !== '__custom__') {
+          input.value = val;
+          input.required = false;
+          if (ddWrap) ddWrap.style.display = 'none';
+        } else if (val === '__custom__') {
+          input.value = '';
+          input.required = true;
+          if (ddWrap) ddWrap.style.display = 'block';
+          input.focus();
+        } else {
+          input.value = '';
+          input.required = false;
+          if (ddWrap) ddWrap.style.display = 'none';
+        }
+        pvPreview();
+      });
+    }
+
     document.getElementById('pvThoiGian').addEventListener('input', pvPreview);
-    document.getElementById('pvDiaDiem').addEventListener('input', pvPreview);
+    document.getElementById('pvDiaDiem').addEventListener('input', () => {
+      // Khi gõ thủ công, nếu không khớp option nào thì chọn __custom__
+      const val = document.getElementById('pvDiaDiem').value.trim();
+      if (ddSelect) {
+        let matched = false;
+        for (let i = 0; i < ddSelect.options.length; i++) {
+          if (ddSelect.options[i].value && ddSelect.options[i].value === val) {
+            ddSelect.selectedIndex = i;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched && val) ddSelect.value = '__custom__';
+        else if (!val) ddSelect.value = '';
+      }
+      pvPreview();
+    });
+
     document.getElementById('phongVanForm').addEventListener('submit', e => {
       const tg = document.getElementById('pvThoiGian');
       if (tg.value && tg.value < isoLocal(new Date())) {
@@ -847,7 +975,27 @@
         tg.setCustomValidity('');
         return;
       }
-      try { localStorage.setItem(PV_KEY, document.getElementById('pvDiaDiem').value.trim()); } catch (err) {}
+      const sel = document.getElementById('pvDiaDiemSelect');
+      const dd = document.getElementById('pvDiaDiem');
+      if (!sel.value) {
+        e.preventDefault();
+        sel.setCustomValidity('Vui lòng chọn địa điểm phỏng vấn.');
+        sel.reportValidity();
+        sel.setCustomValidity('');
+        return;
+      }
+      if (sel.value === '__custom__') {
+        if (!dd.value || dd.value.trim().length < 10) {
+          e.preventDefault();
+          dd.setCustomValidity('Vui lòng nhập địa chỉ phỏng vấn đầy đủ (ít nhất 10 ký tự).');
+          dd.reportValidity();
+          dd.setCustomValidity('');
+          return;
+        }
+      } else {
+        dd.value = sel.value;
+      }
+      try { localStorage.setItem(PV_KEY, dd.value.trim()); } catch (err) {}
     });
 
     document.addEventListener('click', e => {
@@ -855,7 +1003,10 @@
       const ct = e.target.closest('[data-chi-tiet]');
       if (ct) { openDetail(ct.getAttribute('data-chi-tiet')); return; }
       const pv = e.target.closest('[data-phong-van]');
-      if (pv) openInterview({ id: pv.getAttribute('data-phong-van'), name: pv.dataset.name, phone: pv.dataset.phone, lich: pv.dataset.lich });
+      if (pv) {
+        if (pv.disabled) return;
+        openInterview({ id: pv.getAttribute('data-phong-van'), name: pv.dataset.name, phone: pv.dataset.phone, lich: pv.dataset.lich });
+      }
     });
   })();
 </script>
@@ -1012,8 +1163,8 @@
     document.getElementById('editCtvSdt').value = btn.dataset.sdt || '';
     // Nơi ở: điền lại tỉnh, phường, số nhà (địa chỉ cũ không tách được thì hiện để HCNS chọn lại)
     document.getElementById('editCtvSoNha').value = btn.dataset.sonha || '';
-    document.getElementById('editCtvNoiCuCu').textContent = btn.dataset.maphuong ? '' : 'Địa chỉ đang lưu: ' + (btn.dataset.noicutru || '—') + '. Hãy chọn lại tỉnh, phường.';
-    DiaChi.datGiaTri(document.getElementById('editCtvNoiO'), btn.dataset.matinh, btn.dataset.maphuong);
+    document.getElementById('editCtvNoiCuCu').textContent = btn.dataset.maphuong || btn.dataset.maquan ? '' : 'Địa chỉ đang lưu: ' + (btn.dataset.noicutru || '—') + '. Hãy chọn lại tỉnh, phường xã / quận huyện.';
+    DiaChi.datGiaTri(document.getElementById('editCtvNoiO'), btn.dataset.matinh, btn.dataset.maphuong, null, btn.dataset.maquan);
     if (btn.dataset.capdo) {
       document.getElementById('editCtvCapDo').value = btn.dataset.capdo;
     }

@@ -40,10 +40,15 @@ public class AuthService {
         }
 
         String loginIdentifier = tenDangNhap.trim();
-        TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(loginIdentifier)
-                .or(() -> taiKhoanRepository.findBySoDienThoai(loginIdentifier))
-                .orElse(null);
-        if (taiKhoan == null || !passwordMatches(matKhau, taiKhoan.getMatKhau())) {
+        // Một số điện thoại có thể có tài khoản khách hàng và tài khoản CTV riêng (mật khẩu riêng):
+        // lấy tài khoản khớp mật khẩu, ưu tiên nhân viên rồi khách hàng (website dành cho nhân viên và khách).
+        java.util.List<TaiKhoan> khop = taiKhoanRepository.timTheoDinhDanh(loginIdentifier).stream()
+                .filter(t -> passwordMatches(matKhau, t.getMatKhau()))
+                .sorted(java.util.Comparator.comparingInt((TaiKhoan t) -> "NhanVien".equalsIgnoreCase(t.getLoaiTaiKhoan()) ? 0
+                        : "KhachHang".equalsIgnoreCase(t.getLoaiTaiKhoan()) ? 1 : 2))
+                .toList();
+        TaiKhoan taiKhoan = khop.isEmpty() ? null : khop.get(0);
+        if (taiKhoan == null) {
             return AuthenticationResult.failure("Tên đăng nhập hoặc mật khẩu không chính xác.");
         }
         if (!"HoatDong".equalsIgnoreCase(taiKhoan.getTrangThai())) {

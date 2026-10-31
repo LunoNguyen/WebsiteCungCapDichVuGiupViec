@@ -25,7 +25,7 @@ class WebsiteCungCapDichVuGiupViecApplicationTests {
 
 	@Test
 	void testRoleAuthenticationAndDatabaseData() {
-		com.example.Model.TaiKhoan tk = taiKhoanRepository.findByTenDangNhap("giamdoc").orElse(null);
+		com.example.Model.TaiKhoan tk = taiKhoanRepository.findAllByTenDangNhap("giamdoc").stream().findFirst().orElse(null);
 		if (tk != null) {
 			System.out.println("=== GIAMDOC FOUND: TenDangNhap=" + tk.getTenDangNhap()
 					+ ", MatKhau=" + tk.getMatKhau()

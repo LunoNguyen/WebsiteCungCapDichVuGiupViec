@@ -258,7 +258,10 @@ public String baoCao(
         String tenNguoiGui = "Ban Giám đốc";
         
         if (username != null && !username.isBlank()) {
-            var taiKhoanOpt = taiKhoanRepository.findByTenDangNhap(username);
+            // Tên đăng nhập trùng được giữa khách hàng và CTV: ưu tiên tài khoản nhân viên
+            var dsTk = taiKhoanRepository.findAllByTenDangNhap(username);
+            var taiKhoanOpt = dsTk.stream().filter(t -> "NhanVien".equalsIgnoreCase(t.getLoaiTaiKhoan())).findFirst()
+                    .or(() -> dsTk.stream().findFirst());
             if (taiKhoanOpt.isPresent()) {
                 var nhanVienOpt = nhanVienRepository.findByTaiKhoan(taiKhoanOpt.get());
                 if (nhanVienOpt.isPresent()) {
@@ -453,7 +456,7 @@ public String baoCao(
         }
 
         // 4. Kiểm tra trùng Tên đăng nhập
-        if (taiKhoanRepository.findByTenDangNhap(tenDangNhap).isPresent()) {
+        if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllByTenDangNhap(tenDangNhap), loaiTaiKhoan, null)) {
             redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập '" + tenDangNhap + "' đã tồn tại trên hệ thống!");
             return "redirect:/giam-doc/tai-khoan";
         }
@@ -465,7 +468,7 @@ public String baoCao(
         }
 
         // 6. Kiểm tra trùng Số điện thoại
-        if (taiKhoanRepository.findBySoDienThoai(soDienThoai).isPresent()) {
+        if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllBySoDienThoai(soDienThoai), loaiTaiKhoan, null)) {
             redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại '" + soDienThoai + "' đã được sử dụng bởi tài khoản khác!");
             return "redirect:/giam-doc/tai-khoan";
         }
@@ -518,8 +521,7 @@ public String baoCao(
         }
 
         // 3. Kiểm tra trùng Tên đăng nhập với ID khác
-        var existingTk = taiKhoanRepository.findByTenDangNhap(tenDangNhap);
-        if (existingTk.isPresent() && !existingTk.get().getId().equals(id)) {
+        if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllByTenDangNhap(tenDangNhap), loaiTaiKhoan, id)) {
             redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập '" + tenDangNhap + "' đã thuộc về tài khoản khác!");
             return "redirect:/giam-doc/tai-khoan";
         }
@@ -532,8 +534,7 @@ public String baoCao(
         }
 
         // 5. Kiểm tra trùng Số điện thoại với ID khác
-        var existingPhone = taiKhoanRepository.findBySoDienThoai(soDienThoai);
-        if (existingPhone.isPresent() && !existingPhone.get().getId().equals(id)) {
+        if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllBySoDienThoai(soDienThoai), loaiTaiKhoan, id)) {
             redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại '" + soDienThoai + "' đã thuộc về tài khoản khác!");
             return "redirect:/giam-doc/tai-khoan";
         }

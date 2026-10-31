@@ -199,7 +199,7 @@
       <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem">
 
         <!-- Phần 1: Thông tin cá nhân -->
-        <div class="form-section-label"><i class="ti ti-id"></i> 1. Thông tin khách hàng</div>
+        <div class="form-section-label"><i class="ti ti-id"></i> Thông tin khách hàng</div>
         <div class="form-group">
           <label class="form-label">Họ và tên *</label>
           <input type="text" name="hoTen" id="modalHoTen" class="form-control" placeholder="Ví dụ: Nguyễn Thị Mai" required>
@@ -209,7 +209,6 @@
           <div class="form-group">
             <label class="form-label">Số điện thoại *</label>
             <input type="tel" name="soDienThoai" id="modalSoDienThoai" class="form-control" placeholder="Số điện thoại" required pattern="[0-9]{9,11}">
-            <small style="color:var(--text-muted);font-size:0.75rem">Nhập 9-11 chữ số, không khoảng trắng</small>
           </div>
           <div class="form-group">
             <label class="form-label">Email</label>
@@ -234,21 +233,17 @@
 
         <!-- Phần 2: Địa chỉ & Khu vực -->
         <div class="form-section-label" style="margin-top:0.5rem">
-          <i class="ti ti-map-pin"></i> 2. Địa chỉ &amp; Khu vực
+          <i class="ti ti-map-pin"></i> Địa chỉ &amp; Khu vực
         </div>
 
-        <!-- Địa chỉ: tỉnh, phường (provinces.open-api.vn v2); khu vực (quận, huyện) tự suy ra từ phường – /js/dia-chi.js -->
+        <!-- Địa chỉ: tỉnh (mới + cũ), phường xã / quận huyện; khu vực tự suy ra từ ô thứ hai – /js/dia-chi.js -->
         <div data-dia-chi-form id="modalDiaChi" class="dia-chi-box">
           <div class="form-group">
-            <label class="form-label" for="modalTinh">Tỉnh / Thành phố *</label>
+            <label class="form-label" for="modalTinh">Tỉnh, thành phố *</label>
             <select id="modalTinh" name="maTinh" class="form-control" data-native="true" onchange="updateAddressPreview()" required></select>
           </div>
-          <div class="form-group" data-quan-wrap>
-            <label class="form-label" for="modalQuan">Quận / Huyện *</label>
-            <select id="modalQuan" name="maQuan" class="form-control" data-native="true" onchange="updateAddressPreview()"></select>
-          </div>
           <div class="form-group col-full" data-phuong-wrap>
-            <label class="form-label" for="modalPhuong">Phường / Xã *</label>
+            <label class="form-label" for="modalPhuong">Phường, xã / quận, huyện *</label>
             <select id="modalPhuong" name="maPhuong" class="form-control" data-native="true" onchange="updateAddressPreview()" required></select>
           </div>
           <div class="form-group col-full" data-kv-wrap hidden>
@@ -281,7 +276,7 @@
         </div>
 
         <!-- Phần 3: Ghi chú chăm sóc -->
-        <div class="form-section-label" style="margin-top:0.5rem"><i class="ti ti-notes"></i> 3. Ghi chú &amp; Yêu cầu phục vụ</div>
+        <div class="form-section-label" style="margin-top:0.5rem"><i class="ti ti-notes"></i> Ghi chú &amp; Yêu cầu phục vụ</div>
         <div class="form-group">
           <textarea name="ghiChu" id="modalGhiChu" class="form-control" rows="2" placeholder="Ghi chú về thói quen, nuôi thú cưng, thời gian thuận tiện dọn dẹp, yêu cầu nhân viên..."></textarea>
         </div>
@@ -310,8 +305,8 @@
   function updateAddressPreview() {
     const soNha = document.getElementById('modalSoNha').value.trim();
     const tinhName = chuDaChon('modalTinh');
-    const phuongName = chuDaChon('modalPhuong').replace(/^(.*) \((Phường|Xã|Đặc khu|Thị trấn)\)$/, '$2 $1');
-    const parts = [soNha, phuongName, tinhName].filter(Boolean);
+    const phuongName = chuDaChon('modalPhuong').replace(/^(.*) \((Phường|Xã|Đặc khu|Thị trấn)\)$/, '$2 $1').replace(/ \(cũ\)$/, '');
+    const parts = [soNha, phuongName, tinhName].map(s => s.replace(/ \(cũ\)$/, '')).filter(Boolean);
     const box = document.getElementById('addressPreviewBox');
     const text = document.getElementById('addressPreviewText');
     const area = document.getElementById('areaPreviewText');
@@ -355,7 +350,7 @@
     }
 
     if (!tinhThanh || !phuongXa) {
-      Toast.show('Vui lòng chọn Tỉnh/Thành phố và Phường/Xã!', 'error');
+      Toast.show('Vui lòng chọn tỉnh, thành phố và phường, xã / quận, huyện!', 'error');
       return;
     }
 

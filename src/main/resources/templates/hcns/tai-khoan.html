@@ -103,10 +103,10 @@
         <div class="card-header" style="padding:1.25rem 1.5rem">
           <div>
             <div class="card-title">Danh sách tài khoản</div>
-            <div class="card-subtitle">Hiển thị thông tin phân quyền, thông tin người sở hữu và bảo mật mật khẩu BCrypt</div>
+            <div class="card-subtitle">Hiển thị thông tin phân quyền và quản lý tài khoản người dùng</div>
           </div>
           <div style="font-size:0.85rem;color:var(--text-muted)">
-            <i class="ti ti-shield-check" style="color:var(--primary)"></i> Mật khẩu được mã hóa chuẩn BCrypt một chiều
+            <i class="ti ti-shield-check" style="color:var(--primary)"></i> Mật khẩu được mã hóa bảo mật
           </div>
         </div>
         <div class="table-container">
@@ -223,7 +223,7 @@
       <div style="padding:1.25rem 1.5rem">
         <!-- Bước 1: Chọn đối tượng -->
         <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label" style="font-weight:700">1. Chọn đối tượng cấp tài khoản</label>
+          <label class="form-label" style="font-weight:700">Đối tượng cấp tài khoản</label>
           <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:0.5rem">
             <button type="button" class="btn btn-outline acc-type-btn active" id="btnTypeNV" onclick="switchAccType('NhanVien')">
               <i class="ti ti-id-badge-2"></i> Nhân viên
@@ -241,8 +241,7 @@
         <!-- Bước 2: Tìm & Tích chọn người có sẵn -->
         <div class="form-group" style="margin-bottom:1.25rem">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
-            <label class="form-label" style="font-weight:700;margin:0">2. Tìm & Tích chọn người có sẵn trong hệ thống</label>
-            <span style="font-size:0.75rem;color:var(--primary);font-weight:500">Tích chọn để tự điền thông tin</span>
+            <label class="form-label" style="font-weight:700;margin:0">Chọn nhân sự / khách hàng</label>
           </div>
           <div style="position:relative;margin-bottom:0.5rem">
             <i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
@@ -325,28 +324,28 @@
         <!-- Thông tin tự động điền từ người được chọn -->
         <div style="background:var(--primary-soft);border:1px dashed var(--primary);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem">
           <div style="font-size:0.8rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem">
-            <i class="ti ti-id"></i> Thông tin tự động lấy từ hồ sơ (được tích chọn):
+            <i class="ti ti-id"></i> Thông tin cá nhân:
           </div>
           <div class="form-row">
             <div class="form-group" style="margin-bottom:0.5rem">
               <label class="form-label" style="font-size:0.8rem">Họ và tên</label>
-              <input type="text" class="form-control" id="selectedPersonName" placeholder="Tự điền khi tích chọn ở trên..." readonly style="background:#fff;font-weight:600">
+              <input type="text" class="form-control" id="selectedPersonName" placeholder="Họ và tên" readonly style="background:#fff;font-weight:600">
             </div>
             <div class="form-group" style="margin-bottom:0.5rem">
               <label class="form-label" style="font-size:0.8rem">Số điện thoại *</label>
-              <input type="tel" name="soDienThoai" id="createPhone" class="form-control" placeholder="Tự điền SĐT..." required style="background:#fff">
+              <input type="tel" name="soDienThoai" id="createPhone" class="form-control" placeholder="Số điện thoại" required style="background:#fff">
             </div>
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label" style="font-size:0.8rem">Email *</label>
-            <input type="email" name="email" id="createEmail" class="form-control" placeholder="Tự điền hoặc nhập email..." required style="background:#fff">
+            <input type="email" name="email" id="createEmail" class="form-control" placeholder="Địa chỉ email" required style="background:#fff">
           </div>
         </div>
 
         <!-- Bước 3: Điền tên đăng nhập & mật khẩu (Được mã hóa BCrypt) -->
         <div style="border-top:1px solid var(--border-color);padding-top:1rem">
           <div style="font-size:0.85rem;font-weight:700;color:var(--text-main);margin-bottom:0.75rem">
-            3. Thiết lập thông tin Đăng nhập & Mật khẩu
+            Thông tin đăng nhập &amp; Mật khẩu
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -371,7 +370,7 @@
           <!-- Ghi chú bảo mật BCrypt -->
           <div style="background:var(--primary-soft);border-left:3px solid #10b981;padding:0.5rem 0.75rem;border-radius:4px;font-size:0.78rem;color:#065f46;display:flex;align-items:center;gap:0.4rem;margin-top:0.25rem">
             <i class="ti ti-shield-lock" style="font-size:1.1rem;color:#10b981"></i>
-            <span><strong>Bảo mật:</strong> Mật khẩu sẽ được mã hóa bằng thuật toán <strong>BCrypt</strong> trước khi lưu vào CSDL, không lưu text trần.</span>
+            <span>Mật khẩu được lưu trữ an toàn và bảo mật theo chính sách hệ thống.</span>
           </div>
         </div>
       </div>
@@ -450,7 +449,7 @@
             </button>
           </div>
           <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem">
-            <i class="ti ti-lock"></i> Mật khẩu mới sẽ được mã hóa bằng <strong>BCrypt</strong> trước khi lưu trữ vào CSDL.
+            <i class="ti ti-lock"></i> Mật khẩu mới sẽ được cập nhật bảo mật ngay sau khi lưu.
           </div>
         </div>
       </div>

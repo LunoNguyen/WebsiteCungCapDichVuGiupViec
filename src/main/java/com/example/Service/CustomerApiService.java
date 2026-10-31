@@ -79,6 +79,10 @@ public class CustomerApiService {
     @Autowired
     private ViTriCtvStore viTriCtvStore;
 
+    /** Mã một lần để gắn giấy tờ (tải lên MinIO sau khi gửi hồ sơ thành công) vào hồ sơ CTV vừa tạo. */
+    @Autowired
+    private MaGuiGiayToStore maGuiGiayToStore;
+
     @Autowired
     private CollaboratorApiService collaboratorApiService;
 
@@ -202,12 +206,34 @@ public class CustomerApiService {
         return otpCode;
     }
 
-    private TaiKhoan timTaiKhoan(String identifier) {
+    /**
+     * Tài khoản theo số điện thoại / email / tên đăng nhập. Một số có thể có tài khoản khách hàng và tài khoản
+     * cộng tác viên riêng: [loai] chọn tài khoản (tài khoản cũ dùng chung hai vai trò thì theo hồ sơ);
+     * không truyền [loai] thì một tài khoản lấy luôn, nhiều tài khoản ưu tiên khách hàng.
+     */
+    private TaiKhoan timTaiKhoan(String identifier, String loai) {
         String id = identifier.trim();
-        return taiKhoanRepository.findBySoDienThoai(id)
-                .or(() -> taiKhoanRepository.findByEmail(id))
-                .or(() -> taiKhoanRepository.findByTenDangNhap(id))
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản với thông tin đã cung cấp."));
+        java.util.Set<TaiKhoan> ds = new java.util.LinkedHashSet<>(taiKhoanRepository.timTheoDinhDanh(id));
+        taiKhoanRepository.findByEmail(id).ifPresent(ds::add);
+        if (ds.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy tài khoản với thông tin đã cung cấp.");
+        }
+        boolean coLoai = loai != null && !loai.isBlank();
+        if (!coLoai && ds.size() == 1) return ds.iterator().next();
+        String l = coLoai ? loai.trim() : "KhachHang";
+        return ds.stream().filter(t -> l.equalsIgnoreCase(t.getLoaiTaiKhoan())).findFirst()
+                .or(() -> ds.stream().filter(t -> coHoSo(t, l)).findFirst())
+                .or(() -> coLoai ? java.util.Optional.<TaiKhoan>empty() : ds.stream().findFirst())
+                .orElseThrow(() -> new IllegalArgumentException("CongTacVien".equalsIgnoreCase(l)
+                        ? "Không tìm thấy tài khoản cộng tác viên của số điện thoại này."
+                        : "Không tìm thấy tài khoản khách hàng của số điện thoại này."));
+    }
+
+    /** Tài khoản có hồ sơ của vai trò [loai] (tài khoản cũ có thể giữ cả hai hồ sơ). */
+    private boolean coHoSo(TaiKhoan tk, String loai) {
+        return "CongTacVien".equalsIgnoreCase(loai)
+                ? congTacVienRepository.findByTaiKhoan_Id(tk.getId()).isPresent()
+                : khachHangRepository.findByTaiKhoan_Id(tk.getId()).isPresent();
     }
 
     private static String mucDichOtp(String mucDich) {
@@ -233,41 +259,27 @@ public class CustomerApiService {
     }
 
     /**
-     * Một số điện thoại vừa làm khách hàng vừa làm cộng tác viên: bảng TaiKhoan có SĐT/tên đăng nhập
-     * duy nhất, nên vai trò mới dùng chung tài khoản đã có (cùng SĐT, cùng mật khẩu), chỉ tạo thêm hồ sơ.
-     * Người đăng ký phải nhập đúng mật khẩu của tài khoản đó để chứng minh là chủ số điện thoại.
-     *
-     * @return tài khoản để dùng chung, hoặc null nếu số điện thoại chưa có tài khoản
+     * Một số điện thoại có thể có hai tài khoản riêng: khách hàng và cộng tác viên (mật khẩu riêng; DB chỉ
+     * UNIQUE số điện thoại / tên đăng nhập theo từng loại tài khoản). Đăng ký vai trò mới luôn tạo tài khoản mới,
+     * chỉ báo lỗi khi số này đã đăng ký vai trò đó (kể cả tài khoản cũ dùng chung hai vai trò) hoặc là nhân viên.
      */
-    private TaiKhoan timTaiKhoanDeDungChung(String soDienThoai, String matKhau, String vaiTroMoi) {
-        TaiKhoan tk = taiKhoanRepository.findBySoDienThoai(soDienThoai)
-                .or(() -> taiKhoanRepository.findByTenDangNhap(soDienThoai))
-                .orElse(null);
-        if (tk == null) {
-            return null;
+    private void kiemTraTrungDangKy(String soDienThoai, String tenDangNhap, String loaiMoi) {
+        boolean laKhachHang = "KhachHang".equals(loaiMoi);
+        java.util.Set<TaiKhoan> tks = new java.util.LinkedHashSet<>(taiKhoanRepository.timTheoDinhDanh(soDienThoai));
+        tks.addAll(taiKhoanRepository.timTheoDinhDanh(tenDangNhap));
+        for (TaiKhoan tk : tks) {
+            if ("NhanVien".equalsIgnoreCase(tk.getLoaiTaiKhoan())) {
+                throw new IllegalArgumentException("Số điện thoại này đã được dùng cho tài khoản nhân viên.");
+            }
+            boolean coVaiTro = laKhachHang
+                    ? khachHangRepository.findByTaiKhoan_Id(tk.getId()).isPresent()
+                    : congTacVienRepository.findByTaiKhoan_Id(tk.getId()).isPresent();
+            if (coVaiTro || loaiMoi.equalsIgnoreCase(tk.getLoaiTaiKhoan())) {
+                throw new IllegalArgumentException(laKhachHang
+                        ? "Số điện thoại này đã đăng ký tài khoản khách hàng."
+                        : "Số điện thoại này đã đăng ký làm cộng tác viên.");
+            }
         }
-        if ("NhanVien".equalsIgnoreCase(tk.getLoaiTaiKhoan())) {
-            throw new IllegalArgumentException("Số điện thoại này đã được dùng cho tài khoản nhân viên.");
-        }
-        if ("BiKhoa".equalsIgnoreCase(tk.getTrangThai())) {
-            throw new IllegalArgumentException("Tài khoản của số điện thoại này đang bị khóa. Vui lòng liên hệ hỗ trợ.");
-        }
-        boolean coKhachHang = khachHangRepository.findByTaiKhoan_Id(tk.getId()).isPresent();
-        boolean coCtv = congTacVienRepository.findByTaiKhoan_Id(tk.getId()).isPresent();
-        boolean laKhachHang = "KhachHang".equals(vaiTroMoi);
-        if (laKhachHang && coKhachHang) {
-            throw new IllegalArgumentException("Số điện thoại này đã đăng ký tài khoản khách hàng.");
-        }
-        if (!laKhachHang && coCtv) {
-            throw new IllegalArgumentException("Số điện thoại này đã đăng ký làm cộng tác viên.");
-        }
-        if (!authService.kiemTraMatKhau(tk, matKhau)) {
-            String vaiTroCu = coCtv || "CongTacVien".equalsIgnoreCase(tk.getLoaiTaiKhoan()) ? "cộng tác viên" : "khách hàng";
-            throw new IllegalArgumentException("Số điện thoại này đã có tài khoản " + vaiTroCu
-                    + ". Vui lòng nhập đúng mật khẩu của tài khoản đó để dùng chung cho vai trò "
-                    + (laKhachHang ? "khách hàng" : "cộng tác viên") + " (quên mật khẩu thì dùng chức năng Quên mật khẩu).");
-        }
-        return tk;
     }
 
     public Map<String, Object> registerCustomer(CustomerRegisterRequest req) {
@@ -275,15 +287,10 @@ public class CustomerApiService {
         String email = (req.getEmail() != null && !req.getEmail().isBlank()) ? req.getEmail().trim() : (soDienThoai + "@customer.local");
         String tenDangNhap = (req.getTenDangNhap() != null && !req.getTenDangNhap().isBlank()) ? req.getTenDangNhap().trim() : soDienThoai;
 
-        // Số điện thoại đã là cộng tác viên: dùng chung tài khoản đó
-        TaiKhoan taiKhoanCoSan = timTaiKhoanDeDungChung(soDienThoai, req.getMatKhau(), "KhachHang");
-        if (taiKhoanCoSan == null) {
-            if (taiKhoanRepository.findByEmail(email).isPresent()) {
-                throw new IllegalArgumentException("Email này đã được đăng ký trên hệ thống.");
-            }
-            if (taiKhoanRepository.findByTenDangNhap(tenDangNhap).isPresent()) {
-                throw new IllegalArgumentException("Tên đăng nhập đã tồn tại, vui lòng chọn tên khác.");
-            }
+        // Số điện thoại đã là cộng tác viên vẫn tạo tài khoản khách hàng riêng (mật khẩu riêng)
+        kiemTraTrungDangKy(soDienThoai, tenDangNhap, "KhachHang");
+        if (taiKhoanRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email này đã được đăng ký trên hệ thống.");
         }
 
         if (req.getNgaySinh() != null) {
@@ -299,30 +306,21 @@ public class CustomerApiService {
         String maTaiKhoan = "TK-KH-" + suffix;
         String maKhachHang = "KH-" + suffix;
 
-        // 1. Tạo tài khoản (ở trạng thái ChoDuyet cho đến khi xác thực OTP), hoặc dùng chung tài khoản CTV đã có
-        TaiKhoan taiKhoan;
-        if (taiKhoanCoSan != null) {
-            taiKhoan = taiKhoanCoSan;
-            if (req.getEmail() == null || req.getEmail().isBlank()) {
-                email = taiKhoan.getEmail();
-            }
-        } else {
-            // Chỉ tài khoản mới phải theo quy tắc; dùng chung thì mật khẩu cũ đã được kiểm tra khớp
-            QuyTacMatKhau.batBuoc(req.getMatKhau().trim(), soDienThoai);
-            //    Mật khẩu được mã hoá BCrypt ngay tại đây
-            String encodedPassword = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
-                    .encode(req.getMatKhau().trim());
-            taiKhoan = TaiKhoan.builder()
-                    .maTaiKhoan(maTaiKhoan)
-                    .tenDangNhap(tenDangNhap)
-                    .matKhau(encodedPassword)
-                    .email(email)
-                    .soDienThoai(soDienThoai)
-                    .loaiTaiKhoan("KhachHang")
-                    .trangThai("ChoDuyet")
-                    .build();
-            taiKhoan = taiKhoanRepository.save(taiKhoan);
-        }
+        // 1. Tạo tài khoản (ở trạng thái ChoDuyet cho đến khi xác thực OTP)
+        QuyTacMatKhau.batBuoc(req.getMatKhau().trim(), soDienThoai);
+        //    Mật khẩu được mã hoá BCrypt ngay tại đây
+        String encodedPassword = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
+                .encode(req.getMatKhau().trim());
+        TaiKhoan taiKhoan = TaiKhoan.builder()
+                .maTaiKhoan(maTaiKhoan)
+                .tenDangNhap(tenDangNhap)
+                .matKhau(encodedPassword)
+                .email(email)
+                .soDienThoai(soDienThoai)
+                .loaiTaiKhoan("KhachHang")
+                .trangThai("ChoDuyet")
+                .build();
+        taiKhoan = taiKhoanRepository.save(taiKhoan);
 
         // 2. Tạo thông tin Khách hàng
         KhachHang khachHang = KhachHang.builder()
@@ -339,7 +337,7 @@ public class CustomerApiService {
         khachHang = khachHangRepository.save(khachHang);
 
         // 3. Địa chỉ nơi ở (nếu có) thành địa chỉ mặc định trong sổ địa chỉ
-        if (req.getMaPhuong() != null) {
+        if (req.getMaPhuong() != null || req.getMaQuan() != null) {
             com.example.DTO.request.AddressRequest dc = new com.example.DTO.request.AddressRequest();
             dc.setSoNhaTenDuong(req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet());
             dc.setMaTinh(req.getMaTinh());
@@ -365,7 +363,6 @@ public class CustomerApiService {
         }
 
         // 4. Số điện thoại chưa xác thực: gửi OTP (6 chữ số, hết hạn sau 5 phút) qua SMS.
-        //    Tài khoản dùng chung đã hoạt động (đã nhập đúng mật khẩu) thì không cần OTP.
         boolean canXacThucOtp = !"HoatDong".equalsIgnoreCase(taiKhoan.getTrangThai());
         String otpCode = canXacThucOtp ? taoVaGuiOtp(taiKhoan, "DangKy") : null;
 
@@ -374,21 +371,20 @@ public class CustomerApiService {
         result.put("khachHangId", khachHang.getId());
         result.put("soDienThoai", soDienThoai);
         result.put("email", email);
-        result.put("dungChungTaiKhoan", taiKhoanCoSan != null);
+        result.put("dungChungTaiKhoan", false);
         result.put("canXacThucOtp", canXacThucOtp);
         if (canXacThucOtp && smsSender.laMoPhong()) {
             result.put("otpCode", otpCode); // Chỉ trả về khi SMS mô phỏng (app.sms.provider=mock)
         }
         result.put("thoiGianHetHanPhut", 5);
-        result.put("message", canXacThucOtp
-                ? "Đăng ký thành công! Mã OTP đã được gửi tới số " + soDienThoai + ". Vui lòng nhập mã OTP để kích hoạt tài khoản."
-                : "Đã thêm vai trò khách hàng cho tài khoản " + soDienThoai + ". Bạn đăng nhập bằng mật khẩu hiện tại.");
+        result.put("message", "Đăng ký thành công! Mã OTP đã được gửi tới số " + soDienThoai
+                + ". Vui lòng nhập mã OTP để kích hoạt tài khoản.");
         return result;
     }
 
     public Map<String, Object> verifyOtp(OtpVerifyRequest req) {
         String mucDich = mucDichOtp(req.getMucDich());
-        TaiKhoan taiKhoan = timTaiKhoan(req.getIdentifier());
+        TaiKhoan taiKhoan = timTaiKhoan(req.getIdentifier(), req.getLoaiTaiKhoan());
 
         kiemTraVaDungOtp(taiKhoan, mucDich, req.getMaCode());
 
@@ -409,7 +405,7 @@ public class CustomerApiService {
 
     public Map<String, Object> sendOtp(OtpSendRequest req) {
         String mucDich = mucDichOtp(req.getMucDich());
-        TaiKhoan taiKhoan = timTaiKhoan(req.getIdentifier());
+        TaiKhoan taiKhoan = timTaiKhoan(req.getIdentifier(), req.getLoaiTaiKhoan());
 
         if ("DangKy".equals(mucDich) && !"ChoDuyet".equals(taiKhoan.getTrangThai())) {
             throw new IllegalArgumentException("Tài khoản đã được kích hoạt, không cần xác thực lại.");
@@ -442,7 +438,7 @@ public class CustomerApiService {
 
     /** Quên mật khẩu: xác thực OTP (mục đích DatLaiMatKhau) đã gửi qua SMS rồi đặt mật khẩu mới. */
     public Map<String, Object> resetPassword(ResetPasswordRequest req) {
-        TaiKhoan taiKhoan = timTaiKhoan(req.getIdentifier());
+        TaiKhoan taiKhoan = timTaiKhoan(req.getIdentifier(), req.getLoaiTaiKhoan());
         QuyTacMatKhau.batBuoc(req.getMatKhauMoi().trim(), taiKhoan.getSoDienThoai());
         if ("BiKhoa".equals(taiKhoan.getTrangThai())) {
             throw new IllegalArgumentException("Tài khoản đang bị khoá. Vui lòng liên hệ bộ phận hỗ trợ.");
@@ -505,8 +501,22 @@ public class CustomerApiService {
         if (!laKhachHang && !"CongTacVien".equalsIgnoreCase(vaiTro)) {
             throw new IllegalArgumentException("Vai trò đăng nhập không hợp lệ.");
         }
-        TaiKhoan tk = taiKhoanRepository.findByTenDangNhap(req.getTenDangNhap().trim()).orElse(null);
-        if (tk == null || !authService.kiemTraMatKhau(tk, req.getMatKhau())) {
+        // Số có thể có tài khoản khách hàng và tài khoản CTV riêng (mật khẩu riêng): ưu tiên tài khoản đúng
+        // loại của tab, rồi tài khoản cũ dùng chung có hồ sơ vai trò này, cuối cùng tài khoản khớp mật khẩu
+        // bất kỳ (để báo "chưa đăng ký vai trò này" thay vì sai mật khẩu).
+        String vaiTroTk = laKhachHang ? "KhachHang" : "CongTacVien";
+        List<TaiKhoan> tatCa = taiKhoanRepository.timTheoDinhDanh(req.getTenDangNhap().trim());
+        // Số đã có tài khoản vai trò này mà mật khẩu không khớp: báo sai mật khẩu, không báo "chưa đăng ký"
+        boolean coTkVaiTro = tatCa.stream()
+                .anyMatch(t -> vaiTroTk.equalsIgnoreCase(t.getLoaiTaiKhoan()) || coHoSo(t, vaiTroTk));
+        List<TaiKhoan> ungVien = tatCa.stream()
+                .filter(t -> authService.kiemTraMatKhau(t, req.getMatKhau()))
+                .toList();
+        TaiKhoan tk = ungVien.stream().filter(t -> vaiTroTk.equalsIgnoreCase(t.getLoaiTaiKhoan())).findFirst()
+                .or(() -> ungVien.stream().filter(t -> coHoSo(t, vaiTroTk)).findFirst())
+                .or(() -> coTkVaiTro ? Optional.<TaiKhoan>empty() : ungVien.stream().findFirst())
+                .orElse(null);
+        if (tk == null) {
             throw new IllegalArgumentException("Tên đăng nhập hoặc mật khẩu không chính xác.");
         }
         if ("NhanVien".equalsIgnoreCase(tk.getLoaiTaiKhoan())) {
@@ -530,7 +540,7 @@ public class CustomerApiService {
 
         if (laKhachHang) {
             KhachHang k = kh.orElseThrow(() -> new IllegalArgumentException(
-                    "Số điện thoại này chưa đăng ký tài khoản khách hàng. Vui lòng đăng ký (dùng đúng mật khẩu hiện tại)."));
+                    "Số điện thoại này chưa đăng ký tài khoản khách hàng. Vui lòng đăng ký tài khoản khách hàng."));
             if (!"HoatDong".equalsIgnoreCase(tk.getTrangThai())) {
                 // App nhận câu này để chuyển sang bước nhập OTP
                 throw new IllegalArgumentException("Tài khoản chưa được kích hoạt. Vui lòng xác thực mã OTP.");
@@ -581,7 +591,7 @@ public class CustomerApiService {
         final String finalEmail = email;
         String tenDangNhap = req.getProvider().toLowerCase() + "_" + req.getProviderId();
 
-        TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(tenDangNhap)
+        TaiKhoan taiKhoan = taiKhoanRepository.findAllByTenDangNhap(tenDangNhap).stream().findFirst()
                 .or(() -> taiKhoanRepository.findByEmail(finalEmail))
                 .orElse(null);
 
@@ -629,9 +639,9 @@ public class CustomerApiService {
         String email = (req.getEmail() != null && !req.getEmail().isBlank()) ? req.getEmail().trim() : (soDienThoai + "@ctv.local");
         String tenDangNhap = (req.getTenDangNhap() != null && !req.getTenDangNhap().isBlank()) ? req.getTenDangNhap().trim() : soDienThoai;
 
-        // Số điện thoại đã là khách hàng: dùng chung tài khoản đó (cùng mật khẩu)
-        TaiKhoan taiKhoanCoSan = timTaiKhoanDeDungChung(soDienThoai, req.getMatKhau(), "CongTacVien");
-        if (taiKhoanCoSan == null && taiKhoanRepository.findByEmail(email).isPresent()) {
+        // Số điện thoại đã là khách hàng vẫn tạo tài khoản cộng tác viên riêng (mật khẩu riêng)
+        kiemTraTrungDangKy(soDienThoai, tenDangNhap, "CongTacVien");
+        if (taiKhoanRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email này đã được đăng ký trên hệ thống.");
         }
 
@@ -648,15 +658,11 @@ public class CustomerApiService {
         // Địa chỉ nơi ở hiện tại (tỉnh, phường từ API địa giới) – khác với khu vực nhận việc
         String noiCuTru;
         List<KhuVuc> khuVucNoiO = List.of();
-        if (req.getMaQuan() != null && req.getMaPhuong() != null) {
-            // Phường cũ (trước sáp nhập): khu vực là quận cũ đã chọn
-            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinhV1(req.getSoNhaTenDuong(), req.getMaTinh(), req.getMaQuan(), req.getMaPhuong());
+        if (req.getMaPhuong() != null || req.getMaQuan() != null) {
+            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinhChung(req.getSoNhaTenDuong(), req.getMaTinh(),
+                    req.getMaQuan(), req.getMaPhuong(), null);
             noiCuTru = x.diaChiDayDu();
-            khuVucNoiO = java.util.stream.Stream.ofNullable(x.khuVuc()).toList();
-        } else if (req.getMaPhuong() != null) {
-            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinh(req.getSoNhaTenDuong(), req.getMaTinh(), req.getMaPhuong(), null);
-            noiCuTru = x.diaChiDayDu();
-            khuVucNoiO = diaGioiService.khuVucCuaPhuong(req.getMaPhuong());
+            khuVucNoiO = diaGioiService.khuVucCuaDiaChi(req.getMaTinh(), req.getMaQuan(), req.getMaPhuong());
         } else if (req.getNoiCuTru() != null && !req.getNoiCuTru().isBlank()) {
             noiCuTru = req.getNoiCuTru().trim();
         } else {
@@ -677,26 +683,18 @@ public class CustomerApiService {
         // 1. Tạo tài khoản CTV ở trạng thái ChoDuyet với mật khẩu ứng viên tự đặt (web/app).
         //    Khi HCNS duyệt hồ sơ, tài khoản được kích hoạt (CapTaiKhoanCtvService).
         String rawPassword = req.getMatKhau() != null ? req.getMatKhau().trim() : "";
-        //    Tài khoản dùng chung với vai trò khách hàng giữ nguyên trạng thái (khách vẫn đặt dịch vụ được);
-        //    quyền làm CTV do trạng thái hồ sơ CongTacVien quyết định.
-        TaiKhoan taiKhoan;
-        if (taiKhoanCoSan != null) {
-            taiKhoan = taiKhoanCoSan;
-        } else {
-            // Chỉ tài khoản mới phải theo quy tắc; dùng chung thì mật khẩu cũ đã được kiểm tra khớp
-            QuyTacMatKhau.batBuoc(rawPassword, soDienThoai);
-            taiKhoan = TaiKhoan.builder()
-                    .maTaiKhoan(maTaiKhoan)
-                    .tenDangNhap(tenDangNhap)
-                    .matKhau(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
-                            .encode(rawPassword))
-                    .email(email)
-                    .soDienThoai(soDienThoai)
-                    .loaiTaiKhoan("CongTacVien")
-                    .trangThai("ChoDuyet")
-                    .build();
-            taiKhoan = taiKhoanRepository.save(taiKhoan);
-        }
+        QuyTacMatKhau.batBuoc(rawPassword, soDienThoai);
+        TaiKhoan taiKhoan = TaiKhoan.builder()
+                .maTaiKhoan(maTaiKhoan)
+                .tenDangNhap(tenDangNhap)
+                .matKhau(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
+                        .encode(rawPassword))
+                .email(email)
+                .soDienThoai(soDienThoai)
+                .loaiTaiKhoan("CongTacVien")
+                .trangThai("ChoDuyet")
+                .build();
+        taiKhoan = taiKhoanRepository.save(taiKhoan);
 
         // 2. Tạo hồ sơ Cộng tác viên
         CongTacVien ctv = CongTacVien.builder()
@@ -739,25 +737,70 @@ public class CustomerApiService {
             ganKhuVucChoCtv(savedCtv, khuVucTheoDiaChi, khuVucDaGan);
         }
 
+        // 5-6. Giấy tờ gửi kèm (app cũ). Web/app mới: chỉ tải file lên MinIO sau khi hồ sơ lưu thành công,
+        //      rồi gửi object key qua guiGiayToDangKy() bằng maGuiGiayTo trả về bên dưới.
+        luuGiayToCtv(savedCtv, req.getDanhSachHoSo(), req.getDanhSachChungChi());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("congTacVienId", savedCtv.getId());
+        result.put("maCongTacVien", savedCtv.getMaCongTacVien());
+        result.put("hoTen", savedCtv.getHoTen());
+        result.put("trangThai", savedCtv.getTrangThai());
+        result.put("khuVuc", String.join(", ", khuVucRepository.findAllById(khuVucDaGan).stream()
+                .map(KhuVuc::getTenKhuVuc).toList()));
+        result.put("thoiGianXetDuyetDuKien", "1-3 ngày làm việc");
+        result.put("maGuiGiayTo", maGuiGiayToStore != null ? maGuiGiayToStore.taoMa(savedCtv.getId()) : null);
+        result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt, "
+                + "kết quả sẽ được gửi qua tin nhắn tới số " + soDienThoai + ".");
+        return result;
+    }
+
+    /**
+     * Gắn giấy tờ (đã tải lên MinIO sau khi gửi hồ sơ thành công) vào hồ sơ CTV vừa đăng ký.
+     * Mã gửi giấy tờ chỉ dùng được một lần và tự hết hạn.
+     */
+    public Map<String, Object> guiGiayToDangKy(String maGuiGiayTo,
+                                                List<CollaboratorRegisterRequest.HoSoItem> hoSo,
+                                                List<CollaboratorRegisterRequest.ChungChiItem> chungChi) {
+        Integer ctvId = maGuiGiayToStore == null ? null : maGuiGiayToStore.layCtvId(maGuiGiayTo).orElse(null);
+        if (ctvId == null) {
+            throw new IllegalArgumentException("Mã gửi giấy tờ không hợp lệ hoặc đã hết hạn. Liên hệ bộ phận nhân sự để bổ sung giấy tờ.");
+        }
+        CongTacVien ctv = congTacVienRepository.findById(ctvId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hồ sơ cộng tác viên."));
+        int soFile = luuGiayToCtv(ctv, hoSo, chungChi);
+        maGuiGiayToStore.xoa(maGuiGiayTo);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("congTacVienId", ctv.getId());
+        result.put("soFile", soFile);
+        return result;
+    }
+
+    /** Lưu hồ sơ tài liệu (CCCD, ảnh chân dung) và chứng chỉ của CTV – object key MinIO. @return số file đã lưu */
+    private int luuGiayToCtv(CongTacVien savedCtv,
+                             List<CollaboratorRegisterRequest.HoSoItem> hoSo,
+                             List<CollaboratorRegisterRequest.ChungChiItem> chungChi) {
+        int soFile = 0;
         // 5. Lưu bằng cấp / chứng chỉ (URL MinIO)
-        if (req.getDanhSachChungChi() != null) {
-            for (CollaboratorRegisterRequest.ChungChiItem item : req.getDanhSachChungChi()) {
+        if (chungChi != null) {
+            for (CollaboratorRegisterRequest.ChungChiItem item : chungChi) {
                 ChungChiCTV cc = ChungChiCTV.builder()
                         .maChungChi(maNgauNhien("CC-"))
                         .congTacVien(savedCtv)
-                        .loaiChungChi(item.getLoaiChungChi() != null ? item.getLoaiChungChi() : "ChungChi")
+                        .loaiChungChi(chuanHoaLoaiChungChi(item.getLoaiChungChi()))
                         .tenChungChi(item.getTenChungChi())
                         .noiCap(item.getNoiCap())
                         .ngayCap(item.getNgayCap())
                         .duongDanFile(minioService.toStoredValue(item.getDuongDanFile())) // Lưu object key MinIO
                         .build();
                 chungChiCTVRepository.save(cc);
+                soFile++;
             }
         }
 
         // 6. Lưu hồ sơ tài liệu (CCCD trước/sau, ảnh chân dung - URL MinIO)
-        if (req.getDanhSachHoSo() != null) {
-            for (CollaboratorRegisterRequest.HoSoItem item : req.getDanhSachHoSo()) {
+        if (hoSo != null) {
+            for (CollaboratorRegisterRequest.HoSoItem item : hoSo) {
                 if (item.getDuongDanFile() == null || item.getDuongDanFile().isBlank()) {
                     continue; // cột DuongDanFile bắt buộc có giá trị
                 }
@@ -769,20 +812,11 @@ public class CustomerApiService {
                         .ngayTai(LocalDateTime.now())
                         .build();
                 hoSoCTVRepository.save(hs);
+                soFile++;
             }
         }
 
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("congTacVienId", savedCtv.getId());
-        result.put("maCongTacVien", savedCtv.getMaCongTacVien());
-        result.put("hoTen", savedCtv.getHoTen());
-        result.put("trangThai", savedCtv.getTrangThai());
-        result.put("khuVuc", String.join(", ", khuVucRepository.findAllById(khuVucDaGan).stream()
-                .map(KhuVuc::getTenKhuVuc).toList()));
-        result.put("thoiGianXetDuyetDuKien", "1-3 ngày làm việc");
-        result.put("message", "Hồ sơ ứng tuyển cộng tác viên đã được gửi thành công. Vui lòng chờ phòng HCNS xét duyệt, "
-                + "kết quả sẽ được gửi qua tin nhắn tới số " + soDienThoai + ".");
-        return result;
+        return soFile;
     }
 
     /** Gán một khu vực cho CTV, bỏ qua nếu đã gán (cặp congTacVienId - khuVucId là duy nhất). */
@@ -818,6 +852,14 @@ public class CustomerApiService {
      * Sinh mã duy nhất cho các bản ghi tạo liên tiếp trong vòng lặp (hồ sơ, chứng chỉ, dịch vụ, khu vực).
      * Mã theo mili-giây bị trùng khi lưu nhiều bản ghi cùng lúc và vi phạm ràng buộc UNIQUE.
      */
+    private static String chuanHoaLoaiChungChi(String loai) {
+        if (loai == null) return "ChungChi";
+        String l = loai.trim();
+        if ("BangCap".equalsIgnoreCase(l)) return "BangCap";
+        if ("ChungNhan".equalsIgnoreCase(l)) return "ChungNhan";
+        return "ChungChi";
+    }
+
     private static String maNgauNhien(String tienTo) {
         return tienTo + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
     }
@@ -1367,7 +1409,7 @@ public class CustomerApiService {
             // Chỉ nhận địa chỉ còn dùng của chính khách hàng đặt đơn
             diaChi = customerAddressService.timDiaChi(khachHang.getId(), req.getDiaChiId());
         }
-        if (diaChi == null && req.getMaPhuong() != null) {
+        if (diaChi == null && (req.getMaPhuong() != null || req.getMaQuan() != null)) {
             // Địa chỉ mới nhập lúc đặt: lưu vào sổ địa chỉ (tỉnh, phường → khu vực)
             com.example.DTO.request.AddressRequest dcMoi = new com.example.DTO.request.AddressRequest();
             dcMoi.setSoNhaTenDuong(req.getSoNhaTenDuong() != null ? req.getSoNhaTenDuong() : req.getDiaChiChiTiet());

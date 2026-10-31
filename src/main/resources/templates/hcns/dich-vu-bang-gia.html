@@ -23,7 +23,7 @@
             <a class="tab-btn" th:href="@{/hcns/dich-vu-bang-gia} + '?' + ${filterQuery} + 'trangThai=HetHan'" th:classappend="${fTrangThai == 'HetHan'} ? 'active' : ''" th:attr="aria-current=${fTrangThai == 'HetHan' ? 'page' : null}">Hết hạn <span class="tab-count" th:text="${demHetHan}">0</span></a>
           </nav>
           <div class="toolbar-end">
-            <button type="button" class="btn btn-primary" data-modal-open="addPriceModal"><i class="ti ti-plus"></i>Thêm bảng giá</button>
+            <button type="button" class="btn btn-primary" data-modal-open="addPriceModal"><i class="ti ti-plus"></i>Thêm dịch vụ</button>
           </div>
         </div>
         <div class="bulk-active" hidden>
@@ -129,7 +129,7 @@
                 <td><input type="checkbox" class="price-check" th:attr="aria-label='Chọn ' + ${bg.maBangGia}"></td>
                 <td>
                   <div style="font-weight:500" th:text="${bg.dichVu != null ? bg.dichVu.tenDichVu : '—'}">Dọn dẹp nhà</div>
-                  <span class="cell-sub tabular" th:text="${bg.maBangGia} + ' · ' + ${bg.donViTinh}">BG01 · Giờ</span>
+                  <span class="cell-sub tabular" th:text="${bg.maBangGia} + ' · ' + ${bg.donViTinh} + (${bg.dichVu != null and bg.dichVu.thoiGianThucHien != null ? ' · ' + (bg.dichVu.thoiGianThucHien / 60) + 'h' : ''}) + (${bg.dichVu != null and bg.dichVu.soNguoiThucHien != null ? ' · ' + bg.dichVu.soNguoiThucHien + ' người' : ''})">BG01 · Giờ</span>
                 </td>
                 <td class="hide-sm">
                   <span class="badge badge-secondary" th:if="${bg.loaiHinhDat == 'TheoLan'}">Theo lần</span>
@@ -155,6 +155,8 @@
                               th:data-dichvuid="${bg.dichVu != null ? bg.dichVu.id : ''}"
                               th:data-loaihinh="${bg.loaiHinhDat}"
                               th:data-donvitinh="${bg.donViTinh}"
+                              th:data-thoigian="${bg.dichVu != null and bg.dichVu.thoiGianThucHien != null ? bg.dichVu.thoiGianThucHien / 60.0 : ''}"
+                              th:data-songuoi="${bg.dichVu != null ? bg.dichVu.soNguoiThucHien : ''}"
                               th:data-dongia="${bg.donGia}"
                               th:data-ngayapdung="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'yyyy-MM-dd') : ''}"
                               th:data-gioapdung="${bg.ngayApDung != null ? #temporals.format(bg.ngayApDung, 'HH:mm') : ''}"
@@ -195,7 +197,7 @@
               <tr th:if="${#lists.isEmpty(bangGias) and !coBoLoc and fTrangThai == ''}">
                 <td colspan="8" class="table-empty">
                   Chưa có gói giá nào.
-                  <div style="margin-top:0.75rem"><button type="button" class="btn btn-primary" data-modal-open="addPriceModal"><i class="ti ti-plus"></i>Thêm bảng giá</button></div>
+                  <div style="margin-top:0.75rem"><button type="button" class="btn btn-primary" data-modal-open="addPriceModal"><i class="ti ti-plus"></i>Thêm dịch vụ</button></div>
                 </td>
               </tr>
             </tbody>
@@ -299,49 +301,94 @@
 </div>
 
 <!-- ============================================================
-     MODAL: THÊM BẢNG GIÁ MỚI (CREATE)
+     MODAL: THÊM DỊCH VỤ MỚI (CREATE)
      ============================================================ -->
 <div class="modal-overlay" id="addPriceModal">
-  <div class="modal" style="max-width:640px">
+  <div class="modal" style="max-width:680px">
     <div class="modal-header">
-      <h2 class="modal-title">Thêm bảng giá</h2>
+      <h2 class="modal-title">Thêm dịch vụ</h2>
       <button class="modal-close" data-modal-close="addPriceModal" aria-label="Đóng" type="button"><i class="ti ti-x"></i></button>
     </div>
-    <form th:action="@{/hcns/dich-vu-bang-gia/them}" method="post">
+    <form th:action="@{/hcns/dich-vu-bang-gia/them}" method="post" id="addServiceForm">
       <div>
-        <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label">Chọn Dịch vụ áp dụng *</label>
-          <select class="form-control" name="dichVuId" required>
-            <option value="">-- Chọn dịch vụ --</option>
-            <option th:each="dv : ${dichVus}" th:value="${dv.id}" th:text="${dv.tenDichVu + ' (' + dv.maDichVu + ')'}">Dịch vụ</option>
-          </select>
+        <!-- DÒNG 1: Danh mục & Tên dịch vụ (2 ô trên 1 dòng) -->
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">Danh mục *</label>
+            <select class="form-control" name="loaiDichVuId" required id="addDvLoaiDichVuId">
+              <option value="">-- Chọn danh mục --</option>
+              <option th:each="ldv : ${loaiDichVus}" th:value="${ldv.id}" th:text="${ldv.tenLoaiDichVu + ' (' + ldv.maLoaiDichVu + ')'}">Dọn dẹp</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tên dịch vụ *</label>
+            <input class="form-control" name="tenDichVu" placeholder="VD: Vệ sinh đệm sofa" required id="addDvTenDichVu">
+          </div>
         </div>
+
+        <!-- DÒNG 2: Loại hình đặt & Đơn vị tính (2 ô trên 1 dòng) -->
         <div class="form-row" style="margin-bottom:1rem">
           <div class="form-group">
             <label class="form-label">Loại hình đặt *</label>
-            <select class="form-control" name="loaiHinhDat">
+            <select class="form-control" name="loaiHinhDat" id="addDvLoaiHinh" onchange="toggleAddGoiThang(this.value)">
               <option value="TheoLan">Theo lần (Giờ / Buổi)</option>
               <option value="GoiThang">Gói định kỳ (Tháng)</option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">Đơn vị tính *</label>
-            <input class="form-control" name="donViTinh" placeholder="VD: Buổi (3h), Giờ, Lần, m²" required>
+            <input class="form-control" name="donViTinh" id="addDvDonViTinh" list="addDvDonViTinhList" placeholder="VD: Buổi, Giờ, Lần, Máy, m²" required>
+            <datalist id="addDvDonViTinhList">
+              <option value="Buổi">
+              <option value="Giờ">
+              <option value="Lần">
+              <option value="Máy">
+              <option value="Bữa">
+              <option value="Căn">
+              <option value="m²">
+              <option value="Kg">
+            </datalist>
           </div>
         </div>
+
+        <!-- DÒNG 3: Thời lượng & Số người làm (2 ô trên 1 dòng) -->
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">Thời lượng (giờ) *</label>
+            <input class="form-control" type="number" name="thoiGianGio" id="addDvThoiGianGio" placeholder="VD: 2 hoặc 3" min="0.5" max="12" step="0.5" value="2" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Số người làm *</label>
+            <input class="form-control" type="number" name="soNguoiThucHien" id="addDvSoNguoi" min="1" max="20" value="1" required>
+          </div>
+        </div>
+
+        <!-- DÒNG 4: Đơn giá niêm yết & Mô tả / Số buổi (2 ô trên 1 dòng) -->
         <div class="form-row" style="margin-bottom:1rem">
           <div class="form-group">
             <label class="form-label">Đơn giá niêm yết (VNĐ) *</label>
-            <input class="form-control" type="number" name="donGia" placeholder="VD: 150000" min="0" required>
+            <input class="form-control" type="number" name="donGia" placeholder="VD: 250000" min="1000" step="1000" required id="addDvDonGia">
           </div>
-          <div class="form-group">
+          <div class="form-group" id="addDvColSoBuoi" style="display:none">
+            <label class="form-label">Số buổi / tháng *</label>
+            <input class="form-control" type="number" name="soBuoi" id="addDvSoBuoi" min="1" max="31" value="12">
+          </div>
+          <div class="form-group" id="addDvColMoTa">
+            <label class="form-label">Mô tả tóm tắt</label>
+            <input class="form-control" name="moTaChiTiet" placeholder="VD: Phù hợp căn hộ 2-3 phòng ngủ">
+          </div>
+        </div>
+
+        <!-- DÒNG 5: Áp dụng từ (ngày + giờ) -->
+        <div class="form-group" style="margin-bottom:1rem">
           <label class="form-label" for="addBgNgayApDung">Áp dụng từ</label>
           <div class="ngay-gio">
             <input class="form-control" type="date" name="ngayApDung" id="addBgNgayApDung" data-min-today>
             <input class="form-control gio" type="time" name="gioApDung" id="addBgGioApDung" value="00:00" step="60" aria-label="Giờ – Áp dụng từ">
           </div>
         </div>
-        </div>
+
+        <!-- DÒNG 6: Đến (để trống nếu áp dụng lâu dài) (ngày + giờ) -->
         <div class="form-group">
           <label class="form-label" for="addBgNgayKetThuc">Đến (để trống nếu áp dụng lâu dài)</label>
           <div class="ngay-gio">
@@ -352,7 +399,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline" data-modal-close="addPriceModal">Huỷ</button>
-        <button type="submit" class="btn btn-primary">Lưu bảng giá</button>
+        <button type="submit" class="btn btn-primary" id="addDvSubmitBtn">Lưu dịch vụ</button>
       </div>
     </form>
   </div>
@@ -408,6 +455,16 @@
           <div class="form-group">
             <label class="form-label">Đơn vị tính *</label>
             <input class="form-control" name="donViTinh" id="editBgDonViTinh" required>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">Thời lượng (giờ)</label>
+            <input class="form-control" type="number" name="thoiGianGio" id="editBgThoiGianGio" min="0.5" max="12" step="0.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Số người làm</label>
+            <input class="form-control" type="number" name="soNguoiThucHien" id="editBgSoNguoi" min="1" max="20">
           </div>
         </div>
         <div class="form-row" style="margin-bottom:1rem">
@@ -504,6 +561,24 @@
   .ngay-gio .gio { flex: 0 0 7.5rem; }
 </style>
 <script>
+  // Toggle số buổi / mô tả khi chọn loại hình trong modal Thêm dịch vụ
+  function toggleAddGoiThang(val) {
+    const colSoBuoi = document.getElementById('addDvColSoBuoi');
+    const colMoTa = document.getElementById('addDvColMoTa');
+    if (!colSoBuoi || !colMoTa) return;
+    if (val === 'GoiThang') {
+      colSoBuoi.style.display = '';
+      colMoTa.style.display = 'none';
+      const sb = document.getElementById('addDvSoBuoi');
+      if (sb) sb.required = true;
+    } else {
+      colSoBuoi.style.display = 'none';
+      colMoTa.style.display = '';
+      const sb = document.getElementById('addDvSoBuoi');
+      if (sb) sb.required = false;
+    }
+  }
+
   // Giờ gần nhất làm tròn lên 5 phút (mặc định cho "áp dụng từ" hôm nay)
   function gioSapToi() {
     const d = new Date(Date.now() + 5 * 60000);
@@ -515,6 +590,24 @@
   // Máy chủ kiểm tra lại (BangGiaService.kiemTraKhoang).
   document.addEventListener('submit', (e) => {
     const f = e.target;
+
+    const thoiGian = f.querySelector('input[name="thoiGianGio"]');
+    if (thoiGian && (parseFloat(thoiGian.value) < 0.5 || parseFloat(thoiGian.value) > 12)) {
+      e.preventDefault();
+      thoiGian.setCustomValidity('Thời lượng phải từ 0.5 đến 12 giờ.');
+      thoiGian.reportValidity();
+      thoiGian.addEventListener('input', () => thoiGian.setCustomValidity(''), { once: true });
+      return;
+    }
+    const soNguoi = f.querySelector('input[name="soNguoiThucHien"]');
+    if (soNguoi && (parseInt(soNguoi.value, 10) < 1 || parseInt(soNguoi.value, 10) > 20)) {
+      e.preventDefault();
+      soNguoi.setCustomValidity('Số người làm phải từ 1 đến 20 người.');
+      soNguoi.reportValidity();
+      soNguoi.addEventListener('input', () => soNguoi.setCustomValidity(''), { once: true });
+      return;
+    }
+
     const ngayTu = f.querySelector('input[name="ngayApDung"]'), gioTu = f.querySelector('input[name="gioApDung"]');
     if (!ngayTu || !gioTu || ngayTu.type === 'hidden' && !ngayTu._flatpickr) return;
     const ngayDen = f.querySelector('input[name="ngayKetThuc"]'), gioDen = f.querySelector('input[name="gioKetThuc"]');
@@ -555,6 +648,8 @@
       document.getElementById('editBgLoaiHinh').value = btn.dataset.loaihinh;
     }
     document.getElementById('editBgDonViTinh').value = btn.dataset.donvitinh || '';
+    document.getElementById('editBgThoiGianGio').value = btn.dataset.thoigian || '';
+    document.getElementById('editBgSoNguoi').value = btn.dataset.songuoi || '';
     document.getElementById('editBgDonGia').value = btn.dataset.dongia ? Math.round(btn.dataset.dongia) : '';
     DateRules.fill('editBgNgayApDung', btn.dataset.ngayapdung);
     DateRules.fill('editBgNgayKetThuc', btn.dataset.ngayketthuc);

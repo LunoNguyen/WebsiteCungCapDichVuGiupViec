@@ -357,14 +357,20 @@ public class HCNSController {
      * Form cũ chỉ gửi chuỗi noiCuTru thì giữ nguyên chuỗi đó.
      */
     private String noiOCtv(String noiCuTru, String soNhaTenDuong, Integer maTinh, Integer maQuan, Integer maPhuong) {
-        String kq = maPhuong != null
-                ? (maQuan != null ? diaGioiService.xacDinhV1(soNhaTenDuong, maTinh, maQuan, maPhuong)
-                                  : diaGioiService.xacDinh(soNhaTenDuong, maTinh, maPhuong, null)).diaChiDayDu()
+        String kq = maPhuong != null || maQuan != null
+                ? diaGioiService.xacDinhChung(soNhaTenDuong, maTinh, maQuan, maPhuong, null).diaChiDayDu()
                 : (noiCuTru != null ? noiCuTru.trim() : "");
         if (kq.isBlank()) throw new IllegalArgumentException("Vui lòng nhập địa chỉ nơi ở hiện tại của cộng tác viên!");
         if (kq.length() > 200) throw new IllegalArgumentException("Địa chỉ nơi ở quá dài (tối đa 200 ký tự)!");
         return kq;
     }
+
+    /** Các địa chỉ trụ sở / văn phòng phỏng vấn mặc định của bTaskee. */
+    public static final List<String> DIA_CHI_PHONG_VAN_MAC_DINH = List.of(
+            "284/25/20 Lý Thường Kiệt, Phường 14, Quận 10, TP. Hồ Chí Minh",
+            "140 Lê Trọng Tấn, Phường Tây Thạnh, Quận Tân Phú, TP. Hồ Chí Minh",
+            "Tầng 2, Tòa nhà Cantavil Premier, An Phú, TP. Thủ Đức, TP. Hồ Chí Minh"
+    );
 
     /** Địa chỉ phỏng vấn điền sẵn (application.properties: app.phong-van.dia-chi). */
     @org.springframework.beans.factory.annotation.Value("${app.phong-van.dia-chi:}")
@@ -389,7 +395,10 @@ public class HCNSController {
         model.addAttribute("daXemIds", daXem);
         model.addAttribute("lichPhongVan", lichPhongVan);
         model.addAttribute("soHoSoMoi", choDuyet.stream().filter(c -> !daXem.contains(c.getId())).count());
-        model.addAttribute("diaChiPhongVanMacDinh", diaChiPhongVanMacDinh);
+        String defaultAddress = (diaChiPhongVanMacDinh != null && !diaChiPhongVanMacDinh.isBlank())
+                ? diaChiPhongVanMacDinh : DIA_CHI_PHONG_VAN_MAC_DINH.get(0);
+        model.addAttribute("diaChiPhongVanMacDinh", defaultAddress);
+        model.addAttribute("danhSachDiaChiPhongVan", DIA_CHI_PHONG_VAN_MAC_DINH);
         // Quận, huyện: chọn khu vực nhận việc khi thêm / sửa CTV, hiện trong bảng danh sách
         model.addAttribute("khuVucs", khuVucService.danhSach());
         model.addAttribute("khuVucCtv", khuVucCtvService.theoCtv());
@@ -502,10 +511,8 @@ public class HCNSController {
 
             congTacVienRepository.save(ctv);
             // Khu vực nhận việc ban đầu: quận của nơi ở; sau đó tự đổi theo GPS khi CTV dùng app
-            if (maPhuong != null) {
-                List<com.example.Model.KhuVuc> kvs = maQuan != null
-                        ? java.util.stream.Stream.ofNullable(diaGioiService.xacDinhV1(soNhaTenDuong, maTinh, maQuan, maPhuong).khuVuc()).toList()
-                        : diaGioiService.khuVucCuaPhuong(maPhuong);
+            if (maPhuong != null || maQuan != null) {
+                List<com.example.Model.KhuVuc> kvs = diaGioiService.khuVucCuaDiaChi(maTinh, maQuan, maPhuong);
                 List<Integer> kvNoiO = kvs.stream()
                         .map(com.example.Model.KhuVuc::getId).limit(1).toList();
                 if (!kvNoiO.isEmpty()) khuVucCtvService.capNhat(ctv.getId(), kvNoiO);
@@ -1098,11 +1105,34 @@ public class HCNSController {
         }
     }
 
+    private String sinhMaDichVu(Integer loaiDichVuId) {
+        int prefix = (loaiDichVuId != null ? loaiDichVuId : 1) * 100;
+        List<DichVu> all = dichVuRepository.findAll();
+        int maxSeq = prefix;
+        for (DichVu d : all) {
+            if (d.getMaDichVu() != null && d.getMaDichVu().startsWith("DV")) {
+                try {
+                    int num = Integer.parseInt(d.getMaDichVu().substring(2));
+                    if (num >= prefix && num < prefix + 100) {
+                        if (num > maxSeq) maxSeq = num;
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        return "DV" + (maxSeq + 1);
+    }
+
     @PostMapping("/dich-vu-bang-gia/them")
     public String themBangGia(
-            @RequestParam Integer dichVuId,
+            @RequestParam(required = false) Integer loaiDichVuId,
+            @RequestParam(required = false) String tenDichVu,
+            @RequestParam(required = false) Integer dichVuId,
             @RequestParam(defaultValue = "TheoLan") String loaiHinhDat,
             @RequestParam String donViTinh,
+            @RequestParam(required = false, defaultValue = "1") Double thoiGianGio,
+            @RequestParam(required = false, defaultValue = "1") Integer soNguoiThucHien,
+            @RequestParam(required = false) Integer soBuoi,
+            @RequestParam(required = false) String moTaChiTiet,
             @RequestParam BigDecimal donGia,
             @RequestParam(required = false) String ngayApDung,
             @RequestParam(required = false) String gioApDung,
@@ -1110,30 +1140,88 @@ public class HCNSController {
             @RequestParam(required = false) String gioKetThuc,
             RedirectAttributes redirectAttributes) {
         try {
-            var dvOpt = dichVuRepository.findById(dichVuId);
-            if (dvOpt.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Dịch vụ không tồn tại!");
+            if (donGia == null || donGia.compareTo(BigDecimal.ZERO) <= 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Đơn giá phải lớn hơn 0!");
+                return "redirect:/hcns/dich-vu-bang-gia";
+            }
+
+            LocalDateTime tu = com.example.Service.BangGiaService.ghepNgayGio(ngayApDung, gioApDung, false);
+            LocalDateTime tuApDung = tu != null ? tu : LocalDateTime.now();
+            LocalDateTime denApDung = com.example.Service.BangGiaService.ghepNgayGio(ngayKetThuc, gioKetThuc, true);
+            com.example.Service.BangGiaService.kiemTraKhoang(tuApDung, denApDung, null);
+
+            DichVu dv;
+            if (tenDichVu != null && !tenDichVu.isBlank()) {
+                if (loaiDichVuId == null) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn danh mục cho dịch vụ mới!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                var ldvOpt = loaiDichVuRepository.findById(loaiDichVuId);
+                if (ldvOpt.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Danh mục dịch vụ không tồn tại!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                if (thoiGianGio == null || thoiGianGio <= 0 || thoiGianGio > 12) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Thời lượng làm việc phải từ 0.5 đến 12 giờ!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                if (soNguoiThucHien == null || soNguoiThucHien < 1 || soNguoiThucHien > 20) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Số người làm phải từ 1 đến 20 người!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                Integer buoiThang = null;
+                if ("GoiThang".equalsIgnoreCase(loaiHinhDat)) {
+                    if (soBuoi == null || soBuoi < 1) {
+                        redirectAttributes.addFlashAttribute("errorMessage", "Gói định kỳ (Tháng) yêu cầu nhập số buổi trong tháng!");
+                        return "redirect:/hcns/dich-vu-bang-gia";
+                    }
+                    buoiThang = soBuoi;
+                }
+
+                String maDvMoi = sinhMaDichVu(loaiDichVuId);
+                int phut = (int) Math.round(thoiGianGio * 60);
+
+                dv = DichVu.builder()
+                        .maDichVu(maDvMoi)
+                        .loaiDichVu(ldvOpt.get())
+                        .tenDichVu(tenDichVu.trim())
+                        .moTaChiTiet(moTaChiTiet != null && !moTaChiTiet.isBlank() ? moTaChiTiet.trim() : null)
+                        .thoiGianThucHien(phut)
+                        .loaiHinhDat(loaiHinhDat)
+                        .donViTinh(donViTinh != null ? donViTinh.trim() : "Lần")
+                        .soNguoiThucHien(soNguoiThucHien)
+                        .soBuoi(buoiThang)
+                        .giaHienTai(donGia)
+                        .trangThai("HoatDong")
+                        .build();
+                dv = dichVuRepository.save(dv);
+            } else if (dichVuId != null) {
+                var dvOpt = dichVuRepository.findById(dichVuId);
+                if (dvOpt.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Dịch vụ không tồn tại!");
+                    return "redirect:/hcns/dich-vu-bang-gia";
+                }
+                dv = dvOpt.get();
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng nhập tên dịch vụ mới hoặc chọn dịch vụ!");
                 return "redirect:/hcns/dich-vu-bang-gia";
             }
 
             BangGiaDichVu bg = new BangGiaDichVu();
             bg.setMaBangGia(com.example.Service.MaSinh.tao("BG-"));
-            bg.setDichVu(dvOpt.get());
+            bg.setDichVu(dv);
             bg.setLoaiHinhDat(loaiHinhDat);
             bg.setDonViTinh(donViTinh != null ? donViTinh.trim() : "Lần");
             bg.setDonGia(donGia);
-
-            // Thời điểm áp dụng (ngày + giờ); trống = ngay bây giờ. Kết thúc trống = không thời hạn
-            LocalDateTime tu = com.example.Service.BangGiaService.ghepNgayGio(ngayApDung, gioApDung, false);
-            bg.setNgayApDung(tu != null ? tu : LocalDateTime.now());
-            bg.setNgayKetThuc(com.example.Service.BangGiaService.ghepNgayGio(ngayKetThuc, gioKetThuc, true));
-            com.example.Service.BangGiaService.kiemTraKhoang(bg.getNgayApDung(), bg.getNgayKetThuc(), null);
-            bg.setTrangThai("DangApDung"); // chưa tới giờ áp dụng vẫn lưu DangApDung (CHECK chk_BG_trangThai)
+            bg.setNgayApDung(tuApDung);
+            bg.setNgayKetThuc(denApDung);
+            bg.setTrangThai("DangApDung");
             bangGiaDichVuRepository.save(bg);
             bangGiaService.lamMoi();
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm gói bảng giá thành công (Mã: " + bg.getMaBangGia() + ")!");
+
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ mới \"" + dv.getTenDichVu() + "\" (" + dv.getMaDichVu() + ") thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thêm bảng giá: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thêm dịch vụ: " + e.getMessage());
         }
         return "redirect:/hcns/dich-vu-bang-gia";
     }
@@ -1144,6 +1232,9 @@ public class HCNSController {
             @RequestParam Integer dichVuId,
             @RequestParam(defaultValue = "TheoLan") String loaiHinhDat,
             @RequestParam String donViTinh,
+            @RequestParam(required = false) Double thoiGianGio,
+            @RequestParam(required = false) Integer soNguoiThucHien,
+            @RequestParam(required = false) Integer soBuoi,
             @RequestParam BigDecimal donGia,
             @RequestParam(required = false) String ngayApDung,
             @RequestParam(required = false) String gioApDung,
@@ -1164,9 +1255,23 @@ public class HCNSController {
                 return "redirect:/hcns/dich-vu-bang-gia";
             }
 
+            DichVu dv = dvOpt.get();
+            if (thoiGianGio != null && thoiGianGio > 0 && thoiGianGio <= 12) {
+                dv.setThoiGianThucHien((int) Math.round(thoiGianGio * 60));
+            }
+            if (soNguoiThucHien != null && soNguoiThucHien >= 1 && soNguoiThucHien <= 20) {
+                dv.setSoNguoiThucHien(soNguoiThucHien);
+            }
+            if ("GoiThang".equalsIgnoreCase(loaiHinhDat) && soBuoi != null && soBuoi >= 1) {
+                dv.setSoBuoi(soBuoi);
+            }
+            dv.setDonViTinh(donViTinh.trim());
+            dv.setLoaiHinhDat(loaiHinhDat);
+            dichVuRepository.save(dv);
+
             BangGiaDichVu bg = bgOpt.get();
             LocalDateTime apDungCu = bg.getNgayApDung();
-            bg.setDichVu(dvOpt.get());
+            bg.setDichVu(dv);
             bg.setLoaiHinhDat(loaiHinhDat);
             bg.setDonViTinh(donViTinh.trim());
             // Đơn giá không sửa trực tiếp: dùng "Cập nhật giá" để tạo bảng giá mới, giữ lịch sử giá
@@ -1397,7 +1502,7 @@ public class HCNSController {
             }
 
             // 4. Kiểm tra trùng Tên đăng nhập
-            if (taiKhoanRepository.findByTenDangNhap(tenDangNhap).isPresent()) {
+            if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllByTenDangNhap(tenDangNhap), loaiTaiKhoan, null)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập '" + tenDangNhap + "' đã tồn tại trên hệ thống!");
                 return "redirect:/hcns/tai-khoan";
             }
@@ -1409,7 +1514,7 @@ public class HCNSController {
             }
 
             // 6. Kiểm tra trùng Số điện thoại
-            if (taiKhoanRepository.findBySoDienThoai(soDienThoai).isPresent()) {
+            if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllBySoDienThoai(soDienThoai), loaiTaiKhoan, null)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại '" + soDienThoai + "' đã được sử dụng bởi tài khoản khác!");
                 return "redirect:/hcns/tai-khoan";
             }
@@ -1531,8 +1636,7 @@ public class HCNSController {
             }
 
             // Kiểm tra trùng
-            var existingTk = taiKhoanRepository.findByTenDangNhap(tenDangNhap);
-            if (existingTk.isPresent() && !existingTk.get().getId().equals(id)) {
+            if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllByTenDangNhap(tenDangNhap), loaiTaiKhoan, id)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập '" + tenDangNhap + "' đã thuộc về tài khoản khác!");
                 return "redirect:/hcns/tai-khoan";
             }
@@ -1543,8 +1647,7 @@ public class HCNSController {
                 return "redirect:/hcns/tai-khoan";
             }
 
-            var existingPhone = taiKhoanRepository.findBySoDienThoai(soDienThoai);
-            if (existingPhone.isPresent() && !existingPhone.get().getId().equals(id)) {
+            if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllBySoDienThoai(soDienThoai), loaiTaiKhoan, id)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại '" + soDienThoai + "' đã thuộc về tài khoản khác!");
                 return "redirect:/hcns/tai-khoan";
             }
