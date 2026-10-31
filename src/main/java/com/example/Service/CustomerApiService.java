@@ -648,7 +648,13 @@ public class CustomerApiService {
         // Địa chỉ nơi ở hiện tại (tỉnh, phường từ API địa giới) – khác với khu vực nhận việc
         String noiCuTru;
         List<KhuVuc> khuVucNoiO = List.of();
-        if (req.getMaPhuong() != null) {
+        if (req.getMaQuan() != null && req.getMaPhuong() != null) {
+            DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinhV1(req.getSoNhaTenDuong(), req.getMaTinh(), req.getMaQuan(), req.getMaPhuong());
+            noiCuTru = x.diaChiDayDu();
+            if (x.khuVuc() != null) {
+                khuVucNoiO = List.of(x.khuVuc());
+            }
+        } else if (req.getMaPhuong() != null) {
             DiaGioiService.DiaChiDaXacDinh x = diaGioiService.xacDinh(req.getSoNhaTenDuong(), req.getMaTinh(), req.getMaPhuong(), null);
             noiCuTru = x.diaChiDayDu();
             khuVucNoiO = diaGioiService.khuVucCuaPhuong(req.getMaPhuong());
@@ -740,7 +746,7 @@ public class CustomerApiService {
                 ChungChiCTV cc = ChungChiCTV.builder()
                         .maChungChi(maNgauNhien("CC-"))
                         .congTacVien(savedCtv)
-                        .loaiChungChi(item.getLoaiChungChi() != null ? item.getLoaiChungChi() : "ChungChi")
+                        .loaiChungChi(chuanHoaLoaiChungChi(item.getLoaiChungChi()))
                         .tenChungChi(item.getTenChungChi())
                         .noiCap(item.getNoiCap())
                         .ngayCap(item.getNgayCap())
@@ -813,6 +819,14 @@ public class CustomerApiService {
      * Sinh mã duy nhất cho các bản ghi tạo liên tiếp trong vòng lặp (hồ sơ, chứng chỉ, dịch vụ, khu vực).
      * Mã theo mili-giây bị trùng khi lưu nhiều bản ghi cùng lúc và vi phạm ràng buộc UNIQUE.
      */
+    private static String chuanHoaLoaiChungChi(String loai) {
+        if (loai == null) return "ChungChi";
+        String l = loai.trim();
+        if ("BangCap".equalsIgnoreCase(l)) return "BangCap";
+        if ("ChungNhan".equalsIgnoreCase(l)) return "ChungNhan";
+        return "ChungChi";
+    }
+
     private static String maNgauNhien(String tienTo) {
         return tienTo + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
     }

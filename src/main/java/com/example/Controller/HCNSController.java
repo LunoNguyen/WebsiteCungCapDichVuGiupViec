@@ -366,6 +366,13 @@ public class HCNSController {
         return kq;
     }
 
+    /** Các địa chỉ trụ sở / văn phòng phỏng vấn mặc định của bTaskee. */
+    public static final List<String> DIA_CHI_PHONG_VAN_MAC_DINH = List.of(
+            "284/25/20 Lý Thường Kiệt, Phường 14, Quận 10, TP. Hồ Chí Minh",
+            "140 Lê Trọng Tấn, Phường Tây Thạnh, Quận Tân Phú, TP. Hồ Chí Minh",
+            "Tầng 2, Tòa nhà Cantavil Premier, An Phú, TP. Thủ Đức, TP. Hồ Chí Minh"
+    );
+
     /** Địa chỉ phỏng vấn điền sẵn (application.properties: app.phong-van.dia-chi). */
     @org.springframework.beans.factory.annotation.Value("${app.phong-van.dia-chi:}")
     private String diaChiPhongVanMacDinh;
@@ -389,7 +396,10 @@ public class HCNSController {
         model.addAttribute("daXemIds", daXem);
         model.addAttribute("lichPhongVan", lichPhongVan);
         model.addAttribute("soHoSoMoi", choDuyet.stream().filter(c -> !daXem.contains(c.getId())).count());
-        model.addAttribute("diaChiPhongVanMacDinh", diaChiPhongVanMacDinh);
+        String defaultAddress = (diaChiPhongVanMacDinh != null && !diaChiPhongVanMacDinh.isBlank())
+                ? diaChiPhongVanMacDinh : DIA_CHI_PHONG_VAN_MAC_DINH.get(0);
+        model.addAttribute("diaChiPhongVanMacDinh", defaultAddress);
+        model.addAttribute("danhSachDiaChiPhongVan", DIA_CHI_PHONG_VAN_MAC_DINH);
         // Quận, huyện: chọn khu vực nhận việc khi thêm / sửa CTV, hiện trong bảng danh sách
         model.addAttribute("khuVucs", khuVucService.danhSach());
         model.addAttribute("khuVucCtv", khuVucCtvService.theoCtv());

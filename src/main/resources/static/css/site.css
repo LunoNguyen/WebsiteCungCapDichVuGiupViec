@@ -1394,3 +1394,252 @@ li, span { text-wrap: pretty; }
   border: 2px solid #ffffff;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
+
+/* Form tuan tu CTV: Khoa cac muc chua den luot */
+.field.is-locked, fieldset.is-locked, button.is-locked {
+  opacity: 0.42;
+  pointer-events: none;
+  filter: grayscale(0.6);
+  user-select: none;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* Danh sach chung chi da tai len */
+.chung-chi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: #334155;
+  font-weight: 500;
+}
+.chung-chi-chip .btn-del-cc {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+  font-weight: bold;
+}
+.chung-chi-chip .btn-del-cc:hover {
+  color: #b91c1c;
+}
+
+/* Lightbox xem anh phong to */
+.ctv-lightbox-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+.ctv-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.82);
+  backdrop-filter: blur(4px);
+}
+.ctv-lightbox-dialog {
+  position: relative;
+  z-index: 1;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: #0f172a;
+  border-radius: 18px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+.ctv-lightbox-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0f172a;
+  border: none;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: background 0.15s, color 0.15s;
+}
+.ctv-lightbox-close:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+.ctv-lightbox-title {
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  user-select: none;
+}
+.ctv-lightbox-body {
+  overflow: auto;
+  max-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+.ctv-lightbox-body img {
+  max-width: 85vw;
+  max-height: 76vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* Khung thumbnail chung chi */
+.chung-chi-thumb-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 6px;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.chung-chi-thumb-card:hover {
+  border-color: var(--color-brand, #0d9488);
+  box-shadow: 0 4px 10px rgba(13, 148, 136, 0.15);
+}
+.chung-chi-thumb-img-wrap {
+  width: 100%;
+  height: 105px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f5f9;
+  cursor: pointer;
+  position: relative;
+}
+.chung-chi-thumb-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s ease;
+}
+.chung-chi-thumb-img-wrap:hover img {
+  transform: scale(1.05);
+}
+.chung-chi-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.chung-chi-thumb-img-wrap:hover .chung-chi-thumb-overlay {
+  opacity: 1;
+}
+.btn-del-thumb {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.95);
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  transition: background 0.15s;
+  z-index: 2;
+}
+.btn-del-thumb:hover {
+  background: #dc2626;
+}
+.chung-chi-thumb-name {
+  margin-top: 5px;
+  font-size: 11px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+}
+
+/* Cursor pointer tren anh upload */
+.upload img {
+  cursor: pointer;
+}
+.upload .upload-view-hint {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: inherit;
+  cursor: pointer;
+  z-index: 5;
+}
+.upload.is-done .upload-view-hint {
+  display: flex;
+}
+.upload.is-done:hover .upload-view-hint {
+  opacity: 1;
+}
+
+/* Can deu len tren cho danh sach dich vu dai dien (Accordion Cap 2) */
+.dm-rep-list {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 12px !important;
+  align-items: start !important;
+}
+
+.rep-dv-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 0.85rem !important;
+  height: auto !important;
+  transition: all 0.2s ease !important;
+}
+
+.rep-dv-card:hover {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+}
