@@ -61,7 +61,16 @@ public class UngVienCtvService {
     }
 
     /** Lịch phỏng vấn đã gửi gần nhất của một ứng viên. */
-    public record LichPhongVan(String thoiGian, String noiDung, LocalDateTime guiLuc) {}
+    public record LichPhongVan(String thoiGian, String noiDung, LocalDateTime guiLuc) {
+        public boolean coTheDoiLich() {
+            try {
+                LocalDateTime gioHen = LocalDateTime.parse(thoiGian, GIO_NGAY);
+                return LocalDateTime.now().isBefore(gioHen.minusHours(6));
+            } catch (Exception e) {
+                return false;
+            }
+        }
+    }
 
     // =========================================================================
     // ĐÃ XEM / CHƯA XEM
@@ -143,7 +152,11 @@ public class UngVienCtvService {
             throw new IllegalArgumentException("Nhập địa chỉ phỏng vấn đầy đủ (số nhà, đường, phường).");
         }
         String gc = ghiChu != null && !ghiChu.isBlank() ? ghiChu.trim() : null;
-        boolean doiLich = daGuiLichPhongVan(ctv);
+        LichPhongVan lichCu = lichPhongVan(List.of(ctv)).get(ctv.getId());
+        boolean doiLich = lichCu != null;
+        if (doiLich && !lichCu.coTheDoiLich()) {
+            throw new IllegalArgumentException("Không thể đổi lịch phỏng vấn: Đã quá thời hạn cho phép (chỉ được đổi trước giờ hẹn cũ ít nhất 6 tiếng). Lịch hiện tại: " + lichCu.thoiGian());
+        }
 
         String thoiGianText = thoiGian.format(GIO_NGAY);
         String thuNgay = THU[thoiGian.getDayOfWeek().getValue() - 1] + ", " + thoiGian.format(NGAY);
@@ -213,8 +226,12 @@ public class UngVienCtvService {
 
         LichPhongVan lich = lichPhongVan(List.of(ctv)).get(ctvId);
         if (lich != null) {
-            m.put("phongVan", Map.of("thoiGian", lich.thoiGian(), "noiDung", lich.noiDung(),
-                    "guiLuc", lich.guiLuc().format(GIO_NGAY)));
+            m.put("phongVan", Map.of(
+                    "thoiGian", lich.thoiGian(),
+                    "noiDung", lich.noiDung(),
+                    "guiLuc", lich.guiLuc().format(GIO_NGAY),
+                    "coTheDoiLich", lich.coTheDoiLich()
+            ));
         }
         m.put("lichSu", tk == null ? List.of() : nhatKyTaiKhoanRepository.findByTaiKhoan_IdOrderByThoiGianDesc(tk.getId())
                 .stream().limit(10)

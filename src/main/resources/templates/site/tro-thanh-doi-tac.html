@@ -27,7 +27,7 @@
       <div class="steps">
         <div class="step"><h3>Gửi hồ sơ</h3><p>Điền thông tin, chọn dịch vụ muốn làm, đính kèm ảnh chân dung, CCCD và chứng chỉ nếu có.</p></div>
         <div class="step"><h3>Xét duyệt</h3><p>Phòng Hành chính Nhân sự kiểm tra hồ sơ. Hồ sơ đạt sẽ được mời phỏng vấn.</p></div>
-        <div class="step"><h3>Kích hoạt tài khoản</h3><p>Hồ sơ được duyệt, tài khoản được kích hoạt và bạn nhận tin nhắn thông báo. Đăng nhập ứng dụng bằng số điện thoại và mật khẩu đã đặt.</p></div>
+        <div class="step"><h3>Kích hoạt tài khoản</h3><p>Hồ sơ đã được duyệt.</p></div>
         <div class="step"><h3>Nhận việc</h3><p>Xem đơn được phân công, xác nhận hoặc từ chối, theo dõi thời gian biểu và báo cáo kết quả.</p></div>
       </div>
     </div>
@@ -42,44 +42,44 @@
         <div class="alert alert-error" id="ctvError" role="alert"></div>
         <div class="alert alert-ok" id="ctvOk" role="status"></div>
 
-        <fieldset>
-          <legend>Thông tin cá nhân</legend>
+        <fieldset data-step-group="1">
+          <legend>1. Thông tin cá nhân</legend>
           <div class="form-grid">
-            <div class="field full">
-              <label for="hoTen">Họ và tên</label>
-              <input type="text" id="hoTen" name="hoTen" autocomplete="name" required>
-              <div class="error">Nhập họ và tên.</div>
+            <div class="field full" data-step-field="hoTen">
+              <label for="hoTen">Họ và tên *</label>
+              <input type="text" id="hoTen" name="hoTen" autocomplete="name" placeholder="Nguyễn Văn A" required>
+              <div class="error">Nhập họ và tên đầy đủ.</div>
             </div>
-            <div class="field">
-              <label for="soDienThoai">Số điện thoại</label>
-              <input type="tel" id="soDienThoai" name="soDienThoai" inputmode="numeric" autocomplete="tel" required pattern="0[0-9]{9}">
+            <div class="field is-locked" data-step-field="soDienThoai">
+              <label for="soDienThoai">Số điện thoại *</label>
+              <input type="tel" id="soDienThoai" name="soDienThoai" inputmode="numeric" autocomplete="tel" placeholder="09xxxxxxxx" required pattern="0[0-9]{9}" disabled>
               <div class="hint">Dùng làm tên đăng nhập. Kết quả xét duyệt được gửi về số này.</div>
               <div class="error">Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.</div>
             </div>
-            <div class="field">
+            <div class="field is-locked" data-step-field="email">
               <label for="email">Email (không bắt buộc)</label>
-              <input type="email" id="email" name="email" autocomplete="email">
+              <input type="email" id="email" name="email" autocomplete="email" placeholder="email@vi-du.com" disabled>
               <div class="error">Email chưa đúng định dạng.</div>
             </div>
-            <div class="field">
+            <div class="field is-locked" data-step-field="matKhau">
               <label for="matKhau">Mật khẩu đăng nhập *</label>
               <div style="position:relative">
                 <input type="password" id="matKhau" name="matKhau" autocomplete="new-password" required style="padding-right:2.8rem"
-                  data-quy-tac-mat-khau data-sdt="#soDienThoai" data-bo-qua="#coTaiKhoanSan">
+                  data-quy-tac-mat-khau data-sdt="#soDienThoai" data-bo-qua="#coTaiKhoanSan" disabled>
                 <button type="button" onclick="toggleCtvPass('matKhau','iconMatKhau')" tabindex="-1"
                   style="position:absolute;right:0;top:0;bottom:0;background:none;border:none;cursor:pointer;padding:0 0.75rem;color:var(--color-muted,#888)">
                   <span id="iconMatKhau">👁</span>
                 </button>
               </div>
               <label class="hint" style="display:flex;gap:6px;align-items:center;margin-top:6px;cursor:pointer">
-                <input type="checkbox" id="coTaiKhoanSan"> Số điện thoại này đã có tài khoản khách hàng bTaskee (nhập đúng mật khẩu đó để dùng chung tài khoản)
+                <input type="checkbox" id="coTaiKhoanSan" disabled> Số điện thoại này đã có tài khoản khách hàng bTaskee (nhập đúng mật khẩu đó để dùng chung tài khoản)
               </label>
               <div class="error">Mật khẩu chưa đạt các yêu cầu bên trên.</div>
             </div>
-            <div class="field">
+            <div class="field is-locked" data-step-field="xacNhanMatKhau">
               <label for="xacNhanMatKhau">Xác nhận mật khẩu *</label>
               <div style="position:relative">
-                <input type="password" id="xacNhanMatKhau" name="xacNhanMatKhau" autocomplete="new-password" required style="padding-right:2.8rem">
+                <input type="password" id="xacNhanMatKhau" name="xacNhanMatKhau" autocomplete="new-password" required style="padding-right:2.8rem" disabled>
                 <button type="button" onclick="toggleCtvPass('xacNhanMatKhau','iconXacNhan')" tabindex="-1"
                   style="position:absolute;right:0;top:0;bottom:0;background:none;border:none;cursor:pointer;padding:0 0.75rem;color:var(--color-muted,#888)">
                   <span id="iconXacNhan">👁</span>
@@ -87,99 +87,170 @@
               </div>
               <div class="error" id="xacNhanMatKhauError">Mật khẩu không khớp.</div>
             </div>
-            <div class="field">
-              <label for="ngaySinh">Ngày sinh</label>
-              <input type="date" id="ngaySinh" name="ngaySinh" required>
+            <div class="field is-locked" data-step-field="ngaySinh">
+              <label for="ngaySinh">Ngày sinh *</label>
+              <input type="date" id="ngaySinh" name="ngaySinh" required disabled>
               <div class="error">Cộng tác viên phải từ đủ 18 tuổi.</div>
             </div>
-            <div class="field">
+            <div class="field is-locked" data-step-field="gioiTinh">
               <label for="gioiTinh">Giới tính</label>
-              <select id="gioiTinh" name="gioiTinh">
+              <select id="gioiTinh" name="gioiTinh" disabled>
                 <option value="Nu">Nữ</option>
                 <option value="Nam">Nam</option>
                 <option value="Khac">Khác</option>
               </select>
             </div>
-            <!-- ĐỊA CHỈ nơi ở hiện tại: tỉnh, phường theo provinces.open-api.vn (2 cấp). Khác với KHU VỰC nhận việc bên dưới. -->
-            <div class="field full">
+            <!-- ĐỊA CHỈ nơi ở hiện tại: tỉnh, phường theo provinces.open-api.vn (2 cấp) -->
+            <div class="field full is-locked" data-step-field="diaChiHeader">
               <span style="font-weight:600">Địa chỉ hiện tại</span>
               <div class="hint">Nơi bạn đang sống (không phải địa chỉ thường trú trên CCCD nếu khác).</div>
             </div>
             <div data-dia-chi-form style="display:contents">
-              <div class="field">
-                <label for="tinhThanh">Tỉnh, thành phố</label>
-                <select id="tinhThanh" name="maTinh" required></select>
+              <div class="field is-locked" data-step-field="tinhThanh">
+                <label for="tinhThanh">Tỉnh, thành phố *</label>
+                <select id="tinhThanh" name="maTinh" required disabled></select>
                 <div class="error">Chọn tỉnh, thành phố nơi bạn đang sống.</div>
               </div>
-              <div class="field">
-                <label for="phuongXa">Phường, xã / quận, huyện</label>
-                <select id="phuongXa" name="maPhuong" required></select>
+              <div class="field is-locked" data-quan-wrap data-step-field="quanHuyen">
+                <label for="quanHuyen">Quận, huyện</label>
+                <select id="quanHuyen" name="maQuan" disabled></select>
+                <div class="error">Chọn quận, huyện nơi bạn đang sống.</div>
+              </div>
+              <div class="field is-locked" data-step-field="phuongXa">
+                <label for="phuongXa">Phường, xã *</label>
+                <select id="phuongXa" name="maPhuong" required disabled></select>
                 <div class="hint" data-kv-note></div>
                 <div class="error">Chọn phường, xã hoặc quận, huyện nơi bạn đang sống.</div>
               </div>
             </div>
-            <div class="field full">
-              <label for="diaChiChiTiet">Số nhà, tên đường</label>
-              <input type="text" id="diaChiChiTiet" name="soNhaTenDuong" maxlength="140" autocomplete="address-line1" placeholder="VD: 45 Đường số 7" required>
+            <div class="field full is-locked" data-step-field="diaChiChiTiet">
+              <label for="diaChiChiTiet">Số nhà, tên đường *</label>
+              <input type="text" id="diaChiChiTiet" name="soNhaTenDuong" maxlength="140" autocomplete="address-line1" placeholder="VD: 45 Đường số 7" required disabled>
               <div class="error">Nhập số nhà, tên đường nơi bạn đang sống.</div>
             </div>
           </div>
         </fieldset>
 
-        <!-- KHU VỰC nhận việc: không chọn tay, máy chủ lấy quận của nơi ở rồi đổi theo GPS của app CTV -->
-        <fieldset>
-          <legend>Khu vực nhận việc</legend>
-          <div class="hint">Khu vực nhận việc được xác định theo vị trí GPS khi bạn dùng ứng dụng; trước đó bTaskee dùng quận nơi bạn ở.</div>
-        </fieldset>
+        <!-- KHU VỰC NHẬN VIỆC ĐÃ ĐƯỢC BỎ THEO YÊU CẦU (HỆ THỐNG TỰ ĐỘNG THEO GPS/ĐỊA CHỈ) -->
 
-        <fieldset>
-          <legend>Dịch vụ muốn tham gia</legend>
+        <fieldset class="is-locked" id="fsDichVu" data-step-group="2">
+          <legend>2. Dịch vụ muốn tham gia *</legend>
           <div class="field" id="dichVuField">
-            <div class="checks">
-              <label class="check" th:each="dm : ${danhMucs}">
-                <input type="checkbox" name="loaiDichVu" th:value="${dm.id}">
-                <span th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</span>
-              </label>
+            <div class="hint" style="margin-bottom:0.75rem">Nhấn vào từng danh mục để mở rộng danh sách dịch vụ. Chọn các dịch vụ đại diện bạn có thể thực hiện.</div>
+            <div class="dich-vu-groups" style="display:flex;flex-direction:column;gap:0.75rem">
+              <div class="dm-group-card dm-accordion-card" th:each="dm : ${danhMucs}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;transition:border-color 0.2s">
+                <!-- Header Cấp 1: Danh mục lớn (bấm để sổ ra / thu vào) -->
+                <div class="dm-accordion-header" th:data-cat-id="${dm.id}" style="display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1rem;cursor:pointer;user-select:none;background:#f8fafc">
+                  <label class="check" style="font-weight:700;color:var(--color-brand,#0d9488);font-size:1.02rem;cursor:pointer;margin:0" onclick="event.stopPropagation()">
+                    <input type="checkbox" class="check-nhom" name="loaiDichVu" th:value="${dm.id}" th:data-nhom-id="${dm.id}" disabled style="cursor:pointer">
+                    <span th:text="${dm.tenLoaiDichVu}">Dọn dẹp, vệ sinh nhà cửa</span>
+                  </label>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span class="dm-count-badge" style="font-size:0.8rem;color:#64748b;background:#e2e8f0;padding:2px 8px;border-radius:12px"></span>
+                    <span class="dm-accordion-chevron" style="color:#64748b;font-size:0.85rem;display:inline-block;transition:transform 0.25s">▼</span>
+                  </div>
+                </div>
+
+                <!-- Body Cấp 2: Danh sách dịch vụ đại diện gọn gàng -->
+                <div class="dm-accordion-body" th:data-cat-body="${dm.id}" style="display:none;padding:0.85rem 1rem 1rem;background:#ffffff;border-top:1px solid #f1f5f9">
+                  <!-- Dữ liệu thô từ Thymeleaf để JS gom nhóm -->
+                  <div class="raw-dv-items" style="display:none">
+                    <span th:each="dv : ${dm.dichVuTheoLan}" th:data-id="${dv.id}" th:data-ten="${dv.tenDichVu}" th:data-loai="TheoLan" th:data-nhom="${dm.id}"></span>
+                    <span th:each="dv : ${dm.dichVuGoiThang}" th:data-id="${dv.id}" th:data-ten="${dv.tenDichVu}" th:data-loai="GoiThang" th:data-nhom="${dm.id}"></span>
+                  </div>
+                  <!-- Khung hiển thị các dịch vụ đại diện do JS render -->
+                  <div class="dm-rep-list" th:data-rep-container="${dm.id}" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:0.75rem;align-items:start">
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="error">Chọn ít nhất một nhóm dịch vụ.</div>
+            <div class="error" style="margin-top:0.5rem">Vui lòng chọn ít nhất một dịch vụ bạn có thể thực hiện.</div>
+          </div>
+          <div class="field" style="margin-top:1.25rem">
+            <label for="ghiChuDichVu">Ghi chú dịch vụ hoặc tay nghề khác bạn có thể làm (nếu có)</label>
+            <textarea id="ghiChuDichVu" name="ghiChuDichVu" rows="3" placeholder="Ví dụ: Có kinh nghiệm vệ sinh công nghiệp 2 năm, biết nấu ăn món chay, có thể mang theo máy móc chuyên dụng..." disabled></textarea>
           </div>
         </fieldset>
 
-        <fieldset>
-          <legend>Tài liệu đính kèm</legend>
+        <fieldset id="fsTaiLieu" data-step-group="3">
+          <legend>3. Tài liệu đính kèm</legend>
           <div class="field" id="hoSoField">
+            <div class="hint" style="margin-bottom:0.75rem">Nhấn trực tiếp vào bất kỳ ảnh nào đã tải lên để xem phóng to.</div>
             <div class="uploads">
-              <label class="upload" data-upload="AnhChanDung" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
-                <span><svg class="ic"><use href="#i-upload"/></svg><b>Ảnh chân dung</b>jpg, png</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp">
-                <span class="state"></span>
-              </label>
-              <label class="upload" data-upload="CCCD_Mat_Truoc" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
-                <span><svg class="ic"><use href="#i-upload"/></svg><b>CCCD mặt trước</b>jpg, png</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp">
-                <span class="state"></span>
-              </label>
-              <label class="upload" data-upload="CCCD_Mat_Sau" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
-                <span><svg class="ic"><use href="#i-upload"/></svg><b>CCCD mặt sau</b>jpg, png</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp">
-                <span class="state"></span>
-              </label>
-              <label class="upload" data-upload="ChungChi" data-endpoint="/api/storage/upload/ctv-chung-chi">
-                <span><svg class="ic"><use href="#i-upload"/></svg><b>Chứng chỉ, bằng cấp</b>không bắt buộc, jpg, png, pdf</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
-                <span class="state"></span>
-              </label>
+              <div class="upload-wrap">
+                <label class="upload" data-upload="AnhChanDung" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
+                  <span><svg class="ic"><use href="#i-upload"/></svg><b>Ảnh chân dung *</b>jpg, png</span>
+                  <input type="file" accept="image/jpeg,image/png,image/webp">
+                  <span class="state"></span>
+                  <div class="upload-view-hint">🔍 Xem to</div>
+                </label>
+                <div class="upload-actions" style="display:none;margin-top:6px;text-align:center">
+                  <button type="button" class="btn-change-file" style="font-size:0.82rem;color:var(--color-brand,#0d9488);background:none;border:none;cursor:pointer;text-decoration:underline">Đổi ảnh khác</button>
+                </div>
+              </div>
+
+              <div class="upload-wrap">
+                <label class="upload" data-upload="CCCD_Mat_Truoc" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
+                  <span><svg class="ic"><use href="#i-upload"/></svg><b>CCCD mặt trước *</b>jpg, png</span>
+                  <input type="file" accept="image/jpeg,image/png,image/webp">
+                  <span class="state"></span>
+                  <div class="upload-view-hint">🔍 Xem to</div>
+                </label>
+                <div class="upload-actions" style="display:none;margin-top:6px;text-align:center">
+                  <button type="button" class="btn-change-file" style="font-size:0.82rem;color:var(--color-brand,#0d9488);background:none;border:none;cursor:pointer;text-decoration:underline">Đổi ảnh khác</button>
+                </div>
+              </div>
+
+              <div class="upload-wrap">
+                <label class="upload" data-upload="CCCD_Mat_Sau" data-endpoint="/api/storage/upload/ctv-ho-so" data-required>
+                  <span><svg class="ic"><use href="#i-upload"/></svg><b>CCCD mặt sau *</b>jpg, png</span>
+                  <input type="file" accept="image/jpeg,image/png,image/webp">
+                  <span class="state"></span>
+                  <div class="upload-view-hint">🔍 Xem to</div>
+                </label>
+                <div class="upload-actions" style="display:none;margin-top:6px;text-align:center">
+                  <button type="button" class="btn-change-file" style="font-size:0.82rem;color:var(--color-brand,#0d9488);background:none;border:none;cursor:pointer;text-decoration:underline">Đổi ảnh khác</button>
+                </div>
+              </div>
             </div>
-            <div class="hint">Mỗi file tối đa 20 MB. File chỉ được tải lên sau khi hồ sơ gửi thành công.</div>
+
+            <!-- KHUNG CHỨNG CHỈ, BẰNG CẤP: CHUNG 1 Ô + NÚT THÊM Ở BÊN NGOÀI -->
+            <div class="chung-chi-box-section" style="margin-top:1.5rem">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;flex-wrap:wrap;gap:8px">
+                <div>
+                  <label style="font-weight:700;font-size:0.95rem;color:var(--foreground,#1e293b);display:flex;align-items:center;gap:6px">
+                    Chứng chỉ, bằng cấp chuyên môn (không bắt buộc)
+                    <span id="ccCountBadge" style="font-size:0.82rem;font-weight:500;color:var(--color-brand,#0d9488)">(Chưa có chứng chỉ)</span>
+                  </label>
+                  <div style="font-size:0.82rem;color:#64748b">Các hình ảnh chứng chỉ tải lên sẽ hiển thị chung trong ô bên dưới</div>
+                </div>
+                <!-- NÚT THÊM NẰM Ở BÊN NGOÀI Ô -->
+                <button type="button" id="btnThemChungChi" class="btn btn-line btn-sm" style="display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:6px 14px;border-radius:8px;cursor:pointer">
+                  <span>+ Thêm chứng chỉ / bằng cấp</span>
+                </button>
+                <input type="file" id="inputChungChiMulti" multiple accept="image/jpeg,image/png,image/webp,application/pdf" style="display:none">
+              </div>
+
+              <!-- KHUNG HIỂN THỊ CHUNG 1 Ô CHO TẤT CẢ FILE HÌNH CHỨNG CHỈ -->
+              <div id="chungChiSharedBox" style="border:2px dashed #cbd5e1;border-radius:14px;padding:1rem;background:#f8fafc;min-height:90px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <div id="chungChiEmptyNote" style="color:#94a3b8;font-size:0.88rem;text-align:center">
+                  Bấm nút <strong>"+ Thêm chứng chỉ / bằng cấp"</strong> ở trên hoặc nhấp vào ô này để nộp chứng chỉ.
+                </div>
+                <div id="chungChiGrid" style="display:none;width:100%;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:12px">
+                </div>
+              </div>
+            </div>
+
+            <div class="hint" style="margin-top:8px">Mỗi file tối đa 20 MB. Ảnh chân dung và CCCD là bắt buộc (*). Chứng chỉ có thể nộp nhiều bằng cấp cùng lúc. Nếu ảnh lỗi hoặc muốn đổi, bạn có thể bấm "Đổi ảnh khác".</div>
             <div class="error">Cần đủ ảnh chân dung và hai mặt CCCD.</div>
           </div>
           <div class="field" style="margin-top:1rem">
             <label for="tenChungChi">Tên chứng chỉ (nếu có đính kèm)</label>
-            <input type="text" id="tenChungChi" name="tenChungChi" placeholder="Ví dụ: Chứng chỉ nghiệp vụ buồng phòng">
+            <input type="text" id="tenChungChi" name="tenChungChi" placeholder="Ví dụ: Chứng chỉ nghiệp vụ buồng phòng, sơ cấp điện lạnh...">
           </div>
         </fieldset>
 
-        <button class="btn btn-teal" type="submit" id="ctvSubmit">Gửi hồ sơ</button>
+        <button class="btn btn-teal is-locked" type="submit" id="ctvSubmit" disabled style="opacity:0.5">Gửi hồ sơ</button>
       </form>
 
       <aside>
@@ -208,6 +279,18 @@
     </div>
   </section>
 </main>
+
+<!-- Lightbox Modal phong to anh -->
+<div id="ctvLightbox" class="ctv-lightbox-modal" style="display:none">
+  <div class="ctv-lightbox-backdrop" onclick="window.closeCtvLightbox && window.closeCtvLightbox()"></div>
+  <div class="ctv-lightbox-dialog">
+    <button type="button" class="ctv-lightbox-close" onclick="window.closeCtvLightbox && window.closeCtvLightbox()" title="Đóng">&times;</button>
+    <div id="ctvLightboxTitle" class="ctv-lightbox-title">Xem chi tiết ảnh</div>
+    <div class="ctv-lightbox-body">
+      <img id="ctvLightboxImg" src="" alt="Ảnh phóng to">
+    </div>
+  </div>
+</div>
 
 <footer th:replace="~{layout/site-layout :: footer}"></footer>
 <div th:replace="~{layout/site-layout :: scripts}"></div>

@@ -789,7 +789,7 @@ public class CustomerApiService {
                 ChungChiCTV cc = ChungChiCTV.builder()
                         .maChungChi(maNgauNhien("CC-"))
                         .congTacVien(savedCtv)
-                        .loaiChungChi(item.getLoaiChungChi() != null ? item.getLoaiChungChi() : "ChungChi")
+                        .loaiChungChi(chuanHoaLoaiChungChi(item.getLoaiChungChi()))
                         .tenChungChi(item.getTenChungChi())
                         .noiCap(item.getNoiCap())
                         .ngayCap(item.getNgayCap())
@@ -854,6 +854,14 @@ public class CustomerApiService {
      * Sinh mã duy nhất cho các bản ghi tạo liên tiếp trong vòng lặp (hồ sơ, chứng chỉ, dịch vụ, khu vực).
      * Mã theo mili-giây bị trùng khi lưu nhiều bản ghi cùng lúc và vi phạm ràng buộc UNIQUE.
      */
+    private static String chuanHoaLoaiChungChi(String loai) {
+        if (loai == null) return "ChungChi";
+        String l = loai.trim();
+        if ("BangCap".equalsIgnoreCase(l)) return "BangCap";
+        if ("ChungNhan".equalsIgnoreCase(l)) return "ChungNhan";
+        return "ChungChi";
+    }
+
     private static String maNgauNhien(String tienTo) {
         return tienTo + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
     }
