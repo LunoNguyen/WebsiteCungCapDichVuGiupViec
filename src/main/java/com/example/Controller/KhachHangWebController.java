@@ -107,7 +107,7 @@ public class KhachHangWebController {
             ra.addFlashAttribute("error", "Hai mật khẩu chưa khớp nhau.");
             return "redirect:/dang-ky";
         }
-        // Quy tắc mật khẩu kiểm tra trong registerCustomer (chỉ áp cho tài khoản mới, không áp khi dùng chung tài khoản CTV)
+        // Quy tắc mật khẩu kiểm tra trong registerCustomer (SĐT đã là CTV vẫn tạo tài khoản khách hàng riêng)
         try {
             CustomerRegisterRequest req = new CustomerRegisterRequest();
             req.setHoTen(hoTen.trim());

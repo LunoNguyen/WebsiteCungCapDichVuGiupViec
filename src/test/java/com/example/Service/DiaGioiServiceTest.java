@@ -97,6 +97,8 @@ class DiaGioiServiceTest {
         Map<String, Object> binhDuong = ds.stream().filter(t -> "Tỉnh Bình Dương".equals(t.get("ten"))).findFirst().orElseThrow();
         assertEquals(Boolean.TRUE, binhDuong.get("cu"));
         assertEquals(Boolean.FALSE, ds.get(0).get("cu"));
+        // "Tỉnh Quảng Ninh" (v1) và "Thành phố Quảng Ninh" (v2) chỉ khác chữ đầu: một dòng
+        assertEquals(1, ds.stream().filter(t -> ((String) t.get("ten")).endsWith("Quảng Ninh")).count());
     }
 
     @Test

@@ -374,7 +374,7 @@ public class DiaGioiService {
 
     // =========================================================================
     // FORM ĐỊA CHỈ GỘP (khớp bảng DiaChiKhachHang: chuỗi địa chỉ + khu vực)
-    //   Ô tỉnh: tỉnh sau sáp nhập (v2) và tỉnh trước sáp nhập (v1) gộp theo tên – tỉnh cùng tên chỉ có một dòng,
+    //   Ô tỉnh: tỉnh sau sáp nhập (v2) và tỉnh trước sáp nhập (v1) gộp theo tên (bỏ "Tỉnh"/"Thành phố") – tỉnh cùng tên chỉ có một dòng,
     //           tỉnh chỉ còn ở danh mục cũ có cu = true.
     //   Ô thứ hai: cấp ngay dưới tỉnh – phường, xã (v2) và quận, huyện cũ (v1, cu = true) của tỉnh cùng tên.
     // =========================================================================
@@ -384,21 +384,26 @@ public class DiaGioiService {
         tinhThanhV1();
         List<Map<String, Object>> cuList = tinhCacheV1 != null ? tinhCacheV1 : List.of();
         Map<String, Integer> maCuTheoTen = new HashMap<>();
-        for (Map<String, Object> t : cuList) maCuTheoTen.put(KhuVucService.chuanHoa((String) t.get("ten")), (Integer) t.get("ma"));
+        for (Map<String, Object> t : cuList) maCuTheoTen.put(tenTinhGoc(t), (Integer) t.get("ma"));
 
         List<Map<String, Object>> kq = new ArrayList<>();
         Set<String> daCo = new HashSet<>();
         for (Map<String, Object> t : tinhThanh()) {
-            String khoa = KhuVucService.chuanHoa((String) t.get("ten"));
+            String khoa = tenTinhGoc(t);
             Map<String, Object> m = gop(t, false);
             if (maCuTheoTen.containsKey(khoa)) m.put("maCu", maCuTheoTen.get(khoa));
             kq.add(m);
             daCo.add(khoa);
         }
         for (Map<String, Object> t : cuList) {
-            if (!daCo.contains(KhuVucService.chuanHoa((String) t.get("ten")))) kq.add(gop(t, true));
+            if (!daCo.contains(tenTinhGoc(t))) kq.add(gop(t, true));
         }
         return kq;
+    }
+
+    /** Tên tỉnh bỏ dấu, bỏ "Tỉnh" / "Thành phố": "Tỉnh Quảng Ninh" (v1) và "Thành phố Quảng Ninh" (v2) là một tỉnh. */
+    private static String tenTinhGoc(Map<String, Object> t) {
+        return KhuVucService.chuanHoa((String) t.get("ten")).replaceFirst("^(tinh|thanh pho) ", "");
     }
 
     /**

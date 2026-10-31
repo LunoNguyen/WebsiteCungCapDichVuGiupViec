@@ -65,15 +65,12 @@
               <label for="matKhau">Mật khẩu đăng nhập *</label>
               <div style="position:relative">
                 <input type="password" id="matKhau" name="matKhau" autocomplete="new-password" required style="padding-right:2.8rem"
-                  data-quy-tac-mat-khau data-sdt="#soDienThoai" data-bo-qua="#coTaiKhoanSan" disabled>
+                  data-quy-tac-mat-khau data-sdt="#soDienThoai" disabled>
                 <button type="button" onclick="toggleCtvPass('matKhau','iconMatKhau')" tabindex="-1"
                   style="position:absolute;right:0;top:0;bottom:0;background:none;border:none;cursor:pointer;padding:0 0.75rem;color:var(--color-muted,#888)">
                   <span id="iconMatKhau">👁</span>
                 </button>
               </div>
-              <label class="hint" style="display:flex;gap:6px;align-items:center;margin-top:6px;cursor:pointer">
-                <input type="checkbox" id="coTaiKhoanSan" disabled> Số điện thoại này đã có tài khoản khách hàng bTaskee (nhập đúng mật khẩu đó để dùng chung tài khoản)
-              </label>
               <div class="error">Mật khẩu chưa đạt các yêu cầu bên trên.</div>
             </div>
             <div class="field is-locked" data-step-field="xacNhanMatKhau">
@@ -100,7 +97,7 @@
                 <option value="Khac">Khác</option>
               </select>
             </div>
-            <!-- ĐỊA CHỈ nơi ở hiện tại: tỉnh, phường theo provinces.open-api.vn (2 cấp) -->
+            <!-- ĐỊA CHỈ nơi ở hiện tại: tỉnh (mới + cũ) → phường, xã mới / quận, huyện cũ – /js/dia-chi.js -->
             <div class="field full is-locked" data-step-field="diaChiHeader">
               <span style="font-weight:600">Địa chỉ hiện tại</span>
               <div class="hint">Nơi bạn đang sống (không phải địa chỉ thường trú trên CCCD nếu khác).</div>
@@ -111,13 +108,8 @@
                 <select id="tinhThanh" name="maTinh" required disabled></select>
                 <div class="error">Chọn tỉnh, thành phố nơi bạn đang sống.</div>
               </div>
-              <div class="field is-locked" data-quan-wrap data-step-field="quanHuyen">
-                <label for="quanHuyen">Quận, huyện</label>
-                <select id="quanHuyen" name="maQuan" disabled></select>
-                <div class="error">Chọn quận, huyện nơi bạn đang sống.</div>
-              </div>
               <div class="field is-locked" data-step-field="phuongXa">
-                <label for="phuongXa">Phường, xã *</label>
+                <label for="phuongXa">Phường, xã / quận, huyện *</label>
                 <select id="phuongXa" name="maPhuong" required disabled></select>
                 <div class="hint" data-kv-note></div>
                 <div class="error">Chọn phường, xã hoặc quận, huyện nơi bạn đang sống.</div>

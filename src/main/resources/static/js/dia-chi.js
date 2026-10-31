@@ -375,7 +375,8 @@
           duoiTheoMa[k] = x;
           selDuoi.appendChild(option(k, x.cu ? x.ten + ' (cũ)' : nhanPhuong(x.ten)));
         });
-        selDuoi.disabled = false;
+        // Form theo bước (đăng ký CTV): ô còn bị khoá thì giữ khoá đến khi tới bước này
+        selDuoi.disabled = !!selDuoi.closest('.is-locked');
         if (maChon && duoiTheoMa[maChon]) selDuoi.value = String(maChon);
         dongBoDuoi();
         capNhatKhuVuc(kvChon);

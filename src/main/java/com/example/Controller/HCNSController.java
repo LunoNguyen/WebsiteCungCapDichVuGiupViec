@@ -1502,7 +1502,7 @@ public class HCNSController {
             }
 
             // 4. Kiểm tra trùng Tên đăng nhập
-            if (taiKhoanRepository.findByTenDangNhap(tenDangNhap).isPresent()) {
+            if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllByTenDangNhap(tenDangNhap), loaiTaiKhoan, null)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập '" + tenDangNhap + "' đã tồn tại trên hệ thống!");
                 return "redirect:/hcns/tai-khoan";
             }
@@ -1514,7 +1514,7 @@ public class HCNSController {
             }
 
             // 6. Kiểm tra trùng Số điện thoại
-            if (taiKhoanRepository.findBySoDienThoai(soDienThoai).isPresent()) {
+            if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllBySoDienThoai(soDienThoai), loaiTaiKhoan, null)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại '" + soDienThoai + "' đã được sử dụng bởi tài khoản khác!");
                 return "redirect:/hcns/tai-khoan";
             }
@@ -1636,8 +1636,7 @@ public class HCNSController {
             }
 
             // Kiểm tra trùng
-            var existingTk = taiKhoanRepository.findByTenDangNhap(tenDangNhap);
-            if (existingTk.isPresent() && !existingTk.get().getId().equals(id)) {
+            if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllByTenDangNhap(tenDangNhap), loaiTaiKhoan, id)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Tên đăng nhập '" + tenDangNhap + "' đã thuộc về tài khoản khác!");
                 return "redirect:/hcns/tai-khoan";
             }
@@ -1648,8 +1647,7 @@ public class HCNSController {
                 return "redirect:/hcns/tai-khoan";
             }
 
-            var existingPhone = taiKhoanRepository.findBySoDienThoai(soDienThoai);
-            if (existingPhone.isPresent() && !existingPhone.get().getId().equals(id)) {
+            if (TaiKhoanRepository.trungTheoLoai(taiKhoanRepository.findAllBySoDienThoai(soDienThoai), loaiTaiKhoan, id)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại '" + soDienThoai + "' đã thuộc về tài khoản khác!");
                 return "redirect:/hcns/tai-khoan";
             }

@@ -138,11 +138,9 @@
   var emailInput = document.getElementById('email');
   var matKhauInput = document.getElementById('matKhau');
   var xacNhanInput = document.getElementById('xacNhanMatKhau');
-  var coTaiKhoanCheck = document.getElementById('coTaiKhoanSan');
   var ngaySinhInput = document.getElementById('ngaySinh');
   var gioiTinhSelect = document.getElementById('gioiTinh');
   var tinhSelect = document.getElementById('tinhThanh');
-  var quanSelect = document.getElementById('quanHuyen');
   var phuongSelect = document.getElementById('phuongXa');
   var diaChiChiTietInput = document.getElementById('diaChiChiTiet');
   var fsDichVu = document.getElementById('fsDichVu');
@@ -192,7 +190,6 @@
 
   function kiemTraMatKhauHopLe(mk, sdt) {
     if (!mk) return false;
-    if (coTaiKhoanCheck && coTaiKhoanCheck.checked) return mk.length >= 6;
     if (window.QuyTacMatKhau) {
       return QuyTacMatKhau.kiemTra(mk, sdt).length === 0;
     }
@@ -230,12 +227,10 @@
     var nsOk = xnOk && du18Tuoi(nsVal);
     var dcHeader = document.querySelector('[data-step-field="diaChiHeader"]');
     var ttField = document.querySelector('[data-step-field="tinhThanh"]');
-    var qhField = document.querySelector('[data-step-field="quanHuyen"]');
     var pxField = document.querySelector('[data-step-field="phuongXa"]');
     var dcctField = document.querySelector('[data-step-field="diaChiChiTiet"]');
     setFieldLock(dcHeader, !nsOk);
     setFieldLock(ttField, !nsOk);
-    setFieldLock(qhField, !nsOk);
     setFieldLock(pxField, !nsOk);
     setFieldLock(dcctField, !nsOk);
 
@@ -832,6 +827,7 @@
       });
     }
 
+    var diaChi = window.DiaChi ? DiaChi.giaTri(tinhSelect.closest('[data-dia-chi-form]')) : {};
     var payload = {
       hoTen: hoTenInput.value.trim(),
       soDienThoai: sdtInput.value.trim(),
@@ -840,9 +836,10 @@
       ngaySinh: ngaySinhInput.value,
       gioiTinh: gioiTinhSelect ? gioiTinhSelect.value : 'Khac',
       soNhaTenDuong: diaChiChiTietInput.value.trim(),
-      maTinh: parseInt(tinhSelect.value, 10),
-      maQuan: quanSelect && quanSelect.value ? parseInt(quanSelect.value, 10) : null,
-      maPhuong: parseInt(phuongSelect.value, 10),
+      // Ô tỉnh / ô thứ hai mang khoá "c74" / "q767": lấy mã số theo dòng đang chọn (quận cũ → maQuan)
+      maTinh: diaChi.maTinh,
+      maQuan: diaChi.maQuan,
+      maPhuong: diaChi.maPhuong,
       danhSachDichVuId: dichVuIds,
       danhSachHoSo: hoSo,
       danhSachChungChi: danhSachChungChi
