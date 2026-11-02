@@ -173,6 +173,18 @@ public class CollaboratorProfileController {
         }
     }
 
+    /** Lấy vị trí GPS hiện tại của CTV (Redis / bộ nhớ trong / fallback khu vực) */
+    @GetMapping("/{id}/location")
+    public ResponseEntity<?> getLocation(@PathVariable Integer id) {
+        try {
+            return collaboratorApiService.layViTriHienTai(id)
+                    .map(vt -> ResponseEntity.ok(Map.of("success", true, "data", vt)))
+                    .orElseGet(() -> ResponseEntity.ok(Map.of("success", false, "message", "Chưa có vị trí.")));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     /** [POOL] Lấy danh sách đơn đang tìm CTV */
     @GetMapping("/available-orders")
     public ResponseEntity<?> getAvailableOrders(@RequestParam Integer congTacVienId) {

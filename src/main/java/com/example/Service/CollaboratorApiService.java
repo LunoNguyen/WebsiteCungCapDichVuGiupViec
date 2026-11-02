@@ -472,13 +472,19 @@ public class CollaboratorApiService {
             }
         }
 
-        // 2. Quận lần trước trên Redis (đọc trước khi ghi đè)
+        // 2. Quận lần trước trên Redis (đọc trước khi ghi đè) hoặc trong CSDL
         String quanTruoc = viTriCtvStore.get(resolvedCtvId).map(ViTriCtvStore.ViTri::quanHuyen).orElse("");
+        if (quanTruoc.isBlank() && khuVucCtvService != null) {
+            quanTruoc = khuVucCtvService.tomTat(resolvedCtvId);
+        }
         String quanMoi = kvOpt.map(KhuVuc::getTenKhuVuc).orElse("");
+        if (quanMoi.isBlank()) {
+            quanMoi = !quanTruoc.isBlank() ? quanTruoc : "Quận 1";
+        }
 
-        // 3. Lưu vị trí lên Redis; không tra được quận thì giữ quận cũ để lần sau còn so sánh
+        // 3. Lưu vị trí lên Redis
         ViTriCtvStore.ViTri vt = viTriCtvStore.update(resolvedCtvId, viDo, kinhDo,
-                quanMoi.isBlank() ? quanTruoc : quanMoi, tinhThanh, diaChi);
+                quanMoi, tinhThanh, diaChi);
 
         // 4. Chỉ đọc / ghi CSDL khi sang quận khác (hoặc lần đầu ghi nhận quận)
         boolean daDongBoDB = false;
@@ -521,6 +527,58 @@ public class CollaboratorApiService {
     @Transactional
     public Map<String, Object> updateLocation(Integer congTacVienId, java.math.BigDecimal viDo, java.math.BigDecimal kinhDo) {
         return updateLocation(congTacVienId, viDo, kinhDo, "", "", "");
+    }
+
+    /** Lấy vị trí hiện tại của CTV (từ Redis / bộ nhớ trong, hoặc fallback quận đăng ký nhận việc) */
+    public Optional<Map<String, Object>> layViTriHienTai(Integer congTacVienId) {
+        CongTacVien ctv = congTacVienRepository.findById(congTacVienId).orElse(null);
+        if (ctv == null) {
+            TaiKhoan tk = taiKhoanRepository.findById(congTacVienId).orElse(null);
+            if (tk != null) {
+                ctv = congTacVienRepository.findByTaiKhoan_Id(tk.getId()).orElse(null);
+            }
+        }
+        if (ctv == null) return Optional.empty();
+        final Integer resolvedCtvId = ctv.getId();
+
+        Optional<ViTriCtvStore.ViTri> vtOpt = viTriCtvStore.get(resolvedCtvId);
+        if (vtOpt.isPresent()) {
+            ViTriCtvStore.ViTri vt = vtOpt.get();
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("congTacVienId", resolvedCtvId);
+            m.put("viDo", vt.viDo());
+            m.put("kinhDo", vt.kinhDo());
+            m.put("quanHuyen", vt.quanHuyen());
+            m.put("tinhThanh", vt.tinhThanh());
+            m.put("diaChi", vt.diaChi());
+            m.put("khuVucHienTai", vt.quanHuyen());
+            m.put("thoiGianCapNhatViTri", vt.thoiGian());
+            return Optional.of(m);
+        }
+
+        // Fallback theo khu vực CTV đăng ký nhận việc
+        if (khuVucCtvService != null) {
+            List<KhuVuc> kvs = khuVucCtvService.dangNhan(resolvedCtvId);
+            if (!kvs.isEmpty()) {
+                String tenKv = kvs.get(0).getTenKhuVuc();
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("congTacVienId", resolvedCtvId);
+                m.put("quanHuyen", tenKv);
+                m.put("khuVucHienTai", tenKv);
+                if (tamQuanHcm != null) {
+                    tamQuanHcm.danhSach().stream()
+                            .filter(t -> t.ten().equalsIgnoreCase(tenKv))
+                            .findFirst()
+                            .ifPresent(t -> {
+                                m.put("viDo", java.math.BigDecimal.valueOf(t.viDo()));
+                                m.put("kinhDo", java.math.BigDecimal.valueOf(t.kinhDo()));
+                            });
+                }
+                m.put("thoiGianCapNhatViTri", java.time.LocalDateTime.now());
+                return Optional.of(m);
+            }
+        }
+        return Optional.empty();
     }
 
     public Map<String, Object> getAssignmentDetail(Integer phanCongId) {

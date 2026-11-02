@@ -7,6 +7,7 @@ import com.example.Model.PhanCongCTV;
 import com.example.Repository.DonDatDichVuRepository;
 import com.example.Repository.PhanCongCTVRepository;
 import com.example.Service.CatalogService;
+import com.example.Service.ViTriCtvStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Chi tiết một đơn đặt dịch vụ cho khung "Chi tiết đơn" của CSKH, kèm địa chỉ đầy đủ
@@ -41,6 +43,8 @@ public class DonDatChiTietController {
     private com.example.Service.GeocodingService geocodingService;
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Service.CollaboratorApiService collaboratorApiService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.example.Service.KhuVucCtvService khuVucCtvService;
 
     public DonDatChiTietController(DonDatDichVuRepository donDatDichVuRepository,
                                    PhanCongCTVRepository phanCongCTVRepository) {
@@ -108,8 +112,8 @@ public class DonDatChiTietController {
     // ── Theo dõi đơn đang thực hiện trên bản đồ ─────────────────────────
 
     /**
-     * Vị trí địa chỉ khách chọn thực hiện dịch vụ (tra từ địa chỉ, cache Redis) và vị trí mới nhất
-     * của các CTV phụ trách (app CTV gửi lên Redis mỗi 5 giây). Trang CSKH gọi lại mỗi 5 giây.
+     * Vị trí địa chỉ khách chọn thực hiện dịch vụ (tra từ địa chỉ, cache In-Memory & Redis) và vị trí mới nhất
+     * của các CTV phụ trách (app CTV gửi lên Redis/bộ nhớ mỗi 5 giây). Trang CSKH gọi lại mỗi 5 giây.
      *
      * GET /cskh/don-dat-dich-vu/{id}/theo-doi
      */
@@ -130,6 +134,13 @@ public class DonDatChiTietController {
             khach.put("viDo", td.viDo());
             khach.put("kinhDo", td.kinhDo());
         });
+        // Fallback: nếu timToaDo chưa có toạ độ mà đơn có KhuVuc trong DB thì dùng toạ độ khu vực
+        if (khach.get("viDo") == null && don.getDiaChi() != null && don.getDiaChi().getKhuVuc() != null) {
+            geocodingService.timToaDoTheoKhuVuc(don.getDiaChi().getKhuVuc().getTenKhuVuc()).ifPresent(td -> {
+                khach.put("viDo", td.viDo());
+                khach.put("kinhDo", td.kinhDo());
+            });
+        }
         body.put("khachHang", khach);
 
         List<Map<String, Object>> ctvs = new ArrayList<>();
@@ -141,11 +152,25 @@ public class DonDatChiTietController {
             c.put("id", pc.getCongTacVien().getId());
             c.put("hoTen", pc.getCongTacVien().getHoTen());
             c.put("soDienThoai", pc.getCongTacVien().getSoDienThoai());
-            viTriCtvStore.get(pc.getCongTacVien().getId()).ifPresent(vt -> {
+
+            Optional<ViTriCtvStore.ViTri> vtOpt = viTriCtvStore.get(pc.getCongTacVien().getId());
+            if (vtOpt.isPresent()) {
+                ViTriCtvStore.ViTri vt = vtOpt.get();
                 c.put("viDo", vt.viDo());
                 c.put("kinhDo", vt.kinhDo());
                 c.put("capNhatLuc", vt.thoiGian().format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM")));
-            });
+            } else if (khuVucCtvService != null) {
+                // Fallback nếu CTV chưa gửi GPS hoặc app chưa mở: lấy toạ độ theo quận CTV đang nhận việc
+                List<com.example.Model.KhuVuc> kvs = khuVucCtvService.dangNhan(pc.getCongTacVien().getId());
+                if (!kvs.isEmpty()) {
+                    String tenKv = kvs.get(0).getTenKhuVuc();
+                    geocodingService.timToaDoTheoKhuVuc(tenKv).ifPresent(td -> {
+                        c.put("viDo", td.viDo());
+                        c.put("kinhDo", td.kinhDo());
+                        c.put("capNhatLuc", "Khu vực " + tenKv);
+                    });
+                }
+            }
             ctvs.add(c);
         }
         body.put("congTacVien", ctvs);

@@ -2,6 +2,7 @@ package com.example.Service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpEntity;
@@ -16,18 +17,19 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.text.Normalizer;
 import java.time.Duration;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 /**
- * Đổi địa chỉ dạng chữ thành toạ độ bằng OpenStreetMap Nominatim (miễn phí, không cần API key).
- * CSDL không lưu toạ độ địa chỉ nên kết quả được cache trên Redis để không gọi lại nhiều lần
- * (Nominatim giới hạn khoảng 1 yêu cầu/giây).
- *
- * Key: neatify:geocode:{sha1(địa chỉ)} → "viDo|kinhDo" hoặc "-" (không tìm thấy)
+ * Đổi địa chỉ dạng chữ thành toạ độ bằng OpenStreetMap Nominatim và dự phòng toạ độ các quận TP.HCM (TamQuanHcm).
+ * Có bộ nhớ đệm kép (In-Memory + Redis) và cơ chế ngắt mạch (circuit breaker) để tránh làm nghẽn
+ * luồng máy chủ khi không có kết nối internet hoặc dịch vụ bên ngoài phản hồi chậm.
  */
 @Service
 public class GeocodingService {
@@ -41,36 +43,99 @@ public class GeocodingService {
     private final StringRedisTemplate redis;
     private final String keyPrefix;
     private final RestTemplate http;
+    private final Map<String, Optional<ToaDo>> memCache = new ConcurrentHashMap<>();
+
+    @Autowired(required = false)
+    private TamQuanHcm tamQuanHcm;
+
+    // Ngắt mạch: khi gọi Nominatim bị lỗi/timeout thì tạm ngưng gọi mạng trong 60 giây để dùng fallback ngay
+    private volatile long networkCooldownUntil = 0;
 
     public GeocodingService(StringRedisTemplate redis,
                             @Value("${app.cache.key-prefix:neatify:}") String prefix) {
         this.redis = redis;
         this.keyPrefix = prefix + "geocode:";
         SimpleClientHttpRequestFactory f = new SimpleClientHttpRequestFactory();
-        f.setConnectTimeout(Duration.ofSeconds(3));
-        f.setReadTimeout(Duration.ofSeconds(5));
+        f.setConnectTimeout(Duration.ofMillis(1500));
+        f.setReadTimeout(Duration.ofMillis(2000));
         this.http = new RestTemplate(f);
     }
 
     public Optional<ToaDo> timToaDo(String diaChi) {
         if (diaChi == null || diaChi.isBlank()) return Optional.empty();
         String q = diaChi.trim();
-        String key = keyPrefix + sha1(q.toLowerCase());
+        String cacheKey = q.toLowerCase();
 
+        // 1. Kiểm tra cache trong bộ nhớ (nhanh nhất, 0ms)
+        Optional<ToaDo> mem = memCache.get(cacheKey);
+        if (mem != null) return mem;
+
+        // 2. Kiểm tra cache Redis
+        String key = keyPrefix + sha1(cacheKey);
         String cached = docCache(key);
-        if (cached != null) return parse(cached);
-
-        // Thử cả địa chỉ đầy đủ, rồi bỏ dần phần đầu (số nhà/ngõ) nếu không tìm thấy
-        ToaDo kq = null;
-        String thu = q;
-        for (int i = 0; i < 3 && kq == null && thu != null; i++) {
-            kq = goiNominatim(thu);
-            int phay = thu.indexOf(',');
-            thu = phay > 0 ? thu.substring(phay + 1).trim() : null;
+        if (cached != null) {
+            Optional<ToaDo> parsed = parse(cached);
+            memCache.put(cacheKey, parsed);
+            return parsed;
         }
+
+        // 3. Chuẩn bị toạ độ dự phòng từ tâm quận (TamQuanHcm) nếu địa chỉ thuộc TP.HCM
+        ToaDo fallbackQuan = doanToaDoTheoTamQuan(q);
+
+        // 4. Nếu mạng không bị ngắt mạch, thử gọi OpenStreetMap Nominatim
+        ToaDo kq = null;
+        if (System.currentTimeMillis() >= networkCooldownUntil) {
+            String thu = q;
+            for (int i = 0; i < 2 && kq == null && thu != null; i++) {
+                kq = goiNominatim(thu);
+                int phay = thu.indexOf(',');
+                thu = phay > 0 ? thu.substring(phay + 1).trim() : null;
+            }
+        }
+
+        // 5. Nếu không tra được bằng Nominatim thì dùng toạ độ tâm quận
+        if (kq == null && fallbackQuan != null) {
+            kq = fallbackQuan;
+        }
+
+        Optional<ToaDo> result = Optional.ofNullable(kq);
+        memCache.put(cacheKey, result);
         ghiCache(key, kq != null ? kq.viDo().toPlainString() + "|" + kq.kinhDo().toPlainString() : KHONG_THAY,
                 kq != null ? Duration.ofDays(30) : Duration.ofHours(6));
-        return Optional.ofNullable(kq);
+        return result;
+    }
+
+    /** Tra toạ độ nhanh trực tiếp theo tên quận/huyện TP.HCM */
+    public Optional<ToaDo> timToaDoTheoKhuVuc(String tenKhuVuc) {
+        if (tenKhuVuc == null || tenKhuVuc.isBlank() || tamQuanHcm == null) return Optional.empty();
+        String clean = boDau(tenKhuVuc).toLowerCase();
+        for (TamQuanHcm.Tam t : tamQuanHcm.danhSach()) {
+            String tenTam = boDau(t.ten()).toLowerCase();
+            if (clean.contains(tenTam) || tenTam.contains(clean)) {
+                return Optional.of(new ToaDo(BigDecimal.valueOf(t.viDo()), BigDecimal.valueOf(t.kinhDo())));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private ToaDo doanToaDoTheoTamQuan(String diaChi) {
+        if (tamQuanHcm == null || diaChi == null || diaChi.isBlank()) return null;
+        String clean = boDau(diaChi).toLowerCase();
+        for (TamQuanHcm.Tam t : tamQuanHcm.danhSach()) {
+            String tenTam = boDau(t.ten()).toLowerCase();
+            // Khớp ví dụ: "quan 1", "binh thanh", "thu duc", "go vap", "phu nhuan"
+            if (clean.contains(tenTam)) {
+                return new ToaDo(BigDecimal.valueOf(t.viDo()), BigDecimal.valueOf(t.kinhDo()));
+            }
+            // Khớp viết tắt dạng "q.1", "q1", "q. 1"
+            if (t.ten().startsWith("Quận ")) {
+                String soQuan = t.ten().substring(5).trim();
+                if (clean.matches(".*\\b(q\\.?\\s*" + Pattern.quote(soQuan) + ")\\b.*")) {
+                    return new ToaDo(BigDecimal.valueOf(t.viDo()), BigDecimal.valueOf(t.kinhDo()));
+                }
+            }
+        }
+        return null;
     }
 
     private ToaDo goiNominatim(String q) {
@@ -83,14 +148,16 @@ public class GeocodingService {
                     .encode(StandardCharsets.UTF_8)
                     .build().toUri();
             HttpHeaders h = new HttpHeaders();
-            h.set(HttpHeaders.USER_AGENT, "bTaskee/1.0 (luan-an)"); // Nominatim yêu cầu User-Agent riêng
+            h.set(HttpHeaders.USER_AGENT, "bTaskee/1.0 (luan-an)");
             h.set(HttpHeaders.ACCEPT_LANGUAGE, "vi");
             List<?> body = http.exchange(uri, HttpMethod.GET, new HttpEntity<>(h), List.class).getBody();
             if (body == null || body.isEmpty()) return null;
             Map<?, ?> first = (Map<?, ?>) body.get(0);
             return new ToaDo(new BigDecimal(first.get("lat").toString()), new BigDecimal(first.get("lon").toString()));
         } catch (RuntimeException e) {
-            log.warn("Không tra được toạ độ cho '{}': {}", q, e.getMessage());
+            log.warn("Không kết nối được dịch vụ toạ độ mạng cho '{}' (chuyển sang chế độ offline): {}", q, e.getMessage());
+            // Kích hoạt ngắt mạch trong 60 giây để không làm chậm các request kế tiếp
+            networkCooldownUntil = System.currentTimeMillis() + 60_000;
             return null;
         }
     }
@@ -99,7 +166,7 @@ public class GeocodingService {
         try {
             return redis.opsForValue().get(key);
         } catch (RuntimeException e) {
-            return null; // Redis tắt: tra trực tiếp
+            return null;
         }
     }
 
@@ -122,5 +189,12 @@ public class GeocodingService {
         } catch (Exception e) {
             return Integer.toHexString(s.hashCode());
         }
+    }
+
+    private static String boDau(String str) {
+        if (str == null) return "";
+        String nfd = Normalizer.normalize(str, Normalizer.Form.NFD);
+        return Pattern.compile("\\p{InCombiningDiacriticalMarks}+").matcher(nfd)
+                .replaceAll("").replace('đ', 'd').replace('Đ', 'D');
     }
 }
