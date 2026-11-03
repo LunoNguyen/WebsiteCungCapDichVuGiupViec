@@ -30,6 +30,8 @@ public class CollaboratorApiService {
     private HanNhanDonService hanNhanDonService;
     @org.springframework.beans.factory.annotation.Autowired
     private com.example.Repository.DichVuCTVRepository dichVuCTVRepository;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.Repository.HoaDonRepository hoaDonRepository;
     private final DonDatDichVuRepository donDatDichVuRepository;
     private final LichLamViecRepository lichLamViecRepository;
     private final CongTacVienRepository congTacVienRepository;
@@ -98,6 +100,16 @@ public class CollaboratorApiService {
     }
 
     /** Tính tổng số dư ví thu nhập (80%) của CTV từ tất cả các đơn đã hoàn thành */
+        /** Kiểm tra xem đơn hàng là thanh toán Tiền mặt hay Chuyển khoản */
+    private boolean kiemTraLaDonTienMat(DonDatDichVu don) {
+        if (don == null || hoaDonRepository == null) return true;
+        java.util.Optional<com.example.Model.HoaDon> hdOpt = hoaDonRepository.findByDonDat_Id(don.getId());
+        if (hdOpt.isPresent() && "ChuyenKhoan".equalsIgnoreCase(hdOpt.get().getHinhThucThanhToan())) {
+            return false;
+        }
+        return true;
+    }
+
     public java.math.BigDecimal tinhSoDuViCtv(Integer congTacVienId) {
         if (congTacVienId == null) return java.math.BigDecimal.ZERO;
         List<PhanCongCTV> list = phanCongCTVRepository.findByCongTacVien_IdOrderByThoiGianPhanCongDesc(congTacVienId);
@@ -114,7 +126,16 @@ public class CollaboratorApiService {
         }
         java.math.BigDecimal total = java.math.BigDecimal.ZERO;
         for (Map.Entry<DonDatDichVu, List<PhanCongCTV>> e : xongTheoDon.entrySet()) {
-            total = total.add(tinhThuNhapCtv(PhanCongTheoDichVu.tienCuaCtv(e.getKey(), e.getValue())));
+            DonDatDichVu don = e.getKey();
+            java.math.BigDecimal tienCuaCtv = PhanCongTheoDichVu.tienCuaCtv(don, e.getValue());
+            boolean laTienMat = kiemTraLaDonTienMat(don);
+            if (laTienMat) {
+                // Đơn tiền mặt: CTV đã thu 100% tiền mặt từ khách -> trừ chiết khấu nền tảng vào ví CTV (ví có thể âm)
+                total = total.subtract(tinhPhiNenTang(tienCuaCtv));
+            } else {
+                // Đơn chuyển khoản: Khách thanh toán cho công ty -> cộng tiền công thực nhận vào ví CTV
+                total = total.add(tinhThuNhapCtv(tienCuaCtv));
+            }
         }
         return total;
     }
@@ -420,6 +441,9 @@ public class CollaboratorApiService {
             item.put("khachHangPhone", don.getKhachHang().getSoDienThoai());
             item.put("yeuCauDacBiet", don.getYeuCauDacBiet());
             java.math.BigDecimal tienCuaToi = tienDonCuaCtv(pc);
+            boolean laTienMat = kiemTraLaDonTienMat(don);
+            item.put("laTienMat", laTienMat);
+            item.put("hinhThucThanhToan", laTienMat ? "TienMat" : "ChuyenKhoan");
             item.put("thanhTien", tienCuaToi);
             item.put("thanhTienDon", don.getThanhTien());
             item.put("phiNenTang", tinhPhiNenTang(tienCuaToi));
@@ -605,6 +629,9 @@ public class CollaboratorApiService {
         result.put("yeuCauDacBiet", don.getYeuCauDacBiet());
         result.put("ghiChu", don.getGhiChu());
         java.math.BigDecimal tienCuaToi = tienDonCuaCtv(pc);
+        boolean laTienMat = kiemTraLaDonTienMat(don);
+        result.put("laTienMat", laTienMat);
+        result.put("hinhThucThanhToan", laTienMat ? "TienMat" : "ChuyenKhoan");
         result.put("thanhTien", tienCuaToi);
         result.put("thanhTienDon", don.getThanhTien());
         result.put("phiNenTang", tinhPhiNenTang(tienCuaToi));
@@ -912,6 +939,7 @@ public class CollaboratorApiService {
 
         if (targetLlv != null) {
             targetLlv.setTrangThai("DangThucHien");
+            targetLlv.setKetQuaThucHien("BAT_DAU:" + LocalDateTime.now().toString());
             lichLamViecRepository.save(targetLlv);
         }
 
@@ -1414,7 +1442,7 @@ public class CollaboratorApiService {
                 ? req.getKetQuaThucHien().trim().replaceAll("\\s+", " ")
                 : "Hoàn thành công việc";
 
-        // Xác định buổi đang thực hiện (hoặc buổi chưa hoàn thành đầu tiên) để hoàn thành đúng 1 buổi
+        // Xác định buổi đang thực hiện để hoàn thành đúng 1 buổi
         LichLamViec activeSession = null;
         for (LichLamViec llv : sches) {
             if ("DangThucHien".equalsIgnoreCase(llv.getTrangThai())) {
@@ -1425,14 +1453,66 @@ public class CollaboratorApiService {
         if (activeSession == null) {
             for (LichLamViec llv : sches) {
                 if ("SapToi".equalsIgnoreCase(llv.getTrangThai())) {
-                    activeSession = llv;
-                    break;
+                    throw new IllegalArgumentException("Bạn chưa bắt đầu ca làm việc! Vui lòng chụp ảnh và ấn 'Bắt đầu làm việc' trước khi hoàn thành.");
                 }
             }
         }
         // Bấm hoàn thành lần nữa (mạng chập chờn, gọi lại API) khi không còn buổi nào để làm thì không ghi thêm gì
         if (activeSession == null && "HoanThanh".equalsIgnoreCase(pc.getTrangThai())) {
             throw new IllegalArgumentException("Công việc này đã hoàn thành trước đó.");
+        }
+
+        // RÀNG BUỘC THỜI GIAN HOÀN THÀNH CA (-15 phút đến +30 phút kể từ khi bắt đầu làm)
+        LocalDateTime thoiGianBatDauThucTe = null;
+        if (activeSession != null && activeSession.getKetQuaThucHien() != null
+                && activeSession.getKetQuaThucHien().startsWith("BAT_DAU:")) {
+            try {
+                thoiGianBatDauThucTe = LocalDateTime.parse(activeSession.getKetQuaThucHien().substring(8));
+            } catch (Exception ignored) {}
+        }
+        if (thoiGianBatDauThucTe == null) {
+            java.util.Optional<LichSuTrangThaiDon> lsDangLam = lichSuTrangThaiDonRepository
+                    .findFirstByDonDat_IdAndTrangThaiMoiOrderByThoiGianDescIdDesc(don.getId(), "DangThucHien");
+            if (lsDangLam.isPresent()) {
+                thoiGianBatDauThucTe = lsDangLam.get().getThoiGian();
+            }
+        }
+        if (thoiGianBatDauThucTe == null) {
+            LocalDate ngayLam = (activeSession != null && activeSession.getNgayLam() != null)
+                    ? activeSession.getNgayLam() : don.getNgayThucHien();
+            LocalTime gioBatDau = (activeSession != null && activeSession.getGioBatDau() != null)
+                    ? activeSession.getGioBatDau() : (don.getGioBatDau() != null ? don.getGioBatDau() : LocalTime.now());
+            thoiGianBatDauThucTe = (ngayLam != null && gioBatDau != null)
+                    ? LocalDateTime.of(ngayLam, gioBatDau) : LocalDateTime.now();
+        }
+
+        long thoiLuongPhut = 120;
+        LocalTime gbd = (activeSession != null && activeSession.getGioBatDau() != null)
+                ? activeSession.getGioBatDau() : don.getGioBatDau();
+        LocalTime gkt = (activeSession != null && activeSession.getGioKetThuc() != null)
+                ? activeSession.getGioKetThuc() : don.getGioKetThuc();
+        if (gbd != null && gkt != null) {
+            long diff = java.time.Duration.between(gbd, gkt).toMinutes();
+            if (diff < 0) diff += 24 * 60;
+            if (diff > 0) thoiLuongPhut = diff;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime mocKetThucDuKien = thoiGianBatDauThucTe.plusMinutes(thoiLuongPhut);
+        LocalDateTime mocSomNhat = mocKetThucDuKien.minusMinutes(15);
+        LocalDateTime mocTreToiDa = mocKetThucDuKien.plusMinutes(30);
+
+        if (now.isBefore(mocSomNhat)) {
+            String gioSomNhat = mocSomNhat.format(DateTimeFormatter.ofPattern("HH:mm"));
+            String gioBatDauStr = thoiGianBatDauThucTe.format(DateTimeFormatter.ofPattern("HH:mm"));
+            throw new IllegalArgumentException("Chưa đủ thời gian hoàn thành ca làm việc! Ca làm bắt đầu lúc "
+                    + gioBatDauStr + " (dự kiến " + thoiLuongPhut + " phút). "
+                    + "Bạn chỉ có thể hoàn thành sớm tối đa 15 phút (từ lúc " + gioSomNhat + ").");
+        }
+
+        long soPhutTre = 0;
+        if (now.isAfter(mocTreToiDa)) {
+            soPhutTre = java.time.Duration.between(mocKetThucDuKien, now).toMinutes();
         }
 
         // Ảnh tài sản sau khi làm không bắt buộc: có ảnh thì lưu biểu mẫu
@@ -1443,7 +1523,7 @@ public class CollaboratorApiService {
 
         if (activeSession != null) {
             activeSession.setTrangThai("HoanThanh");
-            activeSession.setKetQuaThucHien(cleanKetQua);
+            activeSession.setKetQuaThucHien(cleanKetQua + (soPhutTre > 0 ? " [Hoàn thành trễ " + soPhutTre + " phút]" : ""));
             lichLamViecRepository.save(activeSession);
         }
 
@@ -1493,7 +1573,7 @@ public class CollaboratorApiService {
                 .trangThaiMoi(nextRemaining != null ? "DaXacNhan" : don.getTrangThai())
                 .nguoiThucHien("CongTacVien: " + pc.getCongTacVien().getHoTen())
                 .thoiGian(LocalDateTime.now())
-                .ghiChu("CTV hoàn thành ca làm việc. Kết quả: " + cleanKetQua)
+                .ghiChu("CTV hoàn thành ca làm việc" + (soPhutTre > 0 ? " [Trễ " + soPhutTre + " phút]" : "") + ". Kết quả: " + cleanKetQua)
                 .build();
         lichSuTrangThaiDonRepository.save(ls);
 
@@ -1510,12 +1590,23 @@ public class CollaboratorApiService {
         String phiStr = String.format("%,d", phiNenTang.longValue()) + "đ";
         String thucNhanStr = String.format("%,d", tienThucNhan.longValue()) + "đ";
 
-        // 1. Tạo thông báo hoàn thành đơn cho CTV (ghi rõ nhiệm vụ gì, ngày nào, mấy giờ, chiết khấu 20% & thực nhận 80%)
+        boolean laTienMat = kiemTraLaDonTienMat(don);
+
+        // 1. Tạo thông báo hoàn thành đơn cho CTV (KHÔNG hiển thị tỷ lệ 20% hay 80%)
         if (pc.getCongTacVien() != null && pc.getCongTacVien().getTaiKhoan() != null) {
             String prefixCTV = "CTV " + tenCTV;
-            String chiTietTien = tongTienDon.compareTo(java.math.BigDecimal.ZERO) > 0
-                    ? ". Tổng đơn: " + tongTienStr + " | Phí nền tảng (20%): -" + phiStr + " | Tiền công thực nhận (80%): +" + thucNhanStr + " đã được cộng vào Ví thu nhập"
-                    : "";
+            String chiTietTien;
+            if (tongTienDon.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                if (laTienMat) {
+                    chiTietTien = ". Thu tiền mặt từ khách: " + tongTienStr
+                            + " | Phí nền tảng: -" + phiStr + " đã được trừ vào ví";
+                } else {
+                    chiTietTien = ". Tổng đơn: " + tongTienStr
+                            + " | Tiền công thực nhận: +" + thucNhanStr + " đã được cộng vào Ví thu nhập";
+                }
+            } else {
+                chiTietTien = "";
+            }
             ThongBao tbComplete = ThongBao.builder()
                     .maThongBao("TB-CTV-HT-" + pc.getId() + "-" + (System.currentTimeMillis() % 100000))
                     .tieuDe(prefixCTV + " – Hoàn thành nhiệm vụ: " + don.getMaDonDat())
@@ -1538,23 +1629,32 @@ public class CollaboratorApiService {
             thongBaoNguoiDungRepository.save(tbnd);
         }
 
-        // Thông báo cho khách hàng: ThongBaoSuKienService gửi theo sự kiện phân công / trạng thái đơn
+        // Tính lại số dư ví mới của CTV (ví có thể âm)
         java.math.BigDecimal soDuViMoi = pc.getCongTacVien() != null
                 ? tinhSoDuViCtv(pc.getCongTacVien().getId())
-                : tienThucNhan;
+                : (laTienMat ? phiNenTang.negate() : tienThucNhan);
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("phanCongId", pc.getId());
         res.put("donDatId", don.getId());
         res.put("donDatTrangThai", don.getTrangThai());
+        res.put("laTienMat", laTienMat);
         res.put("tongTienDon", tongTienDon);
         res.put("phiNenTang", phiNenTang);
         res.put("tienThucNhan", tienThucNhan);
+        res.put("soTienThuKhach", laTienMat ? tongTienDon : java.math.BigDecimal.ZERO);
+        res.put("tienBienDongVi", laTienMat ? phiNenTang.negate() : tienThucNhan);
         res.put("tyLeChietKhau", 20);
         res.put("tyLeThucNhan", 80);
         res.put("soDuVi", soDuViMoi);
         res.putAll(layThongTinTaiSanDon(don.getId()));
-        res.put("message", "Đã gửi ảnh tài sản sau dịch vụ & xác nhận hoàn thành! +" + thucNhanStr + " (80% tiền công) đã được cộng vào Ví thu nhập.");
+        if (laTienMat) {
+            res.put("message", "Đã gửi ảnh tài sản sau dịch vụ & hoàn thành ca làm! Thu tiền mặt từ khách: "
+                    + tongTienStr + ". Phí nền tảng (-" + phiStr + ") đã được trừ vào ví.");
+        } else {
+            res.put("message", "Đã gửi ảnh tài sản sau dịch vụ & xác nhận hoàn thành! +"
+                    + thucNhanStr + " tiền công đã được cộng vào Ví thu nhập.");
+        }
         return res;
     }
 
@@ -2123,6 +2223,9 @@ public class CollaboratorApiService {
             }
             item.put("khuVuc", tenKhuVucDon);
             item.put("yeuCauDacBiet", don.getYeuCauDacBiet());
+            boolean laTienMat = kiemTraLaDonTienMat(don);
+            item.put("laTienMat", laTienMat);
+            item.put("hinhThucThanhToan", laTienMat ? "TienMat" : "ChuyenKhoan");
             item.put("thanhTien", don.getThanhTien());
             item.put("phiNenTang", tinhPhiNenTang(don.getThanhTien()));
             item.put("tienThucNhan", tinhThuNhapCtv(don.getThanhTien()));

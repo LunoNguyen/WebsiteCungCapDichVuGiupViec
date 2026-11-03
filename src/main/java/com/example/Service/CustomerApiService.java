@@ -672,9 +672,7 @@ public class CustomerApiService {
             throw new IllegalArgumentException("Địa chỉ nơi ở quá dài (tối đa 200 ký tự).");
         }
         // Khu vực nhận việc không còn chọn tay: ban đầu là quận của nơi ở, sau đó theo GPS của app CTV
-        if (khuVucNoiO.isEmpty() && (req.getPhuongXa() == null || req.getPhuongXa().isBlank())) {
-            throw new IllegalArgumentException("Vui lòng chọn phường, xã nơi ở để xác định khu vực nhận việc ban đầu.");
-        }
+        // Nếu địa chỉ ngoài vùng tra tự động thì dùng fallback khu vực phục vụ ban đầu (không chặn ứng viên nộp hồ sơ)
 
         String suffix = com.example.Service.MaSinh.duoi(); // không trùng khi nhiều người đăng ký cùng lúc
         String maTaiKhoan = "TK-CTV-" + suffix;
@@ -733,6 +731,9 @@ public class CustomerApiService {
         Set<Integer> khuVucDaGan = new HashSet<>();
         KhuVuc khuVucTheoDiaChi = !khuVucNoiO.isEmpty()
                 ? khuVucNoiO.get(0) : timHoacTaoKhuVuc(req.getPhuongXa(), req.getTinhThanh());
+        if (khuVucTheoDiaChi == null && khuVucService != null && !khuVucService.danhSach().isEmpty()) {
+            khuVucTheoDiaChi = khuVucService.danhSach().get(0);
+        }
         if (khuVucTheoDiaChi != null) {
             ganKhuVucChoCtv(savedCtv, khuVucTheoDiaChi, khuVucDaGan);
         }

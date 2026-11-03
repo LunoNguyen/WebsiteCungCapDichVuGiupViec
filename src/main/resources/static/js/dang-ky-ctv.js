@@ -25,6 +25,9 @@
   // Danh sách chứng chỉ tải lên (nhiều file): [{ ten, objectName }]
   var uploadedChungChi = [];
   var uploading = 0;
+  var chon = {};
+  var daTaiLen = {};
+  var giayToCho = null;
 
   function show(box, message) {
     if (!box) return;
@@ -38,95 +41,6 @@
     zone.classList.remove('is-busy', 'is-done', 'is-failed');
     if (cls) zone.classList.add(cls);
     zone.querySelector('.state').textContent = text || '';
-  }
-
-  // ---- Chọn file: chỉ xem trước, chưa tải lên ----
-  document.querySelectorAll('[data-upload]').forEach(function (zone) {
-    var input = zone.querySelector('input[type="file"]');
-    var type = zone.getAttribute('data-upload');
-
-    input.addEventListener('change', function () {
-      var file = input.files && input.files[0];
-      delete chon[type];
-      delete daTaiLen[type];
-      if (!file) { setState(zone, null, ''); return; }
-
-      if (file.size > MAX_BYTES) {
-        setState(zone, 'is-failed', 'File lớn hơn 20 MB');
-        input.value = '';
-        return;
-      }
-
-      // Xem trước ảnh ngay trên trình duyệt
-      var old = zone.querySelector('img');
-      if (old) old.remove();
-      if (file.type.indexOf('image/') === 0) {
-        var img = document.createElement('img');
-        img.alt = '';
-        img.src = URL.createObjectURL(file);
-        zone.insertBefore(img, zone.querySelector('.state'));
-      }
-      chon[type] = file;
-      setState(zone, 'is-done', 'Đã chọn: ' + file.name);
-    });
-  });
-
-  function docJson(res) {
-    return res.json().catch(function () { return {}; }).then(function (body) { return { ok: res.ok, body: body }; });
-  }
-
-  // Tải một file lên MinIO (chỉ gọi sau khi hồ sơ đã lưu thành công) → object key
-  function taiLen(type) {
-    var zone = form.querySelector('[data-upload="' + type + '"]');
-    var data = new FormData();
-    data.append('file', chon[type]);
-    setState(zone, 'is-busy', 'Đang tải lên…');
-    return fetch(zone.getAttribute('data-endpoint'), { method: 'POST', body: data })
-      .then(docJson)
-      .then(function (r) {
-        if (!r.ok || !r.body.success) {
-          throw new Error(r.body.error || 'Không tải được file ' + chon[type].name + '.');
-        }
-        setState(zone, 'is-done', 'Đã tải lên: ' + chon[type].name);
-        return r.body.objectName;
-      })
-      .catch(function (err) {
-        setState(zone, 'is-failed', err.message || 'Không tải được file');
-        throw err;
-      });
-  }
-
-  // Sau khi gửi hồ sơ thành công: tải lần lượt từng file rồi gắn vào hồ sơ bằng mã một lần
-  function guiGiayTo(ma) {
-    var loaiHoSo = ['AnhChanDung', 'CCCD_Mat_Truoc', 'CCCD_Mat_Sau'];
-    var loai = loaiHoSo.concat(chon.ChungChi ? ['ChungChi'] : []);
-    var keys = daTaiLen;
-    return loai.reduce(function (p, type) {
-      return p.then(function () {
-        if (keys[type]) return null;
-        return taiLen(type).then(function (key) { keys[type] = key; });
-      });
-    }, Promise.resolve())
-      .then(function () {
-        var chungChi = keys.ChungChi ? [{
-          loaiChungChi: 'ChungChi',
-          tenChungChi: document.getElementById('tenChungChi').value.trim() || 'Chứng chỉ đính kèm',
-          duongDanFile: keys.ChungChi
-        }] : [];
-        return fetch('/v1/collaborators/register/giay-to', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            maGuiGiayTo: ma,
-            danhSachHoSo: loaiHoSo.map(function (t) { return { loaiTaiLieu: t, duongDanFile: keys[t] }; }),
-            danhSachChungChi: chungChi
-          })
-        });
-      })
-      .then(docJson)
-      .then(function (r) {
-        if (!r.ok || !r.body.success) throw new Error(r.body.message || 'Chưa lưu được giấy tờ vào hồ sơ.');
-      });
   }
 
   // ---- Địa chỉ hiện tại: tỉnh (mới + cũ) và phường xã / quận huyện – /js/dia-chi.js ----
@@ -250,20 +164,12 @@
     // Không khóa cứng phần tài liệu để ứng viên có thể tải ảnh chân dung/CCCD bất kỳ lúc nào
     // setFieldsetLock(fsTaiLieu, !coDichVu);
 
-    // Bước 7: Tài liệu bắt buộc
-    var duHoSo = coDichVu && uploaded.AnhChanDung && uploaded.CCCD_Mat_Truoc && uploaded.CCCD_Mat_Sau;
+    // Bước 7: Nút gửi hồ sơ luôn sẵn sàng để nhận click và thông báo lỗi rõ ràng nếu còn thiếu thông tin
     if (submitBtn) {
-      if (duHoSo && uploading === 0) {
-        submitBtn.removeAttribute('disabled');
-        submitBtn.classList.remove('is-locked');
-        submitBtn.style.opacity = '1';
-        submitBtn.style.cursor = 'pointer';
-      } else {
-        submitBtn.setAttribute('disabled', 'disabled');
-        submitBtn.classList.add('is-locked');
-        submitBtn.style.opacity = '0.5';
-        submitBtn.style.cursor = 'not-allowed';
-      }
+      submitBtn.removeAttribute('disabled');
+      submitBtn.classList.remove('is-locked');
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
     }
   }
 
@@ -709,8 +615,9 @@
   }
 
   function datNut(dangGui) {
-    submitBtn.disabled = dangGui;
-    submitBtn.textContent = dangGui ? 'Đang gửi hồ sơ…' : (giayToCho ? 'Gửi lại giấy tờ' : 'Gửi hồ sơ');
+    if (!submitBtn) return;
+    submitBtn.disabled = !!dangGui;
+    submitBtn.textContent = dangGui ? 'Đang gửi hồ sơ…' : 'Gửi hồ sơ';
   }
 
   function xongHet(d) {
@@ -729,41 +636,96 @@
       '. Khi hồ sơ được duyệt, tài khoản sẽ được kích hoạt và bạn nhận tin nhắn thông báo. Đăng nhập bằng số điện thoại và mật khẩu đã đặt.');
   }
 
-  // Hồ sơ đã lưu: tải giấy tờ; lỗi thì giữ file + mã để bấm gửi lại
-  function guiGiayToCho() {
-    var cho = giayToCho;
-    if (!cho.ma) {
-      giayToCho = null;
-      show(errorBox, 'Đã gửi hồ sơ ' + (cho.d.maCongTacVien || '') +
-        ' nhưng máy chủ chưa nhận được giấy tờ. Liên hệ bộ phận nhân sự để bổ sung ảnh chân dung và CCCD.');
-      return Promise.resolve();
-    }
-    return guiGiayTo(cho.ma)
-      .then(function () { xongHet(cho.d); })
-      .catch(function (err) {
-        show(errorBox, 'Đã gửi hồ sơ ' + (cho.d.maCongTacVien || '') + ' nhưng chưa tải được giấy tờ: ' +
-          (err.message || 'lỗi kết nối') + ' Bấm "Gửi lại giấy tờ" để thử lại.');
-      });
-  }
+
 
   // ---- Gửi hồ sơ ----
+    // ---- Gửi hồ sơ ----
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     hide(errorBox);
     hide(okBox);
 
-    if (uploading > 0) {
-      show(errorBox, 'File đang được tải lên. Vui lòng chờ trong giây lát.');
+    // 1. Họ và tên
+    var hoTenVal = hoTenInput ? hoTenInput.value.trim() : '';
+    if (hoTenVal.length < 2) {
+      show(errorBox, 'Vui lòng nhập Họ và tên (tối thiểu 2 ký tự).');
+      if (hoTenInput) { hoTenInput.focus(); }
       return;
     }
 
-    // Thu thập danh sách dịch vụ CTV đã chọn
+    // 2. Số điện thoại
+    var sdtVal = sdtInput ? sdtInput.value.trim() : '';
+    setFieldLock(document.querySelector('[data-step-field="soDienThoai"]'), false);
+    if (!/^0[0-9]{9}$/.test(sdtVal)) {
+      show(errorBox, 'Vui lòng nhập số điện thoại hợp lệ (10 chữ số, bắt đầu bằng số 0).');
+      if (sdtInput) { sdtInput.focus(); }
+      return;
+    }
+
+    // 3. Mật khẩu
+    setFieldLock(document.querySelector('[data-step-field="matKhau"]'), false);
+    var mkVal = matKhauInput ? matKhauInput.value : '';
+    if (!kiemTraMatKhauHopLe(mkVal, sdtVal)) {
+      var errs = window.QuyTacMatKhau ? QuyTacMatKhau.kiemTra(mkVal, sdtVal) : [];
+      show(errorBox, errs.length > 0 ? errs[0] : 'Mật khẩu cần tối thiểu 8 ký tự, có cả chữ và số, không chứa khoảng trắng hay số điện thoại.');
+      if (matKhauInput) { matKhauInput.focus(); }
+      return;
+    }
+
+    // 4. Xác nhận mật khẩu
+    setFieldLock(document.querySelector('[data-step-field="xacNhanMatKhau"]'), false);
+    var xnVal = xacNhanInput ? xacNhanInput.value : '';
+    if (xnVal !== mkVal) {
+      show(errorBox, 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập.');
+      if (xacNhanInput) { xacNhanInput.focus(); }
+      return;
+    }
+
+    // 5. Ngày sinh (đủ 18 tuổi)
+    setFieldLock(document.querySelector('[data-step-field="ngaySinh"]'), false);
+    setFieldLock(document.querySelector('[data-step-field="gioiTinh"]'), false);
+    var nsVal = ngaySinhInput ? ngaySinhInput.value : '';
+    if (!nsVal) {
+      show(errorBox, 'Vui lòng chọn ngày tháng năm sinh.');
+      if (ngaySinhInput) { ngaySinhInput.focus(); }
+      return;
+    }
+    if (!du18Tuoi(nsVal)) {
+      show(errorBox, 'Cộng tác viên phải từ đủ 18 tuổi trở lên. Vui lòng kiểm tra lại ngày sinh.');
+      if (ngaySinhInput) { ngaySinhInput.focus(); }
+      return;
+    }
+
+    // 6. Địa chỉ
+    setFieldLock(document.querySelector('[data-step-field="diaChiHeader"]'), false);
+    setFieldLock(document.querySelector('[data-step-field="tinhThanh"]'), false);
+    setFieldLock(document.querySelector('[data-step-field="phuongXa"]'), false);
+    setFieldLock(document.querySelector('[data-step-field="diaChiChiTiet"]'), false);
+
+    if (!tinhSelect || !tinhSelect.value) {
+      show(errorBox, 'Vui lòng chọn Tỉnh, thành phố nơi bạn đang sống.');
+      if (tinhSelect) { tinhSelect.focus(); }
+      return;
+    }
+    if (!phuongSelect || !phuongSelect.value) {
+      show(errorBox, 'Vui lòng chọn Phường, xã hoặc Quận, huyện nơi bạn đang sống.');
+      if (phuongSelect) { phuongSelect.focus(); }
+      return;
+    }
+    var dcVal = diaChiChiTietInput ? diaChiChiTietInput.value.trim() : '';
+    if (dcVal.length < 3) {
+      show(errorBox, 'Vui lòng nhập số nhà, tên đường (tối thiểu 3 ký tự).');
+      if (diaChiChiTietInput) { diaChiChiTietInput.focus(); }
+      return;
+    }
+
+    // 7. Dịch vụ
+    setFieldsetLock(fsDichVu, false);
     var dichVuIds = [];
     form.querySelectorAll('input[name="dichVuItem"]:checked').forEach(function (cb) {
       var id = parseInt(cb.value, 10);
       if (id && dichVuIds.indexOf(id) === -1) dichVuIds.push(id);
     });
-    // Thu thập từ các checkbox đại diện đã tích
     form.querySelectorAll('input.check-rep-dv:checked').forEach(function (rep) {
       var subIdsStr = rep.getAttribute('data-sub-ids');
       if (subIdsStr) {
@@ -774,40 +736,39 @@
       }
     });
 
-        var payload = {
-          hoTen: document.getElementById('hoTen').value.trim(),
-          soDienThoai: document.getElementById('soDienThoai').value.trim(),
-          email: document.getElementById('email').value.trim() || null,
-          matKhau: document.getElementById('matKhau') ? document.getElementById('matKhau').value : null,
-          ngaySinh: document.getElementById('ngaySinh').value,
-          gioiTinh: document.getElementById('gioiTinh').value,
-          // Địa chỉ nơi ở: số nhà + mã tỉnh, phường (máy chủ ghép tên và lấy quận làm khu vực nhận việc ban đầu)
-          soNhaTenDuong: document.getElementById('diaChiChiTiet').value.trim(),
-          maTinh: parseInt(tinhSelect.value, 10),
-          maPhuong: parseInt(phuongSelect.value, 10),
-          // Phường cũ (trước sáp nhập) kèm quận cũ; phường mới thì ô quận bị tắt
-          maQuan: (function (q) { return q && !q.disabled && q.value ? parseInt(q.value, 10) : null; })(document.getElementById('quanHuyen')),
-          danhSachDichVuId: dichVuIds,
-          danhSachHoSo: hoSo,
-          danhSachChungChi: chungChi
-        };
     if (dichVuIds.length === 0) {
       show(errorBox, 'Vui lòng chọn ít nhất một dịch vụ bạn có thể làm.');
+      if (fsDichVu) { fsDichVu.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
       return;
     }
 
-    if (!uploaded.AnhChanDung || !uploaded.CCCD_Mat_Truoc || !uploaded.CCCD_Mat_Sau) {
-      show(errorBox, 'Vui lòng tải đủ Ảnh chân dung và 2 mặt Căn cước công dân.');
+    // 8. Đang tải file lên MinIO
+    if (uploading > 0) {
+      show(errorBox, 'Hình ảnh đang được tải lên máy chủ. Vui lòng chờ vài giây rồi bấm Gửi hồ sơ.');
+      return;
+    }
+
+    // 9. Tài liệu bắt buộc
+    if (!uploaded.AnhChanDung) {
+      show(errorBox, 'Vui lòng tải lên Ảnh chân dung.');
+      var z = form.querySelector('[data-upload="AnhChanDung"]');
+      if (z) { z.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      return;
+    }
+    if (!uploaded.CCCD_Mat_Truoc) {
+      show(errorBox, 'Vui lòng tải lên ảnh Căn cước công dân (mặt trước).');
+      var z = form.querySelector('[data-upload="CCCD_Mat_Truoc"]');
+      if (z) { z.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      return;
+    }
+    if (!uploaded.CCCD_Mat_Sau) {
+      show(errorBox, 'Vui lòng tải lên ảnh Căn cước công dân (mặt sau).');
+      var z = form.querySelector('[data-upload="CCCD_Mat_Sau"]');
+      if (z) { z.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
       return;
     }
 
     datNut(true);
-
-    // Hồ sơ đã lưu ở lần trước, chỉ còn thiếu giấy tờ: không tạo hồ sơ mới
-    if (giayToCho) {
-      guiGiayToCho().then(function () { datNut(false); });
-      return;
-    }
 
     var hoSo = ['AnhChanDung', 'CCCD_Mat_Truoc', 'CCCD_Mat_Sau'].map(function (loai) {
       return { loaiTaiLieu: loai, duongDanFile: uploaded[loai] };
@@ -845,18 +806,24 @@
     }
 
     var diaChi = window.DiaChi ? DiaChi.giaTri(tinhSelect.closest('[data-dia-chi-form]')) : {};
+    var tinhText = (tinhSelect && tinhSelect.options && tinhSelect.selectedIndex >= 0) ? tinhSelect.options[tinhSelect.selectedIndex].text : '';
+    var phuongText = (phuongSelect && phuongSelect.options && phuongSelect.selectedIndex >= 0) ? phuongSelect.options[phuongSelect.selectedIndex].text : '';
+    var fullDiaChi = dcVal + (phuongText ? ', ' + phuongText : '') + (tinhText ? ', ' + tinhText : '');
+
     var payload = {
-      hoTen: hoTenInput.value.trim(),
-      soDienThoai: sdtInput.value.trim(),
+      hoTen: hoTenVal,
+      soDienThoai: sdtVal,
       email: emailInput && emailInput.value.trim() ? emailInput.value.trim() : null,
-      matKhau: matKhauInput ? matKhauInput.value : null,
-      ngaySinh: ngaySinhInput.value,
+      matKhau: mkVal,
+      ngaySinh: nsVal,
       gioiTinh: gioiTinhSelect ? gioiTinhSelect.value : 'Khac',
-      soNhaTenDuong: diaChiChiTietInput.value.trim(),
-      // Ô tỉnh / ô thứ hai mang khoá "c74" / "q767": lấy mã số theo dòng đang chọn (quận cũ → maQuan)
-      maTinh: diaChi.maTinh,
-      maQuan: diaChi.maQuan,
-      maPhuong: diaChi.maPhuong,
+      soNhaTenDuong: dcVal,
+      tinhThanh: tinhText,
+      phuongXa: phuongText,
+      noiCuTru: fullDiaChi,
+      maTinh: (diaChi && diaChi.maTinh != null) ? diaChi.maTinh : (tinhSelect && tinhSelect.value ? parseInt(String(tinhSelect.value).replace(/^c/, ''), 10) : null),
+      maQuan: diaChi ? diaChi.maQuan : null,
+      maPhuong: diaChi ? diaChi.maPhuong : null,
       danhSachDichVuId: dichVuIds,
       danhSachHoSo: hoSo,
       danhSachChungChi: danhSachChungChi
@@ -867,10 +834,12 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-      .then(function (res) { return res.json().catch(function () { return {}; }).then(function (body) { return { ok: res.ok, body: body }; }); })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (body) { return { ok: res.ok, status: res.status, body: body }; });
+      })
       .then(function (r) {
         if (!r.ok || !r.body.success) {
-          throw new Error(r.body.message || 'Chưa gửi được hồ sơ. Vui lòng kiểm tra lại thông tin.');
+          throw new Error(r.body.message || r.body.error || 'Chưa gửi được hồ sơ (mã ' + r.status + '). Vui lòng kiểm tra lại thông tin.');
         }
         var d = r.body.data || {};
         form.reset();
@@ -892,10 +861,10 @@
         capNhatTienTrinhForm();
       })
       .catch(function (err) {
-        show(errorBox, err.message);
+        show(errorBox, err.message || 'Lỗi kết nối máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.');
       })
       .then(function () {
-        submitBtn.textContent = 'Gửi hồ sơ';
+        datNut(false);
         capNhatTienTrinhForm();
       });
   });
