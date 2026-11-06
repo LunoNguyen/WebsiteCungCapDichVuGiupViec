@@ -769,6 +769,42 @@ public class CollaboratorApiService {
         PhanCongCTV pc = phanCongCTVRepository.findByIdForUpdate(phanCongId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân công ID: " + phanCongId));
 
+        if ("DangThucHien".equalsIgnoreCase(pc.getTrangThai()) || "HoanThanh".equalsIgnoreCase(pc.getTrangThai())) {
+            throw new IllegalArgumentException("Không thể tự hủy ca làm việc đang thực hiện hoặc đã hoàn thành!");
+        }
+        if ("TuChoi".equalsIgnoreCase(pc.getTrangThai())) {
+            throw new IllegalArgumentException("Phân công này đã được hủy trước đó.");
+        }
+
+        // Quy định tối thiểu 5 tiếng đối với ca đã xác nhận/nhận việc
+        if ("DaXacNhan".equalsIgnoreCase(pc.getTrangThai())) {
+            DonDatDichVu don = pc.getDonDat();
+            LocalDate ngayLam = don != null ? don.getNgayThucHien() : null;
+            LocalTime gioBatDau = (don != null && don.getGioBatDau() != null) ? don.getGioBatDau() : LocalTime.of(8, 0);
+
+            List<LichLamViec> sches = lichLamViecRepository.findByPhanCong_Id(pc.getId());
+            if (sches.isEmpty() && don != null) {
+                sches = lichLamViecRepository.findByPhanCong_DonDat_Id(don.getId());
+            }
+            for (LichLamViec llv : sches) {
+                if ("SapToi".equalsIgnoreCase(llv.getTrangThai()) && llv.getNgayLam() != null) {
+                    ngayLam = llv.getNgayLam();
+                    if (llv.getGioBatDau() != null) gioBatDau = llv.getGioBatDau();
+                    break;
+                }
+            }
+
+            if (ngayLam != null) {
+                LocalDateTime thoiDiemBatDau = LocalDateTime.of(ngayLam, gioBatDau);
+                long phutConLai = java.time.Duration.between(LocalDateTime.now(), thoiDiemBatDau).toMinutes();
+                if (phutConLai < 300) { // Dưới 5 tiếng (300 phút)
+                    throw new IllegalArgumentException("Theo quy định hệ thống, bạn chỉ được tự hủy ca làm trước giờ bắt đầu tối thiểu 5 tiếng. "
+                            + "Ca làm này bắt đầu sau " + (phutConLai > 0 ? (phutConLai / 60) + " giờ " + (phutConLai % 60) + " phút" : "0 phút")
+                            + " (dưới 5 tiếng). Vui lòng liên hệ Tổng đài CSKH để được hỗ trợ!");
+                }
+            }
+        }
+
         pc.setTrangThai("TuChoi");
         String rawLyDo = (req != null) ? req.getLyDoTuChoi() : null;
         String cleanLyDo = (rawLyDo != null) ? rawLyDo.trim().replaceAll("\\s+", " ") : "";
@@ -1251,6 +1287,7 @@ public class CollaboratorApiService {
                     targetLlv.setGioBatDau(batDauMoi);
                     targetLlv.setGioKetThuc(ketThucMoi);
                     targetLlv.setTrangThai("DangThucHien");
+                    targetLlv.setKetQuaThucHien("BAT_DAU:" + LocalDateTime.now().toString());
                     lichLamViecRepository.save(targetLlv);
                 }
 
@@ -2197,6 +2234,11 @@ public class CollaboratorApiService {
                 PhanCongCTV pcCuaToi = pcs.stream().filter(x -> PhanCongTheoDichVu.hieuLuc(x) && x.getCongTacVien() != null
                         && ctvId.equals(x.getCongTacVien().getId())).findFirst().orElse(null);
                 if (phanCongService.lyDoTrungLich(ctvId, don, pcCuaToi != null ? pcCuaToi.getId() : null) != null) continue;
+            } else {
+                // Đơn 1 dịch vụ: nếu CTV bị trùng lịch với ca khác thì cũng bỏ qua (không hiện ở Pool việc mới)
+                if (phanCongService != null && phanCongService.lyDoTrungLich(ctvId, don, null) != null) {
+                    continue;
+                }
             }
 
             Map<String, Object> item = new LinkedHashMap<>();
